@@ -1,0 +1,47 @@
+# OPEC Monthly Oil Market Report, issue 2022-10, page 64. Only the product price
+# table is reproduced, laid out as pdfplumber extracts it. OPEC is the
+# copyright holder and the assessments are Argus's. The MOMR disclaimer
+# permits the information it carries to be reproduced for educational and
+# other non commercial purposes with OPEC acknowledged, which is what this
+# parser fixture is. The rest of the page is not reproduced and no MOMR PDF
+# is committed anywhere in this repository.
+#
+# ONE SUBSTITUTION, and no other change. Where the report writes the minus
+# sign of its change column as an en dash, this file writes an ASCII hyphen,
+# because SPEC.md section 0.1 forbids an en dash anywhere in the repository.
+# The character stands for the same minus and no digit is touched. The real
+# document's dash family is covered separately by the to_float unit test.
+        Table 6 - 4: Refined product prices, US$/b
+                                                    Change Annual avg. Year-to-date
+                                      Aug 22 Sep 22 Sep/Aug   2021 2022-to-date
+        US Gulf (Cargoes FOB)
+        Naphtha*                      84.82  73.94   -10.88   70.70   94.10
+        Premium gasoline (unleaded 93) 127.41 119.75  -7.66   91.41  141.17
+        Regular gasoline (unleaded 87) 116.02 107.32  -8.70   86.72  129.95
+        Jet/Kerosene                  140.21 136.98   -3.23   78.32  141.84
+        Gasoil           (0.2% S)     122.34 115.38   -6.96   73.94  125.39
+        Fuel oil         (3.0% S)     81.74  62.00   -19.74   59.84   83.99
+        Rotterdam (Barges FoB)
+        Naphtha                       72.98  69.03    -3.95   70.15   89.69
+        Premium gasoline (unleaded 98) 137.45 124.73 -12.72   85.89  139.98
+        Jet/Kerosene                  143.04 135.02   -8.02   77.17  142.84
+        Gasoil/Diesel    (10 ppm)     143.00 139.42   -3.58   78.31  143.25
+        Fuel oil         (1.0% S)     90.31  82.58    -7.73   69.12   93.79
+        Fuel oil         (3.5% S)     78.87  66.29   -12.58   61.38   85.27
+        Mediterranean (Cargoes FOB)
+        Naphtha                       70.39  67.00    -3.39   69.40   87.21
+        Premium gasoline**            112.59 99.31   -13.28   80.46  125.47
+        Jet/Kerosene                  138.83 131.39   -7.44   75.06  138.68
+        Diesel                        133.39 131.93   -1.46   77.73  137.82
+        Fuel oil         (1.0% S)     96.88  89.44    -7.44   70.51   99.18
+        Fuel oil         (3.5% S)     71.03  51.18   -19.85   58.98   77.81
+        Singapore (Cargoes FOB)
+        Naphtha                       72.64  68.09    -4.55   70.83   88.27
+        Premium gasoline (unleaded 95) 110.57 97.45  -13.12   80.28  122.01
+        Regular gasoline (unleaded 92) 107.25 93.79  -13.46   78.28  118.07
+        Jet/Kerosene                  132.39 120.92  -11.47   75.10  129.57
+        Gasoil/Diesel    (50 ppm)     139.23 128.58  -10.65   77.36  137.98
+        Fuel oil         (180 cst)    133.62 124.55   -9.07   75.71  131.89
+        Fuel oil         (380 cst 3.5% S) 73.78 59.20 -14.58  62.07   82.96
+        Note: * Barges. ** Cost, insurance and freight (CIF).
+        Sources: Argus and OPEC.

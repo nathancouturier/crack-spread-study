@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "series": "eia_refinery_fuel_2023",
+  "title": "US refinery natural gas use and crude inputs for 2023, the gas intensity inputs",
+  "publisher": "US Energy Information Administration",
+  "method": "seed",
+  "why_a_seed": "SPEC.md section 5.1 asks for a seed JSON with source URLs for this row rather than an adapter. It is four numbers that change once a year, two of them exist only inside a PDF, and each one needs its table named beside it. Recon 03 section 3.1 confirmed that tables 10a and 10b are not in the workbook that accompanies the Refinery Capacity Report: refcap24.xlsx carries one sheet and it is the per refinery capacity file. Nobody should plan to parse these two numbers out of a spreadsheet.",
+  "checked_at": "2026-09-13",
+  "checked_how": "Every figure below was read again on 2026-09-13 from the file named in its verified_from field, not copied from the recon report. The two PDF figures were re read out of the text layer of table10.pdf with pdfplumber, and the two series figures out of the xls files with pandas.",
+  "licence": "US public domain",
+  "licence_note": "U.S. government publications are in the public domain and are not subject to copyright protection. EIA states: 'You may use and/or distribute any of our data, files, databases, reports, graphs, charts, and other information products that are on our website or that you receive through our email distribution service. However, if you use or reproduce any of our information products, you should use an acknowledgment, which includes the publication date.' See https://www.eia.gov/about/copyrights_reuse.php . This is the only unambiguous grant in this project.",
+  "acknowledgment": "Source: U.S. Energy Information Administration, Refinery Capacity Report (June 2024), Natural Gas Navigator (2026) and Petroleum and Other Liquids (2026)",
+  "fetch_note": "NEVER PROBE eia.gov WITH HEAD. It answers HTTP 503 to a HEAD and HTTP 200 to a GET of the same URL, on its navigator pages and on the archive directory index, so a liveness probe with HEAD reports the source as down when it is up. crack.sources.base.http_head refuses the host outright.",
+  "figures": [
+    {
+      "key": "refinery_fuel_gas_mmcf",
+      "label_as_printed": "Natural Gas (million cubic feet)",
+      "value": 1021246.0,
+      "unit": "million cubic feet",
+      "period": "2023",
+      "area": "United States",
+      "source_table": "Table 10a. Fuel Consumed at Refineries by PAD District, 2023",
+      "source_url": "https://www.eia.gov/petroleum/refinerycapacity/archive/2024/table10.pdf",
+      "page_url": "https://www.eia.gov/petroleum/refinerycapacity/",
+      "publication": "EIA Refinery Capacity Report, 2024 edition, released 12 June 2024",
+      "verified_from": "data/private/probe/eia/table10_2024report.pdf",
+      "verified_line": "Natural Gas (million cubic feet) 53,098 180,270 575,110 27,999 184,769 1,021,246",
+      "note": "The United States column is the last of the six, after PAD districts I to V. The table's own note says it 'Includes volumes used as fuel at refineries and all nonprocessing losses of crude oil and petroleum products'. The 2026 edition of the same report carries 2025, not 2023, and its title reads 'Fuels Consumed' rather than 'Fuel Consumed', so the title is not stable across editions and the archive path is what pins the year."
+    },
+    {
+      "key": "hydrogen_feedstock_gas_mmcf",
+      "label_as_printed": "Natural Gas Used As Feedstock For Hydrogen Production",
+      "value": 172313.0,
+      "unit": "million cubic feet",
+      "period": "2023",
+      "area": "United States",
+      "source_table": "Table 10b. Natural Gas Used as Feedstock for Hydrogen Production at Refineries by PAD District, 2023",
+      "source_url": "https://www.eia.gov/petroleum/refinerycapacity/archive/2024/table10.pdf",
+      "page_url": "https://www.eia.gov/petroleum/refinerycapacity/",
+      "publication": "EIA Refinery Capacity Report, 2024 edition, released 12 June 2024",
+      "verified_from": "data/private/probe/eia/table10_2024report.pdf",
+      "verified_line": "Natural Gas Used As Feedstock For 5,265 51,429 54,569 17,586 43,464 172,313",
+      "note": "Printed on the same page as table 10a, below it, with the units in the table heading rather than in the row label, and the row label itself wrapped across two lines. SPEC.md section 4.4 says to include this gas and that is right: a European refiner buys the hydrogen feedstock gas too. Dropping it moves the intensity by about 15 percent, see the sensitivities below."
+    },
+    {
+      "key": "gas_heat_content_btu_per_cf",
+      "label_as_printed": "U.S. Heat Content of Natural Gas Deliveries to Consumers (BTU per Cubic Foot)",
+      "value": 1036.0,
+      "unit": "Btu per cubic foot",
+      "period": "2023",
+      "area": "United States",
+      "source_table": "Heat Content of Natural Gas Consumed, annual, source key NGA_EPG0_VGTH_NUS_BTUCF",
+      "source_url": "https://www.eia.gov/dnav/ng/xls/NG_CONS_HEAT_A_EPG0_VGTH_BTUCF_A.xls",
+      "page_url": "https://www.eia.gov/dnav/ng/ng_cons_heat_a_EPG0_VGTH_btucf_a.htm",
+      "publication": "EIA Natural Gas Navigator, annual 2003 to 2025",
+      "verified_from": "data/private/probe/eia/NG_CONS_HEAT_A_EPG0_VGTH_BTUCF_A.xls",
+      "note": "This is gas DELIVERED TO CONSUMERS, which is the closest published national figure and is not refinery specific. The same page offers a Total Consumption variant. Neighbouring years read 1,036 in 2022, 1,037 in 2024 and 1,036 in 2025, so the spread between variants and years is a few Btu on 1,036 and cannot move the intensity by more than about half a percent. The Method view carries this caveat."
+    },
+    {
+      "key": "crude_inputs_thousand_bbl",
+      "label_as_printed": "U.S. Refinery and Blender Net Input of Crude Oil (Thousand Barrels)",
+      "value": 5827889.0,
+      "unit": "thousand barrels",
+      "period": "2023",
+      "area": "United States",
+      "source_table": "U.S. Refinery and Blender Net Input, annual, source key MCRRIUS1",
+      "source_url": "https://www.eia.gov/dnav/pet/hist_xls/MCRRIUS1a.xls",
+      "page_url": "https://www.eia.gov/dnav/pet/pet_pnp_inpt_dc_nus_mbbl_a.htm",
+      "publication": "EIA Petroleum and Other Liquids, annual 1981 to 2025",
+      "verified_from": "data/private/probe/eia/MCRRIUS1a.xls",
+      "note": "Crude oil only. The same navigator page prints 6,720,185 thousand barrels on its Total row, which adds hydrocarbon gas liquids and other inputs. Crude is the denominator SPEC.md section 4.4 names, and it is the denominator that matches a margin quoted per barrel of crude."
+    }
+  ],
+  "derivation": {
+    "target": "gas_intensity_mmbtu_per_bbl",
+    "rule": "Nothing here is tuned. It is one pass over the four figures above, in the order SPEC.md section 4.4 sets out, and the result is reported whatever it is.",
+    "steps": [
+      {
+        "step": 1,
+        "what": "total natural gas into US refineries, as fuel and as hydrogen feedstock",
+        "expression": "1021246 + 172313",
+        "value": 1193559.0,
+        "unit": "million cubic feet"
+      },
+      {
+        "step": 2,
+        "what": "as cubic feet, one million cubic feet being 1e6 cubic feet",
+        "expression": "1193559 * 1e6",
+        "value": 1193559000000.0,
+        "unit": "cubic feet"
+      },
+      {
+        "step": 3,
+        "what": "as Btu, at EIA's own heat content",
+        "expression": "1193559000000 * 1036",
+        "value": 1236527124000000.0,
+        "unit": "Btu"
+      },
+      {
+        "step": 4,
+        "what": "as MMBtu, one MMBtu being 1e6 Btu",
+        "expression": "1236527124000000 / 1e6",
+        "value": 1236527124.0,
+        "unit": "MMBtu"
+      },
+      {
+        "step": 5,
+        "what": "crude inputs as barrels",
+        "expression": "5827889 * 1e3",
+        "value": 5827889000.0,
+        "unit": "barrels"
+      },
+      {
+        "step": 6,
+        "what": "gas intensity",
+        "expression": "1236527124 / 5827889000",
+        "value": 0.2121741035218756,
+        "unit": "MMBtu per barrel"
+      }
+    ]
+  },
+  "derived": {
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "gas_intensity_full_precision": 0.2121741035218756,
+    "band": [
+      0.12,
+      0.3
+    ],
+    "band_source": "SPEC.md section 4.4: expect about 0.2, and outside 0.12 to 0.30 stop and show your working. This is 0.212, comfortably inside, so there is no stop condition and nothing to tune. SPEC.md section 9 makes it a test.",
+    "is_an_upper_end_default_for_europe": true,
+    "upper_end_note": "It is a US figure. European refiners burn proportionally more of their own still gas and buy proportionally less pipeline gas, so a European refinery's PURCHASED gas intensity is more likely below this than above it. SPEC.md section 4.4 requires it presented as an upper end default, editable in the Model view and labelled.",
+    "sensitivities": [
+      {
+        "key": "fuel_gas_only",
+        "value": 0.18154272601966168,
+        "rounded": 0.1815,
+        "what_changed": "the hydrogen feedstock gas is dropped from the numerator",
+        "expression": "1021246 * 1e6 * 1036 / 1e6 / (5827889 * 1e3)",
+        "moves_the_answer_by": "about 15 percent",
+        "used": false
+      },
+      {
+        "key": "gross_input_denominator",
+        "value": 0.2052930278272621,
+        "rounded": 0.2053,
+        "what_changed": "the denominator becomes gross input to atmospheric crude oil distillation units, 16,502 thousand barrels per day times 365 days",
+        "expression": "1236527124 / (16502 * 365 * 1e3)",
+        "denominator_value": 6023230.0,
+        "denominator_unit": "thousand barrels",
+        "denominator_source_url": "https://www.eia.gov/dnav/pet/pet_pnp_unc_dcu_nus_a.htm",
+        "moves_the_answer_by": "about 3 percent",
+        "used": false,
+        "not_verified": "The 16,502 kb/d was read off the navigator page rather than from a series file: recon 03 section 3.5 tried https://www.eia.gov/dnav/pet/hist_xls/MOCGGUS1a.xls and got HTTP 404, so the source key behind that row is unresolved. It is reported as a sensitivity and is never the study denominator."
+      }
+    ]
+  }
+}

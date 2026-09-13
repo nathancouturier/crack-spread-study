@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crack-spread-study"
+version = "0.1.0"
+description = "Northwest European refining margins: the gasoil and gasoline cracks, the margin after gas, and the crude demand they imply"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "nathancouturier" }]
+dependencies = [
+  "pandas",
+  "numpy",
+  "requests",
+  "beautifulsoup4",
+  "lxml",
+  "openpyxl",
+  "statsmodels",
+  # The DGEC weekly note is a PDF and its quotation table has to be read by
+  # label rather than by position, which needs word coordinates. pdfplumber is
+  # the only library tested at Gate 1 that gives them. See docs/sources.md.
+  "pdfplumber",
+  # Optional daily gas layer only. The monthly gas series comes from the World
+  # Bank pink sheet, which is already in $/mmbtu and carries a usable licence.
+  "yfinance",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.urls]
+Homepage = "https://nathancouturier.github.io/crack-spread-study/"
+Source = "https://github.com/nathancouturier/crack-spread-study"
+
+# src layout. The importable package is "crack", it lives at src/crack.
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# pytest puts src on sys.path itself, so the test suite runs from a clean
+# checkout with no install step. tests/conftest.py does the same thing for
+# anyone running pytest from another working directory.
+pythonpath = ["src"]
+addopts = "-q"

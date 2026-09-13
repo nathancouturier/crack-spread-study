@@ -1,0 +1,30 @@
+# OPEC Monthly Oil Market Report, issue 2003-06, page 13. Only the product price
+# table is reproduced, laid out as pdfplumber extracts it. OPEC is the
+# copyright holder and the assessments are Argus's. The MOMR disclaimer
+# permits the information it carries to be reproduced for educational and
+# other non commercial purposes with OPEC acknowledged, which is what this
+# parser fixture is. The rest of the page is not reproduced and no MOMR PDF
+# is committed anywhere in this repository.
+#
+# ONE SUBSTITUTION, and no other change. Where the report writes the minus
+# sign of its change column as an en dash, this file writes an ASCII hyphen,
+# because SPEC.md section 0.1 forbids an en dash anywhere in the repository.
+# The character stands for the same minus and no digit is touched. The real
+# document's dash family is covered separately by the to_float unit test.
+                                               Table 2
+                                          Refined product prices
+                                                US $/b
+                                                                   Change
+                                              Mar 03 Apr 03 May 03 May/Apr
+                         US Gulf
+                           Regular gasoline (unleaded) 40.63 34.24 33.20 -1.04
+                           Gasoil      (0.2% S) 37.13 30.47 29.65   -0.82
+                           Fuel oil    (3.0% S) 22.78 19.59 21.16   +1.57
+                         Rotterdam
+                           Premium gasoline (unleaded) 36.06 34.38 32.06 -2.32
+                           Gasoil      (0.2% S) 39.61 29.59 29.00   -0.59
+                           Fuel oil    (3.5% S) 21.91 18.61 20.29   +1.68
+                         Singapore
+                           Premium gasoline (unleaded) 37.51 28.74 28.73 -0.01
+                           Gasoil      (0.5% S) 37.87 30.03 29.12   -0.91
+                           Fuel oil    (380 cst) 26.65 23.12 23.15  +0.03

@@ -1,0 +1,559 @@
+{
+  "schema_version": 1,
+  "series": "events",
+  "title": "Dated events and structural breaks marked on the charts",
+  "publisher": "this study, every entry cited",
+  "method": "seed",
+  "why_a_seed": "SPEC.md section 6.5 asks for data/seed/events.json with one source_url per entry and says to include only what can be cited. Nothing fetches this file. It is written by hand, every URL in it was requested on the date in checked_at and the HTTP result is recorded next to the URL, including the ones that refuse automated access.",
+  "checked_at": "2026-09-13",
+  "checked_how": "Every source_url and every additional source URL below was requested once with curl on 2026-09-13, following redirects, with a polite pause between requests. The status, content type and byte count that came back are recorded verbatim in url_status. Where a quote is given it was taken from the body that came back on that request, except where the entry says otherwise in words.",
+  "rules": {
+    "one_source_url_per_entry": "SPEC.md section 6.5. An entry with no source_url does not go in, and tests/test_events_anchors.py fails the build if one appears.",
+    "no_invented_dates": "date_precision is 'day' only where a source names a day. Where the source says 'at the start of 2015' or 'at the end of 2022' the entry carries a month and date_note says why. SPEC.md non negotiable 8.",
+    "layer": "Which layer of the study the event marks. 'daily' means the optional ICE futures layer of SPEC.md section 5.2 only, which this repository does not publish, so those entries mark nothing on a chart today.",
+    "kind": "market, policy, specification_break, definition_change, method_change or reference. A reference is an order of magnitude figure quoted from a news article, never a series and never a benchmark to fit to."
+  },
+  "licence": "this study, MIT",
+  "licence_note": "The list is this project's own. Each entry links the source that establishes the event and quotes it only as far as ordinary quotation allows, and the linked sources carry their own terms. The S&P Global figures are individual numbers quoted from two dated articles with attribution and a link; the underlying assessments are S&P's and are not redistributable as a series.",
+  "counts": {
+    "events": 21,
+    "with_source_url": 21,
+    "urls_that_refuse_automated_access": 8
+  },
+  "events": [
+    {
+      "id": "opec_gasoline_spec_2004_05",
+      "date": "2004-05",
+      "date_precision": "month",
+      "label": "OPEC Rotterdam gasoline quotation respecified, unleaded to unleaded 95",
+      "what": "The row label OPEC prints for gasoline in the 'Refined product prices, US$/b' Rotterdam barges block changes from 'unleaded' to 'unleaded 95'. 2004-05 is the first month the committed cache carries the new label.",
+      "why_it_matters": "A respecification is not a price move. The two labels price different grades, so a level shift across this month is partly the grade and partly the market, and the two cannot be separated from this source. The cache carries the label per row in the gasoline_spec column so no chart has to guess.",
+      "kind": "specification_break",
+      "layer": "monthly",
+      "applies_to": [
+        "opec_rotterdam_products_monthly"
+      ],
+      "series_column": "premium_gasoline_usd_bbl",
+      "source_url": "https://www.opec.org/monthly-oil-market-report.html",
+      "source_title": "Monthly Oil Market Report, table 'Refined product prices, US$/b', Rotterdam (Barges FOB) block",
+      "source_publisher": "OPEC Secretariat, assessments credited to Argus",
+      "source_quote": null,
+      "url_checked_at": "2026-09-13",
+      "url_status": "403 to every scripted request from this machine, 5,749 bytes of refusal body. The report page opens in a browser. The issues themselves are read from the Internet Archive, recon 05 section 1.1, which is what the adapter does.",
+      "measured": "Measured from data/cache/opec_rotterdam_products_monthly.csv, the gasoline_spec column, by taking the first month each distinct label appears. Nothing here is typed from a report."
+    },
+    {
+      "id": "opec_gasoil_spec_2005_03",
+      "date": "2005-03",
+      "date_precision": "month",
+      "label": "OPEC Rotterdam gasoil quotation respecified, 0.2% S to 50 ppm",
+      "what": "The row label OPEC prints for gasoil in the 'Refined product prices, US$/b' Rotterdam barges block changes from '0.2% S' to '50 ppm'. 2005-03 is the first month the committed cache carries the new label.",
+      "why_it_matters": "A respecification is not a price move. The two labels price different grades, so a level shift across this month is partly the grade and partly the market, and the two cannot be separated from this source. The cache carries the label per row in the gasoil_spec column so no chart has to guess.",
+      "kind": "specification_break",
+      "layer": "monthly",
+      "applies_to": [
+        "opec_rotterdam_products_monthly"
+      ],
+      "series_column": "gasoil_usd_bbl",
+      "source_url": "https://www.opec.org/monthly-oil-market-report.html",
+      "source_title": "Monthly Oil Market Report, table 'Refined product prices, US$/b', Rotterdam (Barges FOB) block",
+      "source_publisher": "OPEC Secretariat, assessments credited to Argus",
+      "source_quote": null,
+      "url_checked_at": "2026-09-13",
+      "url_status": "403 to every scripted request from this machine, 5,749 bytes of refusal body. The report page opens in a browser. The issues themselves are read from the Internet Archive, recon 05 section 1.1, which is what the adapter does.",
+      "measured": "Measured from data/cache/opec_rotterdam_products_monthly.csv, the gasoil_spec column, by taking the first month each distinct label appears. Nothing here is typed from a report."
+    },
+    {
+      "id": "opec_gasoline_spec_2005_03",
+      "date": "2005-03",
+      "date_precision": "month",
+      "label": "OPEC Rotterdam gasoline quotation respecified, unleaded 95 to unleaded 50 ppm",
+      "what": "The row label OPEC prints for gasoline in the 'Refined product prices, US$/b' Rotterdam barges block changes from 'unleaded 95' to 'unleaded 50 ppm'. 2005-03 is the first month the committed cache carries the new label.",
+      "why_it_matters": "A respecification is not a price move. The two labels price different grades, so a level shift across this month is partly the grade and partly the market, and the two cannot be separated from this source. The cache carries the label per row in the gasoline_spec column so no chart has to guess.",
+      "kind": "specification_break",
+      "layer": "monthly",
+      "applies_to": [
+        "opec_rotterdam_products_monthly"
+      ],
+      "series_column": "premium_gasoline_usd_bbl",
+      "source_url": "https://www.opec.org/monthly-oil-market-report.html",
+      "source_title": "Monthly Oil Market Report, table 'Refined product prices, US$/b', Rotterdam (Barges FOB) block",
+      "source_publisher": "OPEC Secretariat, assessments credited to Argus",
+      "source_quote": null,
+      "url_checked_at": "2026-09-13",
+      "url_status": "403 to every scripted request from this machine, 5,749 bytes of refusal body. The report page opens in a browser. The issues themselves are read from the Internet Archive, recon 05 section 1.1, which is what the adapter does.",
+      "measured": "Measured from data/cache/opec_rotterdam_products_monthly.csv, the gasoline_spec column, by taking the first month each distinct label appears. Nothing here is typed from a report."
+    },
+    {
+      "id": "opec_gasoil_spec_2008_06",
+      "date": "2008-06",
+      "date_precision": "month",
+      "label": "OPEC Rotterdam gasoil quotation respecified, 50 ppm to 10 ppm",
+      "what": "The row label OPEC prints for gasoil in the 'Refined product prices, US$/b' Rotterdam barges block changes from '50 ppm' to '10 ppm'. 2008-06 is the first month the committed cache carries the new label.",
+      "why_it_matters": "A respecification is not a price move. The two labels price different grades, so a level shift across this month is partly the grade and partly the market, and the two cannot be separated from this source. The cache carries the label per row in the gasoil_spec column so no chart has to guess.",
+      "kind": "specification_break",
+      "layer": "monthly",
+      "applies_to": [
+        "opec_rotterdam_products_monthly"
+      ],
+      "series_column": "gasoil_usd_bbl",
+      "source_url": "https://www.opec.org/monthly-oil-market-report.html",
+      "source_title": "Monthly Oil Market Report, table 'Refined product prices, US$/b', Rotterdam (Barges FOB) block",
+      "source_publisher": "OPEC Secretariat, assessments credited to Argus",
+      "source_quote": null,
+      "url_checked_at": "2026-09-13",
+      "url_status": "403 to every scripted request from this machine, 5,749 bytes of refusal body. The report page opens in a browser. The issues themselves are read from the Internet Archive, recon 05 section 1.1, which is what the adapter does.",
+      "measured": "Measured from data/cache/opec_rotterdam_products_monthly.csv, the gasoil_spec column, by taking the first month each distinct label appears. Nothing here is typed from a report."
+    },
+    {
+      "id": "opec_gasoline_spec_2008_06",
+      "date": "2008-06",
+      "date_precision": "month",
+      "label": "OPEC Rotterdam gasoline quotation respecified, unleaded 50 ppm to unleaded 10 ppm",
+      "what": "The row label OPEC prints for gasoline in the 'Refined product prices, US$/b' Rotterdam barges block changes from 'unleaded 50 ppm' to 'unleaded 10 ppm'. 2008-06 is the first month the committed cache carries the new label.",
+      "why_it_matters": "A respecification is not a price move. The two labels price different grades, so a level shift across this month is partly the grade and partly the market, and the two cannot be separated from this source. The cache carries the label per row in the gasoline_spec column so no chart has to guess.",
+      "kind": "specification_break",
+      "layer": "monthly",
+      "applies_to": [
+        "opec_rotterdam_products_monthly"
+      ],
+      "series_column": "premium_gasoline_usd_bbl",
+      "source_url": "https://www.opec.org/monthly-oil-market-report.html",
+      "source_title": "Monthly Oil Market Report, table 'Refined product prices, US$/b', Rotterdam (Barges FOB) block",
+      "source_publisher": "OPEC Secretariat, assessments credited to Argus",
+      "source_quote": null,
+      "url_checked_at": "2026-09-13",
+      "url_status": "403 to every scripted request from this machine, 5,749 bytes of refusal body. The report page opens in a browser. The issues themselves are read from the Internet Archive, recon 05 section 1.1, which is what the adapter does.",
+      "measured": "Measured from data/cache/opec_rotterdam_products_monthly.csv, the gasoline_spec column, by taking the first month each distinct label appears. Nothing here is typed from a report."
+    },
+    {
+      "id": "worldbank_europe_gas_definition_2010_04",
+      "date": "2010-04",
+      "date_precision": "month",
+      "label": "World Bank Europe gas series becomes an import border price including the UK",
+      "what": "From April 2010 to March 2015 the series is an average import border price with a spot price component, including the UK. From June 2000 to March 2010 it excluded the UK, and the workbook states no definition at all for 1960 to May 2000.",
+      "why_it_matters": "The second of the two definition boundaries inside the committed cache, and the reason any chart that starts before 2015-04 has to carry a label rather than one continuous line.",
+      "kind": "definition_change",
+      "layer": "monthly",
+      "applies_to": [
+        "worldbank_gas_europe_monthly"
+      ],
+      "source_url": "https://www.worldbank.org/en/research/commodity-markets",
+      "source_title": "Commodity Markets, pink sheet, CMO-Historical-Data-Monthly.xlsx, Description sheet",
+      "source_publisher": "World Bank Commodity Price Data (The Pink Sheet)",
+      "source_quote": "Natural Gas (Europe), from April 2015, Netherlands Title Transfer Facility (TTF); April 2010 to March 2015, average import border price and a spot price component, including UK; during June 2000 - March 2010 prices excludes UK.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 55,840 bytes"
+    },
+    {
+      "id": "opec_gasoline_spec_2013_07",
+      "date": "2013-07",
+      "date_precision": "month",
+      "label": "OPEC Rotterdam gasoline quotation respecified, unleaded 10 ppm to unleaded 98",
+      "what": "The row label OPEC prints for gasoline in the 'Refined product prices, US$/b' Rotterdam barges block changes from 'unleaded 10 ppm' to 'unleaded 98'. 2013-07 is the first month the committed cache carries the new label.",
+      "why_it_matters": "A respecification is not a price move. The two labels price different grades, so a level shift across this month is partly the grade and partly the market, and the two cannot be separated from this source. The cache carries the label per row in the gasoline_spec column so no chart has to guess.",
+      "kind": "specification_break",
+      "layer": "monthly",
+      "applies_to": [
+        "opec_rotterdam_products_monthly"
+      ],
+      "series_column": "premium_gasoline_usd_bbl",
+      "source_url": "https://www.opec.org/monthly-oil-market-report.html",
+      "source_title": "Monthly Oil Market Report, table 'Refined product prices, US$/b', Rotterdam (Barges FOB) block",
+      "source_publisher": "OPEC Secretariat, assessments credited to Argus",
+      "source_quote": null,
+      "url_checked_at": "2026-09-13",
+      "url_status": "403 to every scripted request from this machine, 5,749 bytes of refusal body. The report page opens in a browser. The issues themselves are read from the Internet Archive, recon 05 section 1.1, which is what the adapter does.",
+      "measured": "Measured from data/cache/opec_rotterdam_products_monthly.csv, the gasoline_spec column, by taking the first month each distinct label appears. Nothing here is typed from a report."
+    },
+    {
+      "id": "ice_gasoil_10ppm_2015",
+      "date": "2015-01",
+      "date_precision": "month",
+      "label": "ICE Gasoil moves to a 10 ppm specification",
+      "what": "ICE Futures Europe completed the transition of the ICE Gasoil contract to a 10 ppm low sulphur specification at the start of 2015 and renamed it ICE Low Sulphur Gasoil futures.",
+      "why_it_matters": "A change in the deliverable grade of the contract the gasoil crack is quoted against. SPEC.md section 5.2 marks it as a break on the optional daily futures layer. Nothing in the committed monthly or weekly layers is quoted against ICE, so it marks no series this project publishes today.",
+      "kind": "specification_break",
+      "layer": "daily",
+      "applies_to": [],
+      "source_url": "https://s2.q4cdn.com/154085107/files/doc_news/archive/c79af05e-53b8-4422-ab87-42fd967ced10.pdf",
+      "source_title": "ICE announces record open interest in gasoil futures, press release of 2 June 2015",
+      "source_publisher": "Intercontinental Exchange",
+      "source_quote": "Earlier this year, ICE Futures Europe completed the transition of ICE Gasoil to a 10ppm low sulphur specification, to reflect the ongoing move in the underlying middle distillate markets towards low sulphur grades. Following the transition, ICE Gasoil was renamed ICE Low Sulphur Gasoil futures.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, application/pdf, 64,514 bytes",
+      "date_note": "NO DAY IS PINNED, on purpose. The press release is dated June 2015 and says the transition happened 'at the start of this year'. That is as precise as the source gets, so the entry carries a month and says so rather than inventing 1 January. Recon 04 section 6.5."
+    },
+    {
+      "id": "worldbank_europe_gas_definition_2015_04",
+      "date": "2015-04",
+      "date_precision": "month",
+      "label": "World Bank Europe gas series becomes TTF",
+      "what": "From April 2015 the World Bank pink sheet series 'Natural gas, Europe' is the Netherlands Title Transfer Facility price. Before it, from April 2010, it was an average import border price with a spot component including the UK.",
+      "why_it_matters": "The monthly gas series the run economics of SPEC.md section 4.4 are computed from. After this date it is TTF by the publisher's own definition and already in $/MMBtu, so no FX and no conversion factor are involved. Before it, it is a different quantity and must be labelled as one, never as TTF.",
+      "kind": "definition_change",
+      "layer": "monthly",
+      "applies_to": [
+        "worldbank_gas_europe_monthly"
+      ],
+      "source_url": "https://www.worldbank.org/en/research/commodity-markets",
+      "source_title": "Commodity Markets, pink sheet, CMO-Historical-Data-Monthly.xlsx, Description sheet",
+      "source_publisher": "World Bank Commodity Price Data (The Pink Sheet)",
+      "source_quote": "Natural Gas (Europe), from April 2015, Netherlands Title Transfer Facility (TTF); April 2010 to March 2015, average import border price and a spot price component, including UK; during June 2000 - March 2010 prices excludes UK.",
+      "source_quote_note": "Read from the Description sheet of the workbook, recon 04 section 4.3. The workbook URL carries a document id that changes, so the landing page is the stable citation and the adapter scrapes the link. The attribution column of the same block credits Bloomberg Finance L.P. and World Gas Intelligence alongside the World Bank.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 55,840 bytes",
+      "measured": "The committed cache falls 1.50 $/MMBtu, 18.1 percent, between 2015-03 and 2015-04. How much of that is the definition and how much is the market cannot be separated from free data, recon 04 section 5.3."
+    },
+    {
+      "id": "dgec_mbr_method_in_force_2016_01_01",
+      "date": "2016-01-01",
+      "date_precision": "day",
+      "label": "DGEC gross refining margin method in force",
+      "what": "The method DGEC uses to compute the gross refining margin on Brent, revised with IFPEN in 2014, applies from 1 January 2016. To keep the series continuous DGEC recomputed 2014 and 2015 backwards on the new method.",
+      "why_it_matters": "SPEC.md section 4.3 asks for the method change date and says to mark it as a structural break on every chart that spans it. THERE IS NO BREAK TO MARK INSIDE THIS PROJECT'S DATA. The published monthly series starts 2015-01, which is inside the recomputed window, so every value this project holds is on the one method. This entry records the date and that finding, so the Method view can say so rather than leaving the reader to assume a hidden stitch.",
+      "kind": "method_change",
+      "layer": "monthly",
+      "applies_to": [
+        "dgec_mbr_monthly"
+      ],
+      "source_url": "https://www.ecologie.gouv.fr/sites/default/files/documents/Mode%20de%20calcul%20de%20la%20marge%20brute%20de%20raffinage%20sur%20brent.pdf",
+      "source_title": "Mode de calcul de la marge brute de raffinage sur Brent, methodology note, 4 pages",
+      "source_publisher": "DGEC, ministere de la Transition ecologique",
+      "source_quote": "Le détail du mode de calcul de la marge brute utilisé à partir du 1er janvier 2016 figure en annexe. Afin d'assurer la continuité statistique, la marge de raffinage a été rétroactivement recalculée sur la base de la nouvelle méthodologie pour la période 2014-2015.",
+      "source_quote_note": "French as printed, accents kept. The PDF sets its apostrophes as typographic marks and they are written here as ASCII apostrophes; nothing else is changed.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, application/pdf, 252,657 bytes",
+      "measured": "data/cache/dgec_mbr_monthly.csv holds 140 monthly rows, 2015-01 to 2026-08. The first row is eleven months inside the window DGEC says it recomputed."
+    },
+    {
+      "id": "imo_2020_sulphur_cap",
+      "date": "2020-01-01",
+      "date_precision": "day",
+      "label": "IMO 2020 sulphur cap",
+      "what": "From 1 January 2020 the limit on sulphur in fuel oil used on board ships outside emission control areas fell from 3.50 percent to 0.50 percent by mass.",
+      "why_it_matters": "A change in the demand for high sulphur fuel oil, which is one of the products in the Rotterdam block this study parses. The OPEC audit measured the consequence rather than assuming it: the MOMR fuel oil 3.5 percent monthly series agrees with the OPEC Annual Statistical Bulletin annual figure to within 0.62 $/bbl every year from 2001 to 2019 and then breaks from 2020 to 2022, worst gap plus 3.82 $/bbl. The coincidence with this date is recorded and the cause is NOT established.",
+      "kind": "market",
+      "layer": "monthly",
+      "applies_to": [
+        "opec_rotterdam_products_monthly"
+      ],
+      "source_url": "https://www.imo.org/en/MediaCentre/HotTopics/Pages/Sulphur-2020.aspx",
+      "source_title": "IMO 2020, cutting sulphur oxide emissions",
+      "source_publisher": "International Maritime Organization",
+      "source_quote": "On 1 January 2020, a new limit on the sulphur content in the fuel oil used on board ships came into force, marking a significant milestone to improve air quality, preserve the environment and protect human health.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 77,430 bytes",
+      "measured": "Two independent OPEC publications disagree about the same Rotterdam fuel oil 3.5 percent price from 2020, having agreed for nineteen years. Nothing was investigated further and nothing was adjusted. Fuel oil is not a leg of either crack this study publishes."
+    },
+    {
+      "id": "covid_pandemic_and_european_lockdowns_2020_03",
+      "date": "2020-03",
+      "date_precision": "month",
+      "label": "Pandemic lockdowns across Europe",
+      "what": "WHO characterised COVID-19 as a pandemic on 11 March 2020, and European governments ordered movement restrictions during the same month. France restricted movement by decree of 16 March 2020.",
+      "why_it_matters": "The demand collapse SPEC.md section 3 names as the 2020 regime. The OPEC Rotterdam gasoil crack falls to 4.72 $/bbl in May 2020 and NWE utilisation computed from JODI and the Energy Institute falls from 0.851 in 2019 to 0.724 in 2020.",
+      "kind": "market",
+      "layer": "all",
+      "applies_to": [
+        "opec_rotterdam_products_monthly",
+        "jodi_nwe_refinery_intake_monthly",
+        "dgec_mbr_monthly"
+      ],
+      "source_url": "https://www.who.int/news/item/27-04-2020-who-timeline---covid-19",
+      "source_title": "WHO timeline, COVID-19",
+      "source_publisher": "World Health Organization",
+      "source_quote": "Deeply concerned both by the alarming levels of spread and severity, and by the alarming levels of inaction, WHO made the assessment that COVID-19 can be characterized as a pandemic.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 116,529 bytes",
+      "additional_sources": [
+        {
+          "url": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000041728476",
+          "title": "Décret n° 2020-260 du 16 mars 2020 portant réglementation des déplacements dans le cadre de la lutte contre la propagation du virus covid-19",
+          "publisher": "Journal officiel de la République française, via Legifrance",
+          "url_checked_at": "2026-09-13",
+          "url_status": "200, text/html, 120,495 bytes",
+          "why": "One hard dated European lockdown, in the country whose ministry publishes the margin series this study is built on. The lockdowns were national and staggered, so no single date covers Europe and none is claimed."
+        }
+      ],
+      "date_note": "A MONTH, NOT A DAY. The lockdowns were national measures taken on different days in different countries. SPEC.md section 6.5 writes the event as 2020-03 and that is the honest precision."
+    },
+    {
+      "id": "russia_invades_ukraine_2022_02_24",
+      "date": "2022-02-24",
+      "date_precision": "day",
+      "label": "Russia invades Ukraine",
+      "what": "The start of Russia's full scale invasion of Ukraine.",
+      "why_it_matters": "The opening of the 2022 regime SPEC.md section 3 names: record diesel cracks, a European gas price shock and, from December, the sanctions that reshaped NWE product flows.",
+      "kind": "market",
+      "layer": "all",
+      "applies_to": [
+        "opec_rotterdam_products_monthly",
+        "dgec_mbr_monthly",
+        "worldbank_gas_europe_monthly",
+        "jodi_nwe_crude_imports_monthly"
+      ],
+      "source_url": "https://www.consilium.europa.eu/en/policies/sanctions-against-russia/sanctions-against-russia-explained/",
+      "source_title": "EU sanctions against Russia explained",
+      "source_publisher": "Council of the European Union",
+      "source_quote": "Since the start of Russia's full-scale invasion of Ukraine on 24 February 2022, the EU has imposed massive and unprecedented sanctions against Russia.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 145,049 bytes"
+    },
+    {
+      "id": "sp_record_diesel_cracks_week_to_2022_03_25",
+      "date": "2022-03-25",
+      "date_precision": "day",
+      "label": "Week of record European diesel cracks, about 44 $/bbl",
+      "what": "S&P Global reported European diesel cracks averaging about 44 $/bbl in the week to 25 March 2022, and NWE cracking margins of 15.35 $/bbl on Forties for the same week.",
+      "why_it_matters": "An order of magnitude reference on a physical assessment basis, SPEC.md sections 5.1 and 5.5. It is a sanity check on levels and never a benchmark to fit to.",
+      "kind": "reference",
+      "layer": "all",
+      "applies_to": [
+        "opec_rotterdam_products_monthly",
+        "dgec_mbr_monthly"
+      ],
+      "source_url": "https://www.spglobal.com/energy/en/news-research/latest-news/crude-oil/032822-refinery-margin-tracker-record-high-global-diesel-cracks-propel-margins-upward",
+      "source_title": "Refinery margin tracker: record high global diesel cracks propel margins upward, 28 March 2022",
+      "source_publisher": "S&P Global Commodity Insights",
+      "source_quote": null,
+      "url_checked_at": "2026-09-13",
+      "url_status": "403 to automated access, with a bot token user agent and with a browser user agent, 575 bytes of refusal body. The page opens in a browser. The figures below are quoted from SPEC.md sections 3 and 5.5, which quote the article, and were NOT re read from the source in this session.",
+      "figures": [
+        {
+          "key": "european_diesel_crack_usd_bbl",
+          "value": 44.0,
+          "qualifier": "about",
+          "unit": "USD per barrel",
+          "as_stated_in": "SPEC.md section 6.5"
+        },
+        {
+          "key": "nwe_cracking_margin_on_forties_usd_bbl",
+          "value": 15.35,
+          "qualifier": "exact as printed",
+          "unit": "USD per barrel",
+          "as_stated_in": "SPEC.md section 5.5"
+        }
+      ]
+    },
+    {
+      "id": "sp_ara_diesel_cracks_2022_10_13",
+      "date": "2022-10-13",
+      "date_precision": "day",
+      "label": "ARA diesel cracks near 80 $/bbl during French refinery strikes",
+      "what": "S&P Global reported ARA diesel cracks near 80 $/bbl on 13 October 2022 during strikes at French refineries, NWE cracking margins of 23.11 $/bbl on Dated Brent for the week to 14 October 2022, and gas fired refiners earning about 7 $/bbl less than fuel oil fired ones.",
+      "why_it_matters": "The same order of magnitude reference at the other end of 2022, and the source of the 7 $/bbl gas versus fuel oil gap that SPEC.md section 4.4 asks this study's own triangulation to be reported next to.",
+      "kind": "reference",
+      "layer": "all",
+      "applies_to": [
+        "opec_rotterdam_products_monthly",
+        "dgec_mbr_monthly",
+        "dgec_note_reconstructed_cracks_weekly"
+      ],
+      "source_url": "https://www.spglobal.com/energy/en/news-research/latest-news/crude-oil/101722-refinery-margin-tracker-atlantic-basin-margins-soar-on-refinery-outages-tight-diesel-supply",
+      "source_title": "Refinery margin tracker: Atlantic basin margins soar on refinery outages, tight diesel supply, 17 October 2022",
+      "source_publisher": "S&P Global Commodity Insights",
+      "source_quote": null,
+      "url_checked_at": "2026-09-13",
+      "url_status": "403 to automated access, with a bot token user agent and with a browser user agent, 596 bytes of refusal body. The page opens in a browser. The figures below are quoted from SPEC.md sections 3, 4.4 and 5.5 and were NOT re read from the source in this session.",
+      "figures": [
+        {
+          "key": "ara_diesel_crack_usd_bbl",
+          "value": 80.0,
+          "qualifier": "near",
+          "unit": "USD per barrel",
+          "as_stated_in": "SPEC.md section 6.5"
+        },
+        {
+          "key": "nwe_cracking_margin_on_dated_brent_usd_bbl",
+          "value": 23.11,
+          "qualifier": "exact as printed, week to 14 October 2022",
+          "unit": "USD per barrel",
+          "as_stated_in": "SPEC.md section 5.5"
+        },
+        {
+          "key": "gas_fired_versus_fuel_oil_fired_gap_usd_bbl",
+          "value": 7.0,
+          "qualifier": "about",
+          "unit": "USD per barrel",
+          "as_stated_in": "SPEC.md section 3 and section 4.4"
+        }
+      ]
+    },
+    {
+      "id": "ice_gasoil_russian_free_end_2022",
+      "date": "2022-12",
+      "date_precision": "month",
+      "label": "ICE Low Sulphur Gasoil excludes Russian origin barrels",
+      "what": "ICE changed the delivery methodology of the Low Sulphur Gasoil contract from diesel of any origin to diesel that does not include any originating from Russia, from the end of 2022. The first Russian free delivery completed in early February 2023.",
+      "why_it_matters": "A change in the deliverable of the contract the gasoil crack is quoted against, SPEC.md section 5.2, and a break on the optional daily futures layer. It is related to but distinct from the EU embargo on refined products.",
+      "kind": "specification_break",
+      "layer": "daily",
+      "applies_to": [],
+      "source_url": "https://ir.theice.com/press/news-details/2023/ICE-Announces-Successful-First-Delivery-of-Russian-Free-Barrels-of-ICE-Gasoil/default.aspx",
+      "source_title": "ICE announces successful first delivery of Russian free barrels of ICE Gasoil, 7 February 2023",
+      "source_publisher": "Intercontinental Exchange, investor relations",
+      "source_quote": "announced the first delivery of Low Sulphur Gasoil futures since Russian oil was excluded from the contract at the end of 2022.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 62,871 bytes",
+      "date_note": "THE URL IS NOT THE ONE IN SPEC.md SECTION 5.6. The Business Wire copy of the same release refuses automated access: curl could not complete the request at all with a bot token user agent, and a browser user agent got HTTP 403. ICE's own investor relations copy is the same release and is readable. Recon 04 section 6.6. The release says 'at the end of 2022' and pins no day, so this entry carries a month."
+    },
+    {
+      "id": "eu_embargo_russian_seaborne_crude_2022_12_05",
+      "date": "2022-12-05",
+      "date_precision": "day",
+      "label": "EU embargo on Russian seaborne crude and the G7 price cap",
+      "what": "The EU prohibition on the purchase, import and transfer of Russian seaborne crude oil took effect, together with the price cap exemption agreed with the Price Cap Coalition.",
+      "why_it_matters": "A structural change in the crude slate available to NWE refiners and therefore in the crude side of the margin. SPEC.md section 6.5.",
+      "kind": "policy",
+      "layer": "all",
+      "applies_to": [
+        "jodi_nwe_crude_imports_monthly",
+        "dgec_mbr_monthly",
+        "opec_rotterdam_products_monthly"
+      ],
+      "source_url": "https://www.consilium.europa.eu/en/policies/sanctions-against-russia/sanctions-against-russia-explained/",
+      "source_title": "EU sanctions against Russia explained",
+      "source_publisher": "Council of the European Union",
+      "source_quote": "The restrictions apply from 5 December 2022 for crude oil and from 5 February 2023 for other refined petroleum products.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 145,049 bytes",
+      "additional_sources": [
+        {
+          "url": "https://eur-lex.europa.eu/eli/reg/2022/879/oj",
+          "title": "Council Regulation (EU) 2022/879 of 3 June 2022, the sixth sanctions package",
+          "publisher": "Official Journal of the European Union",
+          "url_checked_at": "2026-09-13",
+          "url_status": "200, text/html, 494,575 bytes",
+          "why": "The primary legal text. It is the regulation that sets both wind down dates, 5 December 2022 for goods under CN 2709 00 and 5 February 2023 for goods under CN 2710."
+        },
+        {
+          "url": "https://eur-lex.europa.eu/eli/reg/2022/2367/oj",
+          "title": "Council Regulation (EU) 2022/2367 of 3 December 2022, the price cap",
+          "publisher": "Official Journal of the European Union",
+          "url_checked_at": "2026-09-13",
+          "url_status": "200, text/html, 288,521 bytes",
+          "why": "The price cap itself.",
+          "quote": "On 3 December 2022 the Council adopted Decision (CFSP) 2022/2369, amending Decision 2014/512/CFSP. Decision (CFSP) 2022/2369 establishes the price cap, that is the price per barrel at or below which crude oil from Russia is exempt from the prohibition to provide maritime transport"
+        }
+      ]
+    },
+    {
+      "id": "eu_embargo_russian_refined_products_2023_02_05",
+      "date": "2023-02-05",
+      "date_precision": "day",
+      "label": "EU embargo on Russian refined products",
+      "what": "The EU prohibition on the purchase, import and transfer of Russian refined petroleum products took effect, with price caps on discounted and premium products.",
+      "why_it_matters": "The diesel supply side of the 2023 regime. NWE had imported Russian diesel in volume, so this is a structural change in the product balance the gasoil crack prices.",
+      "kind": "policy",
+      "layer": "all",
+      "applies_to": [
+        "opec_rotterdam_products_monthly",
+        "dgec_note_reconstructed_cracks_weekly",
+        "dgec_mbr_monthly"
+      ],
+      "source_url": "https://www.consilium.europa.eu/en/policies/sanctions-against-russia/sanctions-against-russia-explained/",
+      "source_title": "EU sanctions against Russia explained",
+      "source_publisher": "Council of the European Union",
+      "source_quote": "The restrictions apply from 5 December 2022 for crude oil and from 5 February 2023 for other refined petroleum products.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 145,049 bytes",
+      "additional_sources": [
+        {
+          "url": "https://eur-lex.europa.eu/eli/reg/2022/879/oj",
+          "title": "Council Regulation (EU) 2022/879 of 3 June 2022, the sixth sanctions package",
+          "publisher": "Official Journal of the European Union",
+          "url_checked_at": "2026-09-13",
+          "url_status": "200, text/html, 494,575 bytes",
+          "why": "The primary legal text, which sets the 5 February 2023 date for goods falling under CN 2710."
+        }
+      ]
+    },
+    {
+      "id": "strikes_on_iran_hormuz_2026_02_28",
+      "date": "2026-02-28",
+      "date_precision": "day",
+      "label": "US and Israeli strikes on Iran, Hormuz tanker traffic halts",
+      "what": "The United States and Israel launched joint air strikes on Iran on 28 February 2026. Crude and product flows through the Strait of Hormuz fell from around 20 mb/d before the war to a trickle.",
+      "why_it_matters": "The 2026 regime of SPEC.md section 3. The IEA calls it the largest supply disruption in the history of the global oil market.",
+      "kind": "market",
+      "layer": "all",
+      "applies_to": [
+        "fred_brent_daily",
+        "eia_brent_daily",
+        "dgec_mbr_monthly",
+        "dgec_note_reconstructed_cracks_weekly",
+        "jodi_nwe_refinery_intake_monthly"
+      ],
+      "source_url": "https://www.iea.org/reports/oil-market-report-march-2026",
+      "source_title": "Oil Market Report, March 2026, published 12 March 2026",
+      "source_publisher": "International Energy Agency",
+      "source_quote": "Oil prices have gyrated wildly since the United States and Israel launched joint air strikes on Iran on 28 February.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 312,813 bytes"
+    },
+    {
+      "id": "iea_collective_action_400_mb_2026_03_11",
+      "date": "2026-03-11",
+      "date_precision": "day",
+      "label": "IEA coordinated release of 400 million barrels",
+      "what": "IEA member countries unanimously agreed to make 400 million barrels of emergency oil stocks available to the market, the largest release coordinated by the Agency and the sixth collective action in its history.",
+      "why_it_matters": "SPEC.md section 6.5 gives this event as 2026-03 and says to pin the exact date from the source. It is pinned: 11 March 2026, stated in two separate IEA publications.",
+      "kind": "policy",
+      "layer": "all",
+      "applies_to": [
+        "fred_brent_daily",
+        "eia_brent_daily",
+        "dgec_mbr_monthly"
+      ],
+      "source_url": "https://www.iea.org/reports/oil-market-report-march-2026",
+      "source_title": "Oil Market Report, March 2026, published 12 March 2026",
+      "source_publisher": "International Energy Agency",
+      "source_quote": "IEA Member countries unanimously agreed on 11 March to make 400 mb of oil from their emergency reserves available to the market to address disruptions stemming from the war in the Middle East.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, text/html, 312,813 bytes",
+      "additional_sources": [
+        {
+          "url": "https://www.iea.org/topics/the-middle-east-and-global-energy-markets",
+          "title": "The Middle East and global energy markets",
+          "publisher": "International Energy Agency",
+          "url_checked_at": "2026-09-13",
+          "url_status": "200, text/html, 309,230 bytes",
+          "why": "The second, independent IEA statement of the same date.",
+          "quote": "On 11 March, IEA Member countries unanimously agreed to take emergency collective action to respond to the major disruptions in oil markets, making 400 million barrels of emergency oil stocks available"
+        },
+        {
+          "url": "https://www.cnbc.com/2026/03/14/iran-war-iea-oil-stockpile-spr-strait-hormuz.html",
+          "title": "Oil market coverage of the stock release, 14 March 2026",
+          "publisher": "CNBC",
+          "url_checked_at": "2026-09-13",
+          "url_status": "200, text/html, 814,523 bytes",
+          "why": "The coverage SPEC.md section 5.6 lists. It corroborates the day indirectly rather than directly: published Saturday 14 March 2026, it says prices have surged since the IEA announced the release 'on Wednesday', and the Wednesday before that Saturday is 11 March 2026. The two IEA sources state the date outright, so this one is corroboration and not the citation."
+        }
+      ],
+      "date_note": "PINNED TO A DAY from the source, as SPEC.md section 6.5 requires. Both IEA pages name 11 March. The spec's own table says 2026-03."
+    },
+    {
+      "id": "us_iran_ceasefire_2026_04_07",
+      "date": "2026-04-07",
+      "date_precision": "day",
+      "label": "Two week US and Iran ceasefire",
+      "what": "A two week ceasefire in the Middle East conflict was announced on 7 April 2026. It did not become a lasting settlement: the IEA records an interim ceasefire in June and renewed hostilities in July and August 2026.",
+      "why_it_matters": "The end of the acute phase of the 2026 disruption for the purposes of an event window, and the start of a period the IEA itself describes as unresolved.",
+      "kind": "market",
+      "layer": "all",
+      "applies_to": [
+        "fred_brent_daily",
+        "eia_brent_daily",
+        "dgec_mbr_monthly",
+        "dgec_note_reconstructed_cracks_weekly"
+      ],
+      "source_url": "https://iea.blob.core.windows.net/assets/515f3128-df1a-4d6c-beb4-fd91d2434bef/-14APR2026_OilMarketReport_Free_version1.pdf",
+      "source_title": "Oil Market Report, April 2026, free version, 14 April 2026, page 3",
+      "source_publisher": "International Energy Agency",
+      "source_quote": "It remains to be seen whether the two-week ceasefire announced on 7 April can be a stepping stone to a more lasting settlement.",
+      "url_checked_at": "2026-09-13",
+      "url_status": "200, application/pdf, 3,141,863 bytes"
+    }
+  ]
+}

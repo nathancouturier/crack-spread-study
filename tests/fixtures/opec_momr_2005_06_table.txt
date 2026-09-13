@@ -1,0 +1,76 @@
+# OPEC Monthly Oil Market Report, issue 2005-06, page 21. Only the product
+# price table is reproduced, laid out as pdfplumber extracts it. OPEC is the
+# copyright holder and the assessments are Argus's. The MOMR disclaimer permits
+# the information it carries to be reproduced for educational and other non
+# commercial purposes with OPEC acknowledged, which is what this parser fixture
+# is. The rest of the page is not reproduced and no MOMR PDF is committed
+# anywhere in this repository.
+#
+# ONE SUBSTITUTION, and no other change. Where the report writes the minus sign
+# of its change column as an en dash, this file writes an ASCII hyphen, because
+# SPEC.md section 0.1 forbids an en dash anywhere in the repository. The
+# character stands for the same minus and no digit is touched.
+#
+# WHY THIS ISSUE IS HERE
+# A RESPECIFICATION, second half. One issue later the block prints
+# "Gasoil/Diesel (50 ppm)" and TWO premium rows, "(unleaded 50 ppm)" above
+# "(unleaded 95)". March 2005 gasoil is 64.60 in the May issue and 69.30 in
+# this one, which is not the same product revised by 4.70, and the "unleaded
+# 95" row is 56.03 in both, unchanged. Before the Gate 1 audit this month was
+# reported as a 6.00 $/bbl disagreement. It is not one.
+                                        Refined product prices
+                                             US$/b
+                                                                    Change
+                                                 Mar 05 Apr 05 May 05 May/Apr
+                    US Gulf (Cargoes):
+                    Naphtha                      59.70 61.54  58.02 -3.52
+                    Premium gasoline (unleaded 93) 64.61 69.83 63.33 -6.50
+                    Regular gasoline (unleaded 87) 62.64 65.03 59.41 -5.62
+                    Jet/Kerosene                 66.33 71.40  63.39 -8.01
+                    Gasoil          (0.05% S)    64.52 65.62  61.64 -3.98
+                    Fuel oil        (1.0% S)     34.72 39.65  39.81  0.16
+                    Fuel oil        (3.0% S)     30.59 34.74  36.96  2.22
+                    Rotterdam (Barges FoB):
+                    Naphtha                      62.33 61.62  54.65 -6.97
+                    Premium gasoline (unleaded 50 ppm) 62.03 68.55 62.85 -5.70
+                    Premium gasoline (unleaded 95) 56.03 61.36 56.26 -5.10
+                    Jet/Kerosene                 68.81 71.67  64.90 -6.77
+                    Gasoil/Diesel   (50 ppm)     69.30 70.38  64.51 -5.87
+                    Fuel oil        (1.0% S)     34.06 35.59  34.56 -1.03
+                    Fuel oil        (3.5% S)     30.09 34.53  33.79 -0.74
+                    Mediterranean (Cargoes):
+                    Naphtha                      51.34 51.05  44.97 -6.08
+                    Premium gasoline (unleaded 95) 54.23 59.51 53.58 -5.93
+                    Jet/Kerosene                 66.66 69.93  n.a.   n.a.
+                    Gasoil/Diesel   (50 ppm)     73.26 71.44  64.90 -6.54
+                    Fuel oil        (1.0% S)     35.31 38.31  35.99 -2.32
+                    Fuel oil        (3.5% S)     29.07 33.67  32.20 -1.47
+                    Singapore (Cargoes):
+                    Naphtha                      50.74 49.85  44.76 -5.09
+                    Premium gasoline (unleaded 95) 59.47 61.50 54.46 -7.04
+                    Regular gasoline (unleaded 92) 58.72 60.23 53.37 -6.86
+                    Jet/Kerosene                 66.33 71.40  63.39 -8.01
+                    Gasoil/Diesel   (50 ppm)     68.11 69.39  63.83 -5.56
+                    Fuel oil        (180 cst 2.0% S) 34.13 38.30 38.00 -0.30
+                    Fuel oil        (380 cst 3.5% S) 33.61 37.75 37.18 -0.57
+                    na: not available
+                                            Table 3
+                                Refinery operations in selected OECD countries
+                                Refinery throughput     Refinery utilization
+                                    mb/d                     %
+                           Mar 05 Apr 05 May 05 May/Apr Mar 05 Apr 05 May 05 May/Apr
+                    USA     15.14 15.35 15.63 0.3  90.2  91.5   93.2 1.6
+                    France  1.70  1.58 1.65  0.1   86.9  81.1   84.5 3.4
+                    Germany 2.28  2.17 2.28  0.1   98.3  93.2   98.3 5.1
+                    Italy   1.81  1.90 1.85  0.0   78.1  81.8   79.7 -2.1
+                    UK      1.53  1.53 R 1.51 0.0  83.9  84.0 R 82.6 -1.4
+                    Eur-16 12.07 R 11.94 R 11.85 -0.1 86.9 R 86.0 R 85.4 -0.6
+                    Japan   4.33  4.04 R 3.62 -0.4 92.0  85.8 R 76.9 -8.9
+                    R    Revised since last issue.
+                    Sources OPEC statistics; Argus; Euroilstock Inventory Report/IEA.
+
+
+
+
+
+      20                                                             June 2005

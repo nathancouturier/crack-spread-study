@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# Packaging artifacts, produced by pip install and never committed
+build/
+dist/
+*.egg-info/
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+
+# Local agent settings, machine specific
+.claude/settings.local.json
+
+# Working file for the build, not part of the deliverable
+.build-progress.md
+
+# Node
+node_modules/
+
+# SPEC.md section 0.1 and non negotiable 6. Anything whose terms forbid
+# redistribution lives here: the owner's own daily futures export (section 5.2),
+# and any source cache that may not be republished. Never committed, never
+# deployed, and the site is complete without it.
+data/private/
+
+# data/cache is deliberately NOT ignored. The fetched caches are committed so
+# that "make build" and the published site reproduce with no network access.
+# If you are tempted to add data/cache here, read SPEC.md section 5.4 first.

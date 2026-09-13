@@ -1,0 +1,31 @@
+# OPEC Monthly Oil Market Report, issue 2001-01, page 10. Only the product price
+# table is reproduced, laid out as pdfplumber extracts it. OPEC is the
+# copyright holder and the assessments are Argus's. The MOMR disclaimer
+# permits the information it carries to be reproduced for educational and
+# other non commercial purposes with OPEC acknowledged, which is what this
+# parser fixture is. The rest of the page is not reproduced and no MOMR PDF
+# is committed anywhere in this repository.
+#
+# ONE SUBSTITUTION, and no other change. Where the report writes the minus
+# sign of its change column as an en dash, this file writes an ASCII hyphen,
+# because SPEC.md section 0.1 forbids an en dash anywhere in the repository.
+# The character stands for the same minus and no digit is touched. The real
+# document's dash family is covered separately by the to_float unit test.
+                                                Table 2
+                                            Refined product prices
+                                                 US $/b
+                                                                     Change
+                                                Oct.00 Nov.00 Dec.00 Dec./Nov.
+                          US Gulf
+                            Regular gasoline (unleaded) 36.98 35.99 30.25 -5.74
+                            Gasoil      (0.2%S)  39.55 40.54 34.32    -6.22
+                            Fuel oil    (3.0%S)  23.10 20.81 16.44    -4.37
+                          Rotterdam
+
+                            Premium gasoline (unleaded) 35.31 33.46 28.05 -5.41
+                            Gasoil      (0.2%S)  40.06 40.68 34.25    -6.43
+                            Fuel oil    (3.5%S)  23.82 22.18 18.31    -3.86
+                          Singapore
+                            Premium gasoline (unleaded) 33.09 32.97 29.97 -3.00
+                            Gasoil      (0.5%S)  39.02 34.85 29.61    -5.24
+                            Fuel oil    (380 cst) 26.53 24.49 19.74   -4.75

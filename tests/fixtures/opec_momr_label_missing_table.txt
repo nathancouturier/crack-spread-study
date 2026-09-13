@@ -1,0 +1,44 @@
+# CONSTRUCTED, not a capture. The OPEC MOMR issue 2024-09 product price table
+# with ONE change: the Rotterdam gasoil row is relabelled
+# 'Gasoil/Diesel (7 ppm)', a specification the report has never printed and
+# that PRODUCT_LABELS therefore does not know. Every other row, number and
+# column is untouched, so the only thing that can fail is the label match.
+#
+# This is the SPEC.md section 13 failure the parser exists to make loud. A
+# parser that read the block by position would hand back a 7 ppm gasoil under
+# the 10 ppm column and nothing downstream would notice. This one must refuse
+# the whole issue and say which label it did not recognise.
+        Table 6 - 4: Refined product prices, US$/b
+                                                  Change Annual avg. Year-to-date
+                                      Jul 24 Aug 24 Aug/Jul  2023      2024
+        US Gulf (Cargoes FOB)
+        Naphtha*                       81.45 76.22  -5.23    72.51    76.60
+        Premium gasoline  (unleaded 93) 114.48 109.64 -4.84 117.23   113.70
+        Regular gasoline  (unleaded 87) 100.26 95.57 -4.69  104.59    99.94
+        Jet/Kerosene                  102.10 92.09 -10.01   113.51   104.73
+        Gasoil            (0.2% S)     94.80 87.94  -6.86    78.57    84.08
+        Fuel oil          (3.0% S)     73.66 69.68  -3.98    68.14    70.49
+        Rotterdam (Barges FOB)
+        Naphtha                        75.92 72.69  -3.23    71.06    74.19
+        Premium gasoline  (unleaded 98) 107.60 100.50 -7.10 125.96   114.68
+        Jet/Kerosene                  103.78 96.18  -7.60   111.74   105.94
+        Gasoil/Diesel     (7 ppm)     103.06 95.52  -7.54   111.19   105.80
+        Fuel oil          (1.0% S)     76.11 72.14  -3.97    74.29    74.69
+        Fuel oil          (3.5% S)     77.04 70.60  -6.44    72.79    72.87
+        Mediterranean (Cargoes FOB)
+        Naphtha                        73.92 71.40  -2.52    68.45    71.67
+        Premium gasoline**             99.98 93.05  -6.93   101.80   100.50
+        Jet/Kerosene                  100.73 93.55  -7.18   107.77   102.20
+        Diesel                        102.92 94.91  -8.01   109.08   104.39
+        Fuel oil          (1.0% S)     80.33 75.85  -4.48    78.85    79.53
+        Fuel oil          (3.5% S)     74.62 68.54  -6.08    66.47    70.03
+        Singapore (Cargoes FOB)
+        Naphtha                        74.77 72.78  -1.99    69.53    73.74
+        Premium gasoline  (unleaded 95) 96.42 88.95 -7.47    98.62    97.20
+        Regular gasoline  (unleaded 92) 92.16 84.61 -7.55    94.00    92.71
+        Jet/Kerosene                   98.36 91.54  -6.82   104.68    99.11
+        Gasoil/Diesel     (50 ppm)     99.07 92.01  -7.06   105.99   100.26
+        Fuel oil          (180 cst)    98.61 90.26  -8.35   102.35    98.41
+        Fuel oil          (380 cst 3.5% S) 77.61 69.83 -7.78 69.23    72.99
+        Note: * Barges. ** Cost, insurance and freight (CIF).
+        Sources: Argus and OPEC.

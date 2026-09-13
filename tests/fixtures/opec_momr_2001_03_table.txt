@@ -1,0 +1,32 @@
+# OPEC Monthly Oil Market Report, issue 2001-03, page 10. Only the product price
+# table is reproduced, laid out as pdfplumber extracts it. OPEC is the
+# copyright holder and the assessments are Argus's. The MOMR disclaimer
+# permits the information it carries to be reproduced for educational and
+# other non commercial purposes with OPEC acknowledged, which is what this
+# parser fixture is. The rest of the page is not reproduced and no MOMR PDF
+# is committed anywhere in this repository.
+#
+# ONE SUBSTITUTION, and no other change. Where the report writes the minus
+# sign of its change column as an en dash, this file writes an ASCII hyphen,
+# because SPEC.md section 0.1 forbids an en dash anywhere in the repository.
+# The character stands for the same minus and no digit is touched. The real
+# document's dash family is covered separately by the to_float unit test.
+                                                Table 2
+                                           Refined product prices
+                                                 US $/b
+                                                                     Change
+                                                Dec.00 Jan.01 Feb.01 Feb./Jan.
+                          US Gulf
+                            Regular gasoline (unleaded) 30.25 36.34 34.28 -2.05
+                            Gasoil      (0.2%S) 34.32  35.86 32.32   -3.55
+
+                            Fuel oil    (3.0%S) 16.44  18.57 20.62   +2.05
+                          Rotterdam
+                            Premium gasoline (unleaded) 28.05 29.85 32.49 +2.64
+                            Gasoil      (0.2%S) 34.25  30.15 30.88   +0.73
+                            Fuel oil    (3.5%S) 18.31  15.48 18.21   +2.72
+                          Singapore
+
+                            Premium gasoline (unleaded) 29.97 30.02 31.33 +1.31
+                            Gasoil      (0.5%S) 29.61  28.41 27.57   -0.84
+                            Fuel oil    (380 cst) 19.74 17.99 19.69  +1.70

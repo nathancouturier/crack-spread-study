@@ -1,0 +1,31 @@
+# OPEC Monthly Oil Market Report, issue 2002-01, page 8. Only the product price
+# table is reproduced, laid out as pdfplumber extracts it. OPEC is the
+# copyright holder and the assessments are Argus's. The MOMR disclaimer
+# permits the information it carries to be reproduced for educational and
+# other non commercial purposes with OPEC acknowledged, which is what this
+# parser fixture is. The rest of the page is not reproduced and no MOMR PDF
+# is committed anywhere in this repository.
+#
+# ONE SUBSTITUTION, and no other change. Where the report writes the minus
+# sign of its change column as an en dash, this file writes an ASCII hyphen,
+# because SPEC.md section 0.1 forbids an en dash anywhere in the repository.
+# The character stands for the same minus and no digit is touched. The real
+# document's dash family is covered separately by the to_float unit test.
+                                               Table 2
+                                           Refined product prices
+                                                US $/b
+                                                                   Change
+                                               Oct.01 Nov.01 Dec,01 Dec./Nov.
+                           US Gulf
+                             Regular gasoline (unleaded) 23.63 20.99 21.35 0.37
+                             Gasoil     (0.2%S) 25.42 22.13 21.02   -1.10
+                             Fuel oil   (3.0%S) 15.59 13.62 14.68   1.06
+                           Rotterdam
+                             Premium gasoline (unleaded) 23.50R 20.20 19.30 -0.90
+                             Gasoil     (0.2%S) 27.41 23.03 21.35   -1.68
+
+                             Fuel oil   (3.5%S) 16.07 14.67 14.95   0.28
+                           Singapore
+                             Premium gasoline (unleaded) 22.23 20.75 22.61 1.86
+                             Gasoil     (0.5%S) 25.53 21.87 20.11   -1.76
+                             Fuel oil   (380 cst) 18.72 15.46 16.44 0.98

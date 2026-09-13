@@ -1,0 +1,47 @@
+# OPEC Monthly Oil Market Report, issue 2006-06, page 26. Only the product price
+# table is reproduced, laid out as pdfplumber extracts it. OPEC is the
+# copyright holder and the assessments are Argus's. The MOMR disclaimer
+# permits the information it carries to be reproduced for educational and
+# other non commercial purposes with OPEC acknowledged, which is what this
+# parser fixture is. The rest of the page is not reproduced and no MOMR PDF
+# is committed anywhere in this repository.
+#
+# ONE SUBSTITUTION, and no other change. Where the report writes the minus
+# sign of its change column as an en dash, this file writes an ASCII hyphen,
+# because SPEC.md section 0.1 forbids an en dash anywhere in the repository.
+# The character stands for the same minus and no digit is touched. The real
+# document's dash family is covered separately by the to_float unit test.
+                    Table 2: Refined product prices, US$/b
+                                                                    Change
+                                               Mar 06 Apr 06 May 06 May/Apr
+                    US Gulf (Cargoes):
+                    Naphtha                     72.76  81.21   74.48 -6.73
+                    Premium gasoline (unleaded 93) 86.24 100.57 100.04 -0.53
+                    Regular gasoline (unleaded 87) 77.58 93.27 88.16 -5.11
+                    Jet/Kerosene                78.91  87.43   87.21 -0.22
+                    Gasoil         (0.05% S)    78.94  88.46   88.59 0.13
+                    Fuel oil       (1.0% S)     46.77  50.87   51.32 0.45
+                    Fuel oil       (3.0% S)     46.69  50.74   49.93 -0.81
+                    Rotterdam (Barges FoB):
+                    Naphtha                     69.12  77.49   78.73 1.24
+                    Premium gasoline (unleaded 50 ppm) 76.53 90.97 93.84 2.87
+                    Premium gasoline (unleaded 95) 68.23 81.15 83.69 2.54
+                    Jet/Kerosene                76.52  84.70     87  2.30
+                    Gasoil/Diesel  (50 ppm)     77.42  84.69   86.03 1.34
+                    Fuel oil       (1.0% S)     45.37  47.77   47.14 -0.63
+                    Fuel oil       (3.5% S)     44.02  47.67   48.13 0.46
+                    Mediterranean (Cargoes):
+                    Naphtha                     57.70  64.78   65.85 1.07
+                    Premium gasoline (50 ppm)   77.70  90.10   94.46 4.36
+                    Jet/Kerosene                75.71  83.31   85.48 2.17
+                    Gasoil/Diesel  (50 ppm)     77.59  84.93   87.09 2.16
+                    Fuel oil       (1.0% S)     47.73  47.66   48.89 1.23
+                    Fuel oil       (3.5% S)     43.29  46.28   46.44 0.16
+                    Singapore (Cargoes):
+                    Naphtha                     59.82  64.45   65.59 1.14
+                    Premium gasoline (unleaded 95) 69.64 81.13 86.80 5.67
+                    Regular gasoline (unleaded 92) 69.05 80.15 86.17 6.02
+                    Jet/Kerosene                75.66  84.77   85.55 0.78
+                    Gasoil/Diesel  (50 ppm)     82.11  90.68   92.78 2.10
+                    Fuel oil       (180 cst 2.0% S) 49.43 51.81 52.02 0.21
+                    Fuel oil       (380 cst 3.5% S) 48.89 51.32 51.32 0.00

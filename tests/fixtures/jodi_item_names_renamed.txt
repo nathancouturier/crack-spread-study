@@ -1,0 +1,65 @@
+[fixture header] CONSTRUCTED from jodi_item_names.txt, which is the capture.
+One printed long name has been changed: the gas and diesel oil line now reads
+'Gasoil and marine diesel' instead of 'Gas/diesel oil'. That is what a renamed
+code looks like, and crack.sources.jodi must stop on it rather than carry on
+calling a column gasoil on the strength of a code that no longer means what it
+meant. No code token appears in this header, because the verifier reads the
+words printed to the left of a code and a header that named one would be found
+before the table.
+A Guide on JODI-Oil World Database
+Item Names
+Last update: September 2017
+This is a guide to indicates item and dimension names used in CSV files and their
+corresponding full name in the JODI World Database (in world_primary, world_secondary
+files).
+Products
+(ENERGY_PRODUCT)
+World primary table World secondary table
+Crude oil CRUDEOIL Liquefied petroleum gases LPG
+NGL NGL Naphtha NAPHTHA
+Other OTHERCRUDE Motor and aviation gasoline GASOLINE
+Total TOTCRUDE Kerosenes KEROSENE
+of which: kerosene type jet fuel JETKERO
+Gasoil and marine diesel GASDIES
+Fuel oil RESFUEL
+Other oil products ONONSPEC
+Total oil products TOTPRODS
+Flows
+(FLOW_BREAKDOWN)
+World primary table World secondary table
+Production INDPROD Refinery output REFGROUT
+From other sources OSOURCES Receipts RECEIPTS
+Imports TOTIMPSB Imports TOTIMPSB
+Exports TOTEXPSB Exports TOTEXPSB
+Products transferred/Backflows TRANSBAK Products transferred PTRANSF
+Direct use DIRECUSE Interproduct transfers IPTRANSF
+Stock change STOCKCH Stock change STOCKCH
+Statistical difference STATDIFF Statistical difference STATDIFF
+Refinery intake REFINOBS Demand TOTDEMO
+Closing stocks CLOSTLV Closing stocks CLOSTLV
+Countries
+(REF_AREA)
+Based on ISO 3166-1 alpha-2 standard* available at:
+http://www.iso.org/iso/home/store/publication_item.htm?pid=PUB500001%3aen
+*Except Kosovo, which currently doesn’t have official attribution of a two-letter code
+Time
+(TIME_PERIOD)
+“yyyy-mm” format based on ISO 8601 standard
+A Guide on JODI-Oil World Database
+Item Names
+Last update: September 2017
+Units
+(UNIT_MEASURE)
+KBD Thousand Barrels per day (kb/d)
+KBBL Thousand Barrels (kbbl)
+KL Thousand Kilolitres (kl)
+KTONS Thousand Metric Tons (kmt)
+CONVBBL Conversion factor barrels/ktons
+Colour Codes
+(ASSESSMENT_CODE)
+1 Results of the assessment show reasonable levels of comparability
+2 Consult metadata/Use with caution
+3 Data has not been assessed
+4 Data under verification
+For further inquiries, please contact JODIinfo@ief.org.
+International Energy Forum
