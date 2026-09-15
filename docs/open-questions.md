@@ -1133,23 +1133,49 @@ owner decision could change.
 
 ---
 
-## 35. The horse race is a dead heat, and 132 months may never be able to break it
+## 35. This sample cannot tell the horses apart, and 132 months may never be able to
 
 **Status: open. It is a question about power, not about these three regressors.**
 
+*This question used to be headed "the horse race is a dead heat". The heading was
+the claim the Gate 3 self audit, finding 2.1, took apart: a dead heat asserts
+equality, and the measurement below supports only that this sample cannot
+separate the three. The numbers in it have also moved, because finding 1.1's
+capacity alignment changed the dependent.*
+
 SPEC.md section 6.3 calls the horse race the point of the analysis and asks which
 of the raw gasoil crack, the official margin and the margin after gas explains
-NWE runs best. On the common sample the answer is **none of them beats another**.
-The expanding window out of sample RMSEs are 6.6471, 6.6431 and 6.6202 under the
-capacity dependent and 4.8887, 4.7754 and 4.7018 under the fallback, and **not
-one of the six pairwise squared error differences is distinguishable from zero**,
-at t between 0.01 and 0.82.
+NWE runs best. On the common sample the answer is **none of them is
+distinguishable from another**. The expanding window out of sample RMSEs are
+6.7601, 6.8159 and 6.7793 for A, B and C under the capacity dependent and 4.8911,
+4.8070 and 4.7462 under the fallback, and **not one of the six pairwise squared
+error differences is distinguishable from zero**, at t between 0.04 and 0.77.
 
-The margins are 0.34 percent and 1.54 percent. To call a difference of that size
-on 72 forecasts would need a squared error differential standard error roughly an
-order of magnitude smaller than the measured one. That is not a matter of a
-better estimator. The common sample is 132 months long because DGEC's MBR file
-starts in 2015-01, and it grows by twelve months a year.
+**The measured power, which replaces an estimate that was too kind.** This
+question used to say that calling a difference of that size on 72 forecasts would
+need a squared error differential standard error "roughly an order of magnitude
+smaller than the measured one". Measured properly it is a factor of 2.4 to 150 on
+the effect, which is 19 to 100,000 times the number of forecasts. The table a
+reader can check:
+
+| Dependent | Pair | Observed RMSE gap | Smallest gap detectable | Power against the observed effect | Forecasts for 95 pct power |
+|---|---|---|---|---|---|
+| utilisation | A vs B | 0.819 pct | 7.42 pct | 0.054 | 24,575 |
+| utilisation | A vs C | 0.284 pct | 12.28 pct | 0.050 | 670,408 |
+| utilisation | B vs C | 0.536 pct | 8.31 pct | 0.051 | 74,845 |
+| log intake | A vs B | 1.720 pct | 7.16 pct | 0.072 | 5,013 |
+| log intake | A vs C | 2.963 pct | 7.05 pct | 0.121 | 1,570 |
+| log intake | B vs C | 1.265 pct | 3.53 pct | 0.104 | 2,031 |
+
+Read the power column against the size of the test, which is 0.050. **Four of the
+six comparisons have power against their own observed effect of 0.05 to 0.07.** A
+test whose power equals its size is a coin that always returns "not
+distinguishable"; its failure to reject is arithmetic about the sample, not
+evidence about the null. The kindest of the six needs about 1,570 monthly
+forecasts, roughly 131 years of monthly data.
+
+That is not a matter of a better estimator. The common sample is 132 months long
+because DGEC's MBR file starts in 2015-01, and it grows by twelve months a year.
 
 What was NOT done about it, deliberately: no third dependent was tried, no lag
 structure was searched, no subsample was found on which one horse separates.
@@ -1161,7 +1187,9 @@ different the moment the data does.
 
 **To close it:** more months, or a reader who accepts that "these three are
 indistinguishable on this evidence" is the finding. The site should say the
-second thing.
+second thing, **and it now does**: `horse_race_winner` emits "this sample cannot
+tell the horses apart" with the power beside it, `docs/methodology.md` section 4.6
+prints the power table, and a test fails if the words "dead heat" come back.
 
 ---
 
@@ -1235,13 +1263,39 @@ would be **too** strong to be interesting: this study's margin contains the gas
 price as an exact linear term with coefficient -0.14627, so relevance looked
 mechanical.
 
-**It came out at F = 0.215 on the capacity dependent and F = 0.070 on the
-fallback.** The fitted first stage coefficient is +0.043, not -0.146. The
-arithmetic deduction is roughly cancelled by the margin's own co-movement with
-gas: the months when European gas was dear, 2022 above all, are the months when
-product cracks and therefore the MBR were high. The two effects are of similar
-size and opposite sign, so the gas price has almost no net purchase on the margin
-once month effects and regime terms are in.
+**It came out at F = 0.215 with the controls the capacity equation carries and
+F = 0.070 with the controls the fallback equation carries.** Those two were
+described here as "on the capacity dependent" and "on the fallback" until the Gate
+3 self audit, finding 3.1, pointed out that **the first stage contains no
+dependent variable at all**: it regresses the endogenous margin on the controls
+and the instrument. The two numbers are one control set with and without a single
+column, the linear monthly trend, and the sign of the coefficient flips on it.
+
+**The diagnosis given here was also wrong, by about two thirds.** This question
+used to say the mechanical deduction of -0.14627 is roughly cancelled by the
+margin's own co-movement with gas, and stopped there, as though the cancellation
+explained the +0.043. Measured, the cancellation leaves **+0.10594**: the raw slope
+of the MBR on gas is +0.23581, the mechanical term is -0.14627, the net raw slope
+of the study margin on gas is +0.08954, and the first stage with a constant alone
+is +0.10594, F 5.753. The collapse from there is the CONTROL SET:
+
+| Controls | Coefficient | F |
+|---|---|---|
+| constant only | +0.10594 | 5.753 |
+| plus month dummies | +0.10800 | 5.802 |
+| plus episode dummies | +0.04306 | **0.215** |
+| plus a linear trend | -0.02807 | **0.070** |
+
+**And the episode dummies remove the instrument's own identifying variation.** The
+instrument's standard deviation inside the three twelve month episode windows is
+18.61 $/MMBtu against 5.31 outside them, and its maximum of 60.16 is 2022-10.
+SPEC.md section 6.3 names exactly that variation as the reason to try the
+instrument, "TTF was driven by pipeline cuts in 2022 and by LNG disruption in
+2026", and SPEC.md section 6.1's equation then places a 0/1 step over each of
+those windows and takes it out. **That is a more interesting result than "the
+instrument is weak" and it says something real about why this identification is
+hard:** gas does have purchase on the margin, the purchase is the crisis months,
+and the equation's own regime terms remove the crisis months.
 
 The exclusion restriction was also stated before the run and this study's view of
 it is that it probably does not hold exactly: gas is a hydrogen feedstock as well
@@ -1249,7 +1303,15 @@ as a cost line, so a gas shock can change what a European refiner runs for
 reasons the margin does not capture, and a gas shock arrives inside a wider
 energy shock with its own routes to runs. So the instrument fails on relevance
 and is doubtful on validity, and SPEC.md section 6.3's instruction is to say that
-rather than force it. Nothing downstream reads the two stage estimates.
+rather than force it. Nothing downstream reads the two stage estimates. **The
+operational conclusion survives the corrected diagnosis without a scratch**: F is
+below the rule of thumb bar of 10 under the spec's equation at 0.07 to 0.22, and
+still below it at 5.80 on a constant and the month dummies with the 2022 shock
+left in. What changed is the explanation, not the verdict. And to be explicit
+about what was NOT done: the equation was not re-run without the episode dummies
+in order to get a better F. That would be choosing a specification after seeing
+what it does to a first stage, which SPEC.md section 6.6 forbids. The ladder is
+reported as a diagnosis and the headline equation is unchanged.
 
 **The endogeneity therefore remains unaddressed.** Runs move cracks, the bias is
 toward zero, and every coefficient this study reports is a lower bound in
@@ -1304,10 +1366,34 @@ shape:
 * **Gasoline into the driving season holds and is not close.** May to September
   sits +4.78 $/bbl above the rest of the year, t +4.64, positive in 22 of 25
   years, and it survives removing 2020, 2022 and 2026 (+4.31, t +5.07).
-* **Gasoil into the heating season does not hold.** November to March sits -0.37
-  $/bbl from the rest of the year with a standard error of 1.04, t -0.35, and is
-  positive in only 16 of 25 years. Removing the three crisis years turns the sign
-  without changing the verdict: +0.26, t +0.35.
+* **Gasoil into the heating season does not hold.** The contiguous winter,
+  November and December of one year with January to March of the next, sits -0.44
+  $/bbl from the rest of the two years it spans with a standard error of 0.75,
+  t -0.59, on 24 winters. It is nothing under every window tried: t -0.59 on the
+  contiguous winter, -0.35 on a calendar year November to March window, -0.18 and
+  +0.35 on the same two with the crisis years removed.
+
+**Two sentences this question used to carry were artefacts and are gone.** Gate 3
+self audit, findings 5.2 and 5.3.
+
+* It said the gasoil window is "positive in only 16 of 25 years". That count comes
+  from applying November to March **inside one calendar year**, which averages the
+  head of one winter with the tail of the one before it. Under a contiguous winter
+  it is **positive in 10 of 24**, a minority, and the reassuring reading that the
+  sign was usually right and the mean was dragged down does not survive.
+* It quoted -0.37 as the estimate. That sign rests on two observations out of
+  twenty five, 2022 at -18.81 and 2008 at -10.74 against a next most negative year
+  of -6.39, and under the calendar window the mean and the median have opposite
+  signs, -0.37 against +0.36. The honest statement is that the gasoil winter
+  effect is indistinguishable from zero under every definition tried, and that a
+  signed point estimate gives it more standing than the data supports.
+
+The conclusion is unchanged and it is the one SPEC.md section 6.5 asked to have
+checked rather than asserted: **on this sample the textbook gasoil pattern does
+not hold**. Only the sentences supporting it have been replaced by ones that are
+true. The study now reports the contiguous winter as its window, because that is
+the season a cold week falls in, and prints the calendar year window beside it so
+the size of the artefact is visible.
 
 The month by month shape says why. The gasoil crack's strongest months are
 **October** at +3.00 and November at +2.09, and December, January and February
@@ -1360,19 +1446,25 @@ monthly only until the reconstruction has five years, which is 2027-07.
 
 **Status: open, and it is the first half of this gate's finding carried forward.**
 
+*The numbers below moved when the Gate 3 self audit's finding 1.1 was actioned
+and the capacity denominator was lagged by a year. The disagreement did not.*
+
 Under the capacity dependent, utilisation over Energy Institute capacity, **none
-of the three horses has a coefficient distinguishable from zero**: A at -0.102
-with a Newey-West standard error of 0.113, B at -0.066 with 0.294, C at +0.121
-with 0.322. Under the fallback dependent, the log of NWE5 crude intake with a
-trend and closure steps, **all three are positive and two clear a t of 2**: A at
-+0.195 with 0.092, B at +0.458 with 0.220, C at +0.505 with 0.211.
+of the three horses has a coefficient distinguishable from zero**: A at -0.115
+with a Newey-West standard error of 0.106, B at -0.107 with 0.276, C at +0.093
+with 0.307. Under the fallback dependent, the log of NWE5 crude intake with a
+trend and closure steps, **all three are positive and none of them quite clears a
+t of 2**: A at +0.166 with 0.102, B at +0.400 with 0.240, C at +0.466 with 0.236,
+so t of +1.64, +1.67 and +1.98.
 
 The first half of this gate established the mechanism, as a labelled diagnostic
 and not as a reported result: the capacity denominator is a step function that
-fell 3.0 percent in 2016 and 5.3 percent in 2025 inside the sample, SPEC.md
-section 6.1's capacity equation carries neither a trend nor a closure step, so
-those jumps sit in its dependent as noise, and adding both moves its coefficient
-87 percent of the way to the fallback's.
+fell 3.0 percent in the 2016 figure and 5.3 percent in the 2025 one, which under
+the alignment rule of `docs/methodology.md` section 4.4 land in the dependent at
+2017-01 and 2026-01, both inside the sample. SPEC.md section 6.1's capacity
+equation carries neither a trend nor a closure step, so those jumps sit in its
+dependent as noise, and adding both moves its coefficient 89 percent of the way to
+the fallback's.
 
 Neither model was declared the winner, because SPEC.md section 6.1 asks for the
 capacity model and names the fallback as what to use "if the capacity table is
@@ -1380,8 +1472,9 @@ unusable", and the capacity table is usable. So both are reported with their own
 standard errors.
 
 **This matters for the site**, which has to put one number in the Runs and crude
-demand view. The two disagree about whether a 10 $/bbl move is worth +75 kb/d
-with an interval spanning zero, or +262 kb/d with an interval that does not.
+demand view. Taking the SPEC.md section 6.1 equation under each dependent, the two
+disagree about whether a 10 $/bbl move is worth **+59 kb/d** with an interval
+spanning zero, or **+230 kb/d** with an interval that just does not.
 
 **To close it:** the owner chooses which is the headline and which is the check,
 or the view shows both side by side. This study's recommendation is both, since
@@ -1420,3 +1513,92 @@ source; and an expanding window whose first origin is one row out.
 **To close it:** somebody reruns the headline table from the caches without
 reading `analysis.py` first. Worth doing before Gate 4 wires these numbers into a
 site.
+
+---
+
+## 44. The capacity denominator's reference date is now honest and its publication date is not
+
+**Status: open. It is the residual the Gate 3 self audit's finding 1.1 did not close.**
+
+Finding 1.1 found this study dividing January of year Y by the Energy Institute
+capacity figure stamped 31 December of year Y, a number describing a date eleven
+months in the future. That is fixed: `CAPACITY_SOURCE_LAG_YEARS` is 1, month m of
+year Y now carries the 31 December Y-1 figure, and a test fails if any month is
+ever divided by a stamp later than its own first day. See `docs/methodology.md`
+section 4.4.
+
+**What is not fixed is the publication lag.** The Energy Institute volume carrying
+the 31 December Y figure appears around the middle of year Y+1. So the denominator
+for January 2025 describes 31 December 2024 correctly, and it was still not in
+anybody's hands in January 2025. A strict real time reconstruction would lag by a
+further year, dividing the months of year Y by the 31 December Y-2 stamp.
+
+**That was not done, and here is the reasoning rather than a decision hidden in a
+default.** A second year of lag would put a two year old capacity into every
+month of the sample, which on a system that lost 5.3 percent of its capacity in
+one year is a large and permanent error in the level of the dependent, in exchange
+for a correction that matters only to a reader who wants the 72 out of sample
+forecasts read as a real time simulation. The study's out of sample claim is about
+the ESTIMATION, which the poison test in the audit proved clean to the bit, and
+this question is the place where the remaining gap is recorded rather than
+smoothed over.
+
+**It would be a parameter choice to search over, and it is not being searched
+over.** Choosing between one year and two years of lag by looking at which gives a
+better R2 or a lower out of sample RMSE is exactly what SPEC.md section 6.6
+forbids. One year is the lag the figure's own reference date implies, it was
+chosen from that reasoning and not from a result, and it has not been moved.
+
+**To close it:** the owner says whether the study wants a second, strictly real
+time, utilisation series reported beside the headline one, with the difference
+measured. That is a reporting decision and not a modelling one, and it costs one
+more column rather than a different answer.
+
+
+---
+
+## 45. The run cut threshold is one episode, and no open question said so until now
+
+**Status: open, and it is the single most important caveat on the headline the
+site would most like to print.**
+
+SPEC.md section 6.2 asks for a hockey stick, a grid search and a block bootstrap
+interval, and says that if the interval is wider than 10 $/bbl or touches the edge
+of the sample the threshold is unidentified and the site shows no headroom figure.
+It came back **unidentified** on the edge rule: threshold 2.28 $/bbl, interval 2.03
+to 11.28, which reaches the top of the searchable range. That much was in
+`docs/methodology.md` section 7 in one line, and the Gate 3 self audit, finding
+4.2, pointed out that questions 35 to 43 covered the race, the window, the
+instrument, 2026, seasonality, the two dependents and cross checking, and **none
+of them covered the threshold**, which is the one result the site's headroom
+figure depends on.
+
+**The reason it is unidentified is stronger than the interval.** 24 months sit
+below the estimated threshold and 21 of them are one unbroken stretch, 2020-07 to
+2022-03. Remove that stretch and rerun the whole search and bootstrap on the
+remaining 114 months and the estimate does not merely widen:
+
+| | With every month | Without 2020-07 to 2022-03 |
+|---|---|---|
+| Threshold | 2.28 $/bbl | **9.87** $/bbl |
+| Slope below | **+3.8786** | **-0.4958** |
+| Months below | 24 of 135 | **101 of 114** |
+| Kink R2 less straight line R2 | 26.6 points | **1.0 point** |
+
+**The slope flips sign.** Without the episode, runs rise as the margin falls below
+the estimated kink, which is the opposite of the hockey stick SPEC.md section 6.2
+describes. A kink whose slope reverses when one episode is removed is not a kink,
+and the estimate, its sign included, **is** 2020-07 to 2022-03.
+
+That check did not exist in the code either: `run_cut_threshold` had no way to
+leave months out, while `margin_response` and `intake_trend_response` both
+honoured SPEC.md section 6.1's "with and without the episodes". It does now, by
+two arguments, and `analysis.report()` and `docs/methodology.md` section 4.10 both
+print the result.
+
+**To close it:** a second episode. The sample holds one stretch in which this
+study's margin went negative and runs fell with it, and no behavioural level can
+be estimated from one. It closes when Europe has another one, which is not
+something to wish for, or when a longer margin series reaches back to 2008 and
+1998, which needs a margin before DGEC's file starts in 2015-01 and is open
+question 32's problem in a different form.

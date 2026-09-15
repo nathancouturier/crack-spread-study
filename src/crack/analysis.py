@@ -9,8 +9,21 @@ project that runs a regression.
 What this module will not do, and why
 -------------------------------------
 SPEC.md section 6.6 is the rule that governs this layer. No parameter search, no
-walk forward optimisation, no forecast, no strategy, no Sharpe ratio, no
-profit and loss. Two searches over a number appear below and both are named:
+walk forward optimisation, no strategy, no Sharpe ratio, no profit and loss.
+
+THE ONE CONFLICT INSIDE THE SPEC, RESOLVED RATHER THAN DENIED. SPEC.md section
+6.6 also says "no forecasts" and SPEC.md section 6.3 asks by name for an
+expanding window out of sample RMSE, which the horse race below computes from 72
+one step ahead forecasts per horse per dependent, 432 in all. The conflict is
+resolved in favour of 6.3, the specific instruction, and the resolution is this:
+the only forecasts in this project are the one step ahead ones section 6.3
+requires in order to score a regressor out of sample. None of them is shown as a
+prediction of anything, none is about the future, no parameter is chosen using
+them, and nothing is optimised on them. This header used to say "no forecast"
+flatly, which was not true of 432 of them, and the Gate 3 self audit was right
+that denying the conflict reads worse than stating it.
+
+Two searches over a number appear below and both are named:
 
   1. The threshold grid of SPEC.md section 6.2, which the spec asks for by name
      and pairs with a block bootstrap interval and an explicit unidentified
@@ -4000,14 +4013,14 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
     )
     add(
         "    2017-01 and 2026-01, both inside the sample. The capacity equation of "
-        "SPEC.md section"
+        "SPEC.md section 6.1"
     )
     add(
-        "    6.1 carries no trend"
+        "    carries no trend and no closure step, so those jumps sit in its "
+        "dependent as noise."
     )
     add(
-        "    and no closure step, so those jumps sit in its dependent as noise. "
-        "The fallback carries"
+        "    The fallback carries"
     )
     add(
         "    both and absorbs them. NEITHER IS DECLARED THE WINNER HERE. The "
@@ -5173,7 +5186,7 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
         )
         add(
             "    %+.1f kb/d, which is %.2f in sample residual standard "
-            "deviations. On the capacity dependent"
+            "deviations."
             % (
                 worst["residual_kb_d"],
                 abs(worst["in_sample_residual_sd_multiples"]),

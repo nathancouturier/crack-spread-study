@@ -2535,3 +2535,168 @@ Not optional, so here it is, including the parts that weaken the audit above.
     that I looked for it and did not find it.** The poison test is the strongest
     check I know how to run and it came back clean to the bit. If leakage exists
     there, it is not of a kind that a poisoned dependent can reveal.
+
+
+---
+
+# Gate 3 self audit, what was done about it
+
+Written after the audit above was acted on, by the agent that acted on it, and
+kept in the same file so that neither half can be read without the other. The
+audit above is left exactly as it was written. Nothing in it has been softened,
+renumbered or deleted, because a record of what was found is worth more than a
+tidy one.
+
+All five findings were actioned. **One was a data defect and four were a right
+number described wrongly**, which on a study whose whole value is honesty is not
+the lesser category, and all five are closed below with the test that would catch
+each of them coming back.
+
+## Finding 1.1, the capacity look ahead. FIXED, and it moved the headline
+
+`CAPACITY_SOURCE_LAG_YEARS = 1`. Month m of year Y is now divided by the Energy
+Institute figure stamped 31 December of year Y-1, the capacity the region was
+known to have when the month began, and `capacity_monthly` refuses to apply any
+figure to a month before the date it describes.
+
+Three consequences the auditor did not have to think about, all resolved out
+loud in `docs/methodology.md` section 4.4:
+
+1. **The closure step dummies carried the same defect and were moved with it.**
+   `closure_step_2016` turned on at 2016-01 for a fall established only by the
+   31 December 2016 stamp. It is now `closure_step_2017`, and `closure_step_2025`
+   is now `closure_step_2026`. Unlike an episode dummy for an episode that has
+   not happened yet, a closure dummy is NOT a column of zeros in the training
+   rows of the expanding window, so this was a live look ahead in the out of
+   sample exercise and not an inert one. It moved the fallback numbers.
+2. **2026 stopped being an assumption.** The 31 December 2025 figure is the right
+   denominator for every month of 2026, so the six months that had a numerator
+   and no denominator now have both, no row is flagged `capacity_assumed`, and
+   the basis argument was renamed `basis_beyond` because it is about the file
+   running out and not about 2026. It still bites, and is still tested, for a
+   month past the file's reach.
+3. **The recon 03 anchor was preserved without being bent.** recon 03 section 2.3
+   divided each year's intake by that same year's capacity, so
+   `utilisation_sanity_check` now reports that column, still 11 of 11 to three
+   decimals, AND the lagged column the regressions run on, AND the difference,
+   which reaches -0.0439 in 2025. Neither can be substituted for the other.
+
+The auditor's own uncertainty 3, that the finding rests on a reading of the
+Energy Institute figure as year end, is unchanged and unverified against the
+source. What the fix does not buy is a real time series: the reference date is no
+longer in the future but the publication date still is, and that residual is now
+`docs/open-questions.md` question 44 rather than nothing.
+
+## Finding 2.1, the dead heat. FIXED as wording and as measurement
+
+`analysis.horse_race_winner` no longer emits "THE RACE IS A DEAD HEAT". It emits
+"THIS SAMPLE CANNOT TELL THE HORSES APART", says in the same sentence that this
+is not the same as saying they are equal, and prints the power that says why.
+`LossDifferential` now carries the observed RMSE gap, the smallest gap the test
+could have detected, the power against the observed effect and the forecasts
+needed for 95 percent power, all four measured. `docs/methodology.md` section 4.6
+prints the table, `docs/open-questions.md` question 35 was reheaded and its "an
+order of magnitude" estimate replaced by the measured factor, and a test fails if
+the words "dead heat" appear anywhere in `analysis.report()`.
+
+SPEC.md section 6.3 says that if A wins we say so. Under the corrected dependent
+horse A now HAS the lowest out of sample RMSE under the capacity dependent, and
+the report says so, reading it off the numbers as it always did. It is still not
+distinguishable from the others and the report says that too.
+
+## Finding 3.1, the instrument. FIXED, and it is a better result than it was
+
+`gas_instrument` measures the first stage as the controls go in one at a time and
+reports the instrument's own variation inside and outside the episode windows.
+Both diagnoses the audit corrected are corrected: the first stage contains no
+dependent and the two Fs differ only by the trend column, and the cancellation
+argument stops at +0.10594 instead of being run all the way down to the reported
+number. The report, `docs/methodology.md` section 4.7 and
+`docs/open-questions.md` question 38 all now say that the instrument's variation
+IS the 2022 shock and that SPEC.md section 6.1's equation removes it.
+
+The equation was NOT re-run without the episode dummies to get a better F. That
+would be choosing a specification after seeing what it does to a first stage,
+which SPEC.md section 6.6 forbids.
+
+One number differs from the audit's: the instrument's standard deviation inside
+the episode windows is 18.61 $/MMBtu and outside 5.31 on the sample standard
+deviation the module uses, against the audit's 18.29 and 5.29 on the population
+one. The maximum, 60.16 in 2022-10, agrees exactly.
+
+## Findings 4.1, 4.2 and 4.3, the threshold. FIXED
+
+`run_cut_threshold` takes `drop_episode_months` and `drop_months`, so SPEC.md
+section 6.1's "with and without the episodes" is honoured for the threshold as
+well as for the response. The report and `docs/methodology.md` section 4.10,
+which did not exist, both print the run that removes the one unbroken stretch the
+estimate is drawn from. **The slope flips sign**, +3.8786 to -0.4958, the
+threshold walks from 2.28 to 9.87 $/bbl and 101 of the 114 remaining months sit
+below it. `docs/open-questions.md` question 45 is the entry the audit found
+missing, and the wrong cross reference in `docs/methodology.md` section 4.6,
+which pointed at endogeneity, now points at section 4.10.
+
+Finding 4.3 is fixed at the source rather than in the printing: the longest run's
+first and last month come out of the same loop that counts its length, and a test
+with a stray month placed AFTER the run fails on the old positional guess.
+
+## Findings 5.1, 5.2 and 5.3, the seasonality. FIXED
+
+A season is now a set of (year offset, month) pairs, so the heating season can be
+the contiguous November to March winter it physically is. The conclusion that the
+textbook does not hold survives and stays, because SPEC.md section 6.5 asked for
+it to be checked and not asserted, and it is nothing under every window tried.
+The two sentences that supported it are gone: "positive in 16 of 25" is now
+"positive in 10 of 24", the signed -0.37 is reported as a number whose sign rests
+on two observations out of twenty five with its median of the opposite sign
+beside it, and the exclusion row says it removes two complete years and not
+three. Both windows are printed so the artefact is visible rather than quietly
+corrected. The bare 2.0 in the `holds` flag, the one number the audit could not
+trace, is now `Z95`.
+
+## The section 6.6 inconsistency the audit raised in passing. FIXED
+
+The module header and `docs/methodology.md` section 7 both said "no forecast"
+while the horse race computed 432 one step ahead forecasts. Both now state the
+resolution instead: SPEC.md section 6.3 asks for the expanding window by name,
+that is the only kind of forecast in the project, none is shown as a prediction
+of anything and nothing is optimised on them.
+
+## Every number that moved, and why
+
+The capacity alignment changed `utilisation_pct` in every month, and the closure
+step shift changed the fallback's design, so both dependents moved. The numbers
+below are the ones quoted somewhere a reader meets them.
+
+| Quantity | Was | Now |
+|---|---|---|
+| Capacity response, sum of lags | +0.12046, se 0.30126, t +0.40 | +0.09512, se 0.28582, t +0.33 |
+| Capacity response, 10 $/bbl | +75.1 kb/d, +1.45 pct of runs | +59.3 kb/d, +1.14 pct of runs |
+| Fallback response, sum of lags | +0.47686, se 0.19809, t +2.41 | +0.44391, se 0.22147, t +2.00 |
+| Fallback response, 10 $/bbl | +247.5 kb/d, +4.77 pct of runs | +230.4 kb/d, +4.44 pct of runs |
+| Capacity equation R2 | 0.5002 | 0.4639 |
+| Out of sample RMSE, capacity, A B C | 6.6471, 6.6431, 6.6202 | 6.7601, 6.8159, 6.7793 |
+| Lowest out of sample RMSE, capacity | horse C | **horse A** |
+| Out of sample RMSE, fallback, A B C | 4.8887, 4.7754, 4.7018 | 4.8911, 4.8070, 4.7462 |
+| Mean only benchmark, capacity | 7.9020 | 7.7699 |
+| Loss differential t, all six | 0.01 to 0.82 | 0.04 to 0.77 |
+| Threshold point | 2.03 $/bbl | 2.28 $/bbl |
+| Threshold slope below | +4.5772, se 0.8743 | +3.8786, se 0.7456 |
+| Months below the threshold | 22 of 135, 21 in one stretch | 24 of 135, 21 in one stretch |
+| Threshold without the stretch | not computed | 9.87 $/bbl, slope -0.4958, 101 of 114 below |
+| Closure step dummies in sample | closure_step_2016, closure_step_2025 | closure_step_2017, closure_step_2026 |
+| 2026 months on assumed capacity | 6 | **0** |
+| Annual utilisation 2025, regression basis | 0.8314 | 0.7875 |
+| 2SLS, capacity | -8.83, se 19.08 | -9.44, se 20.40 |
+| Gasoil winter difference | -0.37, se 1.04, 16 of 25 positive | -0.44, se 0.75, 10 of 24 positive |
+
+The first stage F ladder, the instrument's episode variation, the gasoline
+seasonal result, the 2026 residual verdict of "four months cannot answer this",
+the grid sensitivity verdict and the unidentified verdict itself are all
+unchanged.
+
+## The test suite
+
+856 passed and 5 skipped before this pass, 870 and 5 after. Every new test was
+proved by injecting the fault it is named after and watching it fail, and the
+injections and their output are in the pass report. The full gate was run.
