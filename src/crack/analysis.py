@@ -69,20 +69,32 @@ decision at the start of Gate 3 was to build the fallback as well, so that the
 analysis survives if that position ever has to change. So both are here, both are
 reported, and neither is presented as the other's robustness check.
 
-2026 HAS NO CAPACITY FIGURE ANYWHERE
-------------------------------------
-The Energy Institute edition in data/private ends at 2025 and there is no 2026
-number in it or in any other source this project reached. JODI runs to 2026-06.
-So the six months of 2026 that have runs data have no denominator. This module
-refuses to extrapolate a capacity and instead makes the choice explicit in the
-basis argument: CAPACITY_2026_NAN leaves those months missing, which is the
-honest default and the one that satisfies SPEC.md non negotiable 1, and
-CAPACITY_2026_HELD_FLAT carries 2025 capacity forward with every affected row
-flagged capacity_assumed. The headline regression runs on the held flat basis
-because otherwise the 2026 episode, which SPEC.md section 6.1 requires be
-reported with and without, cannot be in the sample at all; and the "without 2026"
-row of that same table is the estimate that rests on no assumption. The fallback
-model needs no capacity and covers 2026 cleanly either way.
+WHICH CAPACITY FIGURE A MONTH IS DIVIDED BY
+-------------------------------------------
+The Energy Institute figure for year Y is capacity at 31 DECEMBER of year Y. This
+module therefore divides month m of year Y by the figure stamped 31 December of
+year Y-1, the capacity the region was known to have when the month began, and
+never by a figure describing a date the month has not reached. See
+CAPACITY_SOURCE_LAG_YEARS for the rule and for the Gate 3 audit finding that
+forced it, and docs/methodology.md section 2.4 for what it cost.
+
+That rule settles 2026 as a side effect. The edition in data/private ends at 2025
+and there is no 2026 number in it or in any other source this project reached,
+but the 31 December 2025 figure is exactly the right denominator for the months
+of 2026, so the six months of 2026 that have runs data need no assumption at all
+and none is made. The basis argument survives because the file runs out again
+every year, as soon as JODI reaches the January after the last year end stamp:
+CAPACITY_BEYOND_NAN leaves those months missing, which is the honest default and
+the one that satisfies SPEC.md non negotiable 1, and CAPACITY_BEYOND_HELD_FLAT
+carries the last figure forward with every affected row flagged capacity_assumed.
+On today's data no month is beyond the file and the two bases are identical.
+
+WHAT THE ALIGNMENT COSTS, said here rather than buried. A denominator that is
+never from the future is a denominator that is up to twelve months stale. The
+2025 closures are where that bites hardest: capacity fell 5.3 percent between the
+2024 and 2025 stamps, so every month of 2025 is divided by a capacity the region
+no longer had by December. The alternative is the look ahead, and the study
+prefers a stale number it can date to a fresh one it could not have had.
 """
 
 from __future__ import annotations
@@ -101,9 +113,10 @@ __all__ = [
     "CAPACITY_COLUMN",
     "INTAKE_COLUMN",
     "IMPORTS_COLUMN",
-    "CAPACITY_2026_NAN",
-    "CAPACITY_2026_HELD_FLAT",
-    "CAPACITY_2026_BASES",
+    "CAPACITY_SOURCE_LAG_YEARS",
+    "CAPACITY_BEYOND_NAN",
+    "CAPACITY_BEYOND_HELD_FLAT",
+    "CAPACITY_BEYOND_BASES",
     "CAPACITY_STEP",
     "CAPACITY_LINEAR",
     "CLOSURE_STEP_MIN_FALL",
@@ -224,30 +237,62 @@ IMPORTS_COLUMN = "nwe5_totimpsb_crudeoil_kbd"
 
 
 # ---------------------------------------------------------------------------
-# Capacity, and what to do about 2026
+# Capacity, and the date a capacity figure is allowed to describe
 # ---------------------------------------------------------------------------
 
-#: 2026 months carry no capacity and utilisation is NaN. The honest default.
-CAPACITY_2026_NAN = "nan"
-#: 2026 months carry the 2025 year end capacity, and every affected row is
-#: flagged capacity_assumed so no chart and no table can show one without the
-#: flag. It is an assumption, it is named, and the "without 2026" row of the
-#: response table is the same estimate without it.
-CAPACITY_2026_HELD_FLAT = "held_flat"
-CAPACITY_2026_BASES = (CAPACITY_2026_NAN, CAPACITY_2026_HELD_FLAT)
+#: THE ALIGNMENT RULE, AND WHY IT IS ONE.
+#:
+#: The Energy Institute figure for year Y is atmospheric distillation capacity AT
+#: 31 DECEMBER OF YEAR Y, recon 03 section 2.2, and capacity_annual's docstring
+#: says so. A figure stamped 31 December Y therefore describes the plant stock at
+#: the END of year Y, which is the same thing as the START of year Y+1. It does
+#: not describe January of year Y, and until 31 December Y nobody knows it.
+#:
+#: The Gate 3 self audit, finding 1.1, found this module dividing January of year
+#: Y by the 31 December Y figure. That put a number that did not exist at the
+#: forecast date into 15 of the 72 out of sample forecast targets, and the 2025
+#: step alone moved the target for 2025-01 by 4.57 percentage points against an
+#: out of sample root mean squared error of about 6.6. It was a real look ahead
+#: and it is fixed here rather than caveated.
+#:
+#: The rule, applied once and everywhere: A CAPACITY FIGURE IS ONLY EVER APPLIED
+#: TO MONTHS AT OR AFTER THE DATE IT DESCRIBES. The first month at or after
+#: 31 December Y is January of year Y+1, so month m of year Y is divided by the
+#: figure stamped 31 December of year Y minus CAPACITY_SOURCE_LAG_YEARS. Every
+#: month of the sample now carries the capacity the region was known to have when
+#: the month began.
+#:
+#: WHAT THIS RULE DOES NOT FIX, said here so it is not mistaken for fixed. The
+#: reference date is now never in the future. The PUBLICATION date still is: the
+#: Energy Institute volume carrying the 31 December Y figure appears around the
+#: middle of year Y+1, so a strict real time reconstruction would lag by a
+#: further year. This study does not do that. It is recorded in
+#: docs/open-questions.md as open question 44 rather than silently ignored.
+CAPACITY_SOURCE_LAG_YEARS = 1
+
+#: Months the capacity file cannot reach carry no capacity and utilisation is
+#: NaN. The honest default, SPEC.md non negotiable 1.
+CAPACITY_BEYOND_NAN = "nan"
+#: Months the capacity file cannot reach carry the last year end figure it holds,
+#: and every affected row is flagged capacity_assumed so no chart and no table can
+#: show one without the flag.
+CAPACITY_BEYOND_HELD_FLAT = "held_flat"
+CAPACITY_BEYOND_BASES = (CAPACITY_BEYOND_NAN, CAPACITY_BEYOND_HELD_FLAT)
 
 #: SPEC.md section 6.1 asks for capacity "interpolated monthly, closures as
-#: steps". The Energy Institute figure is atmospheric distillation capacity AT
-#: YEAR END, recon 03 section 2.2, so a closure inside a year is already fully in
-#: that year's printed number. The step convention carries the year's own figure
-#: across all twelve of its months, which is what makes a closure a step at the
-#: turn of the year rather than a ramp spread over twelve months. It is also the
-#: convention recon 03 section 2.3 measured its sanity check on, so the annual
-#: means below reproduce those figures exactly rather than approximately.
+#: steps". The step convention carries one year end figure across the twelve
+#: months that follow it, which is what makes a closure a step at the turn of the
+#: year rather than a ramp spread over twelve months, and under the alignment rule
+#: above it is also the only one of the two that is free of look ahead.
 CAPACITY_STEP = "step"
 #: Straight line between year end points, offered so the difference can be
-#: measured rather than asserted. It smooths closures, which is the thing SPEC.md
-#: section 6.1 asks not to do, so it is never the default.
+#: measured rather than asserted. IT CARRIES LOOK AHEAD BY CONSTRUCTION and
+#: cannot be made not to: a straight line between the 31 December Y-1 and
+#: 31 December Y figures reads the later of the two into every month of year Y,
+#: which is exactly what CAPACITY_SOURCE_LAG_YEARS exists to stop. It smooths
+#: closures as well, which is the thing SPEC.md section 6.1 asks not to do. So it
+#: is never the default, no reported number in this module uses it, and
+#: tests/test_analysis.py holds both of those claims down.
 CAPACITY_LINEAR = "linear"
 CAPACITY_INTERPOLATIONS = (CAPACITY_STEP, CAPACITY_LINEAR)
 
@@ -281,6 +326,15 @@ def capacity_annual() -> pd.DataFrame:
 def capacity_step_years(min_fall: float = CLOSURE_STEP_MIN_FALL) -> tuple[int, ...]:
     """Years in which NWE5 capacity fell by more than min_fall, as a fraction.
 
+    THE YEAR RETURNED IS THE YEAR THE FALL IS RECORDED IN, not the month the
+    dummy turns on. The fall between the 31 December Y-1 and 31 December Y
+    figures is established by the 31 December Y stamp, so under the alignment rule
+    of CAPACITY_SOURCE_LAG_YEARS the step enters the monthly series in January of
+    year Y plus the lag, and that is where _build_response places it and what it
+    names the column after. A dummy that switched on in January of the fall year
+    would assert in January that the region was going to lose a refinery before
+    December, which is the same look ahead finding 1.1 found in the denominator.
+
     The closure dummy dates for the fallback model of SPEC.md section 6.1. They
     are derived from the capacity series, which means they are derived from the
     private Energy Institute cache, so intake_trend_response accepts them as an
@@ -295,18 +349,28 @@ def capacity_step_years(min_fall: float = CLOSURE_STEP_MIN_FALL) -> tuple[int, .
 
 
 def capacity_monthly(
-    basis_2026: str = CAPACITY_2026_NAN,
+    basis_beyond: str = CAPACITY_BEYOND_NAN,
     interpolation: str = CAPACITY_STEP,
     through: str | pd.Timestamp | None = None,
 ) -> pd.DataFrame:
-    """Monthly NWE5 capacity in kb/d, on a named 2026 basis.
+    """Monthly NWE5 capacity in kb/d, lagged so no figure is applied before its date.
+
+    THE ALIGNMENT. Month m of year Y carries the Energy Institute figure stamped
+    31 December of year Y minus CAPACITY_SOURCE_LAG_YEARS, that is, the capacity
+    the region was known to have when the month began. See the comment on
+    CAPACITY_SOURCE_LAG_YEARS for why, and for what it does not fix.
 
     Args:
-        basis_2026: one of CAPACITY_2026_BASES. There is no published 2026
-            capacity in any source this project reached, so this is a choice and
-            it is made by the caller, out loud.
-        interpolation: CAPACITY_STEP, the default and the one SPEC.md section 6.1
-            describes, or CAPACITY_LINEAR.
+        basis_beyond: one of CAPACITY_BEYOND_BASES, and what to do with months
+            the capacity file cannot reach. Under the alignment above the file's
+            last figure, stamped 31 December of its last year, covers the whole of
+            the FOLLOWING calendar year, so on today's data there are no such
+            months and this argument changes nothing. It bites again as soon as
+            JODI runs past that following year, which happens every year until the
+            next Energy Institute edition lands. It is a choice and it is made by
+            the caller, out loud.
+        interpolation: CAPACITY_STEP, the default, the one SPEC.md section 6.1
+            describes and the only one free of look ahead, or CAPACITY_LINEAR.
         through: the last month to produce. Defaults to the last month of JODI
             intake, since a capacity denominator with no numerator is of no use
             to anyone.
@@ -314,11 +378,11 @@ def capacity_monthly(
     Returns:
         date, capacity_kb_d, capacity_source_year, capacity_assumed.
     """
-    if basis_2026 not in CAPACITY_2026_BASES:
+    if basis_beyond not in CAPACITY_BEYOND_BASES:
         raise ValueError(
-            "basis_2026 is %r. There is no published 2026 refinery capacity, so "
-            "this module will not pick one for you: it is %s"
-            % (basis_2026, " or ".join(CAPACITY_2026_BASES))
+            "basis_beyond is %r. This module will not invent a capacity for a "
+            "month the Energy Institute file does not reach, so it is %s"
+            % (basis_beyond, " or ".join(CAPACITY_BEYOND_BASES))
         )
     if interpolation not in CAPACITY_INTERPOLATIONS:
         raise ValueError(
@@ -335,17 +399,29 @@ def capacity_monthly(
         through = pd.to_datetime(intake["date"]).max()
     through = pd.Timestamp(through).to_period("M").to_timestamp()
 
-    start = pd.Timestamp(year=int(annual["year"].iloc[0]), month=1, day=1)
+    # The first month any figure in the file is allowed to describe. The file's
+    # first stamp is 31 December of its first year, so the series starts in the
+    # January after it and nothing is extrapolated backwards.
+    start = pd.Timestamp(
+        year=int(annual["year"].iloc[0]) + CAPACITY_SOURCE_LAG_YEARS, month=1, day=1
+    )
     months = pd.date_range(start, through, freq="MS")
     frame = pd.DataFrame({"date": months})
     frame["year"] = frame["date"].dt.year
+    # THE ALIGNMENT, in one line. The year whose 31 December stamp is the most
+    # recent one at or before the first day of this month.
+    frame["source_year"] = frame["year"] - CAPACITY_SOURCE_LAG_YEARS
 
     by_year = dict(zip(annual["year"], annual["capacity_kb_d"]))
     if interpolation == CAPACITY_STEP:
-        frame["capacity_kb_d"] = frame["year"].map(by_year).astype(float)
+        frame["capacity_kb_d"] = frame["source_year"].map(by_year).astype(float)
     else:
-        # Year end points placed on 31 December, interpolated on to the month
-        # starts. A month before the first year end is not extrapolated.
+        # LOOK AHEAD ON PURPOSE AND LABELLED. Year end points placed on
+        # 31 December, interpolated on to the month starts, so a month inside year
+        # Y is pulled toward the 31 December Y figure that will not exist until
+        # the year is over. See the comment on CAPACITY_LINEAR: this basis is a
+        # measurement of what the step convention costs and is not a basis any
+        # reported number in this module runs on.
         anchors = pd.Series(
             annual["capacity_kb_d"].to_numpy(),
             index=pd.to_datetime(
@@ -361,25 +437,23 @@ def capacity_monthly(
             interpolated.reindex(pd.DatetimeIndex(months)).to_numpy().astype(float)
         )
 
-    frame["capacity_source_year"] = frame["year"].where(
-        frame["year"] <= last_year, np.nan
-    )
-    frame["capacity_assumed"] = frame["year"] > last_year
+    beyond = frame["source_year"] > last_year
+    frame["capacity_source_year"] = frame["source_year"].where(~beyond, np.nan)
+    frame["capacity_assumed"] = beyond
 
-    beyond = frame["year"] > last_year
-    if basis_2026 == CAPACITY_2026_HELD_FLAT:
+    if basis_beyond == CAPACITY_BEYOND_HELD_FLAT:
         frame.loc[beyond, "capacity_kb_d"] = last_capacity
         frame.loc[beyond, "capacity_source_year"] = last_year
     else:
         frame.loc[beyond, "capacity_kb_d"] = np.nan
 
-    frame["capacity_basis_2026"] = basis_2026
+    frame["capacity_basis_beyond"] = basis_beyond
     frame["capacity_interpolation"] = interpolation
-    return frame.drop(columns=["year"]).reset_index(drop=True)
+    return frame.drop(columns=["year", "source_year"]).reset_index(drop=True)
 
 
 def utilisation_monthly(
-    basis_2026: str = CAPACITY_2026_NAN,
+    basis_beyond: str = CAPACITY_BEYOND_NAN,
     interpolation: str = CAPACITY_STEP,
 ) -> pd.DataFrame:
     """NWE5 crude intake over capacity, monthly, with crude imports beside it.
@@ -415,7 +489,7 @@ def utilisation_monthly(
         on="date",
         how="left",
     )
-    capacity = capacity_monthly(basis_2026, interpolation, through=frame["date"].max())
+    capacity = capacity_monthly(basis_beyond, interpolation, through=frame["date"].max())
     frame = frame.merge(capacity, on="date", how="left")
 
     frame["utilisation"] = frame["intake_kb_d"] / frame["capacity_kb_d"]
@@ -424,16 +498,31 @@ def utilisation_monthly(
 
 
 def utilisation_annual(
-    basis_2026: str = CAPACITY_2026_NAN,
+    basis_beyond: str = CAPACITY_BEYOND_NAN,
     interpolation: str = CAPACITY_STEP,
 ) -> pd.DataFrame:
-    """Calendar year mean intake over that year's capacity, months counted.
+    """Calendar year mean intake over capacity, both ways, months counted.
 
-    The form recon 03 section 2.3 measured, so the two can be compared number by
-    number rather than by eye. A part year is reported with its month count and
-    is not annualised.
+    TWO COLUMNS BECAUSE THERE ARE TWO QUESTIONS, and running them together is how
+    the look ahead of finding 1.1 got in.
+
+      utilisation           mean intake of year Y over the capacity this module
+                            actually divides by, which under
+                            CAPACITY_SOURCE_LAG_YEARS is the 31 December Y-1
+                            figure. This is the annual mean of the monthly series
+                            every regression below runs on.
+      utilisation_same_year mean intake of year Y over the 31 December Y figure.
+                            THE FORM RECON 03 SECTION 2.3 MEASURED, so the two can
+                            be compared number by number rather than by eye. It is
+                            a check on whether this module is reading the same
+                            intake and capacity numbers the reconciliation read.
+                            It is not a forecast target, nothing is estimated from
+                            it, and it is the only place in this module where a
+                            year end figure meets its own year.
+
+    A part year is reported with its month count and is not annualised.
     """
-    monthly = utilisation_monthly(basis_2026, interpolation)
+    monthly = utilisation_monthly(basis_beyond, interpolation)
     monthly["year"] = monthly["date"].dt.year
     grouped = monthly.groupby("year").agg(
         intake_kb_d=("intake_kb_d", "mean"),
@@ -443,6 +532,15 @@ def utilisation_annual(
         capacity_assumed=("capacity_assumed", "any"),
     )
     grouped["utilisation"] = grouped["intake_kb_d"] / grouped["capacity_kb_d"]
+    by_year = dict(
+        zip(capacity_annual()["year"], capacity_annual()["capacity_kb_d"])
+    )
+    grouped["capacity_same_year_kb_d"] = [
+        by_year.get(int(y), np.nan) for y in grouped.index
+    ]
+    grouped["utilisation_same_year"] = (
+        grouped["intake_kb_d"] / grouped["capacity_same_year_kb_d"]
+    )
     return grouped.reset_index()
 
 
@@ -467,20 +565,38 @@ RECON_ANNUAL_UTILISATION: Mapping[int, float] = {
 def utilisation_sanity_check() -> pd.DataFrame:
     """This module's annual utilisation against RECON_ANNUAL_UTILISATION.
 
+    WHICH OF THE TWO ANNUAL FIGURES IS CHECKED, AND WHY. recon 03 section 2.3
+    divided each year's mean intake by that same year's capacity, so
+    utilisation_same_year is the column that answers it and the one the
+    agrees_to_3dp flag is computed from. The study column beside it is the annual
+    mean of the lagged series every regression runs on, which is a different and
+    deliberately different number: see CAPACITY_SOURCE_LAG_YEARS. Both are
+    printed so that neither can be quietly substituted for the other.
+
     Returns:
-        year, utilisation, recon, difference, agrees_to_3dp.
+        year, utilisation_same_year, recon, difference, agrees_to_3dp,
+        utilisation_study, study_less_same_year.
     """
     annual = utilisation_annual().set_index("year")
     rows = []
     for year, expected in sorted(RECON_ANNUAL_UTILISATION.items()):
-        got = float(annual.loc[year, "utilisation"]) if year in annual.index else np.nan
+        same = (
+            float(annual.loc[year, "utilisation_same_year"])
+            if year in annual.index
+            else np.nan
+        )
+        study = (
+            float(annual.loc[year, "utilisation"]) if year in annual.index else np.nan
+        )
         rows.append(
             {
                 "year": year,
-                "utilisation": got,
+                "utilisation_same_year": same,
                 "recon": expected,
-                "difference": got - expected,
-                "agrees_to_3dp": bool(round(got, 3) == expected),
+                "difference": same - expected,
+                "agrees_to_3dp": bool(round(same, 3) == expected),
+                "utilisation_study": study,
+                "study_less_same_year": study - same,
             }
         )
     return pd.DataFrame(rows)
@@ -537,7 +653,7 @@ def margin_frame(
 
 
 def analysis_frame(
-    basis_2026: str = CAPACITY_2026_HELD_FLAT,
+    basis_beyond: str = CAPACITY_BEYOND_HELD_FLAT,
     interpolation: str = CAPACITY_STEP,
     gas_intensity_mmbtu_per_bbl: float = config.GAS_INTENSITY_MMBTU_PER_BBL,
 ) -> pd.DataFrame:
@@ -548,7 +664,7 @@ def analysis_frame(
     two data dates agree: SPEC.md section 7.2 shows them separately for exactly
     this reason.
     """
-    runs = utilisation_monthly(basis_2026, interpolation)
+    runs = utilisation_monthly(basis_beyond, interpolation)
     margin = margin_frame(gas_intensity_mmbtu_per_bbl)
     frame = runs.merge(margin, on="date", how="inner").sort_values("date")
     frame["log_intake_pct"] = 100.0 * np.log(frame["intake_kb_d"].astype(float))
@@ -1029,12 +1145,21 @@ def _build_response(
             columns.append(dummies)
             names.extend(dummy_names)
     for year in closure_years:
-        column = (work["date"] >= pd.Timestamp(year=int(year), month=1, day=1)).astype(
-            float
-        )
+        # THE STEP ENTERS IN THE JANUARY AFTER THE FALL WAS RECORDED, and the
+        # column is named after the month it turns on and not after the year the
+        # Energy Institute booked the fall in. capacity_step_years' docstring has
+        # the reasoning: the fall is only established by the 31 December stamp of
+        # its own year, so a dummy starting in that January is a look ahead, and
+        # in the expanding window of SPEC.md section 6.3 it is a live one rather
+        # than an inert one, because the column is not all zeros in the training
+        # rows the way an unhappened episode's is.
+        effective = int(year) + CAPACITY_SOURCE_LAG_YEARS
+        column = (
+            work["date"] >= pd.Timestamp(year=effective, month=1, day=1)
+        ).astype(float)
         if 0.0 < column.mean() < 1.0:
             columns.append(column.to_numpy())
-            names.append("closure_step_%d" % int(year))
+            names.append("closure_step_%d" % effective)
     present_episodes = tuple(
         name for name in sorted(EPISODES) if work[name].to_numpy().any()
     )
@@ -1112,7 +1237,7 @@ def margin_response(
     lags: Sequence[int] = MARGIN_LAGS,
     episode_dummies: bool = True,
     drop_episode_months: bool = False,
-    basis_2026: str = CAPACITY_2026_HELD_FLAT,
+    basis_beyond: str = CAPACITY_BEYOND_HELD_FLAT,
     interpolation: str = CAPACITY_STEP,
     frame: pd.DataFrame | None = None,
     nw_lag: int | None = None,
@@ -1147,7 +1272,7 @@ def margin_response(
             this module passes them and no headline result uses them.
     """
     if frame is None:
-        frame = analysis_frame(basis_2026, interpolation)
+        frame = analysis_frame(basis_beyond, interpolation)
     capacity, capacity_year = latest_capacity_kb_d()
     runs = recent_runs_kb_d()
     if not label:
@@ -1207,7 +1332,7 @@ def intake_trend_response(
         # No capacity is needed here, so the 2026 basis cannot change the answer,
         # and the held flat basis is used only so the frame carries the same
         # months as the capacity model and the two samples are comparable.
-        frame = analysis_frame(CAPACITY_2026_HELD_FLAT, CAPACITY_STEP)
+        frame = analysis_frame(CAPACITY_BEYOND_HELD_FLAT, CAPACITY_STEP)
     if closure_years is None:
         closure_years = capacity_step_years()
     runs = recent_runs_kb_d()
@@ -1250,7 +1375,7 @@ def imports_beside_intake(frame: pd.DataFrame | None = None) -> Mapping[str, flo
     report says that is arithmetic rather than evidence that imports move too.
     """
     if frame is None:
-        frame = analysis_frame(CAPACITY_2026_HELD_FLAT, CAPACITY_STEP)
+        frame = analysis_frame(CAPACITY_BEYOND_HELD_FLAT, CAPACITY_STEP)
     both = frame.dropna(subset=["intake_kb_d", "imports_kb_d"])
     ratio = both["imports_kb_d"] / both["intake_kb_d"]
     diff_intake = both["intake_kb_d"].diff(12).dropna()
@@ -1525,7 +1650,7 @@ def run_cut_threshold(
     lags: Sequence[int] = THRESHOLD_LAGS,
     replications: int = BOOTSTRAP_REPLICATIONS,
     seed: int = BOOTSTRAP_SEED,
-    basis_2026: str = CAPACITY_2026_HELD_FLAT,
+    basis_beyond: str = CAPACITY_BEYOND_HELD_FLAT,
     max_ci_width: float = THRESHOLD_MAX_CI_WIDTH_USD_BBL,
 ) -> ThresholdResult:
     """Fit the hockey stick, bootstrap the threshold, and say whether it is found.
@@ -1550,7 +1675,7 @@ def run_cut_threshold(
     is None, and the site falls back to the ten year percentile.
     """
     if frame is None:
-        frame = analysis_frame(basis_2026, CAPACITY_STEP)
+        frame = analysis_frame(basis_beyond, CAPACITY_STEP)
     work = frame.copy()
     lag_columns = []
     for k in lags:
@@ -1687,7 +1812,7 @@ def threshold_grid_sensitivity(
     SPEC.md section 6.6.
     """
     if frame is None:
-        frame = analysis_frame(CAPACITY_2026_HELD_FLAT, CAPACITY_STEP)
+        frame = analysis_frame(CAPACITY_BEYOND_HELD_FLAT, CAPACITY_STEP)
     work = frame.copy()
     lag_columns = []
     for k in lags:
@@ -1757,7 +1882,7 @@ def crack_frame(brent_source: str = "fred") -> pd.DataFrame:
 
 
 def horse_frame(
-    basis_2026: str = CAPACITY_2026_HELD_FLAT,
+    basis_beyond: str = CAPACITY_BEYOND_HELD_FLAT,
     interpolation: str = CAPACITY_STEP,
     gas_intensity_mmbtu_per_bbl: float = config.GAS_INTENSITY_MMBTU_PER_BBL,
 ) -> pd.DataFrame:
@@ -1771,7 +1896,7 @@ def horse_frame(
     missing, which is also what makes the common sample something computed rather
     than assumed.
     """
-    runs = utilisation_monthly(basis_2026, interpolation)
+    runs = utilisation_monthly(basis_beyond, interpolation)
     frame = runs.merge(crack_frame(), on="date", how="left")
     frame = frame.merge(
         margin_frame(gas_intensity_mmbtu_per_bbl), on="date", how="left"
@@ -3274,46 +3399,83 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
     add("-" * 78)
     check = utilisation_sanity_check()
     add("  NWE5 crude intake over Energy Institute capacity, step interpolation.")
-    add("  Against what recon 03 section 2.3 measured:")
-    add("    year  utilisation     recon  difference  agrees")
+    for line in _wrap(
+        "THE DENOMINATOR IS LAGGED ONE YEAR AND THAT IS THE FIX FROM THE GATE 3 "
+        "AUDIT. The Energy Institute figure for year Y is capacity at 31 December "
+        "of year Y, so month m of year Y is divided by the 31 December Y-1 "
+        "figure: the capacity the region was known to have when the month began. "
+        "Dividing January of year Y by the 31 December Y figure, which is what "
+        "this module did before, put a number that did not exist at the forecast "
+        "date into 15 of the 72 out of sample targets of section 4. The price of "
+        "the fix is a denominator up to twelve months stale, which is worst in "
+        "2025 where capacity fell 5.3 percent inside the year.",
+        72,
+    ):
+        add("  " + line)
+    add("  Against what recon 03 section 2.3 measured, which divided each year's")
+    add("  intake by that SAME year's capacity and is therefore the same-year")
+    add("  column, not the lagged one the regressions run on:")
+    add("    year  same-year     recon  difference  agrees      lagged  lagged less same")
     for _, row in check.iterrows():
         add(
-            "    %4d  %11s  %8.3f  %+10.6f  %s"
+            "    %4d  %9s  %8.3f  %+10.6f  %-6s  %8s  %+16.6f"
             % (
                 int(row["year"]),
-                _fmt(row["utilisation"], 4),
+                _fmt(row["utilisation_same_year"], 4),
                 row["recon"],
                 row["difference"],
                 "yes" if row["agrees_to_3dp"] else "NO",
+                _fmt(row["utilisation_study"], 4),
+                row["study_less_same_year"],
             )
         )
     disagree = check[~check["agrees_to_3dp"]]
     add(
-        "  %d of %d years agree to three decimals."
+        "  %d of %d years agree to three decimals on the same-year column."
         % (len(check) - len(disagree), len(check))
     )
+    add(
+        "  The lagged column is the one every regression below runs on and it is a"
+    )
+    add(
+        "  DIFFERENT NUMBER ON PURPOSE. The largest gap is %+.4f in %d, which is the"
+        % (
+            check.loc[check["study_less_same_year"].abs().idxmax(), "study_less_same_year"],
+            int(check.loc[check["study_less_same_year"].abs().idxmax(), "year"]),
+        )
+    )
+    add("  size of the closures booked inside that year.")
     capacity_kb_d, capacity_year = latest_capacity_kb_d()
     add(
-        "  2026: no capacity figure exists in any source reached. The published "
-        "series leaves"
+        "  2026: the %d figure of %.1f kb/d is stamped 31 December %d, so it is the"
+        % (capacity_year, capacity_kb_d, capacity_year)
     )
     add(
-        "  2026 NaN (basis %r). The regressions below run on basis %r, which "
-        "carries the %d"
-        % (CAPACITY_2026_NAN, CAPACITY_2026_HELD_FLAT, capacity_year)
+        "  correct denominator for every month of 2026 and NO ASSUMPTION IS MADE "
+        "FOR 2026."
     )
     add(
-        "  figure of %.1f kb/d into 2026 and flags every affected month. The "
-        "without-2026 row is"
-        % capacity_kb_d
+        "  The basis argument (%r or %r) covers months past the file's reach and no"
+        % (CAPACITY_BEYOND_NAN, CAPACITY_BEYOND_HELD_FLAT)
     )
-    add("  the estimate that rests on no assumption.")
+    add(
+        "  month in this sample is one: %d months are flagged capacity_assumed."
+        % int(utilisation_monthly()["capacity_assumed"].sum())
+    )
     add("  Closure step years the fallback draws on, NWE5 capacity falling more")
     add("  than %.0f percent in a year:" % (100 * CLOSURE_STEP_MIN_FALL))
-    add("    all years in the capacity file  %s" % (capacity_step_years(),))
+    add("    fall recorded in the capacity file  %s" % (capacity_step_years(),))
+    add(
+        "    the dummy turns on in the JANUARY AFTER each of those, by the same "
+        "alignment"
+    )
+    add(
+        "    rule as the denominator: %s"
+        % (tuple(y + CAPACITY_SOURCE_LAG_YEARS for y in capacity_step_years()),)
+    )
     add("")
 
-    frame = analysis_frame(CAPACITY_2026_HELD_FLAT, CAPACITY_STEP)
+    frame = analysis_frame(CAPACITY_BEYOND_HELD_FLAT, CAPACITY_STEP)
     add("2. The response, SPEC.md section 6.1")
     add("-" * 78)
     add("  Capacity model, utilisation in percent of capacity")
@@ -3367,12 +3529,18 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
     )
     add(
         "    capacity that is a step function, and that step fell %.1f percent in "
-        "2016 and %.1f percent"
+        "the 2016 figure and"
         % (
             -100
             * float(
                 capacity_annual().set_index("year")["capacity_kb_d"].pct_change()[2016]
             ),
+        )
+    )
+    add(
+        "    %.1f percent in the 2025 one, which under the alignment rule land in "
+        "the dependent at"
+        % (
             -100
             * float(
                 capacity_annual().set_index("year")["capacity_kb_d"].pct_change()[2025]
@@ -3380,8 +3548,11 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
         )
     )
     add(
-        "    in 2025, inside the sample. The capacity equation of SPEC.md section "
-        "6.1 carries no trend"
+        "    2017-01 and 2026-01, both inside the sample. The capacity equation of "
+        "SPEC.md section"
+    )
+    add(
+        "    6.1 carries no trend"
     )
     add(
         "    and no closure step, so those jumps sit in its dependent as noise. "
@@ -4270,28 +4441,36 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
         )
         if dependent == DEPENDENT_CAPACITY:
             add(
-                "    All %d of these months carry the ASSUMED 2026 capacity, "
-                "since no 2026 capacity figure"
+                "    %d of these months carry an ASSUMED capacity. Under the "
+                "alignment rule the 2025"
                 % result.capacity_assumed_post
             )
             add(
-                "    exists anywhere, so part of every residual in this block is "
-                "that assumption and not the"
+                "    year end figure is the right denominator for every month of "
+                "2026, so on this data"
             )
             add(
-                "    world. The block below needs no capacity at all and is the "
-                "one to read for that reason."
+                "    date the count is zero and no residual in this block owes "
+                "anything to an assumption."
+            )
+            add(
+                "    What every one of them DOES carry is a denominator that is up "
+                "to twelve months"
+            )
+            add(
+                "    stale, which is the price of the alignment and is the same "
+                "price every month pays."
             )
         else:
             add(
                 "    This dependent needs NO capacity figure, so none of these "
-                "residuals owes anything to the"
+                "residuals owes anything to"
             )
             add(
-                "    2026 capacity assumption. The cap assumed column is carried "
-                "through from the frame and is"
+                "    the capacity series at all. The cap assumed column is carried "
+                "through from the frame"
             )
-            add("    inert here.")
+            add("    and is inert here.")
         add("")
     add("  THE COMPETING EXPLANATIONS, none of which this data can separate")
     add(
