@@ -3850,6 +3850,36 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
             "    is the same exercise for a model that predicts the training "
             "mean and nothing else."
         )
+        # A 60 month training window on a 132 month sample puts the first
+        # forecast in 2020-04, so EVERY out of sample month is a crisis month.
+        # Measured here rather than asserted, because it is the largest caveat
+        # on the race and it would be easy to leave unsaid.
+        episodes_out = episode_mask(pd.DatetimeIndex(results[0].oos.dates))
+        add(
+            "    CAVEAT ON THE WHOLE COLUMN: a %d month training window on a %d "
+            "month sample puts the first"
+            % (results[0].oos.min_train, results[0].model.regression.nobs)
+        )
+        add(
+            "    forecast in %s, so all %d out of sample months fall in %s to "
+            "%s, and %d of them sit inside"
+            % (
+                results[0].oos.first_forecast[:7],
+                results[0].oos.n_forecasts,
+                results[0].oos.first_forecast[:7],
+                results[0].oos.last_forecast[:7],
+                int(episodes_out["any_episode"].sum()),
+            )
+        )
+        add(
+            "    one of the three episode windows. The out of sample period IS "
+            "the crisis period. It is not a"
+        )
+        add(
+            "    quiet holdout and no choice of training window could make it "
+            "one on a sample that starts in"
+        )
+        add("    2015.")
         key, sentence = horse_race_winner(results)
         for i, line in enumerate(_wrap(sentence, 72)):
             add("    %s%s" % ("RANKING: " if i == 0 else "         ", line))

@@ -700,6 +700,389 @@ it does not move the margin.
 
 ---
 
+### 4.3 The margin the Gate 3 regressions ask about, and what changed
+
+**Read this before reading any number out of `src/crack/analysis.py`.** SPEC.md
+section 6.3 sets up a three horse race: (A) the raw gasoil crack, (B) the
+official margin, (C) the margin after gas, where SPEC.md section 4.4 defines the
+margin after gas as the gross margin minus a gas cost. Gate 2 established that
+DGEC's published MBR is **already net of purchased gas**, section 2.3 and section
+4.2 above. On the spec's own arithmetic B and C would therefore be the same
+series and the race would be a two horse race still being described as three.
+
+The third horse in this repository is therefore **the margin after gas at this
+study's own gas intensity**:
+
+```
+margin_study_intensity(t) = MBR(t) - gas_wedge(t)
+gas_wedge(t)              = (0.21217 - 0.0659) MMBtu/bbl x gas price(t) in $/MMBtu
+```
+
+that is, DGEC's published margin with DGEC's embedded gas assumption taken out
+and this study's put in. It is not the spec's original C and it is not presented
+as it. What it answers is a real and separate question: DGEC's 1.0 percent of the
+tonne is a French linear programming model's purchased gas for a largely self
+sufficient refinery, and 0.21217 MMBtu per barrel is EIA's US figure for a
+refinery that buys more of its energy, so the horse race asks whether a refiner
+at the higher gas intensity shows a different relationship with runs than the
+official margin does.
+
+The two are not the same series. Over the 140 published months the wedge runs
+from 0.231 to 10.245 $/bbl, mean 1.704, so it moves month by month rather than
+shifting the level. Measured over the same months:
+
+| Series | mean | min | max |
+|---|---|---|---|
+| MBR as DGEC publishes it | 6.992 | -0.271 | 38.051 |
+| gas wedge | 1.704 | 0.231 | 10.245 |
+| margin at this study's intensity | 5.288 | -1.818 | 34.963 |
+
+**DGEC's own MBR is reported beside it in every table `analysis.report()`
+prints**, unchanged, so a reader who wants the official margin never sees only
+this study's re-pricing of it.
+
+### 4.4 Utilisation, and the 2026 hole
+
+`utilisation = NWE5 crude intake (JODI, BE DE FR NL GB) / capacity (Energy
+Institute)`. Three decisions, all visible in the code and none of them silent.
+
+**Capacity is a step, not a ramp.** The Energy Institute figure is atmospheric
+distillation capacity **at year end**, so a closure inside a year is already
+fully inside that year's printed number. Each year's figure is carried across all
+twelve of its months, which makes a closure a step at the turn of the year rather
+than a slope spread over twelve. `CAPACITY_LINEAR` exists so the difference can
+be measured, and it is never the default, because smoothing closures is the thing
+SPEC.md section 6.1 asks not to do.
+
+**Only the ratio is published.** The capacity numbers stay in `data/private`,
+`docs/sources.md` section 4.4 and `docs/open-questions.md` section 13 say why.
+
+**There is no 2026 capacity figure in any source this project reached.** The
+Energy Institute edition ends at 2025, JODI runs to 2026-06, so six months with a
+numerator have no denominator. Nothing is extrapolated. The default basis,
+`CAPACITY_2026_NAN`, leaves those months missing. The regressions run on
+`CAPACITY_2026_HELD_FLAT`, which carries the 2025 figure of 6,238 kb/d into 2026
+and flags every affected row `capacity_assumed`, because otherwise the 2026
+episode that SPEC.md section 6.1 requires be reported with and without cannot be
+in the sample at all. The "episode months dropped" row of the response table is
+the same estimate resting on no assumption, and it is reported beside the others.
+
+**The fallback is built too, and it is not a robustness check.** SPEC.md section
+6.1 offers intake with a trend and closure dummies "if the capacity table is
+unusable". The table is usable and not committable, so the owner's decision at
+Gate 3 was to build both. The fallback regresses 100 times the log of NWE5 crude
+intake on a linear monthly trend, month fixed effects, step dummies from January
+of each year in which NWE5 capacity fell by more than 2 percent, and the same
+margin lags. Two percent of a roughly 6.6 mb/d system is about 132 kb/d, one
+medium NWE refinery; the threshold was chosen from that reasoning before any
+regression was run and has not been moved. `intake_trend_response` also runs with
+`closure_years=()`, which needs no capacity data at all, and both are reported.
+
+### 4.5 Two estimator choices that could look like tuning, and are not
+
+SPEC.md section 6.6 forbids parameter search. Two numbers in `analysis.py` are
+read off the data rather than fixed, so both are written down here.
+
+**The Newey-West truncation lag** is `max(3, floor(4 * (n / 100) ** (2 / 9)))`,
+the usual automatic rule with SPEC.md section 6.1's floor of 3 on top. At n = 135
+it gives 4. It is a function of the sample size and of nothing else, and
+`tests/test_analysis.py` checks both the rule and that the covariance actually
+uses that many lags, against statsmodels on the same data.
+
+**The bootstrap block length** is the shortest lag at which the dependent's own
+sample autocorrelation first falls inside the two over root n band. On the real
+sample that is **20 months**, because utilisation is very persistent: the
+autocorrelations run 0.855, 0.742, 0.678 and are still near 0.5 at a year. A
+shorter block would narrow the threshold interval and it would be the wrong
+answer, so the block was not shortened. The rule, the band and the
+autocorrelations it was read off are all printed by `analysis.report()` so the
+reading can be checked rather than taken.
+
+### 4.6 The horse race, and the substitution inside it
+
+SPEC.md section 6.3 calls the horse race the point of the analysis and names
+three runners: **(A)** the raw gasoil crack, the number on every screen, **(B)**
+the official margin, **(C)** the margin after gas.
+
+**Horse C in this study is a substitution, and it is labelled one everywhere.**
+Gate 2 established that DGEC's published MBR is already net of purchased gas at
+DGEC's own embedded intensity of 0.06590 MMBtu/bbl, section 4.2 above. Read
+literally, the spec's B and C are therefore the same series, and a race between
+them would be two horses presented as three. So horse C is the published MBR
+re-priced at this study's EIA derived intensity of 0.21217 MMBtu/bbl:
+
+```
+horse C = MBR - gas wedge
+gas wedge = (0.21217 - 0.06590) * gas price in $/MMBtu
+```
+
+That is a real and different question, about a refiner who buys more of his
+energy than DGEC's model refinery does, and the wedge ran 0.23 to 10.24 $/bbl
+over the sample, so the two are not the same column. **It is not the spec's
+original horse C**, the substitution is carried on the `Horse` record as a flag
+rather than in prose, and `tests/test_analysis.py` asserts that the flag reaches
+every table the race is printed in.
+
+**The sample trap, and what was done about it.** The OPEC Rotterdam quotations
+start 2000-10 and DGEC's MBR file starts 2015-01. Horse A therefore has 288
+usable months and horses B and C have 132. Racing each on its own sample would
+hand A twenty extra years of quieter data and the comparison would be worthless.
+**The race runs on the common sample, 2015-04 to 2026-03, n = 132 for every
+horse, at the same Newey-West lag**, and horse A's longer sample is reported
+separately and labelled as not being the race. `common_sample_dates` computes the
+intersection, the restriction is applied to the rows **after** the lags are built
+from the full frame, and a test checks that a restricted horse's lag 1 column is
+still the value one calendar month earlier and not the previous surviving row.
+
+The race is run **on both dependents**, utilisation over Energy Institute
+capacity and the log intake fallback, because the first half of this gate found
+that the two disagree about the response and a race that held under only one of
+them would be a weaker result than one that held under both.
+
+**The out of sample RMSE.** SPEC.md section 6.3 asks for an expanding window one,
+and it is the honest discriminator: in sample R squared rewards a regressor for
+fitting 2020 and 2022 after the fact. The window trains on the first 60 months,
+forecasts month 61, adds it and refits, and so on to the end of the sample, 72
+forecasts in all. Every coefficient is estimated on the training rows only. The
+specification, meaning which columns exist, is fixed by SPEC.md section 6.1
+before any data is seen and is the same at every origin; an episode dummy for an
+episode that has not happened yet is a column of zeros in the training rows and
+gets a zero coefficient, so the first month of an episode is forecast as though
+the episode were not there. The design comes off the fitted regression rather
+than being rebuilt, so the out of sample equation cannot drift away from the in
+sample one printed beside it. The test that carries the claim poisons the
+dependent from some month onward with an absurd value and asserts that every
+forecast made before that month is bit for bit unchanged.
+
+Beside each horse's RMSE is the same exercise for a model that predicts the
+training mean and nothing else. A regressor that cannot beat the mean has not
+earned the word "explains".
+
+**The largest caveat on that whole column, said plainly.** A 60 month training
+window on a 132 month sample puts the first forecast in 2020-04. **All 72 out of
+sample months therefore fall between 2020-04 and 2026-03, and 25 of them sit
+inside one of the three episode windows.** The out of sample period *is* the
+crisis period. It is not a quiet holdout, and no choice of training window makes
+it one on a sample that starts in 2015: shortening the window to gain quieter
+months would be choosing the window after seeing what it does, which SPEC.md
+section 6.6 forbids. Horse A's own longer sample gets 228 forecasts from 2007-04,
+which is a far more varied period, and that is one more reason its numbers are
+reported separately rather than dropped into the race table.
+
+**What the race found, and it is not what the spec expected.** Under both
+dependents the lowest out of sample RMSE belongs to horse C, by 0.34 percent
+under the capacity dependent and 1.54 percent under the fallback. **Not one of
+the six pairwise squared error differences, three under each dependent, is
+distinguishable from zero**, at t between 0.01 and 0.82. So the race is a **dead
+heat**. The raw gasoil crack is not beaten by the official margin and does not
+beat it, and the same is true of this study's margin after gas. The module prints
+the ranking because the spec asks for it and withholds the word "wins", and
+`horse_race_winner` assembles that sentence from the numbers rather than from an
+opinion, so it will say something different if the data ever does.
+
+**What separates them is in sample, not out of it.** Under the capacity
+dependent none of the three coefficients is distinguishable from zero at all.
+Under the fallback all three are positive, A at +0.195 with a Newey-West standard
+error of 0.092, B at +0.458 with 0.220 and C at +0.505 with 0.211.
+
+**What B and C give that A cannot**, which is the honest statement of this
+study's value once the race has come back a tie:
+
+- **A level.** A crack of 25 $/bbl is a number; a margin of 6 $/bbl is a
+  decision. Only the margin is denominated in what the barrel earns after the
+  crude and the energy are paid for, so only the margin can be set beside a cash
+  cost, and only the margin has a sign that means something.
+- **The gas wedge.** It ran 1.02 $/bbl on average before 2022 and 5.90 $/bbl
+  through 2022, peaking at 10.24. A gasoil crack cannot show that the same crack
+  was worth several dollars a barrel less to a gas fired refinery that year.
+- **A threshold in dollars.** "How far is today from the level where runs get
+  cut" is a question that can only be asked in margin space. This study did not
+  find that level, section 4.7 below, but the question is askable of B and C and
+  is not askable of A.
+
+### 4.7 Endogeneity, which is not fixed and is not hidden
+
+**Runs move cracks.** More runs mean more product on the water and a weaker
+crack, so the regressor this equation treats as a cause is partly an effect of
+the thing it is explaining. The bias that puts in the estimated response is
+**toward zero**. Every coefficient reported by this module should be read as a
+lower bound in absolute value, and the honest reading of a coefficient
+indistinguishable from zero is "this sample cannot see the response", not "there
+is no response".
+
+Lagging the regressor one to three months, which SPEC.md section 6.1 does, helps
+only partly: it removes the same month simultaneity and not the rest, because a
+shock that raises runs depresses cracks for months afterwards and because both
+series are persistent. `analysis.endogeneity_diagnostic` prints the correlation
+of runs with each regressor at lags 0 to 3 so the shape of the problem is
+visible. **It identifies nothing** and the report says so: simultaneity is not
+visible in a correlation.
+
+**The instrument was the attempt to fix it, and it failed.** SPEC.md section 6.3
+suggests the gas cost as an instrument for the margin after gas, on the ground
+that TTF was driven by pipeline cuts in 2022 and LNG disruption in 2026 rather
+than by NWE runs.
+
+*The exclusion restriction, stated before the instrument was run.* It is that the
+European gas price affects NWE refinery runs **only** through the refining
+margin. It is arguable and it is not obvious, and this study's view is that it
+probably does not hold exactly. Gas is not only a cost line: it is a hydrogen
+feedstock for hydrotreating and hydrocracking, so a gas shock can change what a
+European refiner runs and how hard for reasons the margin does not capture. A gas
+shock also arrives inside a wider energy shock that moves product demand,
+industrial activity and crude at once, and those channels reach runs without
+passing through the margin.
+
+*What was expected of the first stage, also written down first.* That it would be
+relevant by construction and that a large F would therefore be partly arithmetic:
+this study's margin contains the gas price as an exact linear term with
+coefficient -0.14627, and DGEC's MBR is itself net of gas.
+
+*What actually happened.* **The first stage F is 0.215 on the capacity dependent
+and 0.070 on the fallback.** The fitted first stage coefficient is +0.043, not
+-0.146: the margin's own co-movement with gas, the months when European gas was
+dear being the months when cracks were high, roughly cancels the mechanical
+deduction, and the instrument has almost no independent purchase on the margin
+once the controls are in. The two stage estimates that follow, -8.83 with a
+standard error of 19.08 and +4.98 with 17.58, are not usable and are printed only
+because the spec asks for the exercise.
+
+**So the instrument is weak and this study says so rather than forcing it.**
+Nothing downstream reads it. The headline response is ordinary least squares, the
+endogeneity is unaddressed, and that is reported as a limitation and not as a
+solved problem.
+
+### 4.8 Did the link hold in 2026: count the months first
+
+SPEC.md section 6.4 asks whether the relation held after 2026-02-28. Before
+running anything, the months were counted.
+
+| Series | Last month |
+|---|---|
+| JODI NWE5 refinery crude intake, the dependent | 2026-06 |
+| OPEC Rotterdam quotations, horse A | 2026-02 |
+| DGEC MBR, horses B and C | 2026-08 |
+
+The OPEC series stops in 2026-02 for a collection reason and not a publication
+one: the six Monthly Oil Market Report issues from April to September 2026 are
+not in the Internet Archive and this pipeline cannot fetch them. That is recorded
+as a manual step in `data/manifest.json` and it is why the horse race ends in
+2026-03 while the section 6.1 response reaches 2026-06.
+
+The dependent ends 2026-06, so there are **four** months after the break with a
+dependent and all three margin lags. The bar this study set before looking, and
+did not move afterwards, is **twelve** post break months, one full seasonal
+cycle, because the equation carries eleven month dummies and a verdict drawn from
+fewer months than it has seasonal terms is a verdict about which months happened
+to fall after the break.
+
+**Four months cannot say whether a relation held, so this study returns no
+verdict.** That is the answer to SPEC.md section 6.4 on this data date, and it is
+one sentence rather than a Chow test that would produce a number looking like an
+answer. The question reopens with the JODI release for 2027-02, around April 2027.
+
+What can be done honestly is done: the equation is fitted on the months up to and
+including 2026-02 and each post break month is predicted out of sample, with the
+episode dummies deliberately **off**, since a 2026 dummy would absorb exactly the
+deviation being looked for. The residuals are a description of four months and
+the module does not call them a test.
+
+| Month | Capacity model, kb/d | Fallback, kb/d |
+|---|---|---|
+| 2026-03 | -17 | +44 |
+| 2026-04 | -271 | -285 |
+| 2026-05 | -75 | -74 |
+| 2026-06 | -250 | -469 |
+
+Runs came in below what the margin implies in four of four months on the capacity
+model and three of four on the fallback, the largest gap 1.79 in sample residual
+standard deviations. **Every capacity model month here also carries the assumed
+2026 capacity**, section 4.4, so part of each of those residuals is that
+assumption and not the world; the fallback needs no capacity figure and is the
+block to read for that reason.
+
+**The competing explanations, none of which this data can separate.** Three
+events fall inside these four months, each cited from `data/seed/events.json`
+with its source URL: the strikes on Iran and the halt to Hormuz traffic on
+2026-02-28, the IEA coordinated release of 400 million barrels on 2026-03-11, and
+the US and Iran ceasefire on 2026-04-07. At least three mechanisms would put runs
+below what the margin implies, and all three are consistent with this table:
+**feedstock availability**, with Hormuz halted a refiner can face a good margin
+and have no suitable crude on the quay, which is what the IEA reported for
+refiners outside the Gulf; **unplanned outages**, since one large NWE unit down
+for a month is worth about a hundred kb/d, the size of these residuals; and
+**maintenance**, since the NWE spring turnaround season is March to May and its
+timing moves year to year while the month dummies carry only the average season.
+
+**This study does not pick one.** Four monthly observations cannot separate three
+explanations, and JODI publishes no outage or turnaround series that would let
+them be separated. SPEC.md section 6.4 says to set them out and not to choose.
+
+### 4.9 Seasonality, checked rather than asserted
+
+**Which series, and where the join is.** Two layers, two panels, **never one
+line**:
+
+- **Monthly, the long history.** OPEC MOMR Rotterdam quotations, 2000-10 to
+  2026-02, 305 months. This is the only series in the project deep enough to give
+  the five year range SPEC.md section 6.5 asks for.
+- **Weekly, where it reaches.** This study's reconstruction of the DGEC note
+  chart, 2022-07-01 to 2026-09-04, 219 Fridays. It is not a DGEC publication and
+  it carries the reconstruction error measured in section 6 below.
+
+They quote different products: DGEC's Gazole and Eurosuper against OPEC's gasoil
+and premium gasoline. Over the 44 overlapping months the weekly series averaged
+to months sits **+0.92 $/bbl** from the monthly one on gasoil, mean absolute gap
+1.24, correlation 0.9935; and **-9.01 $/bbl** on gasoline, mean absolute gap 9.02,
+correlation 0.8861. The gasoline gap is the size of a different product, not an
+error, and it is the reason the two layers are shown side by side and never
+spliced.
+
+**The five year weekly range SPEC.md section 6.5 asks for does not exist.** The
+weekly reconstruction begins 2022-07-01, so at most four calendar years are
+available and the first half of the year has only three. Every week carries an
+`n_years` count so a chart prints the depth beside the band rather than drawing
+four years and calling them five.
+
+**The textbook check.** Each crack is demeaned within its own calendar year, so
+what is left is the shape of the year and not its level, which otherwise swings
+by tens of dollars between years for reasons that are not seasonal. For each
+complete year the season's months less the other months is one number. The mean
+of those numbers is reported with its standard error **across years**, because a
+year is plausibly independent of the next for this purpose and a month is not.
+The month sets were written down before the test: driving season May to September,
+heating season November to March. The removable years of SPEC.md section 6.5 are
+2020, 2022 and 2026, and a test poisons those years with absurd values and asserts
+that excluding them gives the same answer as deleting them.
+
+| Claim | Years | In season | Out | Difference | se | t | |
+|---|---|---|---|---|---|---|---|
+| gasoline into the driving season | 25 | +2.79 | -1.99 | **+4.78** | 1.03 | +4.64 | holds |
+| gasoil into the heating season | 25 | -0.21 | +0.15 | -0.37 | 1.04 | -0.35 | does not hold |
+| gasoline, 2020, 2022 and 2026 removed | 23 | +2.51 | -1.80 | **+4.31** | 0.85 | +5.07 | holds |
+| gasoil, 2020, 2022 and 2026 removed | 23 | +0.15 | -0.11 | +0.26 | 0.76 | +0.35 | does not hold |
+
+**Gasoline: the textbook holds and it is not close.** The driving season months
+sit 4.78 $/bbl above the rest of the year, positive in 22 of 25 years, and the
+difference survives removing the three crisis years. Peak month June, trough
+December.
+
+**Gasoil: the textbook does not hold as it is usually stated.** The November to
+March window is 0.37 $/bbl from the rest of the year with a standard error of
+1.04, which is nothing, and it is positive in only 16 of 25 years. The within
+year shape says why: the gasoil crack's strongest month is **October** at +3.00
+and its second strongest November at +2.09, while December, January and February
+are all negative. **Such strength as there is arrives in the autumn build and has
+faded by the middle of the winter it was built for.**
+
+A window drawn around that October peak would fit better. **It is not tested here
+and no number for it is reported**, because a window chosen after seeing the
+table is a parameter search and SPEC.md section 6.6 forbids it. The honest
+statement is the one above: on this sample, in the windows a desk would name out
+loud, gasoline is seasonal and gasoil is not.
+
+---
+
 ## 5. The monthly averaging rule, fixed once and in the open
 
 A daily series becomes a monthly one in exactly one place,
@@ -802,11 +1185,27 @@ contribution, a breakeven or a ten year percentile. The four layers of section
 trip, alignment and replication tests of SPEC.md section 9 are Gate 2 tests; the
 anchor and intensity tests of that section already run.
 
-**Gate 3, the analysis.** No regression has been run. There is no utilisation
-response, no run cut threshold, no horse race between the raw gasoil crack, the
-official margin and the margin after gas, no instrument, and no 2026 residual
-test. Any number in those categories that appears anywhere before Gate 3 is a
-bug.
+**Gate 3, the analysis, is now complete.** `src/crack/analysis.py` covers SPEC.md
+section 6 end to end: the utilisation series and its fallback and the response
+regression with Newey-West standard errors and the kb/d translation (6.1), the
+run cut threshold with its block bootstrap (6.2), the three horse race with an
+expanding window out of sample RMSE on both dependents, the endogeneity statement
+and the gas instrument with its first stage F (6.3), the 2026 residuals (6.4) and
+the seasonal check (6.5). Sections 4.3 to 4.9 above document every choice those
+make. `analysis.report()` prints the whole of it and is the Gate 3 output.
+
+**Two of section 6's questions came back negative and stay negative.** The run
+cut threshold is **unidentified**, so `headroom` is None and SPEC.md section
+6.2's fallback applies: the site shows the ten year percentile and no headroom
+figure. And the 2026 question has **no verdict**, because the post break sample
+is four months against a bar of twelve set before looking. Both are results
+rather than unfinished work, and SPEC.md section 2 rule 4 allows them.
+
+**What still does not exist in the analysis layer, and should not.** Nothing
+writes a site facing JSON artifact: SPEC.md section 10 puts that behind Gate 4,
+and `analysis.report()` deliberately writes nothing to `data/`. There is no
+forecast, no strategy, no Sharpe ratio and no profit and loss anywhere, by
+SPEC.md section 6.6. Any number in those categories appearing anywhere is a bug.
 
 **Gate 4 and Gate 5, the site.** There is no `index.html`, no CSS and no
 JavaScript, and there should not be: SPEC.md section 10 forbids UI work before

@@ -1121,3 +1121,302 @@ Three things were done and one was deliberately not:
 
 **To close it:** the owner decides whether SPEC.md section 9's Catches column
 moves. Nothing in the code or the tests depends on the answer.
+
+---
+
+# Gate 3, the analysis
+
+SPEC.md section 6. Nine entries. Several of them are the study finding nothing,
+which SPEC.md section 2 rule 4 allows, and they are written as open questions
+rather than as results because each one names something a later data date or an
+owner decision could change.
+
+---
+
+## 35. The horse race is a dead heat, and 132 months may never be able to break it
+
+**Status: open. It is a question about power, not about these three regressors.**
+
+SPEC.md section 6.3 calls the horse race the point of the analysis and asks which
+of the raw gasoil crack, the official margin and the margin after gas explains
+NWE runs best. On the common sample the answer is **none of them beats another**.
+The expanding window out of sample RMSEs are 6.6471, 6.6431 and 6.6202 under the
+capacity dependent and 4.8887, 4.7754 and 4.7018 under the fallback, and **not
+one of the six pairwise squared error differences is distinguishable from zero**,
+at t between 0.01 and 0.82.
+
+The margins are 0.34 percent and 1.54 percent. To call a difference of that size
+on 72 forecasts would need a squared error differential standard error roughly an
+order of magnitude smaller than the measured one. That is not a matter of a
+better estimator. The common sample is 132 months long because DGEC's MBR file
+starts in 2015-01, and it grows by twelve months a year.
+
+What was NOT done about it, deliberately: no third dependent was tried, no lag
+structure was searched, no subsample was found on which one horse separates.
+SPEC.md section 6.6 forbids all three and SPEC.md section 2 rule 3 says report
+the result whatever it is. The module prints the ranking because the spec asks
+for the numbers, and withholds the word "wins", and `horse_race_winner` assembles
+that sentence from the measured loss differentials, so it will say something
+different the moment the data does.
+
+**To close it:** more months, or a reader who accepts that "these three are
+indistinguishable on this evidence" is the finding. The site should say the
+second thing.
+
+---
+
+## 36. Is the horse race still the spec's horse race once C is a substitution?
+
+**Status: open. It needs the owner.**
+
+Gate 2 established that DGEC's published MBR is already net of purchased gas at
+DGEC's own embedded intensity, so SPEC.md section 6.3's horse B and horse C, read
+literally, are **the same series**. Racing them would be two horses presented as
+three.
+
+What this gate did: horse C is the published MBR re-priced at this study's EIA
+derived intensity, `MBR - (0.21217 - 0.06590) * gas price`, the substitution is
+carried as a flag on the `Horse` record so no table can print it unlabelled, and
+`analysis.report()` says so at the top of the section. The wedge ran 0.23 to
+10.24 $/bbl over the sample, so the two columns are genuinely different and the
+race is genuinely three horses.
+
+What it is not: what SPEC.md section 6.3 wrote. Two other readings were available
+and were not taken, because both are the owner's call and not a build decision.
+The race could have been run as two horses with that said plainly. Or a fourth
+runner could have been added, a margin this study builds itself out of cracks and
+yields, which would be gross of gas and would let the spec's B and C be genuinely
+distinct; that is a larger piece of work and it would need the product
+quotations, which exist only from 2015 on the DGEC side and carry the
+reconstruction error on the weekly side.
+
+**To close it:** the owner says whether the substitution stands, whether the site
+calls it horse C or something else, and whether a self built gross margin is
+wanted as a fourth runner in a later gate.
+
+---
+
+## 37. The out of sample period is entirely the crisis period
+
+**Status: open, and it is structural rather than fixable.**
+
+The expanding window trains on 60 months before its first forecast. On a sample
+that starts 2015-04 that puts the first forecast in **2020-04**, so all 72 out of
+sample months fall between 2020-04 and 2026-03 and 25 of them sit inside one of
+the three episode windows of SPEC.md section 6.1.
+
+**The holdout is the pandemic, the invasion and the 2026 war.** Every out of
+sample number in section 4 of `analysis.report()` should be read as "how these
+three regressors did through three crises", not as "how they do".
+
+The obvious fix is the wrong one. Shortening the training window to 36 months
+would buy two quieter years of holdout and would be choosing a window after
+seeing what it does to the answer, which SPEC.md section 6.6 forbids. The window
+was set at 60 months, five years, on the reasoning that it is long enough to
+identify eleven month dummies plus three lags, before any RMSE was computed, and
+it has not moved.
+
+Horse A's own longer sample gets 228 forecasts from 2007-04 and is a far more
+varied test. That is one of the reasons it is reported beside the race rather
+than in it.
+
+**To close it:** nothing, until the sample carries a long quiet stretch after
+2015. Worth restating on the site rather than closing.
+
+---
+
+## 38. The gas instrument is dead, and the reason is interesting enough to write down
+
+**Status: closed as an instrument, open as a question about what else might work.**
+
+SPEC.md section 6.3 suggests the gas cost as an instrument for the margin after
+gas. The expectation, written down before running it, was that the first stage
+would be **too** strong to be interesting: this study's margin contains the gas
+price as an exact linear term with coefficient -0.14627, so relevance looked
+mechanical.
+
+**It came out at F = 0.215 on the capacity dependent and F = 0.070 on the
+fallback.** The fitted first stage coefficient is +0.043, not -0.146. The
+arithmetic deduction is roughly cancelled by the margin's own co-movement with
+gas: the months when European gas was dear, 2022 above all, are the months when
+product cracks and therefore the MBR were high. The two effects are of similar
+size and opposite sign, so the gas price has almost no net purchase on the margin
+once month effects and regime terms are in.
+
+The exclusion restriction was also stated before the run and this study's view of
+it is that it probably does not hold exactly: gas is a hydrogen feedstock as well
+as a cost line, so a gas shock can change what a European refiner runs for
+reasons the margin does not capture, and a gas shock arrives inside a wider
+energy shock with its own routes to runs. So the instrument fails on relevance
+and is doubtful on validity, and SPEC.md section 6.3's instruction is to say that
+rather than force it. Nothing downstream reads the two stage estimates.
+
+**The endogeneity therefore remains unaddressed.** Runs move cracks, the bias is
+toward zero, and every coefficient this study reports is a lower bound in
+absolute value.
+
+**To close it:** a candidate instrument that moves the NWE margin without
+touching NWE runs through any other channel. Non European refinery outages and
+Russian pipeline flow are the two that come to mind, and neither has a free,
+redistributable monthly series this project has found. Not attempted, because
+searching over candidate instruments until one has an F above 10 is a parameter
+search wearing a different hat.
+
+---
+
+## 39. SPEC.md section 6.4 has no answer on this data date, and reopens in April 2027
+
+**Status: open by arithmetic. Nothing to decide.**
+
+SPEC.md section 6.4 asks whether the relation held after 2026-02-28. JODI
+refinery intake, the dependent, ends 2026-06, so there are **four** post break
+months with a dependent and all three margin lags. The bar set before looking was
+twelve, one full seasonal cycle, because the equation carries eleven month
+dummies.
+
+**Four months cannot say whether a relation held**, so no verdict was returned
+and no test was run that would have produced a number looking like one.
+
+What is reported instead: the equation fitted on months to 2026-02 and each post
+break month predicted out of sample, with the episode dummies deliberately off,
+since a 2026 dummy would absorb exactly the deviation being looked for. Runs came
+in below what the margin implies in four of four months on the capacity model and
+three of four on the fallback, the largest gap 1.79 in sample residual standard
+deviations. Three explanations are set out and cited, feedstock availability,
+unplanned outages and maintenance timing, and **none is chosen**, because four
+monthly observations cannot separate three explanations and JODI publishes no
+outage or turnaround series that would let them be separated.
+
+**To close it:** the JODI release covering 2027-02, around April 2027. Then the
+same function returns a verdict instead of a count.
+
+---
+
+## 40. The gasoil seasonal window everybody quotes is not the one in the data
+
+**Status: open. It is a question about what the site should draw.**
+
+SPEC.md section 6.5 asks for the textbook pattern to be checked rather than
+asserted. Checked, on 25 complete years of OPEC Rotterdam quotations, each year
+demeaned by its own mean so the level swings between years do not drown the
+shape:
+
+* **Gasoline into the driving season holds and is not close.** May to September
+  sits +4.78 $/bbl above the rest of the year, t +4.64, positive in 22 of 25
+  years, and it survives removing 2020, 2022 and 2026 (+4.31, t +5.07).
+* **Gasoil into the heating season does not hold.** November to March sits -0.37
+  $/bbl from the rest of the year with a standard error of 1.04, t -0.35, and is
+  positive in only 16 of 25 years. Removing the three crisis years turns the sign
+  without changing the verdict: +0.26, t +0.35.
+
+The month by month shape says why. The gasoil crack's strongest months are
+**October** at +3.00 and November at +2.09, and December, January and February
+are all negative. Such strength as there is arrives in the autumn build and has
+faded by the middle of the winter it was built for.
+
+**A window drawn around that October peak would fit, and it is not tested and no
+number for it is reported.** A window chosen after seeing the table is a
+parameter search and SPEC.md section 6.6 forbids it. Writing one down now for a
+later gate to test on later data would be legitimate; testing it on the same 25
+years would not.
+
+**To close it:** the owner decides whether the Cracks view draws the desk's
+November to March window and reports that it fails, draws the measured shape and
+lets the reader see the October peak, or both. This study's recommendation is
+both, with the failed test printed, because the failure is the more useful fact.
+
+---
+
+## 41. The five year weekly seasonal range SPEC.md section 6.5 asks for does not exist
+
+**Status: open. It needs the owner.**
+
+SPEC.md section 6.5 asks for each crack by week of year with the prior five years
+as a range. The weekly layer is this study's reconstruction of the DGEC note
+chart and it begins **2022-07-01**, so at most four calendar years are available,
+and weeks in the first half of the year have only three. No arrangement of the
+data produces five.
+
+What was done: `seasonal_weekly` carries an `n_years` count on every week so a
+chart prints the depth beside the band instead of drawing four years and calling
+them five, and the long history is served from the monthly OPEC series, which
+does carry five years for every month and is where the textbook check above is
+run.
+
+**The two layers are not spliced and must not be.** They quote different
+products, DGEC's Gazole and Eurosuper against OPEC's gasoil and premium gasoline.
+Over the 44 overlapping months the weekly series averaged to months sits +0.92
+$/bbl from the monthly one on gasoil, mean absolute gap 1.24, correlation 0.9935;
+and **-9.01 $/bbl** on gasoline, mean absolute gap 9.02, correlation 0.8861. The
+gasoline figure is the size of a different product, not an error.
+
+**To close it:** the owner decides whether the weekly seasonal view ships with a
+three to four year band labelled with its depth, or whether the seasonal view is
+monthly only until the reconstruction has five years, which is 2027-07.
+
+---
+
+## 42. The two dependents disagree about whether there is a response at all
+
+**Status: open, and it is the first half of this gate's finding carried forward.**
+
+Under the capacity dependent, utilisation over Energy Institute capacity, **none
+of the three horses has a coefficient distinguishable from zero**: A at -0.102
+with a Newey-West standard error of 0.113, B at -0.066 with 0.294, C at +0.121
+with 0.322. Under the fallback dependent, the log of NWE5 crude intake with a
+trend and closure steps, **all three are positive and two clear a t of 2**: A at
++0.195 with 0.092, B at +0.458 with 0.220, C at +0.505 with 0.211.
+
+The first half of this gate established the mechanism, as a labelled diagnostic
+and not as a reported result: the capacity denominator is a step function that
+fell 3.0 percent in 2016 and 5.3 percent in 2025 inside the sample, SPEC.md
+section 6.1's capacity equation carries neither a trend nor a closure step, so
+those jumps sit in its dependent as noise, and adding both moves its coefficient
+87 percent of the way to the fallback's.
+
+Neither model was declared the winner, because SPEC.md section 6.1 asks for the
+capacity model and names the fallback as what to use "if the capacity table is
+unusable", and the capacity table is usable. So both are reported with their own
+standard errors.
+
+**This matters for the site**, which has to put one number in the Runs and crude
+demand view. The two disagree about whether a 10 $/bbl move is worth +75 kb/d
+with an interval spanning zero, or +262 kb/d with an interval that does not.
+
+**To close it:** the owner chooses which is the headline and which is the check,
+or the view shows both side by side. This study's recommendation is both, since
+the disagreement is a real feature of the data and hiding it would be the one
+choice that is definitely wrong.
+
+---
+
+## 43. Nothing in this gate has been checked against a second implementation end to end
+
+**Status: open. Flagged under SPEC.md section 11 point 10.**
+
+Pieces of `analysis.py` are checked against independent implementations. The
+Newey-West covariance is compared with statsmodels at three truncation lags on
+the same data. The first stage F is compared with statsmodels on the same
+regression, and separately rebuilt by hand in the test from the raw frame. Every
+estimator is run against synthetic data with a planted answer: the lag
+coefficients, the null, the kink, the absence of a kink, the two stage estimate
+against a planted coefficient with a planted confound, and the seasonal
+difference against a planted 5 $/bbl season.
+
+What has **not** happened is anybody re-deriving the horse race, the expanding
+window or the 2026 residuals from the committed caches in a different language or
+a different library and getting the same numbers. SPEC.md section 7.1 requires
+exactly that for the engine, Python against JavaScript, because the engine exists
+twice. The analysis layer exists once, so there is nothing to compare it with,
+and the tests above are the whole of the defence.
+
+The specific things a second implementation would most likely catch, listed so
+that a reader can weigh them: an off by one in the lag construction that the
+planted coefficient tests would not see because they plant into the same
+construction; a sample that is one month different from the one reported, which
+the sample tests check the size of but not the membership of against an external
+source; and an expanding window whose first origin is one row out.
+
+**To close it:** somebody reruns the headline table from the caches without
+reading `analysis.py` first. Worth doing before Gate 4 wires these numbers into a
+site.
