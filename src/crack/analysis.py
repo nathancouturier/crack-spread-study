@@ -934,6 +934,27 @@ MARGIN_LAGS = (1, 2, 3)
 #: not a t interval and it is not a bootstrap interval, and the report says so.
 Z95 = 1.959963984540054
 
+#: The 95th percentile of the standard normal, the second half of the usual
+#: sample size formula: a two sided test at size 0.05 reaches power 1 - beta when
+#: the true effect is Z95 + z(1 - beta) standard errors from zero. Named here so
+#: POWER_TARGET below and the "how many forecasts would it take" column of the
+#: horse race cannot be adjusted after seeing an answer.
+Z_POWER_95 = 1.6448536269514722
+
+#: The power the "forecasts needed" column is computed at. 95 percent, the
+#: conventional companion to a 5 percent test, chosen once and not moved.
+POWER_TARGET = 0.95
+
+
+def normal_cdf(x: float) -> float:
+    """The standard normal distribution function, from math.erf.
+
+    Here rather than from scipy because this project has no scipy dependency and
+    one line of erf is not worth one. Accurate to the last place of a double for
+    every argument this module puts into it.
+    """
+    return 0.5 * (1.0 + math.erf(float(x) / math.sqrt(2.0)))
+
 
 @dataclass(frozen=True)
 class CrudeDemand:
@@ -2253,7 +2274,17 @@ def horse_race_frame(results: Sequence[HorseResult]) -> pd.DataFrame:
 
 @dataclass(frozen=True)
 class LossDifferential:
-    """Is one horse's out of sample RMSE distinguishable from another's."""
+    """Is one horse's out of sample RMSE distinguishable from another's, and COULD it be.
+
+    WHY THE SECOND HALF OF THAT QUESTION IS HERE. A failure to reject is evidence
+    about the null only if the test could have rejected. The Gate 3 self audit,
+    finding 2.1, measured the power of these six comparisons against their own
+    observed effects and found five of the six sitting at 0.050 to 0.085 against
+    a test size of 0.05. A test whose power equals its size says nothing about the
+    null at all: it is a coin that always returns "not distinguishable". So every
+    one of these fields that describes the test's reach travels with the t, and
+    the sentence below prints them together.
+    """
 
     first: str
     second: str
@@ -2262,6 +2293,58 @@ class LossDifferential:
     t: float
     nobs: int
     distinguishable: bool
+    #: The lower of the two out of sample RMSEs, and the higher.
+    better_rmse: float
+    worse_rmse: float
+
+    @property
+    def observed_gap_pct(self) -> float:
+        """The observed RMSE gap as a percentage of the worse horse's RMSE.
+
+        The same arithmetic horse_race_winner uses for its "margin of X percent",
+        so the observed gap and the detectable gap below are in one unit.
+        """
+        return 100.0 * (self.worse_rmse - self.better_rmse) / self.worse_rmse
+
+    @property
+    def detectable_gap_pct(self) -> float:
+        """The smallest RMSE gap this test could have called distinguishable.
+
+        The minimum detectable mean squared error difference at 5 percent two
+        sided is Z95 times the measured Newey-West standard error. Add it to the
+        better horse's mean squared error, take the root, and express the gap the
+        same way as observed_gap_pct. It is a POST HOC minimum detectable effect:
+        it treats the measured HAC standard error as the true one, which is what
+        the statistic is, and it is not a designed power calculation.
+        """
+        detectable = math.sqrt(self.better_rmse**2 + Z95 * self.nw_se)
+        return 100.0 * (detectable - self.better_rmse) / detectable
+
+    @property
+    def power_at_observed(self) -> float:
+        """Power of this 5 percent two sided test against the effect actually observed.
+
+        Compare with 0.05, which is the size of the test. Equal means uninformative.
+        """
+        ratio = abs(self.mean_difference) / self.nw_se if self.nw_se > 0 else 0.0
+        return normal_cdf(-Z95 + ratio) + normal_cdf(-Z95 - ratio)
+
+    @property
+    def forecasts_for_target_power(self) -> float:
+        """How many one step ahead forecasts it would take to reach POWER_TARGET.
+
+        The standard error of a mean falls with the root of the sample size, so
+        the required count is the present one scaled by the square of the ratio
+        between the standard errors needed and measured. It assumes the effect and
+        the serial dependence stay as measured, which is the only thing a post hoc
+        calculation can assume, and it is reported as an order of magnitude rather
+        than as a plan.
+        """
+        if self.mean_difference == 0.0:
+            return float("inf")
+        return self.nobs * (
+            (Z95 + Z_POWER_95) * self.nw_se / self.mean_difference
+        ) ** 2
 
     @property
     def sentence(self) -> str:
@@ -2276,6 +2359,23 @@ class LossDifferential:
                 self.t,
                 self.nobs,
                 "DISTINGUISHABLE" if self.distinguishable else "not distinguishable",
+            )
+        )
+
+    @property
+    def power_sentence(self) -> str:
+        return (
+            "observed RMSE gap %.3f pct, smallest gap this test could have "
+            "detected %.2f pct, power against the observed effect %.3f against a "
+            "test size of 0.050, forecasts needed for %.0f pct power %s"
+            % (
+                self.observed_gap_pct,
+                self.detectable_gap_pct,
+                self.power_at_observed,
+                100 * POWER_TARGET,
+                "%.0f" % self.forecasts_for_target_power
+                if math.isfinite(self.forecasts_for_target_power)
+                else "unbounded",
             )
         )
 
@@ -2310,6 +2410,8 @@ def loss_differential(a: HorseResult, b: HorseResult) -> LossDifferential:
         t=float(t),
         nobs=len(difference),
         distinguishable=bool(abs(t) > Z95),
+        better_rmse=float(min(a.oos.rmse, b.oos.rmse)),
+        worse_rmse=float(max(a.oos.rmse, b.oos.rmse)),
     )
 
 
@@ -2321,6 +2423,17 @@ def horse_race_winner(results: Sequence[HorseResult]) -> tuple[str, str]:
     is read off the numbers here and the sentence is assembled from them, never
     typed. If the raw gasoil crack wins, this function says the raw gasoil crack
     won.
+
+    WHAT THIS FUNCTION USED TO SAY AND WHY IT NO LONGER SAYS IT. It used to emit
+    the words "THE RACE IS A DEAD HEAT" and then, in the same sentence, that the
+    ordering is "a ranking of numbers, not a finding". Those two halves contradict
+    each other: a dead heat asserts that the horses are equal, which is a finding,
+    and one this sample cannot support. The Gate 3 self audit, finding 2.1,
+    measured the power of the pairwise tests against their own observed effects at
+    0.050 to 0.129 against a test size of 0.05, so five of the six comparisons
+    could not have separated the horses whatever the truth was. The honest
+    sentence is that THIS SAMPLE CANNOT TELL THE HORSES APART, and the power that
+    says why is printed with it rather than left for a reader to work out.
     """
     ranked = sorted(results, key=lambda r: r.oos.rmse)
     best, second = ranked[0], ranked[1]
@@ -2331,6 +2444,8 @@ def horse_race_winner(results: Sequence[HorseResult]) -> tuple[str, str]:
         for j in range(i + 1, len(ranked))
     ]
     any_distinguishable = any(p.distinguishable for p in pairs)
+    weakest = max(pairs, key=lambda p: p.detectable_gap_pct)
+    kindest = min(pairs, key=lambda p: p.detectable_gap_pct)
     sentence = (
         "horse %s, %s, has the lowest expanding window out of sample RMSE at "
         "%.4f, ahead of horse %s at %.4f, a margin of %.2f percent. The spread "
@@ -2354,11 +2469,28 @@ def horse_race_winner(results: Sequence[HorseResult]) -> tuple[str, str]:
                 if any_distinguishable
                 else (
                     "NOT ONE of the %d pairwise squared error differences is "
-                    "distinguishable from zero, so THE RACE IS A DEAD HEAT and "
-                    "the ordering above is a ranking of numbers, not a finding. "
-                    "The lowest RMSE is reported because SPEC.md section 6.3 asks "
-                    "for it, and the word 'wins' is withheld because the data "
-                    "does not support it." % len(pairs)
+                    "distinguishable from zero, so THIS SAMPLE CANNOT TELL THE "
+                    "HORSES APART and the ordering above is a ranking of numbers, "
+                    "not a finding. THAT IS NOT THE SAME AS SAYING THEY ARE "
+                    "EQUAL, and the power is the reason: against its own observed "
+                    "effect the strongest of the %d tests has power %.3f and the "
+                    "weakest %.3f, against a test size of 0.050, so a test that "
+                    "returns 'not distinguishable' here was going to return it "
+                    "whatever the truth was. The smallest RMSE gap any of them "
+                    "could have detected runs %.2f to %.2f percent against "
+                    "observed gaps of %.3f to %.3f percent. The lowest RMSE is "
+                    "reported because SPEC.md section 6.3 asks for it, and the "
+                    "word 'wins' is withheld because the data does not support it."
+                    % (
+                        len(pairs),
+                        len(pairs),
+                        max(p.power_at_observed for p in pairs),
+                        min(p.power_at_observed for p in pairs),
+                        kindest.detectable_gap_pct,
+                        weakest.detectable_gap_pct,
+                        min(p.observed_gap_pct for p in pairs),
+                        max(p.observed_gap_pct for p in pairs),
+                    )
                 )
             ),
         )
@@ -2503,10 +2635,43 @@ class InstrumentResult:
     #: is in the same equation.
     mechanical_coefficient: float
     mechanical_measured: str
+    #: THE FIRST STAGE CONTAINS NO DEPENDENT VARIABLE. It regresses the endogenous
+    #: margin on the controls and the instrument, and the dependent never enters
+    #: it. The field above is carried only because the second stage needs it and
+    #: because the control set depends on it, and this string says which control
+    #: set produced the F so that nobody reads the F as a property of the
+    #: dependent. Gate 3 self audit, finding 3.1.
+    control_set: tuple[str, ...]
+    #: One row per control set, in the order the controls go in: the first stage
+    #: coefficient on the instrument, its HAC standard error, its F and its partial
+    #: R2 with a constant only, then with month dummies, then with the episode
+    #: dummies, then with a linear trend. This is the measurement that says the F
+    #: is a property of the CONTROL SET and not of the instrument.
+    control_ladder: tuple[Mapping[str, object], ...]
+    #: The instrument's standard deviation inside the three episode windows, and
+    #: outside them, and its largest value and the month of it. The instrument's
+    #: variation IS the episodes, which is the point of finding 3.1.
+    instrument_sd_in_episodes: float
+    instrument_sd_outside_episodes: float
+    instrument_max: float
+    instrument_max_month: str
+    instrument_months_in_episodes: int
+    #: Assembled from the ladder and the variation, not typed.
+    diagnosis: str
 
     @property
     def iv_t(self) -> float:
         return self.iv_coefficient / self.iv_se if self.iv_se > 0 else float("nan")
+
+    @property
+    def raw_f(self) -> float:
+        """The first stage F with a constant and nothing else."""
+        return float(self.control_ladder[0]["f"])
+
+    @property
+    def raw_coefficient(self) -> float:
+        """The first stage coefficient with a constant and nothing else."""
+        return float(self.control_ladder[0]["coefficient"])
 
 
 #: Stated BEFORE the instrument is run, which is the only time it means anything.
@@ -2598,21 +2763,29 @@ def gas_instrument(
     if len(work) < 24:
         raise ValueError("only %d usable months" % len(work))
 
-    columns = [np.ones(len(work))]
-    names = ["const"]
-    if dependent == DEPENDENT_FALLBACK:
-        periods = pd.PeriodIndex(work["date"], freq="M")
-        columns.append(np.array([(p - periods[0]).n for p in periods], dtype=float))
-        names.append("trend_months")
-    dummies, dummy_names = _month_dummies(work["date"].dt.month)
-    columns.append(dummies)
-    names.extend(dummy_names)
+    # The control blocks are kept apart so the ladder below can put them back
+    # together one at a time. The assembled exog is identical to the one this
+    # function built before, same columns in the same order.
+    periods = pd.PeriodIndex(work["date"], freq="M")
+    trend_column = np.array([(p - periods[0]).n for p in periods], dtype=float)
+    month_block, month_names = _month_dummies(work["date"].dt.month)
+    episode_block, episode_names = [], []
     if episode_dummies:
         for name in sorted(EPISODES):
             column = work[name].to_numpy(dtype=float)
             if 0.0 < column.mean() < 1.0:
-                columns.append(column)
-                names.append(name)
+                episode_block.append(column)
+                episode_names.append(name)
+
+    columns = [np.ones(len(work))]
+    names = ["const"]
+    if dependent == DEPENDENT_FALLBACK:
+        columns.append(trend_column)
+        names.append("trend_months")
+    columns.append(month_block)
+    names.extend(month_names)
+    columns.extend(episode_block)
+    names.extend(episode_names)
     exog = np.column_stack(
         [np.asarray(c, dtype=float).reshape(len(work), -1) for c in columns]
     )
@@ -2650,25 +2823,130 @@ def gas_instrument(
     )
     ols_coefficient, ols_se = ols.get("endo_mean")
 
+    # THE LADDER. Gate 3 self audit, finding 3.1: the reported F of 0.07 to 0.22
+    # is real arithmetic but it is a property of the CONTROL SET, not of the
+    # instrument, and the study's stated reason for it was wrong. So the controls
+    # go in one at a time and the F is measured at each step, on the same sample
+    # and the same Newey-West lag. Nothing is selected on this: the equation the
+    # verdict is read off remains the one SPEC.md section 6.1 specifies, the last
+    # rung of the ladder for the fallback and the one before it for the capacity
+    # dependent, and the rungs are printed so a reader can see where the F went.
+    def _rung(label: str, blocks: Sequence[np.ndarray], block_names: Sequence[str]):
+        stack = [np.ones(len(work))]
+        stack.extend(blocks)
+        control = np.column_stack(
+            [np.asarray(c, dtype=float).reshape(len(work), -1) for c in stack]
+        )
+        rung_names = ("const", *block_names)
+        with_instrument = ols_newey_west(
+            endo, np.column_stack([control, inst]), (*rung_names, "instrument"),
+            lag=nw_lag,
+        )
+        without = ols_newey_west(endo, control, rung_names, lag=nw_lag)
+        rung_coefficient, rung_se = with_instrument.get("instrument")
+        return {
+            "controls": label,
+            "coefficient": float(rung_coefficient),
+            "se": float(rung_se),
+            "f": float((rung_coefficient / rung_se) ** 2) if rung_se > 0 else float("nan"),
+            "partial_r2": float(1.0 - with_instrument.ssr / without.ssr)
+            if without.ssr > 0
+            else float("nan"),
+            "is_the_spec_equation": False,
+        }
+
+    ladder = [
+        _rung("constant only", [], []),
+        _rung("plus month dummies", [month_block], month_names),
+        _rung(
+            "plus episode dummies",
+            [month_block, *episode_block],
+            [*month_names, *episode_names],
+        ),
+        _rung(
+            "plus a linear trend",
+            [trend_column, month_block, *episode_block],
+            ["trend_months", *month_names, *episode_names],
+        ),
+    ]
+    spec_rung = 3 if dependent == DEPENDENT_FALLBACK else 2
+    ladder[spec_rung]["is_the_spec_equation"] = True
+
+    # WHERE THE INSTRUMENT'S VARIATION LIVES. SPEC.md section 6.3 names the 2022
+    # and 2026 shocks as the reason to try this instrument at all. The equation
+    # then puts a 0/1 step over each of them and takes it out.
+    in_episode = work["any_episode"].to_numpy(dtype=float) > 0
+    inside, outside = inst[in_episode], inst[~in_episode]
+    peak = int(np.argmax(inst))
+
     mechanical = -(
         config.GAS_INTENSITY_MMBTU_PER_BBL
         - config.DGEC_EMBEDDED_GAS_INTENSITY_MMBTU_PER_BBL
     )
+    raw_coefficient = float(ladder[0]["coefficient"])
     mechanical_measured = (
         "By arithmetic the gas price enters this study's margin with a "
         "coefficient of exactly %+.5f, the negative of the gap between the two "
-        "gas intensities. The fitted first stage coefficient is %+.5f. The "
-        "difference is the margin's OWN co-movement with gas: the months when "
-        "European gas was dear, 2022 above all, are the months when product "
-        "cracks and therefore the MBR were high, and that positive co-movement "
-        "%s the mechanical deduction. So the instrument has %s independent "
-        "purchase on the margin once the controls are in, which is what the F "
-        "below is measuring."
+        "gas intensities. WITH A CONSTANT AND NOTHING ELSE the fitted first stage "
+        "coefficient is %+.5f, so the margin's OWN co-movement with gas, the "
+        "months when European gas was dear being the months when product cracks "
+        "and therefore the MBR were high, is %+.5f: it %s the mechanical "
+        "deduction and leaves the net slope at %+.5f. THAT IS WHERE THE "
+        "CANCELLATION ARGUMENT ENDS, and this study's docs used to run it all the "
+        "way down to the reported number. The fitted coefficient in the equation "
+        "above is %+.5f, and the step from %+.5f to %+.5f is not the cancellation "
+        "at all: it is the control set, the ladder below measures it rung by rung."
         % (
             mechanical,
+            raw_coefficient,
+            raw_coefficient - mechanical,
+            "more than offsets"
+            if abs(raw_coefficient - mechanical) > abs(mechanical)
+            else "partly offsets",
+            raw_coefficient,
             coefficient,
-            "roughly cancels" if abs(coefficient) < abs(mechanical) else "does not cancel",
-            "almost no" if abs(coefficient / mechanical) < 0.5 else "some",
+            raw_coefficient,
+            coefficient,
+        )
+    )
+
+    biggest_drop = max(
+        range(1, len(ladder)),
+        key=lambda i: float(ladder[i - 1]["f"]) - float(ladder[i]["f"]),
+    )
+    diagnosis = (
+        "THE F IS A PROPERTY OF THE CONTROL SET. With a constant alone the "
+        "instrument's F is %.3f; with the controls SPEC.md section 6.1 specifies "
+        "for this equation, %s, it is %.3f. The rung that takes the most out of "
+        "it is %r, which drops the F from %.3f to %.3f. That matters because "
+        "the instrument's variation IS the episodes the dummies remove: the "
+        "instrument's standard deviation inside the three twelve month episode "
+        "windows is %.2f $/MMBtu against %.2f outside them, and its largest value "
+        "of %.2f is %s. SPEC.md section 6.3 names exactly that variation as the "
+        "reason to try this instrument, 'TTF was driven by pipeline cuts in 2022 "
+        "and by LNG disruption in 2026', and the equation SPEC.md section 6.1 "
+        "specifies then places a 0/1 step over each of those windows and removes "
+        "it. So the honest statement is not that gas has no purchase on the "
+        "margin. It is that gas has purchase on the margin, that the purchase is "
+        "the crisis months, and that this equation's own regime terms take the "
+        "crisis months out. The instrument is weak under the spec's equation at F "
+        "%.3f and it is still weak at F %.3f on a constant and the month dummies "
+        "alone, below the bar of %.0f either way, so the operational conclusion "
+        "does not turn on any of this. The explanation does."
+        % (
+            float(ladder[0]["f"]),
+            ladder[spec_rung]["controls"],
+            f_stat,
+            ladder[biggest_drop]["controls"],
+            float(ladder[biggest_drop - 1]["f"]),
+            float(ladder[biggest_drop]["f"]),
+            float(inside.std(ddof=1)) if len(inside) > 1 else float("nan"),
+            float(outside.std(ddof=1)) if len(outside) > 1 else float("nan"),
+            float(inst[peak]),
+            str(work["date"].iloc[peak].date())[:7],
+            f_stat,
+            float(ladder[1]["f"]),
+            f_bar,
         )
     )
 
@@ -2710,6 +2988,18 @@ def gas_instrument(
         mechanical_relevance=MECHANICAL_RELEVANCE,
         mechanical_coefficient=float(mechanical),
         mechanical_measured=mechanical_measured,
+        control_set=tuple(names),
+        control_ladder=tuple(ladder),
+        instrument_sd_in_episodes=float(inside.std(ddof=1))
+        if len(inside) > 1
+        else float("nan"),
+        instrument_sd_outside_episodes=float(outside.std(ddof=1))
+        if len(outside) > 1
+        else float("nan"),
+        instrument_max=float(inst[peak]),
+        instrument_max_month=str(work["date"].iloc[peak].date())[:7],
+        instrument_months_in_episodes=int(in_episode.sum()),
+        diagnosis=diagnosis,
     )
 
 
@@ -4055,9 +4345,68 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
         for i, line in enumerate(_wrap(sentence, 72)):
             add("    %s%s" % ("RANKING: " if i == 0 else "         ", line))
         add("    Pairwise, is any of that distinguishable from zero:")
-        for i in range(len(results)):
-            for j in range(i + 1, len(results)):
-                add("      %s" % loss_differential(results[i], results[j]).sentence)
+        pairs = [
+            loss_differential(results[i], results[j])
+            for i in range(len(results))
+            for j in range(i + 1, len(results))
+        ]
+        for pair in pairs:
+            add("      %s" % pair.sentence)
+        add(
+            "    AND COULD IT HAVE BEEN. The power of each test against the effect "
+            "it actually"
+        )
+        add(
+            "    measured, beside the smallest gap it could have called "
+            "distinguishable. The size of"
+        )
+        add(
+            "    every test is 0.050, so a power column reading 0.050 carries no "
+            "information about"
+        )
+        add("    the null at all.")
+        add(
+            "      pair        observed gap  smallest detectable  ratio   power  "
+            "forecasts for %.0f pct" % (100 * POWER_TARGET)
+        )
+        for pair in pairs:
+            add(
+                "      %s vs %s   %10.3f pct  %15.2f pct  %5.3f  %6.3f  %s"
+                % (
+                    pair.first[-1],
+                    pair.second[-1],
+                    pair.observed_gap_pct,
+                    pair.detectable_gap_pct,
+                    pair.observed_gap_pct / pair.detectable_gap_pct,
+                    pair.power_at_observed,
+                    "%.0f" % pair.forecasts_for_target_power
+                    if math.isfinite(pair.forecasts_for_target_power)
+                    else "unbounded",
+                )
+            )
+        kindest = min(pairs, key=lambda p: p.forecasts_for_target_power)
+        add(
+            "    The kindest of those %d pairs, %s against %s, needs about %.0f "
+            "monthly forecasts,"
+            % (
+                len(pairs),
+                kindest.first,
+                kindest.second,
+                kindest.forecasts_for_target_power,
+            )
+        )
+        add(
+            "    roughly %.0f years of monthly data, to reach %.0f percent power "
+            "against the gap it"
+            % (
+                kindest.forecasts_for_target_power / 12.0,
+                100 * POWER_TARGET,
+            )
+        )
+        add(
+            "    measured. THIS IS A STATEMENT ABOUT THE SAMPLE AND NOT ABOUT THE "
+            "HORSES."
+        )
         add("")
 
     add("  Horse A on its own longer sample. REPORTED SEPARATELY, NOT THE RACE.")
@@ -4121,38 +4470,97 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
         % ("at least one" if any_pair_distinguishable else "not one")
     )
     if not any_pair_distinguishable:
-        add(
-            "    zero. OUT OF SAMPLE, THE THREE HORSES ARE A DEAD HEAT. The raw "
-            "gasoil crack is not beaten by"
-        )
-        add(
-            "    the official margin and it does not beat it, and the same is "
-            "true of this study's margin"
-        )
-        add(
-            "    after gas. Anybody who says on this evidence that one of the "
-            "three tracks NWE runs better"
-        )
-        add("    than the others is reading a ranking as a result.")
+        all_pairs = [
+            loss_differential(results[i], results[j])
+            for results in race_results.values()
+            for i in range(len(results))
+            for j in range(i + 1, len(results))
+        ]
+        for line in _wrap(
+            "zero. OUT OF SAMPLE, THIS SAMPLE CANNOT TELL THE THREE HORSES APART. "
+            "THAT IS NOT A FINDING THAT THEY ARE EQUAL, and the difference "
+            "matters. Against the effects actually observed these %d tests have "
+            "power %.3f to %.3f, against a size of 0.050, so %d of the %d are "
+            "coins that were always going to say 'not distinguishable'. The "
+            "smallest RMSE gap any of them could have detected runs %.2f to %.2f "
+            "percent, against observed gaps of %.3f to %.3f percent. Anybody who "
+            "says on this evidence that one of the three tracks NWE runs better "
+            "than the others is reading a ranking as a result, and anybody who "
+            "says the three are equally good is reading an underpowered test as a "
+            "measurement."
+            % (
+                len(all_pairs),
+                min(p.power_at_observed for p in all_pairs),
+                max(p.power_at_observed for p in all_pairs),
+                sum(1 for p in all_pairs if p.power_at_observed < 0.10),
+                len(all_pairs),
+                min(p.detectable_gap_pct for p in all_pairs),
+                max(p.detectable_gap_pct for p in all_pairs),
+                min(p.observed_gap_pct for p in all_pairs),
+                max(p.observed_gap_pct for p in all_pairs),
+            ),
+            72,
+        ):
+            add("    " + line)
     else:
         add(
             "    zero, so the ordering above carries information and the pairwise "
             "lines say which pairs."
         )
-    add(
-        "    What DOES separate them is the in sample coefficient under the "
-        "fallback dependent, where all"
-    )
-    add(
-        "    three are positive and horses B and C reach a t of about 2 while A "
-        "is smaller in units of runs;"
-    )
-    add(
-        "    and the capacity dependent, where NONE of the three is "
-        "distinguishable from zero at all."
-    )
+    # MEASURED, NOT ASSERTED. This paragraph used to say "horses B and C reach a
+    # t of about 2", which was true when it was typed and is the kind of clause
+    # that goes on being printed after the number underneath it has moved.
+    fallback_ts = {
+        r.horse.key: r.model.sum_b / r.model.sum_b_se
+        for r in race_results[DEPENDENT_FALLBACK]
+    }
+    capacity_ts = {
+        r.horse.key: r.model.sum_b / r.model.sum_b_se
+        for r in race_results[DEPENDENT_CAPACITY]
+    }
+    for line in _wrap(
+        "What DOES separate them is the in sample coefficient under the fallback "
+        "dependent, where %s and the t statistics run %s; against the capacity "
+        "dependent, where they run %s and %s is distinguishable from zero."
+        % (
+            "all three are positive"
+            if all(
+                r.model.sum_b > 0 for r in race_results[DEPENDENT_FALLBACK]
+            )
+            else "the signs are "
+            + ", ".join(
+                "%s %s" % (k, "+" if fallback_ts[k] > 0 else "-")
+                for k in sorted(fallback_ts)
+            ),
+            ", ".join(
+                "%s %+.2f" % (k, fallback_ts[k]) for k in sorted(fallback_ts)
+            ),
+            ", ".join(
+                "%s %+.2f" % (k, capacity_ts[k]) for k in sorted(capacity_ts)
+            ),
+            "NONE of the three"
+            if all(abs(t) <= Z95 for t in capacity_ts.values())
+            else ", ".join(
+                k for k, t in sorted(capacity_ts.items()) if abs(t) > Z95
+            ),
+        ),
+        72,
+    ):
+        add("    " + line)
     add("")
     add("  WHAT B AND C GIVE THAT A CANNOT, which is this study's honest value")
+    for line in _wrap(
+        "SPEC.md section 6.3: 'If A wins, say so on the page, then say what B and "
+        "C still give that A cannot.' On the capacity dependent horse %s has the "
+        "lowest out of sample RMSE and on the fallback horse %s does, and NEITHER "
+        "ORDERING IS DISTINGUISHABLE FROM NOISE, so the honest form of the spec's "
+        "instruction is this: the raw gasoil crack is not beaten here, and this "
+        "study does not claim it is. What follows is what B and C give anyway, "
+        "and none of it is a claim about forecast accuracy."
+        % (capacity_rank[0].horse.key, fallback_rank[0].horse.key),
+        72,
+    ):
+        add("    " + line)
     add(
         "    If the raw gasoil crack explains runs as well as the margin does, "
         "and on this sample it does,"
@@ -4315,16 +4723,31 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
     for line in _wrap(MECHANICAL_RELEVANCE, 74):
         add("    %s" % line)
     add("")
+    ivs = {}
     for dependent in DEPENDENTS:
         iv = gas_instrument(frame=horses, dependent=dependent)
+        ivs[dependent] = iv
         add(
-            "  Dependent %s, %s to %s, n = %d, Newey-West lag %d"
+            "  Second stage dependent %s, %s to %s, n = %d, Newey-West lag %d"
             % (dependent, iv.first_month, iv.last_month, iv.nobs, iv.nw_lag)
         )
         add(
             "    endogenous  mean of %s over t-1, t-2, t-3" % iv.endogenous
         )
         add("    instrument  mean of %s over the same three months" % iv.instrument)
+        for line in _wrap(
+            "THE FIRST STAGE BELOW CONTAINS NO DEPENDENT VARIABLE. It regresses "
+            "the endogenous margin on the controls and the instrument, and %s "
+            "never enters it. What the two first stages in this section differ by "
+            "is ONE COLUMN, the linear trend the fallback equation carries and the "
+            "capacity equation does not, and the sign of the coefficient flips on "
+            "it. Reading them as 'the F under two models' is the misdescription "
+            "the Gate 3 self audit, finding 3.1, asked to have removed. The "
+            "control set here is: %s."
+            % (dependent, ", ".join(iv.control_set)),
+            72,
+        ):
+            add("    %s" % line)
         add(
             "    first stage  coefficient %+.5f, NW se %.5f, F %.3f, partial R2 "
             "%.4f, equation R2 %.4f"
@@ -4344,9 +4767,43 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
             "    OLS, same equation and sample, for comparison  %+.5f, NW se %.5f"
             % (iv.ols_coefficient, iv.ols_se)
         )
-        for line in _wrap(iv.mechanical_measured, 74):
+        add("    WHERE THE F WENT, measured as the controls go in one at a time:")
+        add(
+            "      controls                    coefficient    NW se        F  "
+            "partial R2"
+        )
+        for rung in iv.control_ladder:
+            add(
+                "      %-26s %+11.5f  %7.5f  %7.3f  %10.4f%s"
+                % (
+                    rung["controls"],
+                    rung["coefficient"],
+                    rung["se"],
+                    rung["f"],
+                    rung["partial_r2"],
+                    "   <- the equation this study runs"
+                    if rung["is_the_spec_equation"]
+                    else "",
+                )
+            )
+        add(
+            "    The instrument's sd inside the %d episode months is %.2f $/MMBtu, "
+            "outside them %.2f,"
+            % (
+                iv.instrument_months_in_episodes,
+                iv.instrument_sd_in_episodes,
+                iv.instrument_sd_outside_episodes,
+            )
+        )
+        add(
+            "    and its maximum of %.2f is %s."
+            % (iv.instrument_max, iv.instrument_max_month)
+        )
+        for line in _wrap(iv.mechanical_measured, 72):
             add("    %s" % line)
-        for line in _wrap("VERDICT: " + iv.verdict, 74):
+        for line in _wrap(iv.diagnosis, 72):
+            add("    %s" % line)
+        for line in _wrap("VERDICT: " + iv.verdict, 72):
             add("    %s" % line)
         add("")
     add(
