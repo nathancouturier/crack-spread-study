@@ -17,6 +17,7 @@ sample sizes, units, reproducibility and arithmetic.
 
 from __future__ import annotations
 
+import dataclasses
 import math
 
 import numpy as np
@@ -365,12 +366,63 @@ class TestThresholdIdentification:
             "edge" in reason for reason in result.reasons
         )
 
+    def test_the_longest_run_dates_are_the_longest_run_s_dates(self):
+        """Gate 3 self audit, finding 4.3. THE STRETCH IS NOT GUESSED.
+
+        report() used to print the stretch as the last `longest_run_below`
+        entries of months_below, which is right only while the longest run
+        happens to sit at the end of the list. Here the stray month is put AFTER
+        the run, which is the arrangement that made the old code print a span
+        that does not exist.
+        """
+        months = pd.date_range("2000-01-01", periods=60, freq="MS")
+        margin = np.full(60, 10.0)
+        # One long run early, a gap, then a single stray month at the end.
+        margin[5:26] = 1.0
+        margin[55] = 1.0
+        frame = pd.DataFrame(
+            {
+                "date": months,
+                "utilisation_pct": 85.0 - 5.0 * (margin < 5.0),
+                analysis.MARGIN_STUDY_INTENSITY: np.concatenate(
+                    [margin[3:], np.full(3, 10.0)]
+                ),
+            }
+        )
+        result = analysis.run_cut_threshold(frame=frame, replications=20)
+
+        # Recount the runs here, independently of the module.
+        runs, current = [], []
+        previous = None
+        for month in result.months_below:
+            period = pd.Period(month, freq="M")
+            if previous is not None and period == previous + 1:
+                current.append(period)
+            else:
+                current = [period]
+                runs.append(current)
+            previous = period
+        longest = max(runs, key=len)
+        assert len(longest) > 5, "this fixture needs a long run to be worth testing"
+        assert result.months_below[-1] > str(longest[-1]), (
+            "this fixture is meant to put a stray month AFTER the run, which is "
+            "the arrangement the old positional guess got wrong"
+        )
+        assert result.longest_run_below == len(longest)
+        assert result.longest_run_first == str(longest[0])
+        assert result.longest_run_last == str(longest[-1])
+        # The old code would have printed the last `longest` entries of the list.
+        assert result.months_below[-result.longest_run_below] != result.longest_run_first
+
     def test_the_months_below_the_threshold_are_reported(self):
         """The dates are the diagnostic that tells a kink from an episode."""
         result = analysis.run_cut_threshold(replications=20)
         assert len(result.months_below) == result.point.months_below
         assert result.longest_run_below >= 1
         assert result.longest_run_below <= len(result.months_below)
+        first = pd.Period(result.longest_run_first, freq="M")
+        last = pd.Period(result.longest_run_last, freq="M")
+        assert (last - first).n + 1 == result.longest_run_below
         # Utilisation below the threshold has to be lower than above it, or the
         # fitted slope and the reported means are telling different stories.
         assert result.mean_utilisation_below < result.mean_utilisation_above
@@ -393,6 +445,66 @@ class TestThresholdIdentification:
             analysis.run_cut_threshold(replications=20).grid_quantiles
             == analysis.THRESHOLD_GRID_QUANTILES
         )
+
+    def test_the_threshold_can_be_run_without_the_episodes(self):
+        """Gate 3 self audit, finding 4.2. SPEC.md section 6.1's with and without.
+
+        margin_response and intake_trend_response both honoured it and the
+        threshold, the one result the site's headroom figure depends on, did not.
+        """
+        import inspect
+
+        parameters = inspect.signature(analysis.run_cut_threshold).parameters
+        assert "drop_episode_months" in parameters
+        assert "drop_months" in parameters
+        assert parameters["drop_episode_months"].default is False
+        assert parameters["drop_months"].default is None
+
+        headline = analysis.run_cut_threshold(replications=20)
+        without = analysis.run_cut_threshold(
+            replications=20, drop_episode_months=True
+        )
+        assert without.nobs < headline.nobs
+        assert without.dropped_months
+        assert not headline.dropped_months
+        # Every month removed is inside an episode window, and none of the kept
+        # ones is.
+        kept = set(headline.months_below) - set(without.dropped_months)
+        assert kept
+        for month in without.dropped_months:
+            stamp = pd.Timestamp(month + "-01")
+            mask = analysis.episode_mask([stamp])
+            assert mask["any_episode"].iloc[0] == 1.0
+
+    def test_removing_the_stretch_destroys_the_kink(self):
+        """Gate 3 self audit, finding 4.1. The measurement the report rests on.
+
+        This is a statement about the committed data and it is deliberately one
+        of the few. If a future refresh makes the kink survive the removal of the
+        stretch it is estimated from, the study's strongest reason for the
+        unidentified verdict has changed and somebody has to read the report
+        again rather than watch it go on saying the old thing.
+        """
+        headline = analysis.run_cut_threshold(replications=200)
+        stretch = [
+            month
+            for month in headline.months_below
+            if headline.longest_run_first <= month <= headline.longest_run_last
+        ]
+        assert len(stretch) == headline.longest_run_below
+        without = analysis.run_cut_threshold(replications=200, drop_months=stretch)
+        assert without.nobs == headline.nobs - len(stretch)
+        assert headline.point.slope_below > 0
+        assert without.point.slope_below < 0, (
+            "the slope below the kink no longer reverses when the stretch it is "
+            "estimated from is removed. It is now %+.4f against %+.4f"
+            % (without.point.slope_below, headline.point.slope_below)
+        )
+        assert without.point.threshold > headline.point.threshold
+        # And the kink stops buying anything over a straight line.
+        assert headline.point.r2 - headline.linear_r2 > 0.2
+        assert without.point.r2 - without.linear_r2 < 0.05
+        assert not without.identified
 
     def test_the_fit_at_a_fixed_threshold_is_least_squares(self):
         # Built here rather than through the frame, because this test is about
@@ -479,41 +591,119 @@ class TestTranslation:
 
 class TestUtilisation:
     def test_it_reproduces_what_the_physical_recon_measured(self):
-        """SPEC.md section 11 point 4 in spirit: an anchor, checked, not asserted."""
+        """SPEC.md section 11 point 4 in spirit: an anchor, checked, not asserted.
+
+        recon 03 section 2.3 divided each year's mean intake by that SAME year's
+        capacity, so that is the column the anchor is checked against. The lagged
+        column the regressions run on is a different number on purpose and the
+        check prints it beside this one rather than instead of it.
+        """
         check = analysis.utilisation_sanity_check()
         assert len(check) == len(analysis.RECON_ANNUAL_UTILISATION)
         failures = check[~check["agrees_to_3dp"]]
         assert failures.empty, (
             "utilisation disagrees with recon 03 section 2.3 in %s"
-            % failures[["year", "utilisation", "recon"]].to_dict("records")
+            % failures[["year", "utilisation_same_year", "recon"]].to_dict("records")
         )
+        # The two columns are genuinely different, or the anchor would be
+        # checking the lagged series by accident.
+        assert check["study_less_same_year"].abs().max() > 0.01
+        assert check["utilisation_study"].notna().all()
 
-    def test_2026_is_nan_by_default_and_flagged_when_it_is_not(self):
+    def test_no_capacity_figure_is_applied_before_the_date_it_describes(self):
+        """Gate 3 self audit, finding 1.1. THE LOOK AHEAD TEST.
+
+        The Energy Institute figure for year Y is capacity at 31 December Y. Any
+        month whose capacity comes from a stamp later than the first day of that
+        month is reading a number that did not exist yet.
+        """
+        capacity = analysis.capacity_monthly()
+        covered = capacity.dropna(subset=["capacity_source_year"])
+        assert len(covered) > 600
+        stamped = pd.to_datetime(
+            {
+                "year": covered["capacity_source_year"].astype(int),
+                "month": 12,
+                "day": 31,
+            }
+        )
+        assert (stamped.to_numpy() <= covered["date"].to_numpy()).all(), (
+            "a capacity figure is being applied to months before the 31 December "
+            "it describes, which is the look ahead of finding 1.1"
+        )
+        # And it is the MOST RECENT such stamp, so the fix is an alignment and
+        # not an arbitrary extra lag.
+        assert (
+            covered["date"].dt.year - covered["capacity_source_year"]
+            == analysis.CAPACITY_SOURCE_LAG_YEARS
+        ).all()
+        assert analysis.CAPACITY_SOURCE_LAG_YEARS == 1
+
+    def test_the_2025_step_lands_in_2026_and_not_in_2025(self):
+        """The step the audit measured, in the one place it is easiest to read."""
+        frame = analysis.utilisation_monthly().set_index("date")
+        annual = analysis.capacity_annual().set_index("year")["capacity_kb_d"]
+        assert annual[2025] < annual[2024], "2025 was the closure year, not 2024"
+        for month in ("2025-01-01", "2025-06-01", "2025-12-01"):
+            assert frame.loc[month, "capacity_kb_d"] == pytest.approx(annual[2024])
+        for month in ("2026-01-01", "2026-06-01"):
+            assert frame.loc[month, "capacity_kb_d"] == pytest.approx(annual[2025])
+
+    def test_2026_needs_no_assumption_and_the_basis_still_guards_the_edge(self):
         default = analysis.utilisation_monthly()
         twenty_six = default[default["date"].dt.year == 2026]
         assert len(twenty_six) > 0
-        assert twenty_six["capacity_kb_d"].isna().all()
-        assert twenty_six["utilisation"].isna().all()
-        assert twenty_six["capacity_assumed"].all()
-
-        held = analysis.utilisation_monthly(analysis.CAPACITY_2026_HELD_FLAT)
-        held_26 = held[held["date"].dt.year == 2026]
-        assert held_26["capacity_kb_d"].notna().all()
-        # Held flat means held flat: every 2026 month carries the 2025 figure.
+        # The 31 December 2025 stamp IS the right denominator for 2026, so no
+        # month of it is an assumption under either basis.
+        assert twenty_six["capacity_kb_d"].notna().all()
+        assert not twenty_six["capacity_assumed"].any()
         capacity, year = analysis.latest_capacity_kb_d()
         assert year == 2025
-        assert (held_26["capacity_kb_d"] == capacity).all()
-        # And every one of them is still flagged, so no table can print one
-        # without the flag beside it.
-        assert held_26["capacity_assumed"].all()
-        # Nothing before 2026 is flagged.
-        assert not held[held["date"].dt.year <= 2025]["capacity_assumed"].any()
+        assert (twenty_six["capacity_kb_d"] == capacity).all()
+        assert not default["capacity_assumed"].any()
 
-    def test_an_unknown_2026_basis_is_refused_rather_than_defaulted(self):
-        with pytest.raises(ValueError, match="2026"):
-            analysis.capacity_monthly(basis_2026="extrapolate")
+        held = analysis.utilisation_monthly(analysis.CAPACITY_BEYOND_HELD_FLAT)
+        assert np.allclose(
+            held["capacity_kb_d"].to_numpy(),
+            default["capacity_kb_d"].to_numpy(),
+            equal_nan=True,
+        ), "no month of this sample is past the file, so the bases must agree"
+
+        # The guard still works where it bites: ask for a month the file cannot
+        # reach and the two bases part company.
+        beyond = pd.Timestamp(year=year + 2, month=6, day=1)
+        nan_basis = analysis.capacity_monthly(through=beyond)
+        flat_basis = analysis.capacity_monthly(
+            analysis.CAPACITY_BEYOND_HELD_FLAT, through=beyond
+        )
+        tail = nan_basis[nan_basis["date"].dt.year > year + 1]
+        assert len(tail) == 6
+        assert tail["capacity_kb_d"].isna().all()
+        assert tail["capacity_assumed"].all()
+        flat_tail = flat_basis[flat_basis["date"].dt.year > year + 1]
+        assert (flat_tail["capacity_kb_d"] == capacity).all()
+        assert flat_tail["capacity_assumed"].all()
+
+    def test_an_unknown_basis_is_refused_rather_than_defaulted(self):
+        with pytest.raises(ValueError, match="basis_beyond"):
+            analysis.capacity_monthly(basis_beyond="extrapolate")
         with pytest.raises(ValueError):
             analysis.capacity_monthly(interpolation="spline")
+
+    def test_the_linear_basis_is_never_what_a_reported_number_runs_on(self):
+        """CAPACITY_LINEAR carries look ahead by construction, so nothing uses it."""
+        import inspect
+
+        for function in (
+            analysis.capacity_monthly,
+            analysis.utilisation_monthly,
+            analysis.utilisation_annual,
+            analysis.analysis_frame,
+        ):
+            default = inspect.signature(function).parameters["interpolation"].default
+            assert default == analysis.CAPACITY_STEP
+        source = inspect.getsource(analysis.report)
+        assert "CAPACITY_LINEAR" not in source
 
     def test_the_step_convention_is_a_step_and_not_a_ramp(self):
         step = analysis.capacity_monthly(interpolation=analysis.CAPACITY_STEP)
@@ -532,12 +722,34 @@ class TestUtilisation:
         expected = tuple(int(y) for y in change[change < -analysis.CLOSURE_STEP_MIN_FALL].index)
         assert analysis.capacity_step_years() == expected
         assert analysis.CLOSURE_STEP_MIN_FALL == 0.02
-        # 2016 and 2025 are the two inside the regression sample, and they are
-        # the years the fallback's dummies attach to.
+        # 2016 and 2025 are the two falls inside the regression sample.
         assert 2016 in expected and 2025 in expected
 
+    def test_the_closure_step_turns_on_after_the_fall_is_recorded(self):
+        """The same alignment rule as the denominator, finding 1.1 applied twice.
+
+        A dummy that switched on in January of the fall year would assert in
+        January that the region was going to lose a refinery before December, and
+        unlike an episode dummy for an episode that has not happened it is NOT a
+        column of zeros in the training rows of the expanding window.
+        """
+        model = analysis.intake_trend_response()
+        names = [n for n in model.regression.names if n.startswith("closure_step_")]
+        assert names, "the fallback carries closure steps or this test is vacuous"
+        falls = set(analysis.capacity_step_years())
+        for name in names:
+            effective = int(name.rsplit("_", 1)[1])
+            assert effective - analysis.CAPACITY_SOURCE_LAG_YEARS in falls
+        assert names == ["closure_step_2017", "closure_step_2026"]
+
+        design = model.regression.design
+        dates = pd.DatetimeIndex(model.regression.dates)
+        column = design[:, model.regression.names.index("closure_step_2017")]
+        assert set(column[dates < pd.Timestamp("2017-01-01")]) == {0.0}
+        assert set(column[dates >= pd.Timestamp("2017-01-01")]) == {1.0}
+
     def test_utilisation_pct_is_a_hundred_times_the_fraction(self):
-        frame = analysis.utilisation_monthly(analysis.CAPACITY_2026_HELD_FLAT)
+        frame = analysis.utilisation_monthly(analysis.CAPACITY_BEYOND_HELD_FLAT)
         both = frame.dropna(subset=["utilisation"])
         assert np.allclose(both["utilisation_pct"], 100.0 * both["utilisation"])
         # And it is a plausible utilisation, not a ratio someone inverted.
@@ -654,7 +866,7 @@ class TestTheTrendIsTime:
 
         full = analysis.intake_trend_response(
             frame=analysis.analysis_frame(
-                analysis.CAPACITY_2026_HELD_FLAT, analysis.CAPACITY_STEP
+                analysis.CAPACITY_BEYOND_HELD_FLAT, analysis.CAPACITY_STEP
             )
         )
         # On the full, contiguous sample the two coincide, which is why the
@@ -737,11 +949,24 @@ class TestReport:
         text = analysis.report(replications=50)
         for phrase in (
             "margin_study_intensity = MBR - gas wedge",
-            "no capacity figure exists",
+            "THE DENOMINATOR IS LAGGED ONE YEAR",
             "VERDICT",
             "10 $/bbl is worth",
+            # The four descriptions the Gate 3 self audit asked to have
+            # corrected. Each of these is a sentence a reader meets, and this is
+            # what stops one of them drifting back.
+            "THIS SAMPLE CANNOT TELL THE THREE HORSES APART",
+            "THE F IS A PROPERTY OF THE CONTROL SET",
+            "TAKE THE EPISODE OUT AND THE ESTIMATE DOES NOT WIDEN, IT REVERSES",
+            "INDISTINGUISHABLE FROM ZERO UNDER EVERY DEFINITION",
         ):
             assert phrase in text, "the report no longer says %r" % phrase
+        for banned_claim in ("DEAD HEAT", "dead heat"):
+            assert banned_claim not in text, (
+                "the report asserts %r again. The measurement supports only that "
+                "this sample cannot separate the horses, Gate 3 self audit "
+                "finding 2.1" % banned_claim
+            )
         # SPEC.md section 0.1: no em dashes and no en dashes anywhere. Written
         # as code points so that this file can assert the rule without breaking
         # it, which is what tests/test_base.py checks across the sources.
@@ -1050,6 +1275,74 @@ class TestFirstStageF:
         columns.append(work["inst_mean"].to_numpy(dtype=float))
         names.append("instrument")
         return work, np.column_stack(columns), names
+
+    def test_the_f_is_measured_as_a_property_of_the_control_set(self):
+        """Gate 3 self audit, finding 3.1. The F belongs to the controls.
+
+        Two things are asserted here and neither is a number about the world:
+        that the ladder's last rung reproduces the headline F exactly, so it is
+        the same regression and not a lookalike, and that the first stage of the
+        two dependents differs by ONE column, which is what makes "the F under
+        two models" a misdescription.
+        """
+        capacity = analysis.gas_instrument(dependent=analysis.DEPENDENT_CAPACITY)
+        fallback = analysis.gas_instrument(dependent=analysis.DEPENDENT_FALLBACK)
+        assert [rung["controls"] for rung in capacity.control_ladder] == [
+            "constant only",
+            "plus month dummies",
+            "plus episode dummies",
+            "plus a linear trend",
+        ]
+        for result, rung in ((capacity, 2), (fallback, 3)):
+            spec = result.control_ladder[rung]
+            assert spec["is_the_spec_equation"]
+            assert spec["f"] == pytest.approx(result.first_stage_f, rel=1e-10)
+            assert spec["coefficient"] == pytest.approx(
+                result.first_stage_coefficient, rel=1e-10
+            )
+            assert sum(
+                bool(r["is_the_spec_equation"]) for r in result.control_ladder
+            ) == 1
+
+        # ONE COLUMN APART. The first stage contains no dependent at all.
+        assert set(fallback.control_set) - set(capacity.control_set) == {
+            "trend_months"
+        }
+        assert set(capacity.control_set) - set(fallback.control_set) == set()
+        for name in (analysis.DEPENDENT_CAPACITY, analysis.DEPENDENT_FALLBACK):
+            assert name not in capacity.control_set
+            assert name not in fallback.control_set
+        assert capacity.control_ladder[0] == fallback.control_ladder[0]
+
+    def test_the_instruments_variation_is_the_episodes_the_controls_remove(self):
+        """The other half of finding 3.1, and the reason the diagnosis changed."""
+        result = analysis.gas_instrument(dependent=analysis.DEPENDENT_CAPACITY)
+        assert result.instrument_months_in_episodes > 0
+        assert result.instrument_sd_in_episodes > (
+            2.0 * result.instrument_sd_outside_episodes
+        ), (
+            "the instrument's variation is no longer concentrated in the episode "
+            "windows, sd %.2f inside against %.2f outside, so the diagnosis in "
+            "the report needs rereading"
+            % (
+                result.instrument_sd_in_episodes,
+                result.instrument_sd_outside_episodes,
+            )
+        )
+        peak = pd.Timestamp(result.instrument_max_month + "-01")
+        assert analysis.episode_mask([peak])["any_episode"].iloc[0] == 1.0
+        # The episode rung is where the F goes, and the report says so from this
+        # measurement rather than from a typed sentence.
+        drops = [
+            result.control_ladder[i - 1]["f"] - result.control_ladder[i]["f"]
+            for i in range(1, len(result.control_ladder))
+        ]
+        assert drops.index(max(drops)) == 1, (
+            "the biggest fall in the first stage F is no longer the episode "
+            "dummies, so the diagnosis in the report needs rereading"
+        )
+        assert "PROPERTY OF THE CONTROL SET" in result.diagnosis
+        assert "%.3f" % result.control_ladder[0]["f"] in result.diagnosis
 
     def test_the_f_is_the_square_of_the_newey_west_t_on_the_excluded_instrument(self):
         frame = synthetic_instrument(relevance=1.0)
@@ -1444,6 +1737,90 @@ class TestSeasonalExclusions:
             analysis.CRACK_GASOLINE, "difference_usd_bbl"
         ] == pytest.approx(5.0, abs=0.1)
 
+    def test_a_winter_is_contiguous_and_a_calendar_year_window_is_not_one(self):
+        """Gate 3 self audit, finding 5.2. THE WINTER IS THE THING BEING MEASURED.
+
+        Planted data settles this without appealing to the real series. ONE cold
+        winter is put into an otherwise flat series, running November and
+        December of 2010 into January, February and March of 2011. The contiguous
+        window sees it for what it is: one anomalous winter out of twenty four.
+        The calendar year window splits it in half and books the halves to two
+        different years, which is exactly how "positive in 16 of 25" was
+        manufactured.
+        """
+        months = pd.date_range("2000-01-01", periods=12 * 26, freq="MS")
+        frame = pd.DataFrame({"date": months})
+        stamp = frame["date"].dt.year * 12 + frame["date"].dt.month
+        lift = np.zeros(len(frame))
+        for year, month in ((2010, 11), (2010, 12), (2011, 1), (2011, 2), (2011, 3)):
+            lift[(stamp == year * 12 + month).to_numpy()] = 12.0
+        frame[analysis.CRACK_GASOIL] = 20.0 + lift
+        frame[analysis.CRACK_GASOLINE] = 20.0
+
+        contiguous = analysis.seasonal_textbook_check(
+            frame=frame, window=analysis.SEASON_WINDOW_CONTIGUOUS
+        ).set_index("crack")
+        calendar = analysis.seasonal_textbook_check(
+            frame=frame, window=analysis.SEASON_WINDOW_CALENDAR
+        ).set_index("crack")
+        assert contiguous.loc[analysis.CRACK_GASOIL, "seasons_positive"] == 1, (
+            "one planted winter has to show up as one positive season"
+        )
+        assert calendar.loc[analysis.CRACK_GASOIL, "seasons_positive"] == 2, (
+            "the calendar year window has to split that one winter across the "
+            "two years it spans, which is the artefact of finding 5.2"
+        )
+        # The contiguous winter spans two calendar years and the driving season
+        # does not, which is the whole of the difference.
+        assert contiguous.loc[analysis.CRACK_GASOIL, "season_spans_years"] == 2
+        assert contiguous.loc[analysis.CRACK_GASOLINE, "season_spans_years"] == 1
+        assert calendar.loc[analysis.CRACK_GASOIL, "season_spans_years"] == 1
+        # A contiguous winter needs both its years complete, so it has one fewer
+        # season than there are complete years.
+        assert (
+            contiguous.loc[analysis.CRACK_GASOIL, "seasons"]
+            == calendar.loc[analysis.CRACK_GASOIL, "seasons"] - 1
+        )
+
+    def test_the_gasoil_winter_sign_is_reported_with_what_it_rests_on(self):
+        """Findings 5.2 and 5.3, on the committed data.
+
+        Not a test that the number is a number. A test that the two things the
+        audit found the published sentences hiding, a median of the opposite sign
+        and a mean carried by two observations, are both on the result where the
+        report can read them.
+        """
+        calendar = analysis.seasonal_textbook_check(
+            window=analysis.SEASON_WINDOW_CALENDAR
+        ).set_index("crack")
+        row = calendar.loc[analysis.CRACK_GASOIL]
+        assert row["difference_usd_bbl"] < 0 < row["median_usd_bbl"], (
+            "the calendar year gasoil mean and median no longer disagree in "
+            "sign, so the paragraph explaining why they did needs rereading"
+        )
+        assert len(row["two_most_negative"]) == 2
+        contiguous = analysis.seasonal_textbook_check().set_index("crack")
+        assert not contiguous.loc[analysis.CRACK_GASOIL, "holds"]
+        assert not calendar.loc[analysis.CRACK_GASOIL, "holds"]
+        # The textbook failure is the finding and it survives every window, which
+        # is what SPEC.md section 6.5 asked to have checked.
+        for window in analysis.SEASON_WINDOWS:
+            for exclusions in ((), analysis.SEASONAL_REMOVABLE_YEARS):
+                check = analysis.seasonal_textbook_check(
+                    exclude_years=exclusions, window=window
+                ).set_index("crack")
+                assert not check.loc[analysis.CRACK_GASOIL, "holds"]
+                assert abs(check.loc[analysis.CRACK_GASOIL, "t"]) < 1.0
+                assert check.loc[analysis.CRACK_GASOLINE, "holds"]
+
+    def test_the_holds_flag_uses_the_module_s_own_critical_value(self):
+        """The one number the Gate 3 self audit could not trace, now traceable."""
+        import inspect
+
+        source = inspect.getsource(analysis.seasonal_textbook_check)
+        assert "mean / se > Z95" in source
+        assert "> 2.0" not in source
+
     def test_the_season_windows_are_fixed_and_not_searched(self):
         assert analysis.DRIVING_SEASON_MONTHS == (5, 6, 7, 8, 9)
         assert analysis.HEATING_SEASON_MONTHS == (11, 12, 1, 2, 3)
@@ -1454,7 +1831,16 @@ class TestSeasonalExclusions:
         import inspect
 
         signature = inspect.signature(analysis.seasonal_textbook_check)
-        assert set(signature.parameters) == {"exclude_years", "frame"}
+        # `window` names one of two FIXED definitions of a season, both of which
+        # are reported. It is not a knob to search over: the month sets are the
+        # module constants above and neither window can be handed a new one.
+        assert set(signature.parameters) == {"exclude_years", "frame", "window"}
+        assert signature.parameters["window"].default == (
+            analysis.SEASON_WINDOW_CONTIGUOUS
+        )
+        assert analysis.SEASON_WINDOWS == ("contiguous", "calendar_year")
+        with pytest.raises(ValueError):
+            analysis.seasonal_textbook_check(window="october_to_february")
 
     def test_the_weekly_and_monthly_layers_are_two_panels_and_not_one_line(self):
         join = analysis.seasonal_join()
@@ -1480,8 +1866,13 @@ class TestTheRaceIsReportedHonestly:
         assert key == best.horse.key
         assert ("%.4f" % best.oos.rmse) in sentence
 
-    def test_a_dead_heat_is_called_a_dead_heat(self):
-        """SPEC.md section 2 rule 3 and rule 4, enforced on the prose."""
+    def test_an_undecided_race_is_not_called_a_dead_heat(self):
+        """Gate 3 self audit, finding 2.1. SPEC.md section 2 rules 3 and 4 on the prose.
+
+        A dead heat asserts that the horses are equal, which is a finding. The
+        measurement supports only that this sample cannot separate them. The two
+        are different claims and this test keeps the second one.
+        """
         results = analysis.horse_race()
         pairs = [
             analysis.loss_differential(results[i], results[j])
@@ -1490,10 +1881,64 @@ class TestTheRaceIsReportedHonestly:
         ]
         _, sentence = analysis.horse_race_winner(results)
         if not any(p.distinguishable for p in pairs):
-            assert "DEAD HEAT" in sentence
+            assert "THIS SAMPLE CANNOT TELL THE HORSES APART" in sentence
+            assert "NOT THE SAME AS SAYING THEY ARE EQUAL" in sentence
             assert "withheld" in sentence
+            # The power is printed beside the claim, because "could not
+            # separate" is only meaningful next to "could not have separated".
+            assert "power" in sentence
+            for banned in ("DEAD HEAT", "dead heat"):
+                assert banned not in sentence
         else:
             assert "carries information" in sentence
+
+    def test_the_power_of_each_comparison_travels_with_it(self):
+        """Finding 2.1 again, on the arithmetic rather than the prose."""
+        results = analysis.horse_race()
+        pair = analysis.loss_differential(results[0], results[1])
+        better = min(r.oos.rmse for r in results[:2])
+        worse = max(r.oos.rmse for r in results[:2])
+        assert pair.better_rmse == pytest.approx(better)
+        assert pair.worse_rmse == pytest.approx(worse)
+        assert pair.observed_gap_pct == pytest.approx(
+            100.0 * (worse - better) / worse
+        )
+        # The smallest detectable gap, rebuilt here from the definition.
+        detectable = math.sqrt(better**2 + analysis.Z95 * pair.nw_se)
+        assert pair.detectable_gap_pct == pytest.approx(
+            100.0 * (detectable - better) / detectable
+        )
+        # A test cannot have less power than its own size.
+        assert 0.05 <= pair.power_at_observed <= 1.0
+        # Power rises with the effect and falls with the noise, or the formula
+        # is upside down.
+        loud = dataclasses.replace(pair, mean_difference=pair.nw_se * 5.0)
+        quiet = dataclasses.replace(pair, mean_difference=pair.nw_se * 0.01)
+        assert loud.power_at_observed > 0.99
+        assert quiet.power_at_observed == pytest.approx(0.05, abs=0.002)
+        assert loud.forecasts_for_target_power < quiet.forecasts_for_target_power
+
+    def test_this_sample_could_not_have_separated_the_horses(self):
+        """The measurement the sentence rests on, asserted so it cannot rot.
+
+        If a future data refresh makes these tests powerful, the report's own
+        wording changes with them, because every clause of it is computed. This
+        test records what is true today: the comparisons cannot see the gaps they
+        are being asked about.
+        """
+        for dependent in analysis.DEPENDENTS:
+            results = analysis.horse_race(dependent=dependent)
+            for i in range(len(results)):
+                for j in range(i + 1, len(results)):
+                    pair = analysis.loss_differential(results[i], results[j])
+                    assert not pair.distinguishable
+                    assert pair.observed_gap_pct < pair.detectable_gap_pct, (
+                        "%s %s: the observed gap is now larger than the smallest "
+                        "detectable one, so the report's power paragraph needs "
+                        "rereading" % (dependent, pair.sentence)
+                    )
+                    assert pair.power_at_observed < 0.5
+                    assert pair.forecasts_for_target_power > 10 * pair.nobs
 
     def test_the_loss_differential_is_the_paired_squared_error_difference(self):
         results = analysis.horse_race()
