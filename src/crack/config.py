@@ -51,13 +51,39 @@ import pandas as pd
 __all__ = [
     "BBL_PER_T_GASOIL",
     "BBL_PER_T_GASOLINE",
+    "PRODUCT_BBL_PER_T",
+    "DGEC_SLATE_LINE",
     "MMBTU_PER_MWH",
     "DGEC_BBL_PER_T_BRENT_NOTE",
     "DGEC_BBL_PER_T_BRENT_MARGIN",
+    "DGEC_MASS_YIELDS",
+    "DGEC_METHOD_EDITION",
+    "DGEC_METHOD_URL",
+    "DGEC_METHOD_REVISED_YEAR",
+    "DGEC_METHOD_ANNEX_IN_FORCE_FROM",
+    "DGEC_SULPHUR_PRICE_USD_T",
+    "DGEC_INSURANCE_AND_LOSS_RATE",
+    "DGEC_PUBLISHED_METHOD_INPUTS",
+    "DGEC_UNPUBLISHED_METHOD_INPUTS",
+    "REPLICATION_BAR_USD_BBL",
+    "PERCENTILE_WINDOW_YEARS",
+    "PERCENTILE_WINDOW_MONTHS",
+    "ROLLING_YIELD_WINDOW_MONTHS",
+    "YIELD_BASIS_CRUDE_INTAKE",
+    "YIELD_BASIS_TOTAL_FEED",
+    "YIELD_BASIS_NORMALISED",
+    "YIELD_BASES",
+    "YIELD_BASIS_NOTES",
     "GAS_INTENSITY_MMBTU_PER_BBL",
     "GAS_INTENSITY_FUEL_ONLY_MMBTU_PER_BBL",
     "GAS_INTENSITY_GROSS_INPUT_MMBTU_PER_BBL",
     "GAS_INTENSITY_BAND",
+    "EI_BCF_NG_PER_MILLION_TONNES_LNG",
+    "GAS_MMBTU_PER_TONNE",
+    "DGEC_EMBEDDED_GAS_INTENSITY_MMBTU_PER_BBL",
+    "MBR_IS_NET_OF_GAS",
+    "MBR_GAS_BASIS_NOTE",
+    "YIELD_WINDOW_MONTHS",
     "OTHER_VARIABLE_COST_USD_BBL",
     "EIA_REFINERY_FUEL_GAS_MMCF_2023",
     "EIA_HYDROGEN_FEEDSTOCK_GAS_MMCF_2023",
@@ -169,6 +195,39 @@ BBL_PER_T_GASOIL = 7.45
 # self audit, finding 3.1.
 BBL_PER_T_GASOLINE = 8.33
 
+# The one table where a product name meets its barrels per tonne factor.
+#
+# THIS EXISTS BECAUSE OF THE GATE 2 SELF AUDIT, FINDING 2. The two constants
+# above were guarded by tests and their USE was not: the audit put
+# BBL_PER_T_GASOIL on the gasoline leg of the decomposition yield and all 756
+# tests and the parity validator stayed green while the October 2022 gasoline
+# contribution moved by 0.61 $/bbl. SPEC.md section 9's Units row calls a wrong
+# conversion factor "the most common error in this study", and a constant that
+# is right in config.py and wrong at the call site is exactly that error.
+#
+# So no call site types a factor any more. Every one of them looks the factor up
+# by the SAME key that names the product it is converting, here, and a wrong
+# factor now requires editing this mapping, which
+# tests/test_units.py::test_every_product_factor_is_the_one_spec_section_4_1_fixes
+# asserts line by line.
+PRODUCT_BBL_PER_T: Mapping[str, float] = MappingProxyType(
+    {
+        "gasoil": BBL_PER_T_GASOIL,
+        "gasoline": BBL_PER_T_GASOLINE,
+    }
+)
+
+# Which line of DGEC's own slate each of this study's two products is, so that
+# the mass yield and the conversion factor are picked up by one key rather than
+# by two hand typed lookups that can disagree. DGEC's "gazole" is road diesel
+# and its "eurobob" is the blendstock the method prices, SPEC.md section 4.2.
+DGEC_SLATE_LINE: Mapping[str, str] = MappingProxyType(
+    {
+        "gasoil": "gazole",
+        "gasoline": "eurobob",
+    }
+)
+
 # MMBtu per MWh. A unit definition, SPEC.md section 4.1, used in the gas chain
 # of SPEC.md section 4.4: gas_usd_mmbtu = ttf_eur_mwh * eurusd / MMBTU_PER_MWH.
 # 1 MWh = 3.6e9 J and 1 MMBtu(IT) = 1.05505585262e9 J, so the exact ratio is
@@ -217,6 +276,208 @@ DGEC_BBL_PER_T_BRENT_NOTE = 7.5
 # of the ten product quotations plus the gas cost and the freight cost are not
 # published, so this factor may end up used only in the partial attribution.
 DGEC_BBL_PER_T_BRENT_MARGIN = 7.55
+
+
+# ---------------------------------------------------------------------------
+# The MBR method itself. SPEC.md section 4.3 layer 1: "Read the note, record its
+# product slate, yields and conversion factors in config.py".
+# ---------------------------------------------------------------------------
+#
+# Source for everything in this block: "Mode de calcul de la marge brute de
+# raffinage sur brent", DGEC, PDF metadata title "2019.08.01 Mode de calcul de
+# la marge brute de raffinage sur brent-1", 4 pages, read in full at recon 02
+# section 5. SPEC.md section 5.6 links it.
+
+#: The edition of the methodology note these constants were read from.
+DGEC_METHOD_EDITION = "2019-08-01"
+
+DGEC_METHOD_URL = (
+    "https://www.ecologie.gouv.fr/sites/default/files/documents/"
+    "Mode%20de%20calcul%20de%20la%20marge%20brute%20de%20raffinage%20sur%20brent.pdf"
+)
+
+#: The note says the method was revised with IFPEN in 2014 and that the annex
+#: method applies from 1 January 2016, with 2014 and 2015 recomputed
+#: retroactively for continuity. Recon 02 section 5.1 quotes all three
+#: sentences.
+#:
+#: THE CONSEQUENCE SPEC.md SECTION 4.3 DOES NOT ANTICIPATE, and it is a relief
+#: rather than a problem: the published MBR file starts in January 2015, which
+#: is inside the recomputed window, so the ENTIRE series this project can reach
+#: is on one method and contains no structural break. There is no break date to
+#: mark on a chart because no chart drawn from public data spans it. The Method
+#: view says so instead, and records that the pre 2014 method is not comparable
+#: and its data is not published anyway.
+DGEC_METHOD_REVISED_YEAR = 2014
+DGEC_METHOD_ANNEX_IN_FORCE_FROM = "2016-01-01"
+
+#: Table 1 of the methodology note, "Rendements massiques", verbatim and
+#: complete, as MASS yields: tonnes of each line per tonne of Brent.
+#:
+#: READ THE UNITS TWICE. These are mass yields on a tonne of crude. SPEC.md
+#: section 4.5 writes contribution[p] = yield[p] * crack[p] with the crack in
+#: $/bbl, which needs a VOLUMETRIC yield, barrels of product per barrel of
+#: crude. The two differ by the ratio of the two conversion factors, and for
+#: gasoil that is 7.45 / 7.55, about 1.3 percent. crack.engine.
+#: mass_yield_to_volume_yield does that conversion and demands both factors, so
+#: a mass yield can never be multiplied by a $/bbl crack by accident. Where this
+#: project holds no cited factor for a product, that product is not converted
+#: and its yield stays on the residual line with its name attached, which is
+#: SPEC.md section 4.3 layer 3's instruction.
+#:
+#: Brent at 100 percent and natural gas at 1.0 percent are INPUTS, not outputs,
+#: and they are kept in the mapping because dropping them would hide two of the
+#: method's own lines. Outputs sum to 94.5 percent, plus 6.6 percent internal
+#: fuel and losses is 101.1 percent, less the 1.0 percent of purchased gas is
+#: 100.1 percent, the residual being the note's own rounding. Recon 02 section
+#: 5.2 reproduces the table.
+DGEC_MASS_YIELDS: Mapping[str, float] = MappingProxyType(
+    {
+        "brent": 1.000,  # input
+        "gaz_naturel": 0.010,  # input, purchased
+        "propane": 0.017,
+        "butane": 0.012,
+        "naphta": 0.082,
+        "eurobob": 0.120,
+        "essence_export": 0.119,
+        "carbureacteur": 0.083,
+        "gazole": 0.340,
+        "fod": 0.082,
+        "fioul_lourd_1pct": 0.088,
+        "soufre": 0.002,
+        "combustible_interne_et_pertes": 0.066,
+    }
+)
+
+#: The note fixes the sulphur price rather than quoting it: "Soufre (estime a
+#: 100 $/t)". Recon 02 section 5.3. It is the one unpublished input the method
+#: itself supplies, and 0.2 percent of a tonne at 100 $/t is 0.20 $/t of crude,
+#: about 0.026 $/bbl, so it changes nothing and is carried for completeness.
+DGEC_SULPHUR_PRICE_USD_T = 100.0
+
+#: "les couts d'assurance et les pertes (evalues forfaitairement a 0,3% du cours
+#: du Brent date et du cout du fret)". Recon 02 section 5.5, page 4 verbatim.
+DGEC_INSURANCE_AND_LOSS_RATE = 0.003
+
+#: The method inputs that ARE published, so a replication may use them.
+#: Recon 02 section 5.6 crossed the note's input list against what the weekly
+#: note actually prints.
+DGEC_PUBLISHED_METHOD_INPUTS: Sequence[str] = (
+    "brent_date",
+    "gazole",
+    "fod",
+    "carbureacteur",
+    "fioul_lourd_1pct",
+    "soufre",
+    "eur_usd",
+)
+
+#: The method inputs that are NOT published anywhere this project can reach, and
+#: therefore the reason SPEC.md section 4.3 layer 2's 0.50 $/bbl bar cannot be
+#: met. Recon 02 section 5.6, each line checked against the note's own tables.
+#:
+#: Every one of these is named on the page rather than summarised, because
+#: SPEC.md section 4.3 layer 2 says "If an input is not published, name it and
+#: fall back to the official series", and an unnamed gap is indistinguishable
+#: from a modelling failure.
+DGEC_UNPUBLISHED_METHOD_INPUTS: Sequence[str] = (
+    "eurobob",  # the note prints Eurosuper, finished gasoline, a different product
+    "essence_export",  # defined as 50 percent naphta CAF plus 50 percent eurosuper FAB
+    "naphta",
+    "propane",
+    "butane",
+    "peg_nord_gas_day_ahead",  # the gas purchase price, EUR/MWh
+    "grtgaz_transport_tariff",  # published as a tariff, not in these documents
+    "aframax_freight_sullom_voe_le_havre",  # Reuters commercial data
+)
+
+#: SPEC.md section 4.3 layer 2 and section 9: "agreement within 0.50 $/bbl in
+#: every complete month is the Gate 2 bar".
+REPLICATION_BAR_USD_BBL = 0.50
+
+
+# ---------------------------------------------------------------------------
+# SPEC.md section 4.5, the ten year percentile
+# ---------------------------------------------------------------------------
+
+#: "percentile_10y = rank of margin_after_gas within its trailing ten years".
+#: Ten years of monthly observations is 120 months, and the window is defined in
+#: months rather than by a date offset so that the rank does not quietly change
+#: length in a leap year.
+PERCENTILE_WINDOW_YEARS = 10
+PERCENTILE_WINDOW_MONTHS = 120
+
+#: SPEC.md section 4.3 layer 4's other window: "Compute NWE yields from JODI
+#: refinery output by product over refinery intake (12-month rolling, BE, DE,
+#: FR, NL, UK)". In months, for the same reason as the one above, and a constant
+#: for a duller reason: it was a bare 12 in two signatures in crack.series while
+#: its sibling, the ten year percentile window, was a named constant with a
+#: docstring. Gate 2 self audit, finding 13. The spec fixes both windows and
+#: both should be the same kind of thing.
+#:
+#: It is a rolling mean of the numerator and of the denominator separately, not
+#: the mean of twelve monthly ratios. crack.series.jodi_yields says why.
+ROLLING_YIELD_WINDOW_MONTHS = 12
+
+
+# ---------------------------------------------------------------------------
+# SPEC.md section 4.3 layer 4, the observed yield denominator. A real choice.
+# ---------------------------------------------------------------------------
+#
+# Recon 03 section 1.8 measured it and refused to pick: "Do not quietly pick
+# one. This is a real modelling choice and the spec has not made it." So both
+# bases exist here, both are computed, and the site shows both.
+
+#: JODI REFINOBS on CRUDEOIL. Crude only in the denominator, gross output from
+#: all feed in the numerator, so the ratio is 1.13 to 1.16 and the product
+#: yields do not sum to 1. Starts 2002-01.
+YIELD_BASIS_CRUDE_INTAKE = "crude_intake"
+
+#: JODI REFINOBS on TOTCRUDE. Total refinery feed in the denominator, so the
+#: ratio is 1.01 to 1.03, which is volume gain and is physically right. Starts
+#: 2009-01, which is the cost.
+YIELD_BASIS_TOTAL_FEED = "total_feed"
+
+#: Crude intake in the denominator, then the yield vector scaled to sum to 1.
+#: Labelled a share of output rather than a yield on crude, because that is what
+#: it is.
+YIELD_BASIS_NORMALISED = "normalised_share"
+
+YIELD_BASES = (
+    YIELD_BASIS_CRUDE_INTAKE,
+    YIELD_BASIS_TOTAL_FEED,
+    YIELD_BASIS_NORMALISED,
+)
+
+#: What each basis means, in the words the Method view uses. Kept next to the
+#: names so the label and the arithmetic cannot drift apart.
+YIELD_BASIS_NOTES: Mapping[str, str] = MappingProxyType(
+    {
+        YIELD_BASIS_CRUDE_INTAKE: (
+            "JODI refinery gross output by product over JODI refinery crude "
+            "intake, REFGROUT over REFINOBS CRUDEOIL. The numerator is output "
+            "from all refinery feed including NGL, other feedstocks and "
+            "backflows, and the denominator is crude alone, so the lines sum to "
+            "about 1.13 to 1.16 rather than to 1. Using these directly as "
+            "yield[p] inflates a decomposed margin by about 15 percent, which is "
+            "why the number is shown next to the sum that gives it away. Covers "
+            "2002-01 onward. Recon 03 section 1.8."
+        ),
+        YIELD_BASIS_TOTAL_FEED: (
+            "The same output over JODI total refinery feed, REFINOBS TOTCRUDE. "
+            "The lines sum to about 1.01 to 1.03, which is volume gain and is "
+            "physically right. Covers 2009-01 onward only, which is the whole "
+            "cost of this basis and the reason it is not simply the default. "
+            "Recon 03 section 1.8."
+        ),
+        YIELD_BASIS_NORMALISED: (
+            "Crude intake in the denominator, then every line divided by the sum "
+            "so the vector adds to 1. It is a share of output, not a yield on "
+            "crude, and it must be labelled that way wherever it appears. It "
+            "keeps the 2002 start and loses the volume gain."
+        ),
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -305,6 +566,116 @@ EIA_RESIDUAL_FUEL_OIL_MMBTU_PER_BBL = 6.287
 #: magnitude, and says to report whatever comes out. It is an order of magnitude
 #: reference and never a target: SPEC.md section 6.6 forbids tuning toward it.
 SP_GAS_VERSUS_FUEL_OIL_GAP_USD_BBL_2022_10 = 7.0
+
+# ---------------------------------------------------------------------------
+# THE MBR IS ALREADY NET OF PURCHASED NATURAL GAS. The Gate 2 self audit,
+# finding 1, and the primary source settles it.
+# ---------------------------------------------------------------------------
+#
+# "Mode de calcul de la marge brute de raffinage sur Brent", DGEC, section 3
+# "Mode de calcul de la marge", verbatim:
+#
+#     "Pour calculer la marge de raffinage sur Brent, on soustrait aux
+#      recettes : les couts d'achat du Brent date FAB et du gaz naturel CAF ;
+#      le cout du fret petrolier ; les couts d'assurance et les pertes"
+#
+# The same note's table 1 carries "Gaz naturel 1,0%" as an INPUT beside
+# "Combustible interne et pertes 6,6%", and says the refinery "procede a des
+# achats de gaz naturel pour completer la couverture de ses besoins en
+# combustible interne et en hydrogene". Its point 4 says the margin is gross of
+# fixed and variable costs "autres que ceux energetiques", that is, gross of
+# everything EXCEPT energy, and the indicator's own name is "marge de raffinage
+# sur couts energetiques".
+#
+# SO THE PUBLISHED MBR IS ALREADY A MARGIN AFTER GAS. SPEC.md section 4.4's
+# margin_after_gas = margin_gross - gas_cost - other_variable_cost assumes a
+# margin_gross that is gross of gas. That assumption is true of a margin this
+# study builds from cracks and yields and FALSE of DGEC's MBR, and subtracting
+# a gas cost from the MBR charges the same barrel for gas twice. Until Gate 2 it
+# did: the correction is worth 0.34 to 14.86 $/bbl by month, 4.48 $/bbl in the
+# latest month and 8.28 $/bbl in October 2022.
+#
+# crack.engine carries the basis on the margin itself, so the wrong combination
+# raises instead of returning a number. docs/methodology.md section 2.3 writes
+# the reading and the size of the correction down, section 4.2 derives DGEC's own
+# embedded intensity, and docs/open-questions.md section 33 carries what is still
+# open about it.
+MBR_IS_NET_OF_GAS = True
+
+MBR_GAS_BASIS_NOTE = (
+    "DGEC's published MBR is already net of the natural gas the method assumes "
+    "the refinery buys: section 3 of the methodology note subtracts 'les couts "
+    "d'achat du Brent date FAB et du gaz naturel CAF' from the product "
+    "revenues, and table 1 carries natural gas at 1.0 percent of the tonne as "
+    "an input. The indicator is named 'marge de raffinage sur couts "
+    "energetiques' and its own note says it is gross of costs 'autres que ceux "
+    "energetiques'. This study therefore does NOT subtract a gas cost from it. "
+    "What it shows instead is the comparison: what DGEC's own embedded gas "
+    "assumption costs at the month's gas price against what this study's EIA "
+    "derived intensity would cost at the same price. SPEC.md section 4.4's "
+    "subtraction applies to a gross margin this study builds itself, not to "
+    "this one."
+)
+
+#: Billion cubic feet of natural gas per million tonnes of LNG. A volumetric
+#: conversion, quoted with attribution from the Energy Institute Statistical
+#: Review of World Energy 2026, sheet "Approximate conversion factors", the
+#: natural gas and LNG table, row "1 million tonnes LNG", column "billion cubic
+#: feet NG": 48.027940960947284.
+#:
+#: Quotation of one factor with attribution is what the review permits; see the
+#: ei_refinery_capacity_annual licence note below for what it does not permit.
+#: Nothing in the margin engine reads it. It exists for one purpose, sizing
+#: DGEC's own gas assumption in the same units as this study's intensity, and
+#: docs/methodology.md section 4.2 shows the arithmetic.
+EI_BCF_NG_PER_MILLION_TONNES_LNG = 48.027940960947284
+
+#: MMBtu per tonne of natural gas, GROSS, derived rather than typed:
+#:
+#:     48.027940960947284 bcf per Mt  x 1e9 cf per bcf / 1e6 t per Mt
+#:         = 48,027.94 cubic feet per tonne
+#:     x EIA_GAS_HEAT_CONTENT_BTU_PER_CF_2023 (1,036 Btu/cf, gross)
+#:         = 49,756,947 Btu per tonne
+#:     / 1e6 = 49.7569 MMBtu per tonne
+#:
+#: The EI table's own energy columns are NET heating values and this study's gas
+#: intensity is built on EIA's GROSS heat content, so the EI energy column is
+#: deliberately not used: the volume column is taken from EI and the heat
+#: content from EIA, which keeps both sides of the comparison on one basis. The
+#: two bases differ by about 10 percent and mixing them would put that 10
+#: percent into the comparison.
+GAS_MMBTU_PER_TONNE = (
+    EI_BCF_NG_PER_MILLION_TONNES_LNG
+    * 1_000.0
+    * EIA_GAS_HEAT_CONTENT_BTU_PER_CF_2023
+    / 1_000_000.0
+)
+
+#: The gas intensity DGEC's method already embeds in the published MBR, in this
+#: study's units, so the two can be put next to each other:
+#:
+#:     0.010 tonnes of gas per tonne of crude      table 1 of the method note
+#:     / 7.55 barrels per tonne of crude           the note's own factor
+#:     x 49.7569 MMBtu per tonne of gas            above
+#:     = 0.06590 MMBtu per barrel
+#:
+#: Against this study's 0.21217 MMBtu per barrel that is 31 percent. The two are
+#: not the same measurement: DGEC's is a French linear programming model's
+#: PURCHASED gas for a self sufficient refinery, and this study's is US refinery
+#: purchased fuel gas plus hydrogen feedstock over crude inputs. The comparison
+#: is reported as information, never subtracted from the other, and the Model
+#: view of SPEC.md section 7.2 is where a reader moves the intensity and watches
+#: the wedge move.
+DGEC_EMBEDDED_GAS_INTENSITY_MMBTU_PER_BBL = (
+    DGEC_MASS_YIELDS["gaz_naturel"] * GAS_MMBTU_PER_TONNE / DGEC_BBL_PER_T_BRENT_MARGIN
+)
+
+#: SPEC.md section 4.3 layer 4's rolling window, in months. It was a bare 12 in
+#: two signatures in crack.series while its sibling, the ten year percentile
+#: window, was PERCENTILE_WINDOW_MONTHS with a docstring. Gate 2 self audit,
+#: finding 13: one of the two spec windows was a config constant and the other a
+#: literal, and they should be the same kind of thing.
+YIELD_WINDOW_MONTHS = 12
 
 #: SPEC.md section 4.4: other_variable_cost defaults to zero and is labelled.
 #: Carbon costs are out of scope for this version and are listed as a limitation,

@@ -31,6 +31,12 @@
 // vendor/, which holds pinned third party libraries this project does not get to
 // rewrite. data/private/ is gitignored and therefore never reached.
 //
+// The run says how many files it was asked about, how many of them are in the
+// index and how many are untracked, and it FAILS if any file it was asked about
+// could not be opened. Gate 2 self audit, finding 9: a PASS is worth what the
+// file list behind it is worth, and one that quietly covered no new file would
+// be true and empty. The counts turn that into something a reader can check.
+//
 // The one exception the house rule allows is a dash that is genuinely part of a
 // cited title, a source name, or a quoted line from a document. Changing one of
 // those would be falsifying a citation, which is worse than breaking a style
@@ -86,15 +92,33 @@ const BINARY_EXTENSIONS = new Set([
   ".pyc", ".so", ".dll", ".dylib", ".exe",
 ]);
 
+function gitList(flags) {
+  const out = execFileSync("git", ["ls-files", ...flags], {
+    cwd: ROOT,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+  return out.split("\n").map((line) => line.trim()).filter(Boolean);
+}
+
 function trackedFiles() {
   try {
-    const out = execFileSync(
-      "git",
-      ["ls-files", "--cached", "--others", "--exclude-standard"],
-      { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }
-    );
-    const files = out.split("\n").map((line) => line.trim()).filter(Boolean);
-    if (files.length) return { files, how: "git ls-files" };
+    const committed = gitList(["--cached"]);
+    const untracked = gitList(["--others", "--exclude-standard"]);
+    const files = [...new Set([...committed, ...untracked])].sort();
+    // The index AND the files that are not in it yet. Gate 2 self audit,
+    // finding 9: a run that reported PASS over a file list with no new file in
+    // it would be true and vacuous, and every Gate 2 file was uncommitted when
+    // the audit ran. The counts are printed so that a pass can be read as
+    // earned rather than taken on trust.
+    if (files.length) {
+      return {
+        files,
+        how: "git ls-files",
+        committed: committed.length,
+        untracked: untracked.length,
+      };
+    }
   } catch {
     // fall through to the walk
   }
@@ -121,7 +145,12 @@ function trackedFiles() {
     }
   };
   walk("");
-  return { files, how: "directory walk, git was not available" };
+  return {
+    files,
+    how: "directory walk, git was not available",
+    committed: null,
+    untracked: null,
+  };
 }
 
 function isSkippedPath(relative) {
@@ -151,10 +180,11 @@ const ESCAPED = [
 ];
 
 const args = new Set(process.argv.slice(2));
-const { files, how } = trackedFiles();
+const { files, how, committed, untracked } = trackedFiles();
 
 const hits = [];
 const allowed = [];
+const unreadable = [];
 let scanned = 0;
 let skipped = 0;
 
@@ -164,12 +194,18 @@ for (const relative of files) {
     continue;
   }
   const full = path.join(ROOT, relative);
-  if (!existsSync(full)) continue;
+  // A file this tool was asked about and could not open is NOT a pass. It used
+  // to be skipped in silence, which is the same shape of problem as finding 9:
+  // a clean result over a set of files nobody counted.
+  if (!existsSync(full)) {
+    unreadable.push({ file: relative, why: "listed but not on disk" });
+    continue;
+  }
   let buffer;
   try {
     buffer = readFileSync(full);
-  } catch {
-    skipped += 1;
+  } catch (err) {
+    unreadable.push({ file: relative, why: String((err && err.code) || err) });
     continue;
   }
   if (looksBinary(buffer)) {
@@ -216,8 +252,20 @@ for (const relative of files) {
 console.log("check-dashes.mjs, repo " + ROOT);
 console.log("file list from " + how);
 console.log(
+  "asked about " + files.length + " file(s)" +
+    (committed === null
+      ? ""
+      : ": " + committed + " in the index, " + untracked + " untracked and not ignored")
+);
+console.log(
   "scanned " + scanned + " text file(s), skipped " + skipped + " binary, vendored or private file(s)"
 );
+if (unreadable.length) {
+  console.log("could not open " + unreadable.length + " file(s):");
+  for (const miss of unreadable.slice(0, 20)) {
+    console.log("  " + miss.file + "  " + miss.why);
+  }
+}
 if (args.has("--list")) {
   for (const relative of files) {
     if (!isSkippedPath(relative)) console.log("  " + relative);
@@ -231,6 +279,14 @@ if (allowed.length) {
     console.log("  " + hit.file + ":" + hit.line + ":" + hit.column + "  " + hit.kind + "  " + hit.text);
   }
   console.log("");
+}
+
+if (unreadable.length) {
+  console.log(
+    "FAIL  " + unreadable.length + " file(s) could not be read, so this run " +
+      "cannot say whether they are clean"
+  );
+  process.exit(1);
 }
 
 if (hits.length) {

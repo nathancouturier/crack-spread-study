@@ -1039,3 +1039,85 @@ as DGEC $/t quotations. Seven months is not a series.
 **To close it:** nothing closes the history. Running
 `python -m crack.sources.dgec_note --collect` every week is what stops it from
 staying at seven.
+
+---
+
+## 33. Is DGEC's 1.0 percent gas line fuel only, or fuel plus hydrogen feedstock?
+
+**Status: open, and it sets the size of the gas wedge. It does not affect the
+margin, which is why the correction stands whatever the answer.**
+
+The Gate 2 self audit, finding 1, established that DGEC's published MBR is
+already net of purchased natural gas, so this study must not subtract its own gas
+cost from it. That part is settled by the note's own words and nothing here
+reopens it: `crack.engine.MARGIN_NET_OF_GAS` and `GasDoubleCountError` make the
+double charge inexpressible, and `docs/methodology.md` section 2.3 carries the
+reading.
+
+What is not settled is the comparison that replaced the subtraction. The wedge
+prices DGEC's embedded intensity and this study's EIA derived intensity at the
+same gas price, and DGEC's embedded intensity is derived here from one line of
+table 1, "Gaz naturel 1,0%", as 1.0 percent of a tonne of crude converted at the
+method's own 7.55 bbl/t and at `config.GAS_MMBTU_PER_TONNE`, which is 49.757
+MMBtu per tonne built from the Energy Institute's volumetric factor and EIA's
+gross heat content. Both of those are cited and both are recomputed in a test.
+
+The open part is what the 1.0 percent COVERS. The note says the refinery buys gas
+"pour completer la couverture de ses besoins en combustible interne et en
+hydrogene", which reads as fuel and feedstock together, but it does not say so in
+the table and it does not split the line. EIA's US split is roughly 86 percent
+fuel to 14 percent feedstock, so the reading is worth about a sixth of the
+embedded intensity.
+
+The consequences, bounded:
+
+- If the 1.0 percent is fuel AND feedstock, the embedded intensity is 0.0659
+  MMBtu/bbl as computed, and the wedge in August 2022 is 10.24 $/bbl.
+- If it is fuel only, DGEC's model refinery buys more gas than 1.0 percent of the
+  tonne in total, the embedded intensity is larger, and the wedge is smaller.
+- Either way the deduction stays at zero. A wedge is a comparison between two
+  assumptions; it is never a line of the margin, and no figure on the site moves
+  with it except the wedge itself.
+
+**To close it:** ask DGEC what the 1.0 percent line covers, or find a French
+refining energy balance that splits purchased gas between fuel and hydrogen.
+Until then the Method view says the embedded intensity is this project's reading
+of one line of table 1 and not a figure DGEC publishes.
+
+---
+
+## 34. SPEC.md section 9's Catches column says the Null row catches sign errors. It cannot.
+
+**Status: a wording problem in the brief, left in the brief. The tests say what
+is true and this entry says why SPEC.md was not edited.**
+
+The Gate 2 self audit, finding 4, injected two sign errors of exactly the kind
+the Null row claims to catch, adding the gas cost instead of subtracting it and
+subtracting the residual instead of adding it, and all three Null tests passed
+through both. They cannot do otherwise: every input in the Null case is zero, and
+zero plus zero, zero minus zero and minus zero minus zero are all zero. Zero has
+no sign to get wrong.
+
+The rows that DID fire on those injections are Linearity and Round trip. So the
+Catches column is attributing the work to the wrong row.
+
+Three things were done and one was deliberately not:
+
+1. `tests/test_engine.py` no longer claims it. The docstring of
+   `test_null_case_is_exactly_zero_everywhere` says what the case is worth, an
+   exactness check on the zero case, and says which rows are the sign tests.
+2. A signed null was added,
+   `test_a_signed_null_is_zero_only_because_every_sign_is_right`: four non zero
+   terms of four different magnitudes that sum to exactly zero, so no single
+   sign flip lands back on zero and no two cancel. It fires on both of the
+   audit's injections.
+3. The file header table carries the correction, because that table is what a
+   reader of the tests sees first.
+4. **SPEC.md was not edited.** It is the brief this work is measured against, not
+   a document this build gets to rewrite to match what it did. The owner may want
+   the Catches column to read "Linearity, Round trip: sign errors" and "Null: a
+   term that should not exist", and that is a one line change, but it is the
+   owner's line.
+
+**To close it:** the owner decides whether SPEC.md section 9's Catches column
+moves. Nothing in the code or the tests depends on the answer.

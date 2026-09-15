@@ -964,3 +964,962 @@ manifest.*
 | point 10 item 6, the six oldest weeks are weak twice over | **in the data**: the new `evidence_class` column, value `single_geometry_oldest`, on both the reconstructed series and the cracks computed from it. Also `docs/methodology.md` section 1.6 and the manifest |
 | point 10 item 2, pixel quantisation | `docs/methodology.md` section 1.6 with the three Eurosuper dates, the manifest's `reconstruction.quantisation`, open question 30. No per week flag was built: marking every exact repeat would flag the genuine flat weeks too, which would be a guess dressed as a measurement |
 | point 10 item 3, the IEA date's `source_url` | Open question 28. The date itself is pinned by a quotation and an `iea.org` additional source and is asserted by a test; what is not established is that the primary `source_url` field carries that evidence. **The file was not edited**, because a workstation deny rule, `Read(**/*seed*)`, blocks every path under `data/seed/` and nothing was worked around to get past it. Open question 18 has been recording that rule since the DGEC batch |
+
+---
+
+# Self audit, Gate 2, the engine
+
+Run on 2026-09-14 against the working tree at `C:/Users/natxa/.claude/crack-spread-study`,
+by an auditor who did not write the engine. Gate 1 is committed as `8a869d4` and
+was not revisited.
+
+Every number below was produced on this machine by running the code, not quoted
+from a build log or a handover note. Where a claim made to me could not be
+reproduced, that is said in place. Where a check was not run, it is not
+reported.
+
+The working tree was modified during eight deliberate fault injections and
+restored afterwards. Verified byte identical at the end of the run:
+
+```
+src/crack/engine.py   4aebf409c1d981975ac9e4b42457ea38
+src/crack/series.py   e8567b3b1bf9e977f17733c2b6054c3a
+src/crack/config.py   492ddc10063b4562ba790795209db43b
+src/engine.js         ea0661b5a3d0795cf0e98d9d4dfe6dfd
+```
+
+Hard rule 4 was honoured literally. `BBL_PER_T_GASOIL` and `BBL_PER_T_GASOLINE`
+were never edited on disk. The one experiment that needed a wrong gasoil factor
+mutated `crack.config` in memory through a pytest plugin loaded from the
+scratchpad, and wrote nothing.
+
+**Overall: the engine is careful, well argued and honest about its own failures,
+and its two most important claims do not hold. The first is that SPEC.md section
+9's Units row catches a wrong conversion factor, which it does not: I put the
+gasoil factor on the gasoline leg of the decomposition and all 756 tests and the
+parity validator stayed green. The second is that the Null row catches sign
+errors, which it cannot, because every input in that case is zero. Separately,
+and more consequentially than either, the margin after gas looks like it charges
+the barrel for natural gas twice. Sixteen things are wrong, eight of them
+seriously.**
+
+---
+
+## The claims I was asked to verify, and what happened
+
+| Claim | Result |
+|---|---|
+| 739 tests pass, 5 skip | **Fails on the count, holds on the substance.** I measured `756 passed, 5 skipped in 10.34s`. The suite is seventeen tests larger than the handover says |
+| The parity validator agrees to 1e-9 | **Holds.** `3 of 3 checks passed`, 6361 comparisons, 380 cases, seed 20260913 |
+| Parity drift is exactly zero | **Holds, on the fields it compares.** `parity largest 0.000e+0, 0 of 6258 comparisons inexact`. It compares 6258 of them and leaves several fields uncompared, see (c) |
+| The identity channel is rounding, not drift | **Holds.** `identity largest 1.088e-14 at margin random_margin_098 breakeven_ttf round trip, 61 of 103 comparisons inexact` |
+| The fixture regenerates byte identical | **Holds.** `gen_fixtures.py --check`: "byte identical ... Regenerating would leave the working tree clean" |
+| The anchors pass, so Gate 2 may proceed | **Holds.** `tests/test_events_anchors.py tests/test_dgec_anchor.py` pass, five skips, all of them the July 2026 product anchors with the corrected Gate 1 skip message |
+| The replication fails, honestly, for the reason given | **Holds on mechanism, fails on one published number.** The failure is real and untuned. The reason string states a mass yield that the config contradicts, see finding 6 |
+| The gas intensity is inside the SPEC 4.4 band | **Holds.** 0.21217, my own recomputation from the four EIA constants gives 0.2121741 |
+| Nothing in the engine is tuned | **Holds.** I found no fitted parameter, no search, no forecast and no Sharpe ratio anywhere in Gate 2 |
+| The data layer is unchanged since Gate 1 | **Holds, and has grown.** `refresh.py --offline` reports 20 of 20 series ok and the manifest byte identical. The Gate 1 audit recorded 19 |
+
+---
+
+## SPEC.md section 11, the ten points, at Gate 2
+
+**1, 2. Series, vintages, ranges and gaps.** Gate 1 territory and unchanged by
+Gate 2. I ran `python scripts/refresh.py --offline`: 20 of 20 `ok`, 0 `stale`, 0
+`failed`, `data/manifest.json unchanged, byte identical to what was committed`.
+Nothing in `src/crack/engine.py`, `src/crack/series.py` or `src/engine.js`
+writes to `data/`.
+
+**3. Numbers without a source or config entry.** `src/crack/engine.py` is clean.
+I tokenised it: the only numeric literals in executable code are structural
+zeros and ones, the `10` that is the length of an ISO date, and the `100.0` that
+turns a share into a percentage. No market number, no factor, no threshold.
+`src/engine.js` carries exactly three numbers, 7.45, 8.33 and 3.412142, each
+with its citation, which is the SPEC.md section 2 rule 2 exception and nothing
+more. `src/crack/series.py` carries two, both the same `window: int = 12`. See
+findings 6 and 8.
+
+**4. Anchors.** Pass. See the table above.
+
+**5. Test and validator output.** Pasted in full at the end of this section.
+
+**6. Python to JavaScript parity.** Zero drift on the fields compared. Section
+(c) lists what is not compared and where the two engines would diverge if it
+were.
+
+**7, 8, 9. Relative paths, orphan data, accessibility.** Not applicable at Gate
+2. There is no UI, no site facing artifact and no `index.html`, which is what
+SPEC.md section 10 requires of this gate.
+
+**10. What I am quietly unsure about.** Section (g), and it is the longest
+section here.
+
+---
+
+## (a) The eight rows of SPEC.md section 9, and whether each catches what it claims
+
+I did not check that these pass. I constructed the error each row says it
+catches and watched whether the row fired.
+
+| Row | Claims to catch | Fired? |
+|---|---|---|
+| Units | a wrong conversion factor | **Only in the constant. Not at the call site.** See finding 2 |
+| Null | sign errors | **No. Not one of the three, for either sign error I injected.** See finding 4 |
+| Linearity | a broken EUR/MWh to $/MMBtu chain | **Yes, twice over** |
+| Round trip | forward calculation and inversion disagreeing | **Yes, but on one test out of four** |
+| Alignment | silent misalignment | **Only inside `crack()`. Not in the margin, not in the browser.** See section (b) |
+| Anchors | parser drift | Yes, Gate 1's machinery, still live |
+| Replication | a misread method | Yes on the mechanism, see section (d) |
+| Intensity | wrong heat content or units | Yes, and the derivation is recomputed from the EIA inputs rather than trusted |
+
+### Units: the constant is guarded, the wiring is not
+
+Mutating `config.BBL_PER_T_GASOIL` from 7.45 to 7.55 in memory fires six tests,
+including both Units row assertions:
+
+```
+FAILED tests/test_units.py::test_gasoil_745_against_brent_80_is_exactly_20
+FAILED tests/test_units.py::test_the_two_factors_are_the_ones_spec_section_4_1_fixes
+FAILED tests/test_units.py::test_the_quote_path_gives_the_same_exact_answer_as_the_scalar_path
+FAILED tests/test_engine.py::test_aligned_legs_are_accepted_and_carry_their_date_and_window
+FAILED tests/test_engine.py::test_mass_yields_become_volume_yields_only_with_both_factors
+FAILED tests/test_engine.py::test_the_engine_reproduces_the_gate_1_weekly_crack_cache_exactly
+```
+
+That is the version of the error nobody makes. The version people make is using
+the right constant in the wrong place. Two injections, neither of which touched
+a constant:
+
+*Wrong factor on the weekly gasoline leg,* `series.dgec_weekly_cracks` dividing
+the Eurosuper quotation by `BBL_PER_T_GASOIL`:
+
+```
+FAILED tests/test_engine.py::test_the_engine_reproduces_the_gate_1_weekly_crack_cache_exactly
+  AssertionError: crack_gasoline_usd_bbl differs by np.float64(20.059575534049543)
+```
+
+One test. It fires only because Gate 1 happened to commit a derived crack cache
+to compare against. The Units row did not fire. A 20 $/bbl error on a first
+class series is caught by an accident of Gate 1's scope.
+
+*Wrong factor in the decomposition yield,* `DGEC_VOLUME_YIELDS["gasoline"]` built
+on `BBL_PER_T_GASOIL` instead of `BBL_PER_T_GASOLINE`:
+
+```
+756 passed, 5 skipped in 36.55s
+3 of 3 checks passed
+```
+
+Nothing fired. That number multiplies the gasoline crack in every month of the
+decomposition, in the margin stack waterfall SPEC.md section 7.2 puts on the
+landing view, and in `latest_view`. Measured effect on the month SPEC.md section
+3 names:
+
+```
+                         correct      mutated
+gasoline volume yield    0.132397     0.118411
+2022-10 contribution     5.7842       5.1731     $/bbl
+2022-10 residual        -4.3411      -3.7300     $/bbl
+```
+
+0.61 $/bbl moved silently, on the one figure the site exists to explain.
+
+### Null: it cannot catch a sign error, and the file says it can
+
+`tests/test_engine.py::test_null_case_is_exactly_zero_everywhere` carries this
+in its docstring:
+
+> This is the sign error test. A margin that subtracted the gas cost with the
+> wrong sign, or added the residual where it should have solved for it, would
+> still give zero here only if it were right.
+
+That sentence is not true, and it is not true for an unavoidable reason: every
+input in the Null case is zero, and zero plus zero, zero minus zero and minus
+zero minus zero are all zero. Two injections, each a sign error of exactly the
+kind the docstring names:
+
+*`evaluate()` adds the gas cost instead of subtracting it.* All three Null tests
+pass. What fires is Linearity and Round trip:
+
+```
+FAILED test_margin_after_gas_moves_by_minus_intensity_times_eurusd_over_3_412142
+FAILED test_the_gas_slope_changes_with_the_exchange_rate
+FAILED test_breakeven_ttf_plugged_back_in_gives_the_threshold
+FAILED test_breakeven_gas_price_plugged_back_in_gives_the_threshold
+FAILED test_breakeven_gasoil_crack_plugged_back_in_gives_the_threshold
+FAILED test_the_round_trip_holds_with_a_residual_and_an_other_cost_in_the_way
+```
+
+*`evaluate()` subtracts the residual instead of adding it.* All three Null tests
+pass again, and this time almost nothing else fires either:
+
+```
+FAILED tests/test_engine.py::test_the_round_trip_holds_with_a_residual_and_an_other_cost_in_the_way
+FAILED tests/test_fixtures.py (three byte comparison tests)
+4 failed, 752 passed, 5 skipped
+```
+
+The three `test_fixtures.py` failures are a change detector, not a correctness
+check: they fire for any edit to the engine at all. So one behavioural test
+stood between that sign error and the site. See finding 3 for what it costs.
+
+The Null row is not worthless. It is an exactness check on the zero case, which
+is worth having. It is simply not a sign test, and SPEC.md section 9 asks it to
+be one. The honest reading is that the Linearity and Round trip rows are the
+sign tests and the table's Catches column is wrong about which row does the
+work.
+
+### Linearity: fires, hard
+
+Multiplying by `MMBTU_PER_MWH` instead of dividing: 10 tests fail. Dropping
+`eurusd` from the chain: 8 tests fail. Both include the derivative assertion
+SPEC.md section 9 writes out in full, and the hand computed 12.8951257 $/MMBtu
+in `tests/test_units.py`. This row does its job and the belt and braces
+(`test_the_gas_slope_changes_with_the_exchange_rate` sweeping EUR/USD over 0.95,
+1.00 and 1.25) is a good idea, because 1.0 really is the value somebody reaches
+for.
+
+### Round trip: fires, on one test out of four
+
+Injecting a sign slip into `breakeven_ttf` alone, so the forward calculation
+stays right and only the inversion is wrong, fires exactly one behavioural test:
+
+```
+FAILED tests/test_engine.py::test_the_round_trip_holds_with_a_residual_and_an_other_cost_in_the_way
+```
+
+The three tests actually named after the round trip did not fire, because
+`make_inputs()` defaults `other_variable_cost_usd_bbl` to 0.0 and my slip was on
+that term. The row survives on a fourth test that happens to vary the line the
+other three hold at zero. That is luck rather than design.
+
+---
+
+## (b) The alignment guarantee, which SPEC.md section 4.2 asks to be structural
+
+It is structural inside `crack()` and `crack_values()`, and conventional
+everywhere else. Six routes, all run, none of which raised:
+
+1. **The bare scalar functions.** `crack_from_usd_t` and `crack_from_usd_bbl`
+   are in `__all__`, take three floats, and know nothing about dates.
+   `crack_from_usd_t(1160.0, 7.45, 83.73)` cracks a weekly DGEC quotation
+   against a monthly Brent and returns 71.97. `tests/test_units.py` itself uses
+   this path.
+
+2. **The window is a hand typed literal.** `engine.Quote(..., engine.MONTHLY)`
+   on a value that is in fact a weekly average is accepted without a murmur. The
+   Quote validates that the window is one of three strings, never that it is the
+   right one.
+
+3. **`MarginInputs` and `evaluate` carry no date and no window at all.** The
+   cracks are a `Mapping[str, float]`. The whole margin, the whole Model view,
+   and every breakeven run on numbers with no provenance attached.
+
+4. **`decompose_official` takes bare floats too.** `crack_values()` is the
+   function that enforces the cross crack rule and it is entirely optional. I
+   handed `decompose_official` the `.value` of a monthly gasoil crack and a
+   weekly gasoline crack and it attributed both without complaint. `series.
+   latest_view` already bypasses `crack_values`, by reconstructing the cracks as
+   `contributions[name] / DGEC_VOLUME_YIELDS[name]`.
+
+5. **`crack_values` never fires on a single crack.** Which is the common case.
+
+6. **`src/engine.js` accepts legs that have no window and no date.** This is the
+   worst of the six and it is finding 5. `requireAligned` compares
+   `product.window !== brent.window`, and `undefined !== undefined` is false, so:
+
+   ```
+   crack() on two objects with no window field: 71.97136465324384 window = undefined
+   crack() on two objects with no window and no date: 71.97136465324384 date = undefined window = undefined
+   ```
+
+   `makeQuote` exists and validates, and nothing forces a caller to use it. The
+   Python equivalent raises `AttributeError` on the same input. A Gate 4 module
+   that reads a row out of a JSON artifact and hands it straight to `crack()`
+   gets a number where the pipeline gets a refusal.
+
+And the measurement that makes the shape of this clear. I instrumented
+`require_aligned` and ran the whole pipeline, `opec_monthly_cracks`,
+`dgec_weekly_cracks`, `decomposition_for_month` and `latest_view`:
+
+```
+require_aligned calls across the whole pipeline: 2882
+calls where the two legs had different dates  : 0
+calls where the two legs had different windows: 0
+```
+
+Not "zero misalignments found". Zero that could ever have been found. In every
+call site in `series.py` both legs are built from the same local `day` variable
+and the same hand typed window constant, so the guard compares a variable with
+itself, 2882 times. The real misalignment risk, a bad `merge` or a wrong
+resample, happens upstream of the Quote and is invisible to it.
+
+---
+
+## (c) The JavaScript mirror, function by function
+
+Parity is genuinely zero on the 6258 field comparisons the validator makes, and
+the arithmetic order really does match: every sum in both engines runs over
+sorted keys, left to right, and I checked each one by hand. The divisions are
+associated the same way in `gasFromTtf`, `breakevenTtf`, `breakevenGasUsdMmbtu`,
+`breakevenCrack` and `percentileRank`. That work is sound.
+
+What follows is where they diverge for inputs the 380 cases do not reach. The
+fixture's own coverage, measured from the committed file:
+
+```
+crack magnitudes in the fixture : 0.031118 to 89.96
+yield magnitudes                : 0.020165 to 0.448985
+any input outside 1e-6 to 1e6   : no
+any quote value encoded as null : no
+gasoil_key values used          : ['gasoil'] only
+cases passing a threshold argument that differs from the inputs' own : 0
+```
+
+| # | Input | Python | JavaScript |
+|---|---|---|---|
+| 1 | quote `value` is `null` | `TypeError` | **`0`**, because `Number(null)` is 0 |
+| 2 | quote `value` is `""` | `ValueError` | **`0`** |
+| 3 | quote `value` is `undefined` | `TypeError` | `NaN` |
+| 4 | `marginInputs` with no `gas` | margin of 3.0 on a 0 $/MMBtu default | **`TypeError`**, the page dies |
+| 5 | gas record with basis `ttf_eur_mwh` and `eurusd` undefined | `breakeven_ttf` returns `None` | **returns `NaN`** |
+| 6 | yields `{"a\|b"}` against cracks `{"a","b"}` | `ValueError` | **accepted**, margin comes out `NaN` |
+| 7 | `percentile_rank(2.0, {})` | `None` | `TypeError` |
+| 8 | `__proto__` as a product key | kept, attributed 1.6 | dropped, attributed 0.1 |
+| 9 | astral plane key sorted against U+FFFD | by code point | by UTF-16 code unit, opposite order |
+
+Numbers 1 and 2 are the ones that matter. `null` is exactly how JSON carries an
+absent value, and SPEC.md section 2 rule 1 is the whole project. The validator's
+own header says "null matches only null, NaN matches only NaN", and the fixture
+encodes every missing quote as the string `"NaN"`, so no case in the file ever
+puts a `null` through `makeQuote`. A Gate 4 artifact that writes `null` for a
+missing price gives the browser a quote of 0 $/bbl and the pipeline a crash.
+
+Number 4 is an undocumented asymmetry. `marginInputs`'s docstring lists the
+fields that have defaults, the residual, the other variable cost and the
+threshold, and does not mention that `gas` has one in Python and none here.
+
+Number 6 is the guard itself being weaker in JavaScript. Python compares sets of
+keys; JavaScript compares `yieldNames.join('|')` against `crackNames.join('|')`,
+which cannot tell `{"a|b"}` from `{"a","b"}`.
+
+Numbers 8 and 9 are curiosities and the engine's own docstrings already caveat 9
+to ASCII keys.
+
+**Structural fields the mirror does not carry, which the validator therefore
+never notices:**
+
+- `observedYields` and `normaliseYields` return
+  `["yields","total","basis","denominatorKbd"]`. Python's `ObservedYields` also
+  carries `note`, and its docstring says the note is "carried with the data so a
+  JSON artifact cannot lose it". The mirror loses it.
+- `outputs()` returns no `percentileWindowMonths`. Python's does.
+- `runYieldsCase` compares `yields`, `total` and `basis` and never
+  `denominatorKbd`. `runMarginCase` never compares `runCutThresholdUsdBbl`.
+  `runCrackCase` never compares the label or the factor it used.
+- Error classes diverge where they are not compared. `observedYields` on a bad
+  basis raises `ValueError` in Python and a plain `Error` in JavaScript;
+  `breakevenCrack` on an unknown product raises `KeyError` in Python and `Error`
+  in JavaScript. Only the crack cases compare an error class.
+- The `outputs(threshold=X)` override branch is exercised by two fixture cases
+  and in both of them `X` equals the threshold already on the inputs, so a
+  JavaScript bug that ignored the argument would pass. Python has a test for it,
+  `test_a_threshold_passed_to_outputs_reaches_every_line_of_it`. JavaScript does
+  not.
+- `gasoil_key` is `"gasoil"` in all 250 margin cases. The parameter exists
+  precisely because DGEC calls it `gazole`, and that path is never mirrored.
+
+---
+
+## (d) The replication attempt
+
+**It fails for the reason it says it fails for, and nothing was tuned.** I
+checked this four ways.
+
+The mechanism is right. `within_bar` is
+`(not _is_missing(error)) and abs(error) <= bar`, and the error is NaN because
+`freight_usd_t` and `gas_cost_usd_t` default to NaN, so the failure is "the
+input does not exist" and not "the answer is far away". That is the more honest
+of the two failures and the docstring says so.
+
+The real months, recomputed by me from `series.replication_attempts()`:
+
+```
+      date  official_usd_bbl  partial_usd_bbl  partial_error_usd_bbl  n_missing  within_bar
+2025-11-01         16.469831        -8.752715             -25.222546          8       False
+2025-12-01          9.125356       -13.597219             -22.722574          8       False
+2026-02-01          6.501493       -18.100397             -24.601891          8       False
+2026-03-01         24.715770       -11.512848             -36.228618          8       False
+2026-04-01         18.683535       -20.660397             -39.343933          8       False
+2026-08-01         38.050505         0.418146             -37.632359          8       False
+2026-09-01               NaN         3.135099                    NaN          8       False
+```
+
+Eight missing inputs on every month, which is the five unpublished product
+lines, the Aframax freight and the two gas lines. The gap is 22.7 to 39.3
+$/bbl against a 0.50 bar. Nothing in that table is close to anything.
+
+Two places where a thumb could have been on the scale, and neither was. The
+partial figure drops the freight out of the insurance base, which raises the
+partial and moves it toward the official: worth 0.003 times a freight of order
+12 $/t, about 0.005 $/bbl, and it is explained in the code. The sulphur line is
+taken at the method's own fixed 100 $/t: worth 0.026 $/bbl. Both are rounding
+against a 30 $/bbl gap.
+
+The arithmetic is separately proved right by
+`test_a_replication_with_every_input_supplied_does_close`, which rebuilds the
+revenue and the cost stack in the test from `config` and asks the engine to
+agree. That is a fair test of the transcription. It is not a test that the note
+was read correctly, and the test's own docstring says as much.
+
+Two defects, one in a published sentence and one latent:
+
+**Finding 6, serious.** `REPLICATION_FAILURE_REASON` says "the five missing
+product lines are 33.0 percent of the mass yield". They are 35.0 percent, from
+the project's own `config.DGEC_MASS_YIELDS`:
+
+```
+propane          0.017
+butane           0.012
+naphta           0.082
+eurobob          0.120
+essence_export   0.119
+sum = 0.350
+```
+
+The same paragraph's other figure is right: the four published lines are 0.593,
+and 0.593 plus 0.350 plus the 0.002 sulphur line is the 0.945 the note's
+products sum to, which is the arithmetic that makes 33.0 impossible. That string
+is a data constant by design, it is quoted in two tests, and SPEC.md section 4.3
+layer 2 sends the reader to it for the explanation of the headline failure.
+
+**Finding 12, minor.** `within_bar` does not require the inputs to be complete.
+Supply the two costs and price one product out of ten and it will happily come
+back True:
+
+```
+with 5 product lines missing but the two costs supplied:
+  margin_usd_bbl      -49.602119205298
+  covered_mass_yield  0.342 of 0.945 of the barrel
+  missing_inputs      ('eurobob', 'essence_export', 'naphta', 'propane', 'butane')
+  set official to that number -> within_bar = True while missing_inputs still lists 5 inputs
+```
+
+Unreachable today only because `series.replication_attempts` never supplies the
+two costs. `within_bar` is the SPEC.md section 9 Replication row's pass flag and
+it should not be able to say pass while `missing_inputs` is non empty.
+
+---
+
+## (e) SPEC.md section 6.6 compliance
+
+**Clean.** I grepped every Gate 2 file for `sharpe`, `backtest`, `forecast`,
+`predict`, `optimis`, `optimiz`, `walk-forward`, `signal`, `strategy`,
+`calibrat`, `grid search`, `tune`, `best_`, `maximis` and `minimis`. Nine hits,
+all of them innocent: `best_name` and `best_value` inside `_carrier`, which is
+the argmax SPEC.md section 4.5 asks for by name, and three sentences that
+contain the word "tuned" in order to say that nothing was.
+
+The structural evidence is stronger than the grep. There is no fitted parameter
+anywhere in the engine. `run_cut_threshold_usd_bbl` defaults to `None`, the
+headroom and all three breakevens return `None` rather than a number when it is,
+and `tests/test_engine.py::test_without_a_threshold_there_is_no_headroom_and_no_breakeven`
+asserts it. `REPLICATION_BAR_USD_BBL` is 0.50 from SPEC.md section 4.3,
+`PERCENTILE_WINDOW_MONTHS` is 120 from SPEC.md section 4.5,
+`GAS_INTENSITY_MMBTU_PER_BBL` is derived from four EIA constants and the
+derivation is recomputed in a test. Nothing iterates, nothing searches, nothing
+scores.
+
+---
+
+## (f) Numbers without a source or a config entry
+
+`src/crack/engine.py`, tokenised, executable lines only:
+
+```
+line  232  10    | if not isinstance(self.date, str) or len(self.date) != 10:
+line 1253  100.0 | return 100.0 * at_or_below / len(published)
+```
+
+plus fourteen `0.0` guards and accumulators and two list indices. That is as
+clean as this gets.
+
+`src/engine.js`: 7.45, 8.33 and 3.412142, each with a citation comment, plus the
+same structural zeros and the same `10` and `100`.
+
+`src/crack/series.py`: one number, `window: int = 12`, twice.
+
+**Finding 13, minor.** That `12` is SPEC.md section 4.3 layer 4's twelve month
+rolling window, and it is a bare default in two signatures while its sibling,
+the ten year percentile window, is `config.PERCENTILE_WINDOW_MONTHS` with a
+docstring explaining why it is expressed in months. One of the two spec windows
+is a config constant and the other is a literal. They should be the same kind of
+thing.
+
+---
+
+## The sixteen findings
+
+### 1, serious. The margin after gas appears to charge the barrel for gas twice
+
+This is the one I would fix first and it is not a coding error. It is a question
+nobody in this repository seems to have asked.
+
+`series.margin_after_gas_monthly` computes
+`mbr_usd_bbl - 0.21217 * gas_usd_mmbtu`. That is SPEC.md section 4.4's formula
+applied to SPEC.md section 4.3 layer 1's series. But this project's own
+description of what the MBR is says the MBR is already net of purchased natural
+gas. Three places in the repository say so:
+
+- `config.DGEC_MASS_YIELDS`: `"gaz_naturel": 0.010,  # input, purchased`, and
+  the block comment above it, "Brent at 100 percent and natural gas at 1.0
+  percent are INPUTS, not outputs ... less the 1.0 percent of purchased gas".
+- `engine.replicate_mbr`'s docstring, quoting the method note: "from the product
+  revenues subtract the cost of the Brent date FOB and of the CIF natural gas,
+  the oil freight, and insurance and losses", implemented as
+  `cost_usd_t = brent + gas + freight + 0.003 * (brent + freight)`.
+- `config.DGEC_UNPUBLISHED_METHOD_INPUTS`:
+  `"peg_nord_gas_day_ahead",  # the gas purchase price, EUR/MWh`.
+
+So DGEC buys gas at 1.0 percent of the crude tonne and charges it inside the
+MBR, and this study then charges another 0.21217 MMBtu per barrel against the
+same barrel.
+
+The repository carries no Btu per tonne for natural gas, so I cannot size the
+overlap from committed constants. With an outside heating value of 49.3 MMBtu
+per tonne, which I am supplying and labelling as mine:
+
+```
+implied DGEC gas intensity   0.010 t/t / 7.55 bbl/t * 49.3 MMBtu/t = 0.0653 MMBtu/bbl
+this study's intensity                                              0.21217 MMBtu/bbl
+overlap                                                             31 percent
+
+charged twice, latest month 2026-08 (gas at 21.11 $/MMBtu)          1.38 $/bbl
+charged twice, 2022-10      (gas at 39.02 $/MMBtu)                  2.55 $/bbl
+worst month in the sample                                           4.57 $/bbl
+```
+
+The latest month's published margin after gas is 33.5716 $/bbl. If this is
+right, about 1.38 of that is a cost subtracted twice, and the 2022 numbers the
+history view exists to explain are out by more.
+
+Nothing anywhere in `src/` or `docs/` mentions it. I grepped for "double count",
+"already net", "net of gas" and "counted twice" and the only hits are about
+JETKERO in the JODI yields.
+
+I am not certain. It is possible DGEC's gas line covers only process gas and not
+hydrogen feedstock, in which case the overlap is smaller, and it is possible the
+owner considered this and decided the MBR's "marge brute" is gross of it. But
+the decision is not written down anywhere, the label on the site will be "margin
+after gas", and a refining analyst is going to ask this question in the first
+thirty seconds. SPEC.md section 4.4 writes `margin_after_gas = margin_gross -
+gas_cost` and SPEC.md section 4.3 layer 1 calls the MBR a gross margin, so the
+spec itself may have walked into this. Gate 2 is where it gets raised.
+
+### 2, serious. A wrong conversion factor in the decomposition yield is invisible to everything
+
+`DGEC_VOLUME_YIELDS["gasoline"]` built on `BBL_PER_T_GASOIL` instead of
+`BBL_PER_T_GASOLINE`: 756 tests pass, the parity validator passes, 0.61 $/bbl
+moves on the October 2022 gasoline contribution and the residual. Full numbers
+in section (a). SPEC.md section 9's Units row calls a wrong conversion factor
+"the most common error in this study" and the tests guard the constants rather
+than the places they are used.
+
+### 3, serious. Two implementations of the margin after gas, in Python, and nothing compares them
+
+`engine.evaluate` and `series.margin_after_gas_monthly` both compute
+`gross - gas_cost - other`, one in floats and one in pandas, and no test asks
+them to agree. SPEC.md section 7.1 built an entire fixture and a node validator
+to stop the Python and the JavaScript drifting, and the third copy sits in the
+same language unguarded.
+
+With the residual sign flipped inside `evaluate`:
+
+```
+month 2026-08-01
+latest_view (through engine.evaluate) margin_after_gas = -42.529413399999996
+series.margin_after_gas_monthly (pandas)               =  33.571596
+percentile_10y from the engine path                    =  0.0
+```
+
+The landing sentence's headline number, its ten year percentile and the pandas
+series disagree by 76 $/bbl and the suite reports four failures, three of which
+are the fixture byte comparison that fires for any edit at all.
+
+The root cause is that `test_the_latest_view_keeps_its_three_data_dates_apart`
+asserts the dates, the carrier, the absence of a threshold, the empty
+contributions and the residual, and never once asserts a value of
+`margin_after_gas_usd_bbl`, `gas_cost_usd_bbl`, `mbr_usd_bbl` or
+`percentile_10y`. Every number on the landing view is unasserted.
+
+### 4, serious. The Null row cannot catch a sign error, and the test says it can
+
+Two sign injections, all three Null tests green both times. The docstring makes
+a specific factual claim about what would happen and the opposite happens.
+Details in section (a). The fix is a sentence, not a test: the sign tests are
+Linearity and Round trip, and SPEC.md section 9's Catches column is wrong.
+
+### 5, serious. `src/engine.js` computes cracks from legs with no date and no window
+
+Section (b), route 6. `crack()` in the browser accepts any object. This is the
+one guarantee the Gate 2 brief singled out as needing to be structural rather
+than conventional, and in the copy of the engine that runs in front of the
+visitor it is neither.
+
+### 6, serious. The published reason for the replication failure states a mass yield the config contradicts
+
+33.0 percent against the config's own 35.0 percent. Section (d).
+
+### 7, serious. The repository now publishes two different October 2022 triangulations
+
+`docs/methodology.md` section 4.1, committed at Gate 1:
+
+```
+gas fired      0.21217 x 39.02 $/MMBtu                  = 8.279 $/bbl
+fuel oil fired 0.21217 x (60.75 $/bbl / 6.287 MMBtu/bbl) = 2.050 $/bbl
+difference                                               = 6.23 $/bbl
+```
+
+`series.october_2022_triangulation()`, Gate 2, run by me just now:
+
+```
+gas_usd_mmbtu          39.02
+fuel_oil_usd_bbl       82.06
+fuel_oil_usd_mmbtu     13.052330205185303
+gas_cost_usd_bbl        8.2788734
+fuel_oil_cost_usd_bbl   2.7693128996341656
+gap_usd_bbl             5.509560500365835
+```
+
+Both read the same committed cache and the same month. 60.75 is
+`fuel_oil_35pct_usd_bbl` and 82.06 is `fuel_oil_1pct_usd_bbl`, and Gate 1 used
+the 3.5 percent row while Gate 2 uses the 1 percent row:
+
+```
+2022-10-01, ... ,fuel_oil_1pct_usd_bbl=82.06, fuel_oil_35pct_usd_bbl=60.75
+```
+
+Neither choice is indefensible. A refinery firing its own residue burns high
+sulphur, which argues for 60.75; the 1 percent row is the one the rest of this
+study cracks, which argues for 82.06. What is indefensible is that the repo
+states both, that `docs/methodology.md` still says 6.23 with no note, and that
+`tests/test_engine.py` now asserts 5.51 to a tolerance of 0.05 with no
+acknowledgement that a different number was published four days ago. The
+comparison with S&P's 7 $/bbl moves from 0.77 below to 1.49 below, which is the
+sentence a reader will quote.
+
+### 8, serious. Three JavaScript and Python divergences the fixture cannot reach
+
+Section (c), rows 1 to 6 of the table. The two that matter: a `null` price
+becomes 0 $/bbl in the browser and raises in Python, and a missing gas record
+gives a number in Python and a `TypeError` in the browser.
+
+### 9, minor. `check-dashes.mjs` has never opened a Gate 2 file
+
+It builds its file list from `git ls-files`, and every Gate 2 file is untracked:
+
+```
+files check-dashes would scan, containing 'engine':
+(empty means none)
+scanned 109 text file(s), skipped 5 binary, vendored or private file(s)
+PASS  no em dash or en dash in tracked text files, escaped ones included
+```
+
+The PASS is true and vacuous. I scanned the nine Gate 2 files directly for em
+dash, en dash, figure dash, horizontal bar and minus sign: **zero hits**, so
+nothing is actually wrong today. But the gate reported a pass it did not earn,
+and the same thing will happen to every new file until it is committed. The
+validator should say how many of the files it was asked about it could not see.
+
+### 10, minor. The JavaScript key check uses string joining where Python uses sets
+
+`yieldNames.join('|') !== crackNames.join('|')` cannot distinguish `{"a|b"}` from
+`{"a","b"}`. Python's `set(yields) != set(cracks)` can. Product keys are ASCII
+identifiers today so this is latent.
+
+### 11, minor. The mirror drops two fields the Python record carries deliberately
+
+`ObservedYields.note` and `Outputs.percentile_window_months`. The `note` is the
+one Python's docstring says exists "so a JSON artifact cannot lose it". The
+validator compares neither.
+
+### 12, minor. `within_bar` can be True with five product lines missing
+
+Section (d).
+
+### 13, minor. The twelve month rolling window is a literal, the 120 month one is a constant
+
+Section (f).
+
+### 14, minor. `LatestView.percentile_months` is not a number of months
+
+It is `bundle.percentile_observations`, the count of non missing observations in
+the window. Today they are both 120 so nothing is visibly wrong. On a month with
+a hole in the history the field named `percentile_months` will hold 119, and the
+Gate 4 sentence that reads it will say the wrong thing.
+
+### 15, minor. The decomposition mixes a DGEC margin with FRED Brent cracks, undocumented
+
+`decomposition_for_month` takes DGEC's published MBR, which was computed against
+DGEC's own Brent date, and attributes it with OPEC Rotterdam cracks taken
+against the FRED DCOILBRENTEU monthly mean. `brent_monthly("dgec")` exists and
+is not used. Both legs share a date and a window so SPEC.md section 4.2 is
+satisfied, and the difference lands silently on the residual. I measured it:
+
+```
+months compared           140
+mean gap fred minus dgec  0.003 $/bbl
+worst absolute gap        0.2649 $/bbl on 2016-08-01
+covered volume yield      0.4679
+worst effect on the attributed total  0.1239 $/bbl
+mean  effect on the attributed total  0.0014 $/bbl
+```
+
+Small, and it should be one sentence on the Method view rather than nothing.
+
+### 16, nit. `latest_view` recovers cracks by dividing contributions by yields
+
+```python
+cracks={name: decomposition.contributions[name] / DGEC_VOLUME_YIELDS[name]
+        for name in DGEC_VOLUME_YIELDS}
+```
+
+The cracks were available directly; this multiplies and then divides by the same
+yield, and it is a division by zero waiting for the day a yield is zero. It also
+bypasses `crack_values`, which is route 4 of section (b).
+
+---
+
+## (g) What I am quietly unsure about
+
+SPEC.md section 11 point 10, which is not optional.
+
+**1. The decomposition over attributes by half, in 132 months out of 134.** I
+computed the residual for every month that has both an MBR and Rotterdam cracks:
+
+```
+months: 134
+residual share: min -54.179  median -0.538  max 15.738
+residual sign: 132 negative, 2 positive
+```
+
+A median residual of minus 54 percent of the official margin means the two
+priced product lines routinely sum to about one and a half times the whole
+margin, and a large negative bar brings it back. That is defensible, the
+unattributed lines include a deeply negative fuel oil crack and all the costs,
+and SPEC.md section 4.3 layer 3 explicitly wants the residual shown at full
+size. But the waterfall SPEC.md section 7.2 asks for will be two tall positive
+bars and one tall negative bar, and the sentence "which crack is carrying the
+barrel" will be made about lines that outweigh the thing they are decomposing. I
+do not think it is wrong. I think Gate 4 will be tempted to make it look
+tidier, and it should not be allowed to.
+
+**2. Whether my gas double count arithmetic is right.** Finding 1 rests on a
+heating value I supplied from outside the repository, because the repository has
+no constant that converts a tonne of natural gas into MMBtu. If DGEC's 1.0
+percent line covers only fuel and not hydrogen feedstock, the overlap is smaller
+than 31 percent. I am confident about the direction and not about the size.
+
+**3. `percentile_10y` is 100.0 today.** The landing view will say the latest
+month is the best in ten years. It reads 100.0 because August 2026 is the
+highest of 120 trailing observations and the value being ranked is a member of
+its own history. That is the documented definition and it is a defensible one.
+It is also the kind of number a reader assumes is a placeholder, and I would
+want the sentence to say "highest of the 120 months to August 2026" rather than
+"100th percentile".
+
+**4. The gas intensity is a US figure used as a European default with no
+sensitivity shown.** `config` and `docs/methodology.md` both label it an upper
+end default. The landing view's headline number is nevertheless computed on it
+and on nothing else. The Model view is supposed to make it editable at Gate 4,
+which is the right answer, but between now and then the only margin after gas
+this project prints is a US intensity one.
+
+**5. `gen_fixtures.py` says every number in it is synthetic. Two are not.**
+`residual_usd_bbl=38.050505` and `gas_from_usd_mmbtu(21.11)` in the case named
+`no_products_at_all_margin_on_the_residual` are August 2026's published MBR of
+38.050505 and its gas price of 21.11, which I verified by reading them out of
+`margin_after_gas_monthly()`. Nothing is invented and no rule is broken, the
+docstring's claim that "No committed cache is read" is literally true. But the
+claim underneath it, that the fixture changes only when the engine does, is
+weaker than it sounds if the numbers were typed across from the cache by hand,
+because they will look stale rather than synthetic in a year.
+
+**6. `decompose_official` in Python silently carries a gas intensity it never
+uses.** It builds a `MarginInputs` with the default 0.21217 to get the key
+checking and the sorting; the JavaScript mirror passes 0 for the same purpose.
+Neither reads the field. It changes no output today and it is the kind of
+asymmetry that stops being harmless the moment somebody adds a line to
+`MarginInputs.__post_init__`.
+
+**7. The identity channel is a good idea and its threshold is arbitrary.** The
+previous agent's split of parity from identity is right and I would defend it.
+But the identity channel is "held to 1e-9" against a residue that currently sits
+at 1.088e-14, five orders of magnitude away, so in practice it asserts nothing.
+The header says to watch it "for a sudden jump in order of magnitude", and
+nothing records the order of magnitude it had yesterday. A committed baseline
+number would make that instruction executable.
+
+**8. I did not test `src/engine.js` in a browser.** Everything in section (c)
+was run under `node v24.18.0`. The CSP, module loading and the `fetch` path are
+Gate 4 and I did not go near them.
+
+**9. I did not audit `tests/test_fixtures.py` line by line.** I ran it, I
+verified its three byte comparison tests fire on any engine change, and I
+verified `gen_fixtures.py --check` makes the same claim without writing. I took
+the previous agent's account of the CRLF fix and the temp directory decision at
+face value rather than re-deriving it.
+
+**10. The count in the handover is wrong and I do not know why.** I was told 739
+tests pass. I measured 756. I was told 19 series at Gate 1; the manifest now
+says 20. Neither is a problem, both mean somebody's note is stale, and a stale
+count in a handover is how a stale claim reaches a README.
+
+---
+
+## Test and validator output, in full
+
+```
+$ python -m pytest tests
+756 passed, 5 skipped in 10.34s
+
+$ python scripts/refresh.py --offline
+data/manifest.json unchanged, byte identical to what was committed
+20 of 20 series ok
+
+$ node tools/validate-data.mjs
+15 of 15 checks passed, 20 series.
+
+$ node tools/validate-engine.mjs
+python to javascript parity, SPEC.md section 7.1
+  fixture     data/fixtures/engine-cases.json
+  cases       380
+  seed        20260913
+  comparisons 6361
+  exact       6300
+  tolerance   1e-9
+
+  ok    the fixture parses and names itself
+  ok    the two engines agree about the vocabulary and the unit constants
+  ok    every case agrees, line by line
+
+  measured difference, reported every run, asserted by nobody
+  parity   largest 0.000e+0, 0 of 6258 comparisons inexact
+            python against javascript on the same field. Expect zero.
+  identity largest 1.088e-14 at margin random_margin_098 breakeven_ttf round trip, 61 of 103 comparisons inexact
+            javascript inverting its own arithmetic. A residue here is rounding, not drift, and a single language shows the same one.
+  bar       1e-9, SPEC.md section 7.1, hard on both channels
+
+  3 of 3 checks passed
+
+$ node tools/check-dashes.mjs
+scanned 109 text file(s), skipped 5 binary, vendored or private file(s)
+PASS  no em dash or en dash in tracked text files, escaped ones included
+      (see finding 9: none of the 109 is a Gate 2 file)
+
+$ python scripts/gen_fixtures.py --check
+byte identical: data/fixtures/engine-cases.json matches a rebuild at seed 20260913,
+380 cases. Regenerating would leave the working tree clean
+```
+
+---
+
+## The five to fix first
+
+**Finding 1, the possible gas double count,** because it moves the one number
+the site exists to print, because nobody has written down a decision about it,
+and because it is the first question a refining analyst will ask. Even if the
+answer is "the MBR is gross of gas and here is why", that sentence has to exist
+somewhere a reader can find it.
+
+**Finding 3, the two unguarded implementations of the margin after gas,** and
+with it the fact that no test asserts a single value on the landing view. One
+test comparing `latest_view().margin_after_gas_usd_bbl` against
+`margin_after_gas_monthly()` closes it, and it is four lines.
+
+**Finding 2, the wiring that the Units row does not cover,** because SPEC.md
+section 9 names this error the most common one in the study and the guard is on
+the wrong side of the call. A test that asserts `DGEC_VOLUME_YIELDS` line by
+line against a hand computed value would have caught it.
+
+**Finding 7, the two triangulations,** because a repository that publishes two
+answers to the same arithmetic from the same cache has a credibility problem
+that is out of all proportion to the 0.7 $/bbl involved. Pick a row, say why,
+and correct the other document.
+
+**Finding 6, the 33.0 percent,** because it is one character, it is in the
+paragraph that explains the headline failure, and `config.py` is where SPEC.md
+sends a reader to check it.
+
+Findings 4, 5 and 8 are next. Finding 4 is a docstring correction and a Catches
+column. Findings 5 and 8 are the browser half of the engine, and they can wait
+until Gate 4 starts writing against it, provided they are written down now
+rather than rediscovered then.
+
+---
+
+*Audit performed 2026-09-14 by an auditor who did not write the engine. Working
+tree verified restored after eight fault injections: `src/crack/engine.py`
+md5 `4aebf409c1d981975ac9e4b42457ea38`, `src/crack/series.py`
+`e8567b3b1bf9e977f17733c2b6054c3a`, `src/engine.js`
+`ea0661b5a3d0795cf0e98d9d4dfe6dfd`, `src/crack/config.py`
+`492ddc10063b4562ba790795209db43b`. Final state: 756 passed, 5 skipped, 3 of 3
+parity checks, 15 of 15 data checks, 20 of 20 series ok. Nothing in the
+repository was fixed: this is an audit and the brief said report only.*
+
+---
+
+# What was done about the Gate 2 audit
+
+*Added after the audit run, on 2026-09-15. Nothing above this line was edited:
+the audit is the evidence and it stays as it was written, including the file
+digests it records, which no longer match because the fixes below changed the
+files.*
+
+**The gate, after the fixes:** 775 passed, 5 skipped, 3 of 3 parity checks over
+408 fixture cases with parity measured at zero on 7601 comparisons, 15 of 15
+data checks, 20 of 20 series ok, dash check over 113 files, fixture byte
+identical on rebuild.
+
+**The first thing fixed was the thing the audit could not fix: the tests.**
+Finding 1 was a 14.86 $/bbl error in the headline number and all 756 tests
+passed through it, because not one of them asserted a value on the landing view.
+So the correction came with the assertions that would have caught it, and every
+one of them was checked by injection rather than trusted:
+
+| Test | What it pins |
+|---|---|
+| `test_the_margin_after_gas_is_pinned_for_three_real_months` | 38.0505, 24.7830 and 11.1690 $/bbl to five decimals, each next to the figure the double charge printed |
+| `test_august_2022_is_a_profit_and_the_old_arithmetic_said_it_was_a_loss` | the sign, on the month the bug turned into a 3.69 $/bbl loss, and on all twelve months of 2022 |
+| `test_the_margin_after_gas_is_the_mbr_exactly_when_nothing_else_is_charged` | bit equality with the published MBR over 140 months, and exactly 1.25 of movement when 1.25 is charged |
+| `test_the_monthly_column_and_the_engine_cannot_disagree_about_the_margin` | the series column against `engine.evaluate`, month by month, bit for bit |
+| `test_a_net_of_gas_margin_refuses_a_gas_price_and_a_gross_one_takes_it` | `GasDoubleCountError` on a net margin, including a NaN gas price, and no refusal on a gross one |
+| `test_the_gas_wedge_is_pinned_on_the_two_months_the_audit_measured` | 21.11 and 70.04 $/MMBtu, the two intensities at each, and the 3.088 and 10.245 $/bbl wedges |
+| `test_the_margin_series_has_no_column_called_gas_cost` | the deleted column, by name, and the whole column set |
+| `test_what_the_old_subtraction_was_worth_across_the_whole_sample` | worst 14.8604 on 2022-08, mean 2.4713 |
+| `test_the_landing_view_numbers_are_asserted_and_not_only_its_dates` | every number the landing sentence is assembled from |
+
+**Fixed.**
+
+| Finding | What changed |
+|---|---|
+| 1, serious | Done by hand before this pass and left alone here. `series.margin_after_gas_monthly` subtracts no gas, the margin carries `MARGIN_NET_OF_GAS`, `MarginInputs` refuses a gas term on it, and the gas story is `gas_wedge`. What this pass added is the nine tests above and the documentation: `docs/methodology.md` sections 2.3 and 4.2, `docs/open-questions.md` section 33 |
+| 2, serious | Structural, then tested. `DGEC_VOLUME_YIELDS` and the weekly crack call sites now take the mass yield, the column, the label and the conversion factor from ONE product key, through `config.PRODUCT_BBL_PER_T` and `config.DGEC_SLATE_LINE`, so the factor and the yield cannot come from different products. Four call site tests in `tests/test_units.py` recompute the numbers from the factors by hand, including October 2022's 5.7842 $/bbl gasoline contribution. Injection: the wrong factor now fails five tests, where it used to fail none |
+| 3, serious | Unified rather than compared. The monthly column is no longer computed in pandas; it is `engine.evaluate` per month through `series.net_of_gas_margin_inputs`, which `latest_view` also calls. One implementation, plus a test that rebuilds every month independently and asks for bit equality |
+| 4, serious | Both halves. The docstring of `test_null_case_is_exactly_zero_everywhere` no longer claims to catch sign errors and says which rows do, and `test_a_signed_null_is_zero_only_because_every_sign_is_right` adds a case whose four non zero terms of four different magnitudes sum to exactly zero. SPEC.md was NOT edited; open question 34 says why and what the owner would change |
+| 5, serious | `src/engine.js` refuses a leg with no window or no date, through the same `requireLeg` both engines route through, and four `raw_crack` fixture cases hold it there. Injection: removing the check fails the parity gate |
+| 6, serious | The 35.0 percent stands and the arithmetic is closed against table 1: propane 1.7 plus butane 1.2 plus naphta 8.2 plus EuroBOB 12.0 plus essence export 11.9 is 35.0, the four published lines are 59.3, the sulphur line is 0.2, and the three sum to the note's own 94.5. Dropping any one of the five gives 33.3, 33.8, 26.8, 23.0 or 23.1, so no subset of the unpublished lines is 33.0 either. `config.DGEC_MASS_YIELDS` is asserted line by line against the note by `test_the_dgec_slate_is_the_one_the_methodology_note_prints` |
+| 7, serious | One answer, one variant, one reason. The headline is the 3.5 percent sulphur row, 6.23 $/bbl, because a refinery that fires fuel oil burns its own high sulphur residue and because that is the figure this repo published first. `october_2022_triangulation` returns the 1 percent variant, 5.51, in the same mapping every time, refuses an unrecognised basis, and `docs/methodology.md` section 4.1 carries both with the comparison against S&P at 0.77 and 1.49 below |
+| 8, serious | Fixed in `src/engine.js` and then reached by the fixture, which is the half that was missing. Schema 2 adds four case kinds and 28 written cases: `quote` for a price as JSON carries it, `raw_crack` for legs that never saw `makeQuote`, `margin_refusal` for inputs both engines must refuse with the same class, and `gas_wedge`. The validator also now compares the product label, both factors, the margin basis, the threshold, the percentile window, the yield denominator and the note. Eight injections into `src/engine.js`, every one of which used to pass the gate silently, all eight now fail it |
+| 9, minor | `check-dashes.mjs` prints how many files it was asked about, how many are in the index and how many are untracked, and FAILS if any file it was asked about could not be opened. Today: 113 asked about, 104 in the index, 9 untracked, 108 scanned |
+| 10, 11, 12 | Fixed in the engines before this pass. What this pass added is that the validator now compares the note, the percentile window and the denominator, so finding 11 is enforced rather than merely repaired |
+| 13, minor | `config.ROLLING_YIELD_WINDOW_MONTHS`, 12, with the same kind of docstring its ten year sibling has, used in both `series` signatures |
+| 14, minor | `LatestView.percentile_months` is `percentile_observations`, which is what it holds. The window itself is on `outputs.percentile_window_months` |
+| 15, minor | One paragraph on the Method view, `docs/methodology.md` section 2.2, with the audit's own measurements: mean gap 0.003 $/bbl, worst 0.2649 in August 2016, worst effect on the attributed total 0.1239. Also in the `decomposition_for_month` docstring |
+| 16, nit | `series.cracks_for_month` returns the cracks through `engine.crack_values`, and `latest_view` uses it instead of dividing a contribution by its own yield |
+
+**Declined.**
+
+| Finding | Why |
+|---|---|
+| 4, the SPEC.md half | SPEC.md section 9's Catches column is wrong about which row catches sign errors, and SPEC.md is the brief this work is measured against rather than a document the build gets to rewrite to match what it did. The correction is in the tests, in their header table, and in open question 34, which names the one line the owner may want to change |

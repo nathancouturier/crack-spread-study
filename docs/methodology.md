@@ -412,8 +412,22 @@ need is stated so the gap is visible:
 |---|---|---|
 | 1, official margin | DGEC's own published MBR on Brent, monthly, $/bbl | **built.** `dgec_mbr_monthly`, 140 months, all nine SPEC.md section 5.5 anchors reproduce exactly |
 | 2, replication | recompute the MBR from DGEC's published quotations | **cannot be completed, and the reason is published.** Five of the ten quotations the methodology note names are never published: EuroBOB, essence export, naphta, propane and butane, plus the PEG Nord gas price and the Aframax freight. SPEC.md section 4.3 says to name the missing input and fall back to the official series, which is what happens |
-| 3, decomposition | `yield[p] * crack[p]` per product, with a residual line | the yields are in the methodology note and are recorded in `config`; the arithmetic is Gate 2 |
+| 3, decomposition | `yield[p] * crack[p]` per product, with a residual line | the yields are in the methodology note and are recorded in `config`; the arithmetic is Gate 2. **Two Brents meet on this line**, see below |
 | 4, observed yields | NWE yields from JODI output over intake | the three JODI caches are built; the ratio is Gate 2 |
+
+**Layer 3 attributes a DGEC margin with cracks taken against a different Brent,
+and the difference lands on the residual.** DGEC computed the MBR against its own
+published monthly Brent date. The cracks come from the OPEC Rotterdam table
+against the FRED DCOILBRENTEU monthly mean, because FRED is the only crude series
+that spans the whole product table back to 2000. Both legs of every crack share a
+date and an averaging window, so SPEC.md section 4.2 is satisfied, but the margin
+and the cracks do not share a crude assessment. Measured over the 140 months
+where both exist: the mean gap between the two Brents is 0.003 $/bbl, the worst
+is 0.2649 $/bbl in August 2016, and at the 0.4679 volume yield the decomposition
+covers, the worst effect on the attributed total is 0.1239 $/bbl and the mean
+0.0014. It is small, it is silent, and it is said here rather than nowhere.
+`series.brent_monthly("dgec")` is the other choice and taking it would shorten
+the crack series to 2015.
 
 ### 2.3 Run economics
 
@@ -423,6 +437,54 @@ gas_cost         = gas_intensity_mmbtu_per_bbl * gas_usd_mmbtu
 margin_after_gas = margin_gross - gas_cost - other_variable_cost
 headroom         = margin_after_gas - run_cut_threshold
 ```
+
+**That subtraction applies to a margin this study builds itself, and NOT to
+DGEC's published MBR. The MBR is already net of purchased natural gas.** The
+Gate 2 self audit, finding 1, found the monthly series applying it anyway and
+charging the same barrel for gas twice. The evidence that the MBR is net of gas
+is the note's own: section 3 takes off the revenues "les couts d'achat du Brent
+date FAB et du gaz naturel CAF", table 1 carries "Gaz naturel 1,0%" as an INPUT
+line, the note says the refinery buys gas for its internal fuel and its hydrogen
+needs, it describes the figure as gross only of costs "autres que ceux
+energetiques", and the indicator is named a margin "sur couts energetiques".
+
+What the error was worth, measured on the committed caches:
+
+| Month | Published MBR, and margin after gas | What the double charge printed | Overcharged by |
+|---|---|---|---|
+| 2026-08 | 38.05 $/bbl | 33.57 | 4.48 |
+| 2022-10 | 24.78 $/bbl | 16.50 | 8.28 |
+| 2022-08 | 11.17 $/bbl | **minus 3.69** | 14.86 |
+
+Worst 14.86 $/bbl, mean 2.47 $/bbl over 140 months. August 2022, in the most
+profitable stretch European refining has had in modern history, read as a loss.
+
+Two things changed, and the second is the one that matters:
+
+1. `crack.series.margin_after_gas_monthly` subtracts no gas. With
+   `other_variable_cost` at its default of zero, the margin after gas IS the
+   published margin, bit for bit, and a test asserts that equality on every
+   month rather than to a tolerance.
+2. A margin now carries its basis. `engine.MARGIN_NET_OF_GAS` says the gas
+   purchase is already inside it, and `engine.MarginInputs` raises
+   `GasDoubleCountError` for any non zero gas term on such a margin, in both
+   engines. The mistake is no longer expressible rather than merely fixed.
+
+**The gas story survives and is better told as a wedge.** Instead of a
+deduction, the two intensities are priced at the same gas price and shown side
+by side: DGEC's own embedded assumption, 1.0 percent of the tonne of crude at the
+method's own 7.55 bbl/t, which is 0.0659 MMBtu/bbl, against this study's EIA
+derived 0.21217, which is 3.22 times as much.
+
+```
+2026-08   gas 21.11 $/MMBtu   DGEC embedded 1.391   this study 4.479   wedge 3.088
+2022-08   gas 70.04 $/MMBtu   DGEC embedded 4.616   this study 14.860  wedge 10.245
+```
+
+A positive wedge means a refinery buying gas at this study's intensity pays more
+for it than DGEC's model refinery does, so the published margin flatters such a
+refinery by the wedge. It is a comparison, never a line of the margin, and
+nothing in the engine subtracts it.
 
 One change to that chain has already been earned by the data and is recorded
 here rather than left to be discovered. **The monthly gas series this study runs
@@ -572,6 +634,69 @@ against S&P's about 7 $/bbl. Four independent committed sources, nothing tuned,
 same order of magnitude. The residual fuel oil heat content of 6.287 MMBtu per
 barrel comes from the EIA Monthly Energy Review table A1 and is used for this
 triangulation and nothing else; no part of the margin engine reads it.
+
+**Which fuel oil, and why it is a question.** The OPEC Rotterdam table publishes
+two fuel oil rows and in October 2022 they were 21 $/bbl apart: 60.75 $/bbl at
+3.5 percent sulphur and 82.06 at 1 percent. That is 0.7 $/bbl of answer. The
+Gate 2 self audit, finding 7, found this repository publishing both, 6.23 here
+and 5.51 from `crack.series.october_2022_triangulation`, from the same cache and
+the same month, with nothing saying which was the answer.
+
+The headline is the 3.5 percent row, for two reasons. SPEC.md section 4.4 asks
+for the gas cost "against a refinery fired on fuel oil", and a refinery that
+fires fuel oil burns its own heavy residue, which is high sulphur rather than
+the low sulphur barge it would have to buy. And it is the figure this repository
+published first; a published number does not move without a reason, and "the
+other row is the one we crack elsewhere" is a reason to report the variant, not
+to replace the headline with it.
+
+The variant comes back from the same call, labelled, every time:
+
+```
+fuel oil fired, 1 percent sulphur   0.21217 x (82.06 / 6.287) = 2.769 $/bbl
+difference                                                    = 5.51 $/bbl
+```
+
+So the gap is 6.23 $/bbl on the row a fuel oil fired refinery actually burns,
+0.77 below S&P's figure, and 5.51 $/bbl on the low sulphur row, 1.49 below.
+`series.october_2022_triangulation` refuses a fuel oil basis it does not
+recognise rather than defaulting to one, which is how two answers got published
+in the first place.
+
+### 4.2 DGEC's own embedded gas intensity, and the wedge against this one
+
+The published MBR already contains a gas purchase, section 2.3 above, so the
+question this study can ask of it is not "what does gas cost" but "how does
+DGEC's assumption compare with mine". Sizing that needs DGEC's 1.0 percent line
+in this study's units, MMBtu per barrel of crude. Derived, not typed, from four
+cited numbers:
+
+| Input | Value | Source |
+|---|---|---|
+| natural gas as a share of the tonne of crude | 1.0 percent | DGEC methodology note, table 1, "Gaz naturel" |
+| barrels per tonne of crude | 7.55 | the same note's own margin factor |
+| natural gas per million tonnes of LNG | 48.0279 bcf | Energy Institute Statistical Review 2026, approximate conversion factors |
+| heat content of natural gas | 1,036 Btu/cf, gross | EIA, as in the intensity above |
+
+```
+48.027940960947284 bcf per Mt x 1e9 cf per bcf / 1e6 t per Mt = 48,027.94 cf per tonne
+x 1,036 Btu per cf                                            = 49,756,947 Btu per tonne
+/ 1e6                                                         = 49.7569 MMBtu per tonne
+
+0.010 tonnes of gas per tonne of crude / 7.55 bbl per tonne
+    x 49.7569 MMBtu per tonne                                 = 0.06590 MMBtu per barrel
+```
+
+The Energy Institute table's own energy columns are NET heating values and this
+study's intensity is built on EIA's GROSS heat content, which differ by about 10
+percent, so the volume column is taken from EI and the heat content from EIA and
+both sides of the comparison stay on one basis.
+
+**0.0659 against 0.21217 is a ratio of 3.22.** Priced at one month's gas price
+that gives the wedge in section 2.3: 3.09 $/bbl in August 2026 and 10.24 $/bbl in
+August 2022. What the 1.0 percent line actually covers, fuel only or fuel plus
+hydrogen feedstock, is `docs/open-questions.md` section 33; it moves the wedge and
+it does not move the margin.
 
 ---
 
