@@ -1638,9 +1638,21 @@ class ThresholdResult:
     #: a reader can tell the difference is to see the dates.
     months_below: tuple[str, ...]
     longest_run_below: int
+    #: The first and last month of that longest unbroken run. MEASURED IN THE SAME
+    #: LOOP THAT COUNTS IT. report() used to print the stretch as
+    #: months_below[-longest] to months_below[-1], which assumes the longest run
+    #: sits at the end of the list; the Gate 3 self audit, finding 4.3, showed that
+    #: a single stray month AFTER the run makes that print a span that does not
+    #: exist. These two fields exist so no caller has to guess.
+    longest_run_first: str
+    longest_run_last: str
     mean_utilisation_below: float
     mean_utilisation_above: float
     grid_quantiles: tuple[float, float]
+    #: The months removed from the estimation sample before anything was fitted,
+    #: and why. Empty on the headline run.
+    dropped_months: tuple[str, ...] = ()
+    dropped_label: str = ""
 
     @property
     def ci_width(self) -> float:
@@ -1673,6 +1685,9 @@ def run_cut_threshold(
     seed: int = BOOTSTRAP_SEED,
     basis_beyond: str = CAPACITY_BEYOND_HELD_FLAT,
     max_ci_width: float = THRESHOLD_MAX_CI_WIDTH_USD_BBL,
+    drop_episode_months: bool = False,
+    drop_months: Sequence[str | pd.Timestamp] | None = None,
+    dropped_label: str = "",
 ) -> ThresholdResult:
     """Fit the hockey stick, bootstrap the threshold, and say whether it is found.
 
@@ -1694,6 +1709,24 @@ def run_cut_threshold(
     2 rule 4: the study is allowed to find nothing. If the interval is wider than
     max_ci_width or reaches the edge of the grid, identified is False, headroom
     is None, and the site falls back to the ten year percentile.
+
+    LEAVING MONTHS OUT, WHICH THIS FUNCTION COULD NOT DO BEFORE. The Gate 3 self
+    audit, finding 4.2, noted that margin_response and intake_trend_response both
+    honour SPEC.md section 6.1's "show results with and without the 2020, 2022 and
+    2026 episodes" and that the threshold, the one result the site's headroom
+    figure depends on, did not. Two arguments close that:
+
+      drop_episode_months  removes the three twelve month episode windows of
+                           EPISODES. A rule fixed before any of this was run.
+      drop_months          removes exactly the months given. report() uses it for
+                           one thing only: the unbroken stretch that the headline
+                           estimate turns out to be estimated from, READ OFF THE
+                           HEADLINE RESULT rather than typed, which is a
+                           destruction test and not a search. Nothing is selected
+                           on either run: the headline threshold, its interval and
+                           its verdict are the ones computed with every month in,
+                           and they do not move because a second run exists.
+                           SPEC.md section 6.6.
     """
     if frame is None:
         frame = analysis_frame(basis_beyond, CAPACITY_STEP)
@@ -1715,6 +1748,24 @@ def run_cut_threshold(
     work = work.dropna(subset=["utilisation_pct", "margin_mean_lagged"]).reset_index(
         drop=True
     )
+    # THE LAGS ARE BUILT BEFORE ANY MONTH IS REMOVED, for the same reason
+    # _build_response builds them on the full frame: dropping a month first would
+    # silently hand the month after it a lag from three months earlier than the
+    # name says.
+    dropped: list[str] = []
+    if drop_episode_months:
+        episodes = episode_mask(work["date"])
+        keep = episodes["any_episode"].to_numpy() == 0.0
+        dropped.extend(str(d.date())[:7] for d in work.loc[~keep, "date"])
+        work = work[keep].reset_index(drop=True)
+    if drop_months:
+        remove = {
+            str(pd.Timestamp(m).to_period("M").to_timestamp().date())[:7]
+            for m in drop_months
+        }
+        keep = ~work["date"].map(lambda d: str(d.date())[:7]).isin(remove)
+        dropped.extend(str(d.date())[:7] for d in work.loc[~keep, "date"])
+        work = work[keep.to_numpy()].reset_index(drop=True)
     if len(work) < 24:
         raise ValueError("only %d usable months, too few to search" % len(work))
 
@@ -1761,11 +1812,23 @@ def run_cut_threshold(
         )
     below = work[margin < point.threshold]
     below_months = tuple(str(d.date())[:7] for d in below["date"])
+    # THE RUN LENGTH AND THE RUN'S DATES COME OUT OF THE SAME LOOP. Finding 4.3 of
+    # the Gate 3 self audit: the dates used to be recovered by report() as the
+    # last `longest` entries of months_below, which is right only while the
+    # longest run happens to sit at the end of the list.
     longest, current, previous = 0, 0, None
+    run_first = run_last = ""
+    current_first = ""
     for stamp in below["date"]:
         period = pd.Timestamp(stamp).to_period("M")
-        current = current + 1 if previous is not None and period == previous + 1 else 1
-        longest = max(longest, current)
+        if previous is not None and period == previous + 1:
+            current += 1
+        else:
+            current = 1
+            current_first = str(period)
+        if current > longest:
+            longest = current
+            run_first, run_last = current_first, str(period)
         previous = period
 
     identified = not reasons
@@ -1799,6 +1862,10 @@ def run_cut_threshold(
         regressor_max=float(margin.max()),
         months_below=below_months,
         longest_run_below=int(longest),
+        longest_run_first=run_first,
+        longest_run_last=run_last,
+        dropped_months=tuple(sorted(set(dropped))),
+        dropped_label=dropped_label,
         mean_utilisation_below=float(below["utilisation_pct"].mean())
         if len(below)
         else float("nan"),
@@ -3249,6 +3316,37 @@ SEASONAL_RANGE_YEARS = 5
 DRIVING_SEASON_MONTHS = (5, 6, 7, 8, 9)
 HEATING_SEASON_MONTHS = (11, 12, 1, 2, 3)
 
+#: WHICH WINTER, AND WHY IT HAD TO BE SAID OUT LOUD.
+#:
+#: A driving season fits inside one calendar year. A WINTER DOES NOT. The Gate 3
+#: self audit, finding 5.2, found this module applying HEATING_SEASON_MONTHS
+#: inside a single calendar year, which averages November and December of year Y
+#: with January, February and March of the SAME year Y. Those are the head of one
+#: winter and the tail of the one before it, two different winters, and the
+#: reassuring half of the published sentence, "positive in 16 of 25 years", was an
+#: artefact of that split. Under a contiguous winter it is positive in 10 of 24,
+#: a minority.
+#:
+#: So a season is now written as (year offset, month) pairs and the two
+#: definitions are both computed and both reported:
+#:
+#:   SEASON_WINDOW_CONTIGUOUS  the physical season. The heating season is November
+#:                             and December of year Y with January, February and
+#:                             March of year Y+1, and the comparison months are
+#:                             every other month of the two calendar years that
+#:                             winter spans. THE DEFAULT AND THE ONE THE SITE
+#:                             QUOTES, because it is the season a heating degree
+#:                             day actually falls in.
+#:   SEASON_WINDOW_CALENDAR    the old within one calendar year window, kept and
+#:                             printed beside it so the artefact is visible rather
+#:                             than quietly corrected.
+#:
+#: The driving season is identical under both, which is why the gasoline numbers
+#: do not move.
+SEASON_WINDOW_CONTIGUOUS = "contiguous"
+SEASON_WINDOW_CALENDAR = "calendar_year"
+SEASON_WINDOWS = (SEASON_WINDOW_CONTIGUOUS, SEASON_WINDOW_CALENDAR)
+
 
 def seasonal_monthly(
     crack: str = CRACK_GASOIL,
@@ -3415,6 +3513,7 @@ def seasonal_join() -> Mapping[str, object]:
 def seasonal_textbook_check(
     exclude_years: Sequence[int] = (),
     frame: pd.DataFrame | None = None,
+    window: str = SEASON_WINDOW_CONTIGUOUS,
 ) -> pd.DataFrame:
     """CHECK, do not assert: does gasoline firm into summer and gasoil into winter.
 
@@ -3424,24 +3523,49 @@ def seasonal_textbook_check(
 
       1. Each year's cracks are demeaned by that year's own mean. What is left is
          the within year shape, which is the only thing a seasonal claim is about.
-      2. For each year, the mean of the season's months less the mean of the other
-         months is one number. Years, not months, are the unit, so twenty five
-         numbers rather than three hundred correlated ones.
+      2. For each SEASON, the mean of the season's months less the mean of every
+         other month of the calendar years the season spans is one number.
+         Seasons, not months, are the unit, so twenty odd numbers rather than
+         three hundred correlated ones.
       3. The reported t is that difference's mean over its standard error across
-         years. A year is plausibly independent of the next for this purpose; a
+         seasons. A year is plausibly independent of the next for this purpose; a
          month is not.
 
+    WHICH MONTHS ARE "THE SEASON", said plainly because the answer used to be
+    wrong. The driving season sits inside one calendar year, so it spans one year
+    and is compared with the other seven months of it. The heating season does
+    not: under window=SEASON_WINDOW_CONTIGUOUS it is November and December of
+    year Y with January, February and March of year Y+1, and it is compared with
+    the other nineteen months of those two years. Under
+    window=SEASON_WINDOW_CALENDAR it is the old within one calendar year window,
+    which averaged the head of one winter with the tail of another; it is kept so
+    the report can print both and show what the difference did. See the comment on
+    SEASON_WINDOW_CONTIGUOUS.
+
     Only complete years are used, because a partial year's own mean is not
-    comparable with a full one's. The result is reported whichever way it comes
-    out, including the way that contradicts the textbook.
+    comparable with a full one's, and a contiguous winter needs BOTH of its years
+    complete. The result is reported whichever way it comes out, including the way
+    that contradicts the textbook.
     """
+    if window not in SEASON_WINDOWS:
+        raise ValueError(
+            "window is %r, which is %s" % (window, " or ".join(SEASON_WINDOWS))
+        )
     if frame is None:
         frame = crack_frame()
     excluded = {int(y) for y in exclude_years}
+    #: (year offset, month) pairs. A driving season is one year wide under either
+    #: window; a heating season is two under the contiguous one.
+    heating = (
+        ((0, 11), (0, 12), (1, 1), (1, 2), (1, 3))
+        if window == SEASON_WINDOW_CONTIGUOUS
+        else tuple((0, m) for m in HEATING_SEASON_MONTHS)
+    )
+    driving = tuple((0, m) for m in DRIVING_SEASON_MONTHS)
     rows = []
     for crack, season, label in (
-        (CRACK_GASOLINE, DRIVING_SEASON_MONTHS, "gasoline into the driving season"),
-        (CRACK_GASOIL, HEATING_SEASON_MONTHS, "gasoil into the heating season"),
+        (CRACK_GASOLINE, driving, "gasoline into the driving season"),
+        (CRACK_GASOIL, heating, "gasoil into the heating season"),
     ):
         work = frame.dropna(subset=[crack])[["date", crack]].copy()
         work["year"] = work["date"].dt.year
@@ -3450,36 +3574,73 @@ def seasonal_textbook_check(
         years = [
             int(y) for y in complete[complete == 12].index if int(y) not in excluded
         ]
-        differences, in_season, out_season = [], [], []
+        work = work[work["year"].isin(years)].copy()
+        work["demeaned"] = work[crack] - work.groupby("year")[crack].transform("mean")
+        demeaned = {
+            (int(r.year), int(r.month)): float(r.demeaned) for r in work.itertuples()
+        }
+        span = max(offset for offset, _ in season) + 1
+        differences, in_season, out_season, starts = [], [], [], []
         for year in years:
-            block = work[work["year"] == year]
-            demeaned = block[crack] - block[crack].mean()
-            mask = block["month"].isin(season)
-            differences.append(float(demeaned[mask].mean() - demeaned[~mask].mean()))
-            in_season.append(float(demeaned[mask].mean()))
-            out_season.append(float(demeaned[~mask].mean()))
+            block_years = [year + k for k in range(span)]
+            if any(y not in years for y in block_years):
+                continue
+            wanted = {(year + offset, month) for offset, month in season}
+            inside = [demeaned[key] for key in wanted]
+            outside = [
+                demeaned[(y, m)]
+                for y in block_years
+                for m in range(1, 13)
+                if (y, m) not in wanted
+            ]
+            differences.append(float(np.mean(inside) - np.mean(outside)))
+            in_season.append(float(np.mean(inside)))
+            out_season.append(float(np.mean(outside)))
+            starts.append(year)
         values = np.asarray(differences, dtype=float)
         n = len(values)
         se = float(values.std(ddof=1) / math.sqrt(n)) if n > 1 else float("nan")
         mean = float(values.mean()) if n else float("nan")
+        worst = (
+            sorted(zip(starts, differences), key=lambda pair: pair[1])[:2] if n else []
+        )
         rows.append(
             {
                 "claim": label,
                 "crack": crack,
-                "season_months": tuple(season),
-                "complete_years": n,
-                "first_year": min(years) if years else np.nan,
-                "last_year": max(years) if years else np.nan,
+                "window": window,
+                "season_months": tuple(month for _, month in season),
+                "season_spans_years": int(span),
+                "complete_years": len(years),
+                "seasons": n,
+                "first_season": min(starts) if starts else np.nan,
+                "last_season": max(starts) if starts else np.nan,
                 "excluded_years": tuple(sorted(excluded)),
                 "in_season_mean_usd_bbl": float(np.mean(in_season)) if n else np.nan,
                 "out_of_season_mean_usd_bbl": float(np.mean(out_season))
                 if n
                 else np.nan,
                 "difference_usd_bbl": mean,
+                #: THE MEDIAN IS NOT DECORATION. On the gasoil winter the mean and
+                #: the median have opposite signs, which is the whole of finding
+                #: 5.3, and a reader who is shown only the mean cannot see it.
+                "median_usd_bbl": float(np.median(values)) if n else np.nan,
                 "se": se,
                 "t": mean / se if se and se > 0 else float("nan"),
-                "years_positive": int((values > 0).sum()),
-                "holds": bool(n > 1 and se > 0 and mean / se > 2.0),
+                "seasons_positive": int((values > 0).sum()),
+                #: The two seasons that pull the mean hardest, so a sign that rests
+                #: on two observations out of twenty five cannot be quoted as
+                #: though it rested on twenty five.
+                "two_most_negative": tuple(
+                    "%d %+.3f" % (year, value) for year, value in worst
+                ),
+                #: Z95 rather than the bare 2.0 this used to carry. The Gate 3
+                #: self audit named that literal as the one number in this module
+                #: a reader could not trace. It is one sided because the textbook
+                #: claim is directional, and it changes nothing on this data: the
+                #: gasoline t is above 4 and the gasoil t is below 1 in absolute
+                #: value under every window tried.
+                "holds": bool(n > 1 and se > 0 and mean / se > Z95),
             }
         )
     return pd.DataFrame(rows)
@@ -4099,8 +4260,8 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
         % (
             scattered,
             "is" if scattered == 1 else "are",
-            threshold.months_below[-longest] if longest else "n/a",
-            threshold.months_below[-1] if longest else "n/a",
+            threshold.longest_run_first or "n/a",
+            threshold.longest_run_last or "n/a",
         )
     )
     if concentration >= 0.75:
@@ -4129,6 +4290,128 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
             "    so the objection in the line above does not apply to this run. "
             "Read the interval."
         )
+    add("")
+
+    # ---------------------------------------------------------------------
+    # SPEC.md section 6.1's "with and without the episodes", now honoured for
+    # the threshold as well. Gate 3 self audit, findings 4.1 and 4.2.
+    # ---------------------------------------------------------------------
+    add("  TAKE THE EPISODE OUT AND THE ESTIMATE DOES NOT WIDEN, IT REVERSES")
+    stretch = [
+        m
+        for m in threshold.months_below
+        if threshold.longest_run_first <= m <= threshold.longest_run_last
+    ]
+    variants = [
+        (
+            "without the stretch %s to %s"
+            % (threshold.longest_run_first, threshold.longest_run_last),
+            run_cut_threshold(
+                frame=frame,
+                replications=replications,
+                drop_months=stretch,
+                dropped_label="the estimated stretch",
+            ),
+        ),
+        (
+            "without the three episode windows",
+            run_cut_threshold(
+                frame=frame,
+                replications=replications,
+                drop_episode_months=True,
+                dropped_label="the three episode windows",
+            ),
+        ),
+    ]
+    add(
+        "    run                                       n  threshold  slope below"
+        "   months below   kink R2  line R2   verdict"
+    )
+    for label, result in [("headline, every month in", threshold), *variants]:
+        add(
+            "    %-38s %4d  %9.3f  %+11.4f  %6d of %-4d  %7.4f  %7.4f   %s"
+            % (
+                label[:38],
+                result.nobs,
+                result.point.threshold,
+                result.point.slope_below,
+                len(result.months_below),
+                result.nobs,
+                result.point.r2,
+                result.linear_r2,
+                "identified" if result.identified else "unidentified",
+            )
+        )
+    without = variants[0][1]
+    for line in _wrap(
+        "THE SLOPE FLIPS SIGN. Removing the one unbroken stretch the headline "
+        "estimate is drawn from, %s to %s, moves the slope below the kink from "
+        "%+.4f to %+.4f percentage points per $/bbl and walks the threshold from "
+        "%.2f to %.2f $/bbl, with %d of the %d remaining months then sitting BELOW "
+        "it against %d of %d before. The kink buys %.1f points of R2 over a "
+        "straight line on the reduced sample against %.1f points on the full one, "
+        "and the mean utilisation below and above %s. A kink whose slope reverses "
+        "when one episode is removed is not a kink. THIS IS THE STRONGEST "
+        "AVAILABLE STATEMENT OF WHY THE VERDICT IS UNIDENTIFIED and it is better "
+        "evidence than the width of the interval: an unidentified interval sounds "
+        "like a wide estimate of something real, and this is a description of one "
+        "episode. The bottom of the regressor's range goes with it: everything "
+        "from %+.3f up to %+.3f $/bbl is that same stretch%s."
+        % (
+            threshold.longest_run_first,
+            threshold.longest_run_last,
+            threshold.point.slope_below,
+            without.point.slope_below,
+            threshold.point.threshold,
+            without.point.threshold,
+            len(without.months_below),
+            without.nobs,
+            len(threshold.months_below),
+            threshold.nobs,
+            100 * (without.point.r2 - without.linear_r2),
+            100 * (threshold.point.r2 - threshold.linear_r2),
+            "swap places"
+            if (
+                (threshold.mean_utilisation_below < threshold.mean_utilisation_above)
+                != (without.mean_utilisation_below < without.mean_utilisation_above)
+            )
+            else "keep their order",
+            threshold.regressor_min,
+            without.regressor_min,
+            ", which is every month in which the lagged margin was negative"
+            if without.regressor_min > 0.0 > threshold.regressor_min
+            else "",
+        ),
+        72,
+    ):
+        add("    " + line)
+    add(
+        "    Mean utilisation below and above the kink: headline %.2f and %.2f, "
+        "without the"
+        % (threshold.mean_utilisation_below, threshold.mean_utilisation_above)
+    )
+    add(
+        "    stretch %.2f and %.2f. Regressor range headline %.3f to %.3f, without "
+        "it %.3f to %.3f."
+        % (
+            without.mean_utilisation_below,
+            without.mean_utilisation_above,
+            threshold.regressor_min,
+            threshold.regressor_max,
+            without.regressor_min,
+            without.regressor_max,
+        )
+    )
+    for line in _wrap(
+        "NOTHING IS SELECTED ON EITHER OF THESE RUNS. The headline threshold, its "
+        "interval and its verdict are the ones computed with every month in, and "
+        "they are the numbers above and on the site. The stretch removed in the "
+        "first variant is read off the headline result rather than chosen, and the "
+        "second variant is the rule SPEC.md section 6.1 fixed before any of this "
+        "was run. SPEC.md section 6.6.",
+        72,
+    ):
+        add("    " + line)
     add("")
     add(
         "  Does the verdict turn on where the grid was cut. A check, and the "
@@ -5077,42 +5360,92 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
         "left is the shape of the"
     )
     add(
-        "    year and not its level; take the season's months less the other "
-        "months as ONE number per year;"
+        "    year and not its level; take the season's months less every other "
+        "month of the calendar"
     )
     add(
-        "    and report the mean of those numbers with the standard error across "
-        "years. A year is the unit"
+        "    years the season spans, as ONE number per season; and report the "
+        "mean of those numbers"
     )
     add(
-        "    because months inside a year are not independent. The month sets "
-        "were written down before the"
+        "    with the standard error across seasons. A year is the unit because "
+        "months inside a year are"
     )
     add(
-        "    test: driving season %s, heating season %s."
-        % (DRIVING_SEASON_MONTHS, HEATING_SEASON_MONTHS)
+        "    not independent. The month sets were written down before the test: "
+        "driving season %s," % (DRIVING_SEASON_MONTHS,)
     )
+    add("    heating season %s." % (HEATING_SEASON_MONTHS,))
+    for line in _wrap(
+        "WHICH WINTER, AND WHY THIS SECTION NOW SAYS SO. A driving season fits "
+        "inside one calendar year and a winter does not. The heating season "
+        "quoted here is the CONTIGUOUS one, November and December of year Y with "
+        "January, February and March of year Y+1, because that is the winter a "
+        "cold week actually falls in. Applying the same five month set inside one "
+        "calendar year, which is what this module did before the Gate 3 self "
+        "audit read it, averages the head of one winter with the tail of the one "
+        "before it. Both are printed below so the difference between them is "
+        "visible rather than quietly corrected, and the second row of each pair "
+        "is the old one.",
+        72,
+    ):
+        add("    " + line)
     for exclusions, label in (
         ((), "all complete years"),
         (SEASONAL_REMOVABLE_YEARS, "with 2020, 2022 and 2026 removed"),
     ):
-        check = seasonal_textbook_check(exclude_years=exclusions)
         add("    %s:" % label)
-        for _, row in check.iterrows():
-            add(
-                "      %-34s %2d years  in season %+6.2f  out %+6.2f  diff "
-                "%+6.2f  se %5.2f  t %+6.2f  %s"
-                % (
-                    row["claim"],
-                    row["complete_years"],
-                    row["in_season_mean_usd_bbl"],
-                    row["out_of_season_mean_usd_bbl"],
-                    row["difference_usd_bbl"],
-                    row["se"],
-                    row["t"],
-                    "HOLDS" if row["holds"] else "DOES NOT HOLD",
+        for window in SEASON_WINDOWS:
+            check = seasonal_textbook_check(exclude_years=exclusions, window=window)
+            for _, row in check.iterrows():
+                if window == SEASON_WINDOW_CALENDAR and row["crack"] == CRACK_GASOLINE:
+                    # The driving season is identical under both windows. Printing
+                    # it twice would invite a reader to look for a difference that
+                    # cannot exist.
+                    continue
+                add(
+                    "      %-32s %-14s %2d seasons  in %+6.2f  out %+6.2f  diff "
+                    "%+6.2f  median %+6.2f  se %5.2f  t %+6.2f  positive %2d of %2d"
+                    "  %s"
+                    % (
+                        row["claim"],
+                        row["window"],
+                        row["seasons"],
+                        row["in_season_mean_usd_bbl"],
+                        row["out_of_season_mean_usd_bbl"],
+                        row["difference_usd_bbl"],
+                        row["median_usd_bbl"],
+                        row["se"],
+                        row["t"],
+                        row["seasons_positive"],
+                        row["seasons"],
+                        "HOLDS" if row["holds"] else "DOES NOT HOLD",
+                    )
                 )
-            )
+    excluded_complete = int(
+        seasonal_textbook_check(exclude_years=SEASONAL_REMOVABLE_YEARS)
+        .iloc[0]["complete_years"]
+    )
+    all_complete = int(seasonal_textbook_check().iloc[0]["complete_years"])
+    for line in _wrap(
+        "THE EXCLUSION ROW REMOVES %d COMPLETE YEARS, NOT THREE. %d has %d months "
+        "in the cache and is not a complete year, so it was never in the %d and "
+        "cannot be taken out of them: %d complete years go in and %d come out. "
+        "The arithmetic was always right and the sentence was not, which is Gate 3 "
+        "self audit finding 5.1."
+        % (
+            all_complete - excluded_complete,
+            2026,
+            int(
+                (crack_frame()["date"].dt.year == 2026).sum()
+            ),
+            all_complete,
+            all_complete,
+            excluded_complete,
+        ),
+        72,
+    ):
+        add("    " + line)
     add("")
     shape = seasonal_shape()
     add("  The within year shape, in $/bbl away from each year's own mean")
@@ -5152,51 +5485,101 @@ def report(replications: int = BOOTSTRAP_REPLICATIONS) -> str:
     )
     add(
         "    removing 2020, 2022 and 2026. It is positive in %d of those %d "
-        "years. Peak month %d, trough %d."
+        "seasons. Peak month %d, trough %d."
         % (
-            int(full.loc[CRACK_GASOLINE, "years_positive"]),
-            int(full.loc[CRACK_GASOLINE, "complete_years"]),
+            int(full.loc[CRACK_GASOLINE, "seasons_positive"]),
+            int(full.loc[CRACK_GASOLINE, "seasons"]),
             gasoline_peak,
             gasoline_trough,
         )
     )
-    add(
-        "    GASOIL: THE TEXTBOOK DOES NOT HOLD AS IT IS USUALLY STATED. The "
-        "November to March window sits"
+    calendar = seasonal_textbook_check(window=SEASON_WINDOW_CALENDAR).set_index(
+        "crack"
     )
-    add(
-        "    %+.2f $/bbl from the rest of the year with a standard error of %.2f, "
-        "t %+.2f, which is nothing,"
+    excluded_row = seasonal_textbook_check(
+        exclude_years=SEASONAL_REMOVABLE_YEARS
+    ).set_index("crack")
+    add("    GASOIL: THE TEXTBOOK DOES NOT HOLD AS IT IS USUALLY STATED.")
+    for line in _wrap(
+        "The contiguous winter, November and December of one year with January to "
+        "March of the next, sits %+.2f $/bbl from the rest of those two years "
+        "with a standard error of %.2f, t %+.2f, across %d winters. That is "
+        "nothing, and it is nothing under every window tried: t %+.2f on the "
+        "contiguous winter, %+.2f on the old calendar year window, %+.2f with "
+        "2020, 2022 and 2026 removed. THE CONCLUSION IS THE SAME AND IT IS THE "
+        "ONE SPEC.md SECTION 6.5 ASKED TO HAVE CHECKED RATHER THAN ASSERTED."
         % (
             full.loc[CRACK_GASOIL, "difference_usd_bbl"],
             full.loc[CRACK_GASOIL, "se"],
             full.loc[CRACK_GASOIL, "t"],
-        )
-    )
-    add(
-        "    and it is positive in only %d of %d years. The shape table above "
-        "says why: the gasoil crack's"
+            int(full.loc[CRACK_GASOIL, "seasons"]),
+            full.loc[CRACK_GASOIL, "t"],
+            calendar.loc[CRACK_GASOIL, "t"],
+            excluded_row.loc[CRACK_GASOIL, "t"],
+        ),
+        72,
+    ):
+        add("    " + line)
+    for line in _wrap(
+        "WHAT THIS SECTION USED TO SAY AND NO LONGER DOES, because the Gate 3 "
+        "self audit showed both sentences were artefacts. The first was 'positive "
+        "in only %d of %d years', which reads as 'the sign was usually right and "
+        "the mean was dragged down'. That count belongs to the calendar year "
+        "window; under the contiguous winter it is positive in %d of %d, a "
+        "minority. The second was quoting %+.2f as the estimate. Its sign rests on "
+        "two observations out of %d, %s, and it does not survive them: %+.2f on "
+        "all years under the calendar window, %+.2f on the calendar window with "
+        "the crisis years out, %+.2f on contiguous winters and %+.2f on "
+        "contiguous winters with the crisis years out. The honest statement is "
+        "that the gasoil "
+        "winter effect is INDISTINGUISHABLE FROM ZERO UNDER EVERY DEFINITION "
+        "TRIED, and that a signed point estimate gives it more standing than the "
+        "data supports. Under the contiguous winter the mean and the median at "
+        "least agree in sign, %+.2f and %+.2f, which under the calendar window "
+        "they do not, %+.2f and %+.2f."
         % (
-            int(full.loc[CRACK_GASOIL, "years_positive"]),
-            int(full.loc[CRACK_GASOIL, "complete_years"]),
-        )
+            int(calendar.loc[CRACK_GASOIL, "seasons_positive"]),
+            int(calendar.loc[CRACK_GASOIL, "seasons"]),
+            int(full.loc[CRACK_GASOIL, "seasons_positive"]),
+            int(full.loc[CRACK_GASOIL, "seasons"]),
+            calendar.loc[CRACK_GASOIL, "difference_usd_bbl"],
+            int(calendar.loc[CRACK_GASOIL, "seasons"]),
+            " and ".join(calendar.loc[CRACK_GASOIL, "two_most_negative"]),
+            calendar.loc[CRACK_GASOIL, "difference_usd_bbl"],
+            seasonal_textbook_check(
+                exclude_years=SEASONAL_REMOVABLE_YEARS,
+                window=SEASON_WINDOW_CALENDAR,
+            ).set_index("crack").loc[CRACK_GASOIL, "difference_usd_bbl"],
+            full.loc[CRACK_GASOIL, "difference_usd_bbl"],
+            excluded_row.loc[CRACK_GASOIL, "difference_usd_bbl"],
+            full.loc[CRACK_GASOIL, "difference_usd_bbl"],
+            full.loc[CRACK_GASOIL, "median_usd_bbl"],
+            calendar.loc[CRACK_GASOIL, "difference_usd_bbl"],
+            calendar.loc[CRACK_GASOIL, "median_usd_bbl"],
+        ),
+        72,
+    ):
+        add("    " + line)
+    add(
+        "    The shape table above says where such strength as there is lives: "
+        "the gasoil crack's"
     )
     add(
-        "    strongest month is %d and its weakest is %d, so such strength as "
-        "there is arrives in the autumn"
+        "    strongest month is %d and its weakest is %d, so it arrives in the "
+        "autumn build and has"
         % (gasoil_peak, gasoil_trough)
     )
     add(
-        "    build and has faded by the middle of the winter it was built for. A "
-        "window drawn around that"
+        "    faded by the middle of the winter it was built for. A window drawn "
+        "around that peak would"
     )
     add(
-        "    peak would fit better, and it is NOT tested here and no number for "
-        "it is reported, because a"
+        "    fit better, and it is NOT tested here and no number for it is "
+        "reported, because a window"
     )
     add(
-        "    window chosen after seeing this table is a parameter search and "
-        "SPEC.md section 6.6 forbids it."
+        "    chosen after seeing this table is a parameter search and SPEC.md "
+        "section 6.6 forbids it."
     )
     add(
         "    The honest statement is the one above: on this sample, gasoline is "
