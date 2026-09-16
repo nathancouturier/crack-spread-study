@@ -20,7 +20,7 @@
  * Numeric literals: none.
  */
 
-import { el, sentence, disclosure, figureCell } from "./dom.js";
+import { el, sentence, disclosure, figureCell, scrollTable } from "./dom.js";
 import { formatNumber, formatCell, segmentsText, UNITS } from "./format.js";
 import * as charts from "./charts.js";
 
@@ -126,17 +126,17 @@ function panelWords(panel, latest, decimals) {
 
 /* The text alternative: every week, every year, with how it was read and how
  * many prior years the week has. Wide, so it scrolls in its own container with
- * the week column sticky; the caption says the years run to the right. */
+ * the week column sticky; the caption names the years that are off screen. */
 function weeksTable(panel, decimals, at) {
   const years = panel.year_order;
   const headRow = el("tr", {}, [
     el("th", { text: "Week", attrs: { scope: "col" } }),
-    el("th", { text: "Prior years", attrs: { scope: "col" } }),
+    el("th", { text: "Prior years", attrs: { scope: "col", "data-short": "prior years" } }),
   ]);
   for (const year of years) {
     const label = formatNumber(year, "year", decimals);
-    headRow.appendChild(el("th", { text: label + ", " + UNITS.usd_bbl, attrs: { scope: "col" } }));
-    headRow.appendChild(el("th", { text: label + ", how read", attrs: { scope: "col" } }));
+    headRow.appendChild(el("th", { text: label + ", " + UNITS.usd_bbl, attrs: { scope: "col", "data-short": label } }));
+    headRow.appendChild(el("th", { text: label + ", how read", attrs: { scope: "col", "data-short": label + ", how read" } }));
   }
   const body = el("tbody");
   for (const row of panel.weeks) {
@@ -160,10 +160,6 @@ function weeksTable(panel, decimals, at) {
     });
     body.appendChild(tr);
   }
-  const table = el("table", { class: "table" }, [
-    el("caption", { text: "The " + panel.name + " crack by week of the year, one pair of columns per year, the later years to the right." }),
-    el("thead", {}, [headRow]),
-    body,
-  ]);
-  return el("div", { class: "table-scroll" }, [table]);
+  const table = el("table", { class: "table weeks-table" }, [el("thead", {}, [headRow]), body]);
+  return scrollTable(["The " + panel.name + " crack by week of the year, one pair of columns per year."], table);
 }

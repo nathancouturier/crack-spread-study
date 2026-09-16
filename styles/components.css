@@ -154,14 +154,23 @@
 }
 
 /* The body opens by grid-template-rows 0fr to 1fr over --t-fast, the first of
- * the three motions Part 3 section 8 allows. The inner wrapper clips. */
+ * the three motions Part 3 section 8 allows. The inner wrapper clips, which the
+ * motion needs, and so it would clip a focus ring flush with the column's edge:
+ * the ring is 2px at a 4px offset. The wrapper therefore reaches 8px past the
+ * column on both sides, padded back by the same 8px, so the content does not
+ * move and every ring sits inside the clip. Part 7, C15. */
 .section__body {
   display: grid;
   grid-template-rows: 0fr;
   transition: grid-template-rows var(--t-fast) var(--ease-out);
 }
 .section__body[data-open="true"] { grid-template-rows: 1fr; }
-.section__body > .section__inner { overflow: hidden; min-height: 0; }
+.section__body > .section__inner {
+  overflow: hidden;
+  min-height: 0;
+  margin-inline: -8px;
+  padding-inline: 8px;
+}
 .section__body[data-open="true"] > .section__inner { padding-block: 8px 32px; }
 
 /* Blocks inside an open section: 24px apart and a sentence heading, never a
@@ -204,12 +213,20 @@
   border-collapse: collapse;
   font-size: var(--fs-body-s);
 }
-.table caption {
+.table caption,
+.table-caption {
   text-align: left;
   font-weight: 500;
   font-size: var(--fs-body);
   margin-bottom: 8px;
   caption-side: top;
+}
+/* A scrolling table's caption is a paragraph above its box, never inside it,
+ * so it wraps to the column and is never clipped with the columns it names.
+ * Part 7, C13. */
+.table-caption {
+  max-width: 64em;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 .table th,
 .table td {
@@ -234,10 +251,13 @@
 
 /* A wide table scrolls inside its own container, never the page. No shadow on
  * the sticky edge, no fade on the container: the caption says what is off
- * screen. */
+ * screen, at every width, measured by src/dom.js scrollTable. The box clips in
+ * both directions once it scrolls, so it keeps 8px under the last row for the
+ * focus ring of a link there. */
 .table-scroll {
   overflow-x: auto;
   max-width: 100%;
+  padding-bottom: 8px;
 }
 .table-scroll .table th:first-child,
 .table-scroll .table td:first-child {
@@ -297,8 +317,8 @@ p.block,
   font-variant-numeric: tabular-nums lining-nums;
 }
 .block > p + p,
-.block > .table-scroll + p,
-.block > p + .table-scroll { margin-top: 8px; }
+.block > .table-block + p,
+.block > p + .table-block { margin-top: 8px; }
 .note,
 .scale-note { font-size: var(--fs-meta); }
 
@@ -314,16 +334,11 @@ p.block,
   border: 0;
 }
 
-/* The caption words naming the columns off screen appear only where they are
- * off screen. Part 3 section 5, S6. */
-.caption-narrow { display: none; }
-@media (max-width: 600px) {
-  .caption-narrow { display: inline; }
-}
-
 .table th.col-num,
 .table td.num,
-.table th.num { text-align: right; }
+.table th.num,
+.table td.range { text-align: right; }
+.table td.range { white-space: nowrap; }
 .table .is-missing { font-family: var(--ff-body); }
 
 /* A text link inside a table or a sentence. Underlined, never an arrow. */
@@ -412,6 +427,9 @@ p.block,
 .mark-accent-bar { fill: var(--role-mark-accent); stroke: var(--role-ring); stroke-width: 2px; paint-order: stroke; }
 .mark-interval { stroke: var(--role-series); stroke-width: 2px; fill: none; }
 .mark-accent-rule { stroke: var(--role-mark-accent); stroke-width: 1.5px; }
+/* The ring under the zero rule where it crosses an interval line: the rule's
+ * 1.5px plus 2px of --bg each side, S25. Part 7, C15. */
+.mark-accent-rule-ring { stroke: var(--role-ring); stroke-width: 5.5px; }
 
 /* The two seasonal panels: side by side above 768px, stacked below. */
 .panels {
@@ -428,7 +446,10 @@ p.block,
  * line on one side does not drop that side's plot below the other's. */
 @media (min-width: 768px) {
   .panels { grid-template-rows: auto auto auto; }
-  .panel { display: grid; grid-template-rows: subgrid; grid-row: span 3; row-gap: 0; }
+  /* One column that may shrink below its content: without minmax(0, 1fr) the
+   * open week table widened the panel past the section, clipping the table's
+   * caption and the right hand focus ring. Part 7, C15. */
+  .panel { display: grid; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr); grid-row: span 3; row-gap: 0; }
   .panel__heading { align-self: end; }
 }
 .panel__heading {
@@ -494,6 +515,27 @@ p.block,
 /* ------------------------------------------------------ run economics --- */
 
 .model-name { min-width: 14rem; max-width: 24rem; }
+/* B1 of the Gate 4 audit: at 375 px a 14rem sticky column left 111px for every
+ * figure. At 600px and below it takes at most 9.5rem and wraps, so more than
+ * half of the box is left for the columns that scroll. */
+@media (max-width: 600px) {
+  .model-name { min-width: 9.5rem; width: 9.5rem; max-width: 9.5rem; }
+  .model-name__equation { display: none; }
+}
+/* The equations under the response table, shown only at 600px and below, where
+ * they leave the sticky column. */
+.model-equations { display: none; }
+@media (max-width: 600px) {
+  .model-equations {
+    display: grid;
+    gap: 4px;
+    margin-top: 8px;
+    font-size: var(--fs-meta);
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .model-equations__label { color: var(--text); font-weight: 500; }
+}
 .table th.model-name { font-weight: 400; }
 .model-name__label { display: block; }
 .model-name__equation {
@@ -517,10 +559,27 @@ p.block,
 /* --------------------------------------------------------- provenance --- */
 
 .manifest-table td { vertical-align: top; }
-.table th.manifest__series { font-weight: 500; white-space: nowrap; vertical-align: top; }
-.manifest__vintage { min-width: 16rem; max-width: 28rem; font-size: var(--fs-meta); }
-.manifest__source { min-width: 14rem; font-size: var(--fs-meta); }
-.manifest__fetch { min-width: 11rem; }
+/* The series column holds a reader's label and wraps, Part 7, C12. Its width is
+ * capped so the sticky column never takes the scroll box: B1 of the Gate 4 audit
+ * measured a 291px nowrap id in a 335px box. */
+.table th.manifest__series {
+  font-weight: 500;
+  vertical-align: top;
+  min-width: 12rem;
+  max-width: 16rem;
+}
+@media (max-width: 600px) {
+  .table th.manifest__series { min-width: 9.5rem; width: 9.5rem; max-width: 9.5rem; }
+}
+.manifest__words {
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.manifest__provisional { min-width: 8rem; }
+.manifest__gaps { min-width: 10rem; }
+.manifest__vintage { min-width: 11rem; max-width: 15rem; font-size: var(--fs-meta); }
+.manifest__source { min-width: 10rem; font-size: var(--fs-meta); }
+.manifest__fetch { min-width: 9rem; }
 .manual-step + .manual-step { margin-top: 16px; }
 .manual-step .prose + .prose { margin-top: 4px; }
 .manual-step__what { font-weight: 500; }

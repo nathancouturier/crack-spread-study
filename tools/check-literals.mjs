@@ -127,6 +127,11 @@ const DECLARED = {
     { snippet: "Object.freeze([1, 2, 5, 10])", count: 3, why: "the 1, 2, 5, 10 tick ladder" },
     { snippet: "Math.pow(10, Math.floor(Math.log10(rough)))", count: 1, why: "the power of ten under a tick step" },
   ],
+  "src/dom.js": [
+    // How many cut off columns a table caption names one by one before it says
+    // "the columns from X on". A wording decision about a list, not a value.
+    { snippet: "const MOST_NAMED = 4;", count: 1, why: "columns named one by one in a caption, Part 7 C13" },
+  ],
   "src/engine.js": [
     // An ISO calendar date, YYYY-MM-DD, is ten characters. A format fact used
     // to reject a malformed date before any arithmetic, not a market value.

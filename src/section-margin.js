@@ -46,9 +46,9 @@ export function render(inner, data) {
     const barCell = el("td", { class: "waterfall__bar", attrs: { role: "cell" } });
     barCells.push({ cell: barCell, row, previous: index > 0 ? rows[index - 1] : null, isLast: index === rows.length - 1 });
 
-    // Every figure signed, Part 3 section 5; the accent's figure in the text
-    // accent role, which is --accent-bright in dark.
-    const figure = figureCell(formatCell(row.value_usd_bbl, "usd_bbl", decimals, true), "value_usd_bbl",
+    // Steps signed, totals not, Part 3 section 4 and Part 7, C14; the accent's
+    // figure in the text accent role, which is --accent-bright in dark.
+    const figure = figureCell(formatCell(row.value_usd_bbl, "usd_bbl", decimals, !isTotal), "value_usd_bbl",
       [isTotal ? "num--total" : "", row.accent ? "text-accent" : ""].filter(Boolean).join(" "));
     figure.setAttribute("role", "cell");
 
@@ -59,7 +59,7 @@ export function render(inner, data) {
   });
 
   const table = el("table", { class: "table waterfall", attrs: { role: "table" } }, [
-    el("caption", { text: "How the ministry's refining margin for " + data.month_label + " is built, line by line, in " + UNITS.usd_bbl + ", then what the barrel keeps at the average US refinery's gas use." }),
+    el("caption", { text: "How the ministry's refining margin for " + data.month_label + " is built, line by line, in " + UNITS.usd_bbl + ", then its gross margin at the average US refinery's gas use." }),
     el("thead", { attrs: { role: "rowgroup" } }, [
       el("tr", { attrs: { role: "row" } }, [
         el("th", { text: "Line", attrs: { scope: "col", role: "columnheader" } }),

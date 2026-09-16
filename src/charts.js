@@ -322,23 +322,54 @@ function runsOf(rows, key) {
 }
 
 /* A bracket in a rail: a line across the weeks, an end tick at each side, and
- * its label centred on the line over a --bg halo, so no text sits on a mark. */
+ * its label. Where the label fits inside the bracket it is centred on the line
+ * over a --bg plate, so no text sits on a mark; plateRailLabels decides, once
+ * the words can be measured. The bracket's ends travel on the label. */
 function bracket(group, x0, x1, y, label) {
   const tick = GEOMETRY.BRACKET_TICK * GEOMETRY.HALF;
   group.appendChild(svgEl("path", {
     class: "mark-context",
     d: "M" + px(x0) + " " + px(y - tick) + " V" + px(y + tick) + " M" + px(x0) + " " + px(y) + " H" + px(x1) + " M" + px(x1) + " " + px(y - tick) + " V" + px(y + tick),
   }));
-  group.appendChild(svgEl("text", { class: "chart-caption rail-label", x: px((x0 + x1) * GEOMETRY.HALF), y: px(y), "text-anchor": "middle", "dominant-baseline": "central" }, label));
+  group.appendChild(svgEl("text", {
+    class: "chart-caption rail-label",
+    x: px((x0 + x1) * GEOMETRY.HALF),
+    y: px(y),
+    "text-anchor": "middle",
+    "dominant-baseline": "central",
+    "data-x0": px(x0),
+    "data-x1": px(x1),
+    "data-y": px(y),
+  }, label));
 }
 
-/** Give each rail label a --bg plate the width of its words, so the bracket
- *  line stops at the label instead of showing between the words. Text can only
+/** Place each rail label where it hides no part of its bracket. Text can only
  *  be measured once the svg is in the document, so the caller runs this after
- *  inserting it. */
+ *  inserting it, and again when the fonts arrive; every run starts from the
+ *  centred place, so it measures afresh.
+ *
+ *  In order of preference (Part 7, C15, M2 of the Gate 4 audit):
+ *    1  inside the bracket, centred on a --bg plate the width of its words, when
+ *       the plate leaves both end ticks showing
+ *    2  just right of the bracket, when that stays inside the chart
+ *    3  just left of it, likewise
+ *    4  on a line of its own under the chart, starting under the bracket
+ *  A plate wider than its bracket hid the end ticks, so "4 prior years" read as
+ *  running into "none", and a narrow bracket kept only two stubs that looked
+ *  like arrows. */
 export function plateRailLabels(svg) {
+  const g = GEOMETRY;
   for (const plate of svg.querySelectorAll(".rail-plate")) plate.remove();
+  const width = Number(svg.getAttribute("width"));
+  if (!svg.hasAttribute("data-base-height")) svg.setAttribute("data-base-height", svg.getAttribute("height"));
+  const baseHeight = Number(svg.getAttribute("data-base-height"));
+  let lines = 0;
   for (const label of svg.querySelectorAll(".rail-label")) {
+    const x0 = Number(label.getAttribute("data-x0"));
+    const x1 = Number(label.getAttribute("data-x1"));
+    label.setAttribute("x", px((x0 + x1) * g.HALF));
+    label.setAttribute("y", label.getAttribute("data-y"));
+    label.setAttribute("text-anchor", "middle");
     let box;
     try {
       box = label.getBBox();
@@ -346,15 +377,31 @@ export function plateRailLabels(svg) {
       continue;
     }
     if (!box || box.width === 0) continue;
-    const pad = GEOMETRY.TICK_LENGTH;
-    label.parentNode.insertBefore(svgEl("rect", {
-      class: "mark-ring-fill rail-plate",
-      x: px(box.x - pad),
-      y: px(box.y),
-      width: px(box.width + pad + pad),
-      height: px(box.height),
-    }), label);
+    const pad = g.TICK_LENGTH;
+    if (box.x - pad > x0 + 1 && box.x + box.width + pad < x1 - 1) {
+      label.parentNode.insertBefore(svgEl("rect", {
+        class: "mark-ring-fill rail-plate",
+        x: px(box.x - pad),
+        y: px(box.y),
+        width: px(box.width + pad + pad),
+        height: px(box.height),
+      }), label);
+    } else if (x1 + g.LABEL_GAP + box.width <= width) {
+      label.setAttribute("x", px(x1 + g.LABEL_GAP));
+      label.setAttribute("text-anchor", "start");
+    } else if (x0 - g.LABEL_GAP - box.width >= 0) {
+      label.setAttribute("x", px(x0 - g.LABEL_GAP));
+      label.setAttribute("text-anchor", "end");
+    } else {
+      label.setAttribute("x", px(Math.max(0, Math.min(x0, width - box.width))));
+      label.setAttribute("y", px(baseHeight + lines * g.RAIL_HEIGHT + g.RAIL_HEIGHT * g.HALF));
+      label.setAttribute("text-anchor", "start");
+      lines += 1;
+    }
   }
+  const height = baseHeight + lines * g.RAIL_HEIGHT;
+  svg.setAttribute("height", String(height));
+  svg.setAttribute("viewBox", [0, 0, width, height].join(" "));
 }
 
 /* A hatch pattern with a unique id, 45 degree strokes in the context role. */
@@ -637,6 +684,20 @@ function intervalRow(group, xOf, y, item) {
   group.appendChild(svgEl("circle", { class: "mark-series-fill", cx: px(cx), cy: px(y), r: g.DOT_RADIUS }));
 }
 
+/* The accent zero rule over one interval row, from y1 to y2. Where the rule
+ * crosses the ink interval line, a --bg ring under it separates the two: accent
+ * against ink is 2.14 in light (S25, Part 7 C15). The ring is drawn only where
+ * the line actually crosses zero, so an interval that stops short of zero keeps
+ * its end tick whole, however close to the rule it sits. */
+function zeroRule(group, x, y1, y2, rowY, item) {
+  const g = GEOMETRY;
+  if (present(item.low) && present(item.high) && item.low < 0 && item.high > 0) {
+    const reach = g.STRIP_END_TICK * g.HALF;
+    group.appendChild(svgEl("line", { class: "mark-accent-rule-ring", x1: px(x), x2: px(x), y1: px(rowY - reach), y2: px(rowY + reach) }));
+  }
+  group.appendChild(svgEl("line", { class: "mark-accent-rule", x1: px(x), x2: px(x), y1: px(y1), y2: px(y2) }));
+}
+
 /** An interval strip for one table row, hidden, Part 3 section 5. */
 export function intervalCell({ width, height, item, domain }) {
   const g = GEOMETRY;
@@ -644,13 +705,16 @@ export function intervalCell({ width, height, item, domain }) {
   const inset = g.DOT_RADIUS + g.RING_WIDTH;
   const xOf = linear(domain[0], domain[1], inset, Math.max(width - inset, inset));
   intervalRow(svg, xOf, height * g.HALF, item);
-  const zero = xOf(0);
-  svg.appendChild(svgEl("line", { class: "mark-accent-rule", x1: px(zero), x2: px(zero), y1: 0, y2: height }));
+  zeroRule(svg, xOf(0), 0, height, height * g.HALF, item);
   return svg;
 }
 
 /** The interval strips as one figure above the table at narrow widths, an
- *  image with a title and description. Each row labelled at its left end. */
+ *  image with a title and description. Each row labelled at its left end.
+ *
+ *  The accent zero rule runs through each interval row and stops at the label
+ *  line above the next, so it never crosses a label: S6 of the Gate 4 audit
+ *  measured it through "Crude intake with a trend" at 375 px. Part 7, C15. */
 export function intervalFigure({ width, items, domain, title, desc }) {
   const g = GEOMETRY;
   const rowHeight = g.STRIP_LABEL + g.STRIP_ROW;
@@ -658,14 +722,16 @@ export function intervalFigure({ width, items, domain, title, desc }) {
   const svg = imageSvg({ width, height, title, desc, className: "chart--strip-figure" });
   const inset = g.DOT_RADIUS + g.RING_WIDTH;
   const xOf = linear(domain[0], domain[1], inset, Math.max(width - inset, inset));
+  const zero = xOf(0);
   const group = svgEl("g", { "aria-hidden": "true" });
   items.forEach((item, index) => {
-    const labelY = index * rowHeight + g.STRIP_LABEL * g.HALF;
-    group.appendChild(svgEl("text", { class: "chart-caption-strong", x: 0, y: px(labelY), "dominant-baseline": "central" }, item.label));
-    intervalRow(group, xOf, index * rowHeight + g.STRIP_LABEL + g.STRIP_ROW * g.HALF, item);
+    const top = index * rowHeight;
+    const rowTop = top + g.STRIP_LABEL;
+    const rowY = rowTop + g.STRIP_ROW * g.HALF;
+    group.appendChild(svgEl("text", { class: "chart-caption-strong", x: 0, y: px(top + g.STRIP_LABEL * g.HALF), "dominant-baseline": "central" }, item.label));
+    intervalRow(group, xOf, rowY, item);
+    zeroRule(group, zero, rowTop, rowTop + g.STRIP_ROW, rowY, item);
   });
-  const zero = xOf(0);
-  group.appendChild(svgEl("line", { class: "mark-accent-rule", x1: px(zero), x2: px(zero), y1: g.STRIP_LABEL, y2: height }));
   svg.appendChild(group);
   return svg;
 }

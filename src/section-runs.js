@@ -26,7 +26,7 @@
  * Numeric literals: none.
  */
 
-import { el, sentence, figureCell } from "./dom.js";
+import { el, sentence, figureCell, scrollTable } from "./dom.js";
 import { formatNumber, formatCell, segmentsText, UNITS } from "./format.js";
 import * as charts from "./charts.js";
 
@@ -69,13 +69,13 @@ export function render(inner, data) {
 
   const head = el("tr", {}, [
     el("th", { text: "Model", attrs: { scope: "col" } }),
-    el("th", { class: "col-num", text: perMove, attrs: { scope: "col" } }),
-    el("th", { class: "col-num", text: "Interval, " + level + " percent", attrs: { scope: "col" } }),
-    el("th", { class: "strip-col", attrs: { scope: "col" } }, [el("span", { class: "visually-hidden", text: "Interval drawn on one scale with zero marked" })]),
-    el("th", { text: "Zero", attrs: { scope: "col" } }),
-    el("th", { class: "col-num", text: "Share of runs, percent", attrs: { scope: "col" } }),
-    el("th", { class: "col-num", text: "t", attrs: { scope: "col" } }),
-    el("th", { class: "col-num", text: "Months", attrs: { scope: "col" } }),
+    el("th", { class: "col-num", text: perMove, attrs: { scope: "col", "data-short": UNITS.kb_d } }),
+    el("th", { class: "col-num", text: "Interval, " + level + " percent", attrs: { scope: "col", "data-short": "interval" } }),
+    el("th", { class: "strip-col", attrs: { scope: "col", "data-short": "interval drawing" } }, [el("span", { class: "visually-hidden", text: "Interval drawn on one scale with zero marked" })]),
+    el("th", { text: "Zero", attrs: { scope: "col", "data-short": "zero" } }),
+    el("th", { class: "col-num", text: "Share of runs, percent", attrs: { scope: "col", "data-short": "share of runs" } }),
+    el("th", { class: "col-num", text: "t", attrs: { scope: "col", "data-short": "t" } }),
+    el("th", { class: "col-num", text: "Months", attrs: { scope: "col", "data-short": "months" } }),
   ]);
   const body = el("tbody");
   const stripCells = [];
@@ -90,7 +90,10 @@ export function render(inner, data) {
         el("span", { class: "model-name__equation", text: sentenceCase(model.equation) + "." }),
       ]),
       figureCell(formatCell(model.kb_d, "kb_d", decimals, true), "kb_d"),
-      el("td", { class: "num", text: low === null || high === null ? "no interval" : low + " to " + high, attrs: { "data-field": "kb_d_low kb_d_high" } }),
+      // The two ends in the figure face, the word between them in the text face.
+      low === null || high === null
+        ? el("td", { class: "range", text: "no interval", attrs: { "data-field": "kb_d_low kb_d_high" } })
+        : el("td", { class: "range", attrs: { "data-field": "kb_d_low kb_d_high" } }, [el("span", { class: "num", text: low }), " to ", el("span", { class: "num", text: high })]),
       stripCell,
       sentence("td", model.zero_segments, decimals, "zero-cell"),
       figureCell(formatCell(model.share_of_runs_percent, "percent", decimals, true), "share_of_runs_percent"),
@@ -98,15 +101,17 @@ export function render(inner, data) {
       figureCell(formatCell(model.months, "count", decimals), "months"),
     ]));
   });
-  const table = el("table", { class: "table response-table" }, [
-    el("caption", {}, [
-      document.createTextNode("Crude runs per " + move + " " + UNITS.usd_bbl + " of margin after gas at the average US refinery's use, the planned model first."),
-      el("span", { class: "caption-narrow", text: " The interval, zero, share, t and months columns are to the right." }),
-    ]),
-    el("thead", {}, [head]),
-    body,
-  ]);
-  block.appendChild(el("div", { class: "table-scroll" }, [table]));
+  const table = el("table", { class: "table response-table" }, [el("thead", {}, [head]), body]);
+  block.appendChild(scrollTable([
+    "Crude runs per " + move + " " + UNITS.usd_bbl + " of margin after gas at the average US refinery's use, the planned model first.",
+  ], table));
+  // At 600px and below each equation is said under the table instead of inside
+  // the sticky model column, where it made every row a dozen lines tall
+  // (Part 7, C13). The stylesheet shows one of the two, never both.
+  block.appendChild(el("ul", { class: "model-equations" }, models.map((model) => el("li", {}, [
+    el("span", { class: "model-equations__label", text: model.label + ": " }),
+    sentenceCase(model.equation) + ".",
+  ]))));
   if (stripCells.length) {
     charts.onWidthChange(stripCells[0].cell, () => {
       for (const { cell, item } of stripCells) {
@@ -130,11 +135,11 @@ export function render(inner, data) {
   util.appendChild(sentence("p", utilisation.latest_segments, decimals, "lead"));
   const uhead = el("tr", {}, [
     el("th", { text: "Month", attrs: { scope: "col" } }),
-    el("th", { class: "col-num", text: "Utilisation, percent of capacity", attrs: { scope: "col" } }),
-    el("th", { class: "col-num", text: "Implied by the margin, percent", attrs: { scope: "col" } }),
-    el("th", { class: "col-num", text: "Difference, " + UNITS.pp, attrs: { scope: "col" } }),
-    el("th", { class: "col-num", text: "Difference, " + UNITS.kb_d, attrs: { scope: "col" } }),
-    el("th", { text: "Status", attrs: { scope: "col" } }),
+    el("th", { class: "col-num", text: "Utilisation, percent of capacity", attrs: { scope: "col", "data-short": "utilisation" } }),
+    el("th", { class: "col-num", text: "Implied by the margin, percent", attrs: { scope: "col", "data-short": "implied" } }),
+    el("th", { class: "col-num", text: "Difference, " + UNITS.pp, attrs: { scope: "col", "data-short": "difference in " + UNITS.pp } }),
+    el("th", { class: "col-num", text: "Difference, " + UNITS.kb_d, attrs: { scope: "col", "data-short": "difference in " + UNITS.kb_d } }),
+    el("th", { text: "Status", attrs: { scope: "col", "data-short": "status" } }),
   ]);
   const ubody = el("tbody");
   for (const month of utilisation.post_break_months) {
@@ -147,14 +152,9 @@ export function render(inner, data) {
       el("td", { class: month.provisional ? "status-word" : "", text: month.status_word, attrs: { "data-field": "status_word" } }),
     ]));
   }
-  util.appendChild(el("div", { class: "table-scroll" }, [el("table", { class: "table" }, [
-    el("caption", {}, [
-      document.createTextNode("The months after the break, each against " + utilisation.implied_by.equation + "."),
-      el("span", { class: "caption-narrow", text: " The figures and the status are to the right." }),
-    ]),
-    el("thead", {}, [uhead]),
-    ubody,
-  ])]));
+  util.appendChild(scrollTable([
+    "The months after the break, each against " + utilisation.implied_by.equation + ".",
+  ], el("table", { class: "table utilisation-table" }, [el("thead", {}, [uhead]), ubody])));
   util.appendChild(sentence("p", utilisation.segments, decimals));
   inner.appendChild(util);
 }

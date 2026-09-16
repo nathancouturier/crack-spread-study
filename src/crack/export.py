@@ -1694,6 +1694,14 @@ MANUAL_STEPS_READER: Mapping[str, Mapping[str, str]] = {
 }
 
 
+#: What a manual step's status means, said to a reader.
+MANUAL_STEP_STATUS_WORDS: Mapping[str, str] = {
+    "outstanding": "It has not been done yet.",
+    "standing": "It is never finished: it has to be done every time.",
+    "done": "It has been done.",
+}
+
+
 def _provisional_segments(entry: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     """Whether any of a series is provisional, SPEC.md section 5.3, in words.
 
@@ -1742,7 +1750,14 @@ def provenance_reader(manifest: Mapping[str, Any]) -> Mapping[str, Any]:
     for step in manifest.get("manual_steps", []):
         if step["id"] not in MANUAL_STEPS_READER:
             raise KeyError("no reader text in export.MANUAL_STEPS_READER for the manual step %s" % step["id"])
-        steps.append({"id": step["id"], "status": step["status"], **MANUAL_STEPS_READER[step["id"]]})
+        if step["status"] not in MANUAL_STEP_STATUS_WORDS:
+            raise KeyError("no reader words in export.MANUAL_STEP_STATUS_WORDS for the status %s" % step["status"])
+        steps.append({
+            "id": step["id"],
+            "status": step["status"],
+            "status_sentence": MANUAL_STEP_STATUS_WORDS[step["status"]],
+            **MANUAL_STEPS_READER[step["id"]],
+        })
     return {
         "series": rows,
         "manual_steps_heading": MANUAL_STEPS_HEADING,

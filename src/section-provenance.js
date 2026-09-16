@@ -1,11 +1,18 @@
 /* section-provenance.js
  *
- * "Provenance", inside the Now view. docs/design.md Part 3 section 1: the
- * manifest table, failed and stale rows first, in the column order of Part 6
- * section F (series, status, last value date, last fetch, gaps, vintage,
- * source) as data/provenance.json lists it; the manual steps verbatim; then who
- * each source is credited to and on what terms, and the typefaces with the
- * Figtree for Satoshi disclosure.
+ * "Provenance", inside the Now view. docs/design.md Part 3 section 1 as
+ * corrected in Part 7, C12 and C13: the manifest table, failed and stale rows
+ * first, in the column order data/provenance.json lists (series, status, last
+ * value, provisional, last fetch, missing dates, vintage, source); the work done
+ * by hand; then who each source is credited to and on what terms, and the
+ * typefaces with the Figtree for Satoshi disclosure.
+ *
+ * WHOSE WORDS. data/provenance.json carries the manifest whole, which is the
+ * pipeline's record for whoever maintains it, and a reader layer written for
+ * this page: a label and a source per series, whether any of it is provisional,
+ * and the manual steps in sentences. Everything this module prints comes from
+ * the reader layer or from a manifest field that is already a value (a status,
+ * a date, a count); nothing prints a series id or a manual step verbatim.
  *
  * Nothing here is summarised into a count or a badge. A status is a word in a
  * cell at full ink. A gap is a count of missing dates with the first and last
@@ -15,20 +22,23 @@
  * Numeric literals: none.
  */
 
-import { el, figureCell } from "./dom.js";
+import { el, sentence, scrollTable } from "./dom.js";
 import { formatCell, formatInstant } from "./format.js";
 
 export const artifact = "provenance";
 export const loading = "the manifest of every series, its source and its last fetch";
 
-const COLUMN_HEADS = Object.freeze({
-  series: "Series",
-  status: "Status",
-  last_date: "Last value",
-  fetched_at: "Last fetch",
-  gaps: "Missing dates",
-  vintage: "Vintage",
-  source: "Source",
+/* Each column's header and the short name the caption uses when it is off
+ * screen. */
+const COLUMNS = Object.freeze({
+  series: { head: "Series", short: "series" },
+  status: { head: "Status", short: "status" },
+  last_date: { head: "Last value", short: "last value" },
+  provisional: { head: "Provisional", short: "provisional" },
+  fetched_at: { head: "Last fetch", short: "last fetch" },
+  gaps: { head: "Missing dates", short: "missing dates" },
+  vintage: { head: "Vintage", short: "vintage" },
+  source: { head: "Source", short: "source" },
 });
 
 /* Rows that did not come back cleanly lead the table. */
@@ -37,54 +47,58 @@ const TROUBLE = new Set(["failed", "stale"]);
 export function render(inner, data) {
   const decimals = data.conventions.decimals;
   const manifest = data.manifest;
+  const reader = data.reader || { series: {}, manual_steps: [] };
   const columns = data.manifest_columns;
 
   const series = [...manifest.series].sort((a, b) => Number(TROUBLE.has(b.status)) - Number(TROUBLE.has(a.status)));
-  const head = el("tr", {}, columns.map((column) => el("th", { class: column === "last_date" || column === "gaps" ? "col-num" : "", text: COLUMN_HEADS[column] || column, attrs: { scope: "col" } })));
+  const head = el("tr", {}, columns.map((column) => el("th", {
+    class: column === "last_date" ? "col-num" : "",
+    text: COLUMNS[column] ? COLUMNS[column].head : column,
+    attrs: { scope: "col", "data-short": COLUMNS[column] ? COLUMNS[column].short : null },
+  })));
   const body = el("tbody");
   for (const entry of series) {
-    body.appendChild(el("tr", { attrs: { "data-series": entry.series, "data-status": entry.status } }, columns.map((column) => cellFor(column, entry, decimals))));
+    const words = reader.series[entry.series] || {};
+    body.appendChild(el("tr", { attrs: { "data-series": entry.series, "data-status": entry.status } }, columns.map((column) => cellFor(column, entry, words, decimals))));
   }
-  const table = el("table", { class: "table manifest-table" }, [
-    el("caption", {}, [
-      document.createTextNode("Every series the study reads, as the manifest recorded it at " + (formatInstant(manifest.generated_at) || "a time it did not record") + "; failed and stale series first."),
-      el("span", { class: "caption-narrow", text: " The fetch, gaps, vintage and source columns are to the right." }),
-    ]),
-    el("thead", {}, [head]),
-    body,
-  ]);
-  inner.appendChild(el("div", { class: "block" }, [el("div", { class: "table-scroll" }, [table])]));
+  const table = el("table", { class: "table manifest-table" }, [el("thead", {}, [head]), body]);
+  inner.appendChild(el("div", { class: "block" }, [scrollTable([
+    "Every series the study reads, as the manifest recorded it at " + (formatInstant(manifest.generated_at) || "a time it did not record") + "; failed and stale series first.",
+  ], table)]));
 
-  // The manual steps, verbatim.
-  const steps = manifest.manual_steps || [];
+  // The work done by hand, in the reader layer's words.
+  const steps = reader.manual_steps || [];
   if (steps.length) {
-    const block = el("div", { class: "block" }, [el("h3", { class: "block__heading", text: "Work this pipeline cannot do for itself" })]);
-    if (manifest.manual_steps_note) block.appendChild(el("p", { class: "prose", text: manifest.manual_steps_note }));
+    const block = el("div", { class: "block" }, [el("h3", { class: "block__heading", text: reader.manual_steps_heading })]);
+    if (reader.manual_steps_intro) block.appendChild(el("p", { class: "prose", text: reader.manual_steps_intro }));
     for (const step of steps) {
-      const item = el("div", { class: "manual-step", attrs: { "data-step": step.id } });
+      const item = el("div", { class: "manual-step", attrs: { "data-step": step.id, "data-status": step.status } });
       item.appendChild(el("p", { class: "prose" }, [
         el("span", { class: "manual-step__what", text: step.what }),
-        document.createTextNode(" This step is "),
-        el("span", { class: "status-word", text: step.status, attrs: { "data-field": "status" } }),
-        document.createTextNode("."),
+        document.createTextNode(" " + step.status_sentence),
       ]));
       item.appendChild(el("p", { class: "prose", text: "Why: " + step.why }));
-      item.appendChild(el("p", { class: "prose", text: "What skipping it costs: " + step.cost_if_skipped }));
+      item.appendChild(el("p", { class: "prose", text: "What it costs while it is not done: " + step.cost }));
       item.appendChild(el("p", { class: "prose", text: "How: " + step.how }));
-      if (step.cadence) item.appendChild(el("p", { class: "prose", text: "How often: " + step.cadence + "." }));
       block.appendChild(item);
     }
     inner.appendChild(block);
   }
 
-  // Attributions and terms.
+  // Attributions and terms. A credit line that only repeats the name is said once.
   const credits = el("div", { class: "block" }, [el("h3", { class: "block__heading", text: "Who the figures are credited to, and on what terms" })]);
   const list = el("ul", { class: "credit-list" });
   for (const source of data.attributions || []) {
-    const item = el("li", { class: "prose", attrs: { "data-source": source.id } }, [
-      el("span", { class: "credit__who", text: source.who }),
-      document.createTextNode(". " + source.credit_line + ". Terms: " + source.licence + "."),
-    ]);
+    let name = source.who;
+    let credit = source.credit_line || "";
+    if (credit === name || name.startsWith(credit)) credit = "";
+    else if (credit.startsWith(name)) {
+      name = credit;
+      credit = "";
+    }
+    const item = el("li", { class: "prose", attrs: { "data-source": source.id } }, [el("span", { class: "credit__who", text: name }), document.createTextNode(".")]);
+    if (credit) item.appendChild(document.createTextNode(" Credit line: \"" + credit + "\"."));
+    item.appendChild(document.createTextNode(" Terms: " + source.licence + "."));
     if (source.third_party) item.appendChild(document.createTextNode(" " + source.third_party));
     list.appendChild(item);
   }
@@ -101,36 +115,41 @@ export function render(inner, data) {
   }
 }
 
-function cellFor(column, entry, decimals) {
+function cellFor(column, entry, words, decimals) {
   switch (column) {
     case "series":
-      return el("th", { class: "manifest__series", text: entry.series, attrs: { scope: "row" } });
+      return el("th", { class: "manifest__series", text: words.label || entry.series, attrs: { scope: "row" } });
     case "status":
       return el("td", { class: "status-word", text: entry.status, attrs: { "data-field": "status" } });
     case "last_date":
-      return el("td", { class: "num", text: entry.last_date || "none", attrs: { "data-field": "last_date" } });
+      return entry.last_date
+        ? el("td", { class: "num", text: entry.last_date, attrs: { "data-field": "last_date" } })
+        : el("td", { class: "manifest__words", text: "none", attrs: { "data-field": "last_date" } });
+    case "provisional":
+      return sentence("td", words.provisional_segments || [], decimals, "manifest__words manifest__provisional");
     case "fetched_at": {
-      if (!entry.fetched_at) {
-        return el("td", { class: "manifest__fetch", text: entry.machine_fetched === false ? "not fetched by a machine, " + entry.method : "no fetch recorded", attrs: { "data-field": "fetched_at" } });
-      }
+      if (words.fetch_words) return el("td", { class: "manifest__fetch", text: words.fetch_words, attrs: { "data-field": "fetched_at" } });
+      if (!entry.fetched_at) return el("td", { class: "manifest__fetch", text: "no fetch recorded", attrs: { "data-field": "fetched_at" } });
       return el("td", { class: "manifest__fetch", text: formatInstant(entry.fetched_at) || entry.fetched_at, attrs: { "data-field": "fetched_at" } });
     }
     case "gaps": {
       const gaps = entry.gaps || [];
-      if (!gaps.length) return el("td", { class: "num", text: "none", attrs: { "data-field": "gaps" } });
+      if (!gaps.length) return el("td", { class: "manifest__words manifest__gaps", text: "none", attrs: { "data-field": "gaps" } });
       const first = gapDate(gaps[0], true);
       const last = gapDate(gaps[gaps.length - 1], false);
-      const cell = figureCell(formatCell(gaps.length, "count", decimals), "gaps");
-      cell.textContent += gaps.length === 1 ? " date, " + first : " dates, " + first + " to " + last;
-      return cell;
+      const count = formatCell(gaps.length, "count", decimals);
+      let text = count + (gaps.length === 1 ? " date, " + first : " dates, " + first + " to " + last);
+      if (words.gaps_reason) text += "; " + words.gaps_reason;
+      return el("td", { class: "manifest__words manifest__gaps", text, attrs: { "data-field": "gaps" } });
     }
     case "vintage":
       return el("td", { class: "manifest__vintage", text: entry.vintage === null || entry.vintage === undefined ? "none recorded" : String(entry.vintage) });
     case "source": {
       const href = entry.page_url || entry.url;
+      const name = words.source || entry.source;
       const cell = el("td", { class: "manifest__source" });
-      if (href) cell.appendChild(el("a", { class: "text-link", text: entry.source, attrs: { href, rel: "noopener" } }));
-      else cell.appendChild(document.createTextNode(entry.source));
+      if (href) cell.appendChild(el("a", { class: "text-link", text: name, attrs: { href, rel: "noopener" } }));
+      else cell.appendChild(document.createTextNode(name));
       return cell;
     }
     default:
