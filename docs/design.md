@@ -498,33 +498,42 @@ assert every figure in the sentence came from one. Clauses, in order:
 
 | Clause | Field(s) | Template when | Wording |
 |---|---|---|---|
-| margin | `margin_month`, `mbr_usd_bbl` | always | "On the ministry's Rotterdam margin, a refiner kept {mbr} $/bbl after gas in {margin_month}," |
-| rank | `percentile_rank`, `percentile_observations` | rank equals n | "the most in the {n} months to {margin_month}," |
-| | | rank equals 1 | "the least in the {n} months to {margin_month}," |
-| | | otherwise | "more than in {rank minus 1} of the {n} months to {margin_month}," |
-| wedge | `margin_study_intensity_usd_bbl`, `intensity_ratio` | always | "or {study} at the average US refinery's gas use, {ratio} times the ministry's;" |
-| carrier | `carrier_name`, `carrier_contribution_usd_bbl`, `crack_month` | carrier present | "{carrier} carried the barrel, {contribution} $/bbl of it at the ministry's own prices for {crack_month}," |
-| | | carrier absent | "no product split of that month is possible yet to say which crack carried it," |
+| margin | `margin_month`, `mbr_usd_bbl` | always | "On the ministry's Rotterdam margin, a refiner kept {mbr} $/bbl after its own gas allowance in {margin_month}," |
+| rank | `percentile_rank`, `percentile_observations` | rank equals n | "the most in {n} months;" |
+| | | rank equals 1 | "the least in {n} months;" |
+| | | otherwise | "more than in {rank minus 1} of {n} months;" |
+| carrier | `carrier_name`, `carrier_contribution_usd_bbl`, `crack_month` | carrier present | "{carrier} carried {contribution} of it," (and "on the prices of {crack_month}" only if that month is not the margin month) |
+| | | carrier absent | "no product split of that month says which crack carried it," |
 | runs | `threshold_identified`, `headroom_usd_bbl` | unidentified | "and this sample cannot say whether runs have room to rise." |
 | | | identified | "and runs sit {headroom} $/bbl above the level at which they get cut." |
 
-Today it reads (Part 7, C1, `data/now.json`): "On the ministry's Rotterdam
-margin, a refiner kept 38.05 $/bbl after gas in August 2026, the most in the 120
-months to August 2026, or 34.96 at the average US refinery's gas use, 3.2 times
-the ministry's; gasoil carried the barrel, 27.00 $/bbl of it at the ministry's own
-prices for August 2026, and this sample cannot say whether runs have room to
-rise." The carrier clause no longer mixes months: it names the same month as the
-margin, from the same ministry and the same basis.
+Today it reads (Part 7, C1 and C9, `data/now.json`): "On the ministry's
+Rotterdam margin, a refiner kept 38.05 $/bbl after its own gas allowance in
+August 2026, the most in 120 months; gasoil carried 27.00 of it, and this sample
+cannot say whether runs have room to rise." Thirty seven words, four clauses,
+the month once. The trailing window ends at the margin month, so "the most in
+120 months" needs no second date, and the carrier is split on the same month's
+printed prices, so it needs none either.
 
-Why this wording (S13): "Rotterdam refiners made" claimed realised earnings for
-an indicator the ministry computes on a notional slate. "A refiner kept ...
-after gas" is what the MBR is, net of gas at the ministry's own 0.0659
-MMBtu/bbl. "A US one" was vague about where 0.21217 comes from; it is the EIA's
-all US refinery average, and the ratio 3.22 (`docs/methodology.md`) says how far
-it sits from the ministry's assumption, printed at one decimal. "The last month
+**Corrected at Gate 4, Part 7, C9.** The sentence first carried a fifth clause,
+"or 34.96 at the average US refinery's gas use, 3.2 times the ministry's", and
+said the month three times. It ran to about 65 words and nobody says it out
+loud. The 34.96 figure and the ratio moved to the "Refining margin and gas"
+section, where the wedge that produces them is drawn: `margin-stack.json`
+`study_margin_segments`, "At the average US refinery's gas use, 3.2 times the
+ministry's, the same barrel would have kept 34.96 $/bbl in August 2026 rather
+than 38.05; the gap is the extra gas, −3.09 $/bbl", and the wedge row's second
+line now carries the ratio too.
+
+Why this wording (S13, C9): "Rotterdam refiners made" claimed realised earnings
+for an indicator the ministry computes on a notional slate. "A refiner kept ...
+after its own gas allowance" is what the MBR is, net of gas at the margin's own
+0.0659 MMBtu/bbl, and "its own" is the fewest words that say the gas assumption
+is the ministry's rather than a refinery's. The EIA's all US refinery average,
+0.21217, and the ratio 3.22 (`docs/methodology.md`) that says how far it sits
+from the ministry's assumption, are in the margin section. "The last month
 with product prices" was also wrong on this page, because weekly product cracks
-run to September; what stops in February is the monthly Rotterdam quotation set
-that lets the margin be split by product, and the clause now says that.
+run to September.
 
 **Data dates**, directly under the verdict: a `ul` of four sentences, one per
 source date, never one line, never a `dl` (S5: a term and description pair
@@ -575,7 +584,10 @@ departure from the spec's working labels:
 - **Refining margin and gas.** "How the cracks build the ministry's NWE
   refining margin in {margin_month}, on the ministry's own prices for that month,
   and what it is worth at the average US refinery's gas use." (Part 7, C1: one
-  month, not two.)
+  month, not two.) Inside, under the waterfall, the sentence the verdict gave
+  up (C9): "At the average US refinery's gas use, {ratio} times the ministry's,
+  the same barrel would have kept {study} $/bbl in {margin_month} rather than
+  {mbr}; the gap is the extra gas, {wedge} $/bbl."
 - **Run economics and crude demand.** "No level at which runs get cut can be
   identified. Crude runs move {capacity_kb_d} kb/d per 10 $/bbl of margin on
   the planned model, t {capacity_t}, and {fallback_kb_d} on a model with a trend,
@@ -623,7 +635,7 @@ three lines at 28px about 110, padding 56, dates four rows 80, four headers 4 x
 | tracked | the dates list, "Weekly cracks run to the week of 4 September 2026 ... last fetched"; the cracks header |
 | NWE refining margins | the verdict's first clause; the "Refining margin and gas" section name and its "NWE refining margin" summary |
 | across gasoil and gasoline cracks | the "Gasoil and gasoline cracks" section name with both values; the verdict's carrier clause |
-| run economics | the "Run economics and crude demand" section name; its first sentence "No level at which runs get cut can be identified"; "after gas" and the 34.96 clause in the verdict |
+| run economics | the "Run economics and crude demand" section name; its first sentence "No level at which runs get cut can be identified"; "after its own gas allowance" and "runs have room to rise" in the verdict; the 34.96 at the US gas use in the margin section (C9) |
 | linked to crude demand | the same section name; kb/d per 10 $/bbl for both models with t in its summary; the nav's "Runs and crude demand" |
 
 **375 x 812** (about 700px of viewport), re-estimated (S21). At 480px and below
@@ -1842,3 +1854,48 @@ and the tilt figure in particular exist today only as measurements quoted in
 `docs/methodology.md`, not as a function's output, so exporting them first needs
 a function that computes them; typing 0.30, 1.68 or 10 into the exporter would
 break SPEC.md section 2 rule 2 from the other side.
+
+### C6. Two comments in the verbatim token block lost a middle dot and an em dash
+
+`styles/tokens.css` copies the portfolio's custom properties byte for byte. Two
+comments inside that block carried a middle dot and an em dash, which SPEC.md
+section 0.1 and Part 5 item 18 ban from every file, so those two characters
+became commas. No declaration was touched.
+
+### C7. The nav links only the views that exist
+
+At Gate 4 only Now has data behind it. A nav link to History, Model, Runs and
+crude demand, Events or Method would open onto nothing, an orphan UI state
+(SPEC.md section 11 point 8), so `src/ui.js` builds the nav from its route table
+and Gate 5 adds each view with its link. The "Runs and crude demand" words above
+the fold at 375 px therefore come from the section name "Run economics and
+crude demand" until the Runs view is published.
+
+### C8. The theme glyphs carry U+FE0E
+
+Recorded in Part 3 section 6 as S11 and implemented in `src/theme.js` and
+`index.html`: each glyph is followed by the text presentation selector.
+
+### C9. The verdict is said out loud: four clauses, the month once
+
+**What the plan said.** Part 3 section 1 gave the verdict five clauses, the
+fifth "or {study} at the average US refinery's gas use, {ratio} times the
+ministry's", and named the margin month in the margin clause, the rank clause
+and the carrier clause. Built from `data/now.json` it read at about 65 words.
+
+**Why that was wrong.** SPEC.md section 7.2 asks for one sentence a trader would
+say out loud with four things in it: what a Rotterdam refiner earns per barrel
+after gas this month, where that sits in ten years, which crack carries the
+barrel, and whether runs have room to rise. A second margin at a second gas
+intensity, and the same month three times, is a paragraph read off a table.
+
+**What was built.** `crack.export.verdict_segments` writes four clauses with the
+month once: the rank clause drops "to {month}" because the trailing window ends
+at the margin month, and the carrier clause drops "at the ministry's own prices
+for {month}" unless the split month ever differs from the margin month, in
+which case it names it. "After gas" became "after its own gas allowance", which
+says whose gas assumption the figure is net of. The US intensity figure and the
+ratio moved to `margin-stack.json`: `study_margin_segments`, printed under the
+waterfall, and the ratio in `wedge_segments`, the wedge row's second line.
+`tests/test_export.py` pins the new sentence whole, the single month and the
+moved fields; `tools/validate-format.mjs` checks the same through `format.js`.

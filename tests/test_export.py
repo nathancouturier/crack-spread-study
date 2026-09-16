@@ -357,11 +357,21 @@ def test_the_verdict_reads_as_the_design_says(built):
         s["text"] if "text" in s else (s.get("label") or str(s["value"]))
         for s in built["now"]["verdict"]["segments"]
     )
-    assert words.startswith("On the ministry's Rotterdam margin, a refiner kept ")
-    assert "the most in the 120 months to August 2026" in words
-    assert "gasoil carried the barrel" in words
-    assert "at the ministry's own prices for August 2026" in words
-    assert words.endswith("and this sample cannot say whether runs have room to rise.")
+    assert words == (
+        "On the ministry's Rotterdam margin, a refiner kept 38.050505 $/bbl after its own gas allowance "
+        "in August 2026, the most in 120 months; gasoil carried 26.996621 of it, "
+        "and this sample cannot say whether runs have room to rise."
+    )
+    # SPEC.md section 7.2, said out loud: four clauses, the month once, and the
+    # US intensity figure is not in it (docs/design.md Part 7, C9).
+    assert words.count("August 2026") == 1
+    fields = [s["field"] for s in built["now"]["verdict"]["segments"] if "field" in s]
+    assert "margin_study_intensity_usd_bbl" not in fields
+    assert "intensity_ratio" not in fields
+    assert len(words.split()) <= 40
+    # The figure moved to the section where the wedge is drawn.
+    moved = {s["field"] for s in built["margin-stack"]["study_margin_segments"] if "field" in s}
+    assert {"margin_study_intensity_usd_bbl", "intensity_ratio", "gas_wedge_usd_bbl"} <= moved
     for banned in ("clears zero", "a coin", "SPEC", "product prices", "Rotterdam refiners made", "winner"):
         for payload in built.values():
             for _, segments in _segment_lists(payload):

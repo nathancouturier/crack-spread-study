@@ -728,32 +728,58 @@ def verdict_values(inputs: Inputs) -> dict[str, Any]:
     return values
 
 
+def _verdict_rank_clause(rank: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """The rank clause of the verdict, without the month: the verdict says the
+    month once, in its first clause, and the trailing window ends there. The
+    fallback paragraph keeps _rank_clause, which names the month."""
+    n = rank["percentile_observations"]
+    if rank["percentile_rank"] == n:
+        head = [T("the most in ")]
+    elif rank["percentile_rank"] == 1:
+        head = [T("the least in ")]
+    else:
+        head = [
+            T("more than in "),
+            N("percentile_months_below", rank["percentile_months_below"], "count"),
+            T(" of "),
+        ]
+    return head + [N("percentile_observations", n, "count"), T(" months")]
+
+
 def verdict_segments(values: Mapping[str, Any], run: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """One sentence a trader would say out loud, SPEC.md section 7.2, in four
+    clauses: what the barrel kept after gas this month, where that sits in ten
+    years, which crack carried it, and whether runs have room to rise.
+
+    The month is said once. "After its own gas allowance" says whose gas: the
+    MBR is net of gas at the ministry's embedded intensity, so the figure is the
+    ministry's and not a refinery's. The same barrel at the average US
+    refinery's gas use, and the ratio of the two intensities, are said in the
+    "Refining margin and gas" section, where the wedge is drawn
+    (margin-stack.json study_margin_segments). docs/design.md Part 7, C9."""
     month = values["margin_month"]
     out: list[Mapping[str, Any]] = [
         T("On the ministry's Rotterdam margin, a refiner kept "),
         N("mbr_usd_bbl", values["mbr_usd_bbl"], "usd_bbl"),
-        T(" $/bbl after gas in "),
+        T(" $/bbl after its own gas allowance in "),
         D("margin_month", month),
         T(", "),
-        *_rank_clause(values, month),
-        T(", or "),
-        N("margin_study_intensity_usd_bbl", values["margin_study_intensity_usd_bbl"], "usd_bbl"),
-        T(" at the average US refinery's gas use, "),
-        N("intensity_ratio", values["intensity_ratio"], "ratio"),
-        T(" times the ministry's; "),
+        *_verdict_rank_clause(values),
+        T("; "),
     ]
     if values["carrier"] is not None:
         out += [
             W("carrier_name", values["carrier_name"]),
-            T(" carried the barrel, "),
+            T(" carried "),
             N("carrier_contribution_usd_bbl", values["carrier_contribution_usd_bbl"], "usd_bbl"),
-            T(" $/bbl of it at the ministry's own prices for "),
-            D("crack_month", values["crack_month"]),
-            T(", "),
+            T(" of it"),
         ]
+        if values["crack_month"] != month:
+            # Never today (Part 7, C1), but a split from another month is named.
+            out += [T(" on the prices of "), D("crack_month", values["crack_month"])]
+        out += [T(", ")]
     else:
-        out += [T("no product split of that month is possible yet to say which crack carried it, ")]
+        out += [T("no product split of that month says which crack carried it, ")]
     if run["threshold_identified"]:
         out += [
             T("and runs sit "),
@@ -1144,9 +1170,26 @@ def margin_stack(inputs: Inputs) -> Mapping[str, Any]:
         N("study_intensity_mmbtu_per_bbl", wedge.study_intensity_mmbtu_per_bbl, "mmbtu_per_bbl"),
         T(" MMBtu/bbl here against the ministry's "),
         N("embedded_intensity_mmbtu_per_bbl", wedge.embedded_intensity_mmbtu_per_bbl, "mmbtu_per_bbl"),
-        T(", at "),
+        T(", "),
+        N("intensity_ratio", wedge.ratio, "ratio"),
+        T(" times as much, at "),
         N("gas_usd_mmbtu", wedge.gas_usd_mmbtu, "usd_mmbtu"),
         T(" $/MMBtu."),
+    ]
+    # The figure the verdict used to carry, docs/design.md Part 7, C9: the same
+    # barrel at the average US refinery's gas use, said where the wedge is drawn.
+    payload["study_margin_segments"] = [
+        T("At the average US refinery's gas use, "),
+        N("intensity_ratio", wedge.ratio, "ratio"),
+        T(" times the ministry's, the same barrel would have kept "),
+        N("margin_study_intensity_usd_bbl", running, "usd_bbl"),
+        T(" $/bbl in "),
+        D("margin_month", month),
+        T(" rather than "),
+        N("mbr_usd_bbl", view.mbr_usd_bbl, "usd_bbl"),
+        T("; the gap is the extra gas, "),
+        N("gas_wedge_usd_bbl", -wedge.wedge_usd_bbl, "usd_bbl", signed=True),
+        T(" $/bbl."),
     ]
     return payload
 

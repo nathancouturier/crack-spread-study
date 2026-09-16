@@ -146,6 +146,20 @@ for (const segments of sentences) {
   }
 }
 check("now.json carries numeric segments to check", numeric > 0, true);
+
+// The verdict is one sentence a trader would say out loud, SPEC.md section 7.2:
+// four clauses, the month said once, no fifth clause for the US gas intensity,
+// which lives in the margin section. docs/design.md Part 3 section 1 and Part 7,
+// C9. Read through format.js, as the page reads it.
+const spoken = now.verdict.segments.map((segment) => format.segmentText(segment, decimals).text).join("");
+const verdictFields = now.verdict.segments.filter((segment) => segment.field).map((segment) => segment.field);
+check("the verdict names the margin month once", verdictFields.filter((field) => field === "margin_month").length, 1);
+check("the verdict holds no US intensity figure", verdictFields.some((field) => field === "margin_study_intensity_usd_bbl" || field === "intensity_ratio"), false);
+check("the verdict says whose gas", spoken.includes("after its own gas allowance"), true);
+check("the verdict is one sentence", (spoken.match(/[.]\s/g) || []).length === 0 && spoken.endsWith("."), true);
+const stack = JSON.parse(readFileSync(path.join(ROOT, "data/margin-stack.json"), "utf8"));
+const movedFields = stack.study_margin_segments.filter((segment) => segment.field).map((segment) => segment.field);
+check("the margin section carries the US intensity figure", movedFields.includes("margin_study_intensity_usd_bbl") && movedFields.includes("intensity_ratio"), true);
 check("now.json carries fetch times to check", instants > 0, true);
 
 console.log("  " + passed + " check(s) passed, " + failed + " failed; " + numeric + " numeric segment(s) and " + instants + " fetch time(s) of data/now.json cross checked");

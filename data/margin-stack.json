@@ -233,8 +233,23 @@
     {"field": "study_intensity_mmbtu_per_bbl", "value": 0.21217, "format": "mmbtu_per_bbl"},
     {"text": " MMBtu/bbl here against the ministry's "},
     {"field": "embedded_intensity_mmbtu_per_bbl", "value": 0.065903, "format": "mmbtu_per_bbl"},
-    {"text": ", at "},
+    {"text": ", "},
+    {"field": "intensity_ratio", "value": 3.219417, "format": "ratio"},
+    {"text": " times as much, at "},
     {"field": "gas_usd_mmbtu", "value": 21.11, "format": "usd_mmbtu"},
     {"text": " $/MMBtu."}
+  ],
+  "study_margin_segments": [
+    {"text": "At the average US refinery's gas use, "},
+    {"field": "intensity_ratio", "value": 3.219417, "format": "ratio"},
+    {"text": " times the ministry's, the same barrel would have kept "},
+    {"field": "margin_study_intensity_usd_bbl", "value": 34.962813, "format": "usd_bbl"},
+    {"text": " $/bbl in "},
+    {"field": "margin_month", "value": "2026-08-01", "label": "August 2026"},
+    {"text": " rather than "},
+    {"field": "mbr_usd_bbl", "value": 38.050505, "format": "usd_bbl"},
+    {"text": "; the gap is the extra gas, "},
+    {"field": "gas_wedge_usd_bbl", "value": -3.087691, "format": "usd_bbl", "signed": true},
+    {"text": " $/bbl."}
   ]
 }
