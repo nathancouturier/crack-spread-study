@@ -1,0 +1,325 @@
+#!/usr/bin/env node
+// Measure the rendered Now view in a real browser, and fail on what no grep sees.
+//
+//     python scripts/serve.py --port 8126            in another shell
+//     node tools/check-layout.mjs                    http://localhost:8126/crack-spread-study/
+//     node tools/check-layout.mjs --base <url> --browser <path to a Chromium>
+//     node tools/check-layout.mjs --only B1,S7       report some checks only
+//     node tools/check-layout.mjs --widths 375 --themes light
+//
+// The Gate 4 audit (docs/self-audit.md, "Self audit, Gate 4") found failures that
+// every static validator passed: a manifest table with a 44 px window at 375 px,
+// captions clipped inside their own scroll containers, a Source column off screen
+// with nothing saying so, focus rings clipped by the section body, an accent rule
+// through a label, words set in the figure face. Each is a property of layout,
+// so each is measured here, in headless Chromium, at the widths the audit used,
+// with every section and both text alternatives open, in both themes.
+//
+// NOT IN `make gate`. It needs a browser and a running server, and the gate runs
+// with neither. Run it by hand after a change to src/ or styles/, and Gate 5's
+// workflow can run it against the Pages build. tools/browser.mjs says how the
+// browser is found; every run uses a fresh profile, so no cached module is
+// measured.
+//
+// THE CHECKS, named by the audit finding each one holds down
+//   B1  a sticky first column takes at most half its scroll box
+//   B2  a table's caption is never clipped by the table's own scroll box
+//   S1  every column cut off by a scroll box is named in the caption, and the
+//       caption names none that is fully in view; focus on a control inside a
+//       scroll box brings the whole focus ring into view
+//   S3  the Provenance section holds no engineering log: no recon references,
+//       no HTTP codes, no "this machine", no snake_case identifier, no word in
+//       capitals that is not a name, no heading repeated as the next sentence,
+//       no credit line said twice, French names with their accents
+//   S6  no text in a strip figure is crossed by the accent zero rule
+//   S7  no focus ring anywhere in an open section is clipped by an ancestor
+//   S8  every series the manifest flags provisional says so in its row
+//   M1  JetBrains Mono holds no letters
+//   M2  a rail label either sits inside its bracket with the end ticks showing
+//       or outside it, never over an end tick
+//   M3  where the accent zero rule crosses an interval line, a --bg ring
+//       separates them
+//   M4  waterfall totals carry no plus sign; the scale sentence is not said to
+//       the cent
+//   P   the page body never scrolls sideways, and the console logs no error
+//       and throws no exception (messages from browser extensions excepted)
+
+import { argValue, launch, openNow } from "./browser.mjs";
+
+const argv = process.argv;
+const BASE = argValue(argv, "--base") || "http://localhost:8126/crack-spread-study/";
+const ONLY = (argValue(argv, "--only") || "").split(",").filter(Boolean);
+const WIDTHS = (argValue(argv, "--widths") || "375,768,1024,1280,1440").split(",").map(Number);
+const THEMES = (argValue(argv, "--themes") || "light,dark").split(",");
+const ALL = "cracks,margin,runs,provenance";
+
+/* Everything below PROBE runs inside the page. It returns
+ * [{ check, width, theme, problem }]. */
+const PROBE = String.raw`(async () => {
+  const problems = [];
+  const add = (check, problem) => problems.push({ check, problem });
+  const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const RING = 6; // outline 2px at offset 4px, styles/layout.css
+  const text = (node) => (node.textContent || "").replace(/\s+/g, " ").trim();
+
+  // Open every text alternative, then let the width observers draw.
+  for (const button of document.querySelectorAll('.disclosure__button[aria-expanded="false"]')) button.click();
+  await frame();
+  await new Promise((r) => setTimeout(r, 300));
+
+  const scrollers = [...document.querySelectorAll(".table-scroll")];
+  for (const scroller of scrollers) {
+    const table = scroller.querySelector("table");
+    if (!table) continue;
+    const name = table.className + " " + (text(table.querySelector("th")) || "");
+    const box = scroller.getBoundingClientRect();
+    scroller.scrollLeft = 0;
+    await frame();
+
+    // The caption the reader sees: a caption element, or what aria-labelledby names.
+    const labelId = table.getAttribute("aria-labelledby");
+    const caption = table.querySelector("caption") || (labelId ? document.getElementById(labelId) : null);
+    if (!caption) add("B2", name + ": no caption");
+    else {
+      const c = caption.getBoundingClientRect();
+      if (c.right > box.right + 1 && scroller.contains(caption)) add("B2", name + ": the caption is " + Math.round(c.width) + " px wide inside a " + Math.round(box.width) + " px scroll box, clipped");
+      if (c.right > document.documentElement.clientWidth + 1) add("B2", name + ": the caption runs off the page");
+    }
+
+    const overflows = scroller.scrollWidth > scroller.clientWidth + 1;
+    const firstCells = [...table.querySelectorAll("tr > :first-child")];
+    const sticky = firstCells.length && getComputedStyle(firstCells[0]).position === "sticky"
+      ? Math.max(...firstCells.map((cell) => cell.getBoundingClientRect().width)) : 0;
+    if (overflows && sticky > scroller.clientWidth / 2) {
+      add("B1", name + ": sticky first column " + Math.round(sticky) + " px of a " + scroller.clientWidth + " px box");
+    }
+
+    // S1: which header cells are cut on the right at scrollLeft 0, and does the caption name them.
+    const heads = [...table.querySelectorAll("thead tr:last-child th")].filter((th) => th.getBoundingClientRect().width > 0);
+    const words = caption ? text(caption).toLowerCase() : "";
+    const shortName = (th) => (th.dataset.short || text(th)).toLowerCase();
+    const cutRight = heads.filter((th, i) => i > 0 && th.getBoundingClientRect().right > box.right + 1);
+    if (cutRight.length) {
+      if (!/to the right/.test(words)) add("S1", name + ": " + cutRight.length + " column(s) off screen to the right and the caption does not say so");
+      else if (cutRight.length <= 4) {
+        for (const th of cutRight) if (!words.includes(shortName(th))) add("S1", name + ": the caption does not name the cut column " + JSON.stringify(shortName(th)));
+      }
+    } else if (/to the right/.test(words)) {
+      add("S1", name + ": the caption says columns are to the right and none is");
+    }
+    if (overflows) {
+      scroller.scrollLeft = scroller.scrollWidth;
+      scroller.dispatchEvent(new Event("scroll"));
+      await frame();
+      await new Promise((r) => setTimeout(r, 50));
+      const after = caption ? text(caption).toLowerCase() : "";
+      if (/to the right/.test(after)) add("S1", name + ": scrolled to the end, the caption still says columns are to the right");
+      scroller.scrollLeft = 0;
+      scroller.dispatchEvent(new Event("scroll"));
+      await frame();
+    }
+
+    // S1: focus inside a scroll box brings the ring into view.
+    for (const control of scroller.querySelectorAll("a[href], button")) {
+      scroller.scrollLeft = 0;
+      await frame();
+      control.focus();
+      await frame();
+      const r = control.getBoundingClientRect();
+      const b = scroller.getBoundingClientRect();
+      const stickyCell = control.closest("tr") ? control.closest("tr").firstElementChild : null;
+      const leftEdge = b.left + (stickyCell && stickyCell !== control.closest("td,th") && getComputedStyle(stickyCell).position === "sticky" ? stickyCell.getBoundingClientRect().width : 0);
+      const over = Math.max(r.right + RING - b.right, leftEdge - (r.left - RING), 0);
+      if (over > 1) add("S1", name + ": focus on " + JSON.stringify(text(control).slice(0, 40)) + " leaves its ring " + Math.round(over) + " px outside the scroll box");
+      control.blur();
+    }
+    scroller.scrollLeft = 0;
+  }
+
+  // S7: focus rings clipped by any ancestor, everywhere in the open sections.
+  for (const control of document.querySelectorAll('.section__body[data-open="true"] a[href], .section__body[data-open="true"] button, .section__body[data-open="true"] [tabindex="0"], .section__button')) {
+    if (control.closest(".table-scroll") && control !== control.closest(".table-scroll")) continue; // measured above, after scrolling
+    control.scrollIntoView({ block: "center" });
+    control.focus();
+    await frame();
+    const r = control.getBoundingClientRect();
+    const ring = { left: r.left - RING, right: r.right + RING, top: r.top - RING, bottom: r.bottom + RING };
+    for (let node = control.parentElement; node && node !== document.body; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.overflowX === "visible" && style.overflowY === "visible") continue;
+      const c = node.getBoundingClientRect();
+      const clip = Math.max(c.left - ring.left, ring.right - c.right, c.top - ring.top, ring.bottom - c.bottom);
+      if (clip > 0.5) {
+        add("S7", "the focus ring of " + JSON.stringify(text(control).slice(0, 40) || control.className) + " is clipped " + clip.toFixed(1) + " px by ." + String(node.className).split(" ")[0]);
+        break;
+      }
+    }
+    control.blur();
+  }
+  window.scrollTo(0, 0);
+
+  // S3: the Provenance prose.
+  const provenance = document.querySelector("#section-body-provenance .section__inner");
+  if (provenance) {
+    const prose = [...provenance.querySelectorAll("p, li, h3, th, td, caption")].map(text).join("\n");
+    const bad = [
+      [/\brecon \d/i, "an internal recon reference"],
+      [/\bHTTP \d{3}\b/, "an HTTP status code"],
+      [/this machine/i, "\"this machine\""],
+      [/\b[a-z]+_[a-z0-9_]+\b/, "a snake_case identifier"],
+      [/ ,/, "a space before a comma"],
+      [/python -m|--collect/, "a command line"],
+      [/\bat any price, ever\b/, "\"at any price, ever\""],
+      [/most interesting period/, "\"the most interesting period\""],
+      [/generale de l'energie|ministere|Transition ecologique/, "a French name without its accents"],
+    ];
+    for (const [pattern, why] of bad) {
+      const m = pattern.exec(prose);
+      if (m) add("S3", why + ": " + JSON.stringify(prose.slice(Math.max(0, m.index - 30), m.index + 40)));
+    }
+    const NAMES = new Set(["JODI", "OPEC", "DGEC", "FRED", "MOMR", "NWE", "MBR", "EIA", "ICE", "TTF", "RBRTE", "REUTERS", "DCOILBRENTEU", "DEXUSEU", "USD", "EUR", "CC", "BY", "SIL", "OFL", "UTC", "US", "UK", "BE", "DE", "FR", "NL", "PDF", "PDFS", "MMBTU", "L.P", "IEA", "ARA", "CIF", "FOB", "TBTS", "LOCF", "ISO", "ICIS"]);
+    for (const m of prose.matchAll(/\b[A-Z][A-Z]{3,}\b/g)) if (!NAMES.has(m[0])) add("S3", "a word in capitals: " + m[0]);
+    for (const heading of provenance.querySelectorAll("h3")) {
+      const next = heading.nextElementSibling;
+      if (next && text(next).toLowerCase().startsWith(text(heading).toLowerCase().replace(/[.]$/, ""))) add("S3", "the heading " + JSON.stringify(text(heading)) + " is repeated as the next sentence");
+    }
+    for (const item of provenance.querySelectorAll("li")) {
+      const sentences = text(item).split(/(?<=\.)\s+/).map((s) => s.replace(/[.]$/, ""));
+      const seen = new Set();
+      for (const s of sentences) {
+        if (s.length > 12 && seen.has(s)) add("S3", "a credit says the same thing twice: " + JSON.stringify(s));
+        seen.add(s);
+      }
+    }
+  }
+
+  // S8: provisional flags in the manifest table.
+  try {
+    const manifest = (await (await fetch("data/provenance.json", { cache: "no-cache" })).json()).manifest;
+    for (const entry of manifest.series) {
+      if (!entry.provisional_from) continue;
+      const row = document.querySelector('tr[data-series="' + entry.series + '"]');
+      if (!row) add("S8", entry.series + ": no row");
+      else if (!/provisional/i.test(text(row))) add("S8", entry.series + " is flagged provisional from " + entry.provisional_from + " and its row does not say so");
+    }
+  } catch (error) {
+    add("S8", "could not read data/provenance.json: " + error.message);
+  }
+
+  // S6 and M3: the interval strips.
+  const parseInterval = (d) => {
+    const m = /M([\d.]+) [\d.]+ V[\d.]+ M[\d.]+ ([\d.]+) H([\d.]+)/.exec(d || "");
+    return m ? { x0: +m[1], y: +m[2], x1: +m[3] } : null;
+  };
+  for (const svg of document.querySelectorAll("svg.chart--strip-figure, svg.chart--strip")) {
+    if (!svg.getBoundingClientRect().width) continue;
+    const rules = [...svg.querySelectorAll("line.mark-accent-rule")].map((l) => ({ x: +l.getAttribute("x1"), y1: +l.getAttribute("y1"), y2: +l.getAttribute("y2") }));
+    for (const label of svg.querySelectorAll("text")) {
+      const b = label.getBBox();
+      for (const rule of rules) {
+        if (rule.x >= b.x && rule.x <= b.x + b.width && Math.max(rule.y1, rule.y2) > b.y && Math.min(rule.y1, rule.y2) < b.y + b.height) {
+          add("S6", "the accent zero rule at x " + rule.x.toFixed(1) + " crosses the label " + JSON.stringify(text(label)));
+        }
+      }
+    }
+    const rings = [...svg.querySelectorAll(".mark-accent-rule-ring")].map((l) => ({ x: +l.getAttribute("x1"), y1: +l.getAttribute("y1"), y2: +l.getAttribute("y2") }));
+    for (const path of svg.querySelectorAll("path.mark-interval")) {
+      const iv = parseInterval(path.getAttribute("d"));
+      if (!iv) continue;
+      for (const rule of rules) {
+        if (rule.x > iv.x0 && rule.x < iv.x1 && rule.y1 <= iv.y && rule.y2 >= iv.y) {
+          const ringed = rings.some((ring) => Math.abs(ring.x - rule.x) < 0.5 && ring.y1 < iv.y && ring.y2 > iv.y);
+          if (!ringed) add("M3", "the accent zero rule crosses an ink interval line at y " + iv.y.toFixed(1) + " with no --bg ring");
+        }
+      }
+    }
+  }
+
+  // M1: no letters in JetBrains Mono.
+  const walker = document.createTreeWalker(document.getElementById("view"), NodeFilter.SHOW_TEXT);
+  const monoWords = new Map();
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const value = node.nodeValue.trim();
+    if (!value || !node.parentElement) continue;
+    const parent = node.parentElement;
+    if (parent.closest("[hidden], .visually-hidden")) continue;
+    if (!/JetBrains/.test(getComputedStyle(parent).fontFamily)) continue;
+    if (/[A-Za-z]/.test(value)) monoWords.set(value, (monoWords.get(value) || 0) + 1);
+  }
+  for (const [value, count] of monoWords) add("M1", "words in JetBrains Mono, " + count + " time(s): " + JSON.stringify(value.slice(0, 50)));
+
+  // M2: rail labels against their brackets.
+  for (const label of document.querySelectorAll("svg .rail-label")) {
+    let bracket = label.previousElementSibling;
+    while (bracket && bracket.classList.contains("rail-plate")) bracket = bracket.previousElementSibling;
+    if (!bracket || bracket.tagName !== "path") continue;
+    const m = /M([\d.]+) ([\d.]+) V([\d.]+) M[\d.]+ [\d.]+ H([\d.]+)/.exec(bracket.getAttribute("d"));
+    if (!m) continue;
+    const x0 = +m[1];
+    const x1 = +m[4];
+    const tickTop = +m[2];
+    const tickBottom = +m[3];
+    const plate = label.previousElementSibling && label.previousElementSibling.classList.contains("rail-plate") ? label.previousElementSibling.getBBox() : null;
+    const b = plate || label.getBBox();
+    const inside = b.x > x0 + 1 && b.x + b.width < x1 - 1;
+    const outside = b.x + b.width < x0 || b.x > x1 || b.y >= tickBottom || b.y + b.height <= tickTop;
+    const clipped = b.x < 0 || b.x + b.width > +label.ownerSVGElement.getAttribute("width") + 0.5 || b.y + b.height > +label.ownerSVGElement.getAttribute("height") + 0.5;
+    if (clipped) add("M2", "the rail label " + JSON.stringify(text(label)) + " runs outside its chart");
+    if (!inside && !outside) add("M2", "the rail label " + JSON.stringify(text(label)) + " covers an end tick of its bracket (" + x0.toFixed(0) + " to " + x1.toFixed(0) + ", label " + b.x.toFixed(0) + " to " + (b.x + b.width).toFixed(0) + ")");
+  }
+
+  // M4: signs and precision in the margin section.
+  for (const cell of document.querySelectorAll("tr.is-total td.num")) if (/^\+/.test(text(cell))) add("M4", "a waterfall total prints a plus sign: " + text(cell));
+  const scale = document.querySelector("#section-body-margin .scale-note");
+  if (scale && /\.00 to /.test(text(scale))) add("M4", "the scale is said to the cent: " + JSON.stringify(text(scale)));
+
+  // P: the body never scrolls sideways.
+  if (document.documentElement.scrollWidth > document.documentElement.clientWidth) add("P", "the page scrolls sideways, " + document.documentElement.scrollWidth + " in " + document.documentElement.clientWidth);
+  return problems;
+})()`;
+
+const browser = await launch(argv);
+console.log("check-layout.mjs, " + BASE + ", " + browser.executable);
+const found = [];
+try {
+  const page = await browser.page();
+  for (const theme of THEMES) {
+    for (const width of WIDTHS) {
+      page.errors.length = 0;
+      await openNow(page, BASE, { theme, open: ALL, width, height: width < 768 ? 812 : 900 });
+      const problems = await page.evaluate(PROBE);
+      for (const problem of problems) found.push({ ...problem, width, theme });
+      for (const message of page.errors) {
+        if (/chrome-extension:\/\//.test(message) || !/^(exception|console error|log error)/.test(message)) continue;
+        found.push({ check: "P", problem: message, width, theme });
+      }
+    }
+  }
+} finally {
+  await browser.close();
+}
+
+const selected = ONLY.length ? found.filter((f) => ONLY.includes(f.check)) : found;
+const byCheck = new Map();
+for (const f of selected) {
+  const key = f.check + "  " + f.problem;
+  if (!byCheck.has(key)) byCheck.set(key, []);
+  byCheck.get(key).push(f.theme + " " + f.width);
+}
+const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "P"].filter((c) => !ONLY.length || ONLY.includes(c));
+for (const check of checks) {
+  const lines = [...byCheck.entries()].filter(([key]) => key.startsWith(check + "  "));
+  if (!lines.length) {
+    console.log("PASS  " + check);
+    continue;
+  }
+  console.log("FAIL  " + check + ", " + lines.length + " distinct problem(s)");
+  for (const [key, where] of lines.slice(0, 12)) console.log("        " + key.slice(check.length + 2) + "  [" + where.join(", ") + "]");
+  if (lines.length > 12) console.log("        and " + (lines.length - 12) + " more");
+}
+const failedChecks = checks.filter((c) => [...byCheck.keys()].some((k) => k.startsWith(c + "  ")));
+if (failedChecks.length) {
+  console.log("FAIL  " + failedChecks.join(", "));
+  process.exit(1);
+}
+console.log("PASS  every layout check, " + WIDTHS.join(", ") + " px, " + THEMES.join(" and "));
