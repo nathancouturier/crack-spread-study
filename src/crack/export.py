@@ -954,7 +954,60 @@ def latest_week(inputs: Inputs) -> Mapping[str, Any]:
             "position": position,
             "prior_years": points,
         }
-    return {"date": _iso(last["date"]), "iso_year": year, "iso_week": week, "n_years": n_years, "products": products}
+    date = _iso(last["date"])
+    for product, info in products.items():
+        info["heading_segments"] = _panel_heading(product, info, date, n_years)
+        info["desc_segments"] = _panel_desc(product, info, date, year)
+    return {"date": date, "iso_year": year, "iso_week": week, "n_years": n_years, "products": products}
+
+
+def _panel_heading(product: str, info: Mapping[str, Any], date: str, n_years: int | None) -> list[Mapping[str, Any]]:
+    """The seasonal panel's sentence heading, docs/design.md Part 3 section 3:
+    the figure, that it is read off the chart, and how far it sits from the
+    range of the prior years, with how many years that range holds."""
+    name = PRODUCT_NAMES[product]
+    out = [
+        T(name[:1].upper() + name[1:] + ", "),
+        N("%s_usd_bbl" % product, info["value_usd_bbl"], "usd_bbl"),
+        T(" $/bbl in the week to "),
+        D("weekly_date", date, kind="day"),
+        T(", read off the ministry's chart, "),
+    ]
+    position = info["position"]
+    if position == "above":
+        out += [N("above_prior_maximum_usd_bbl", info["above_prior_maximum_usd_bbl"], "usd_bbl"), T(" above the highest same week of the ")]
+    elif position == "below":
+        out += [N("below_prior_minimum_usd_bbl", info["prior_minimum_usd_bbl"] - info["value_usd_bbl"], "usd_bbl"), T(" below the lowest same week of the ")]
+    elif position == "inside":
+        out += [T("inside the range of the same week in the ")]
+    else:
+        return out + [T("with no earlier year to set it against.")]
+    return out + [N("n_years", n_years, "count"), T(" years before it.")]
+
+
+def _panel_desc(product: str, info: Mapping[str, Any], date: str, year: int) -> list[Mapping[str, Any]]:
+    """The seasonal panel's SVG description, docs/design.md Part 3 section 9."""
+    points = info["prior_years"]
+    out = [
+        T(PRODUCT_NAMES[product][:1].upper() + PRODUCT_NAMES[product][1:] + " crack by week of the year, "),
+        N("current_year", year, "year"),
+    ]
+    if points:
+        out += [T(" against "), N("first_prior_year", points[0]["year"], "year"), T(" to "), N("last_prior_year", points[-1]["year"], "year")]
+    out += [
+        T(", one line per year. Latest "),
+        N("%s_usd_bbl" % product, info["value_usd_bbl"], "usd_bbl"),
+        T(" $/bbl in the week to "),
+        D("weekly_date", date, kind="day"),
+    ]
+    if info["position"] in ("above", "below", "inside"):
+        out += [
+            T(", against a range for that week of "),
+            N("prior_minimum_usd_bbl", info["prior_minimum_usd_bbl"], "usd_bbl"),
+            T(" to "),
+            N("prior_maximum_usd_bbl", info["prior_maximum_usd_bbl"], "usd_bbl"),
+        ]
+    return out + [T(". Squares are figures the ministry printed; a hatch under the axis marks the least defended weeks, a bracket the weeks with no second chart yet.")]
 
 
 def _point(row: pd.Series, column: str, product: str) -> Mapping[str, Any]:
@@ -1092,6 +1145,15 @@ def margin_stack(inputs: Inputs) -> Mapping[str, Any]:
                 mass_yield_percent=_num(100 * config.DGEC_MASS_YIELDS[config.DGEC_NOTE_SLATE_LINE[product]]),
                 volume_yield=_num(series.DGEC_NOTE_VOLUME_YIELDS[product]),
                 carrier=product == decomposition.carrier,
+                detail_segments=[
+                    T("The "),
+                    W("label", label),
+                    T(" quotation less Brent, "),
+                    N("crack_usd_bbl", crack.value, "usd_bbl", signed=True),
+                    T(" $/bbl, on "),
+                    N("volume_yield_percent", 100 * series.DGEC_NOTE_VOLUME_YIELDS[product], "percent"),
+                    T(" percent of the barrel by volume"),
+                ],
             )
         unattributed = [
             {"slate_line": line, "name": SLATE_LINE_NAMES[line], "mass_yield_percent": _num(100 * config.DGEC_MASS_YIELDS[line])}
@@ -1138,7 +1200,20 @@ def margin_stack(inputs: Inputs) -> Mapping[str, Any]:
     payload["month_label"] = month_label(month)
     payload["decomposed"] = decomposition is not None
     payload["rows"] = rows
-    payload["scale"] = {"low_usd_bbl": _num(scale_low), "high_usd_bbl": _num(scale_high), "includes_zero": True}
+    payload["scale"] = {
+        "low_usd_bbl": _num(scale_low),
+        "high_usd_bbl": _num(scale_high),
+        "includes_zero": True,
+        "segments": [
+            T("On one scale, "),
+            N("low_usd_bbl", scale_low, "usd_bbl"),
+            T(" to "),
+            N("high_usd_bbl", scale_high, "usd_bbl"),
+            T(" $/bbl, "),
+            D("margin_month", month),
+            T("."),
+        ],
+    }
 
     history = series.note_decomposition_history()
     done = history[history["decomposed"]]
@@ -1228,7 +1303,31 @@ def _model_row(model: analysis.ResponseModel, model_id: str, label: str, equatio
         "first_month": model.first_month,
         "last_month": model.last_month,
         "newey_west_lag": int(model.regression.nw_lag),
+        "zero_segments": _zero_segments(low, high),
     }
+
+
+def _zero_segments(low: float, high: float) -> list[Mapping[str, Any]]:
+    """The Zero column, docs/design.md Part 3 section 5, S27: the distance from
+    zero as a share of the interval's width, never a pass word."""
+    width = high - low
+    if low <= 0.0 <= high:
+        return [W("interval_includes_zero", "includes zero")]
+    if low > 0.0:
+        return [
+            T("lower end "),
+            N("kb_d_low", low, "kb_d", signed=True),
+            T(", "),
+            N("lower_share_percent", 100 * low / width, "percent"),
+            T(" percent of the interval's width above zero"),
+        ]
+    return [
+        T("upper end "),
+        N("kb_d_high", high, "kb_d", signed=True),
+        T(", "),
+        N("upper_share_percent", 100 * -high / width, "percent"),
+        T(" percent of the interval's width below zero"),
+    ]
 
 
 def run_economics(inputs: Inputs) -> Mapping[str, Any]:
@@ -1259,6 +1358,20 @@ def run_economics(inputs: Inputs) -> Mapping[str, Any]:
         ],
         "interval_level_percent": 95,
     }
+    strip = [T("Crude runs per "), N("move_usd_bbl", cap.translation.move_usd_bbl, "usd_bbl"), T(" $/bbl of margin, each with its "),
+             N("interval_level_percent", 95, "count"), T(" percent interval, on one scale with zero marked: ")]
+    for i, model in enumerate(payload["response"]["models"]):
+        strip += [
+            T("" if i == 0 else "; "),
+            W("label", model["label"]),
+            T(", "),
+            N("kb_d", model["kb_d"], "kb_d", signed=True),
+            T(" kb/d, "),
+            N("kb_d_low", model["kb_d_low"], "kb_d", signed=True),
+            T(" to "),
+            N("kb_d_high", model["kb_d_high"], "kb_d", signed=True),
+        ]
+    payload["response"]["strip_desc_segments"] = [x for x in strip if x.get("text") != ""] + [T(".")]
     gap = fall.sum_b - cap.sum_b
     moved = (diag.sum_b - cap.sum_b) / gap if gap else math.nan
     reason = [T("The capacity figure falls by a step in ")]
@@ -1289,6 +1402,7 @@ def run_economics(inputs: Inputs) -> Mapping[str, Any]:
         provisional, word = _status_word(runs, month)
         months.append({
             "month": month,
+            "month_label": month_label(month),
             "utilisation_percent": _num(r["actual"]),
             "implied_percent": _num(r["predicted"]),
             "residual_pp": _num(r["residual"]),
@@ -1325,6 +1439,25 @@ def run_economics(inputs: Inputs) -> Mapping[str, Any]:
             T(" clear the bar set before looking."),
         ],
     }
+    last_row = next((m for m in months if m["month"] == view.runs_data_date), None)
+    latest_words = [
+        T("Utilisation in "),
+        D("runs_month", view.runs_data_date),
+        T(" was "),
+        N("latest_utilisation_percent", latest["utilisation_pct"], "percent"),
+        T(" percent of capacity"),
+    ]
+    if last_row is not None:
+        latest_words += [
+            T(" against "),
+            N("implied_percent", last_row["implied_percent"], "percent"),
+            T(" percent that the margin implies, and the month is "),
+            W("status_word", last_row["status_word"]),
+            T("."),
+        ]
+    else:
+        latest_words += [T("; no implied figure exists for that month.")]
+    payload["utilisation"]["latest_segments"] = latest_words
     return payload
 
 

@@ -51,7 +51,16 @@
       "slate_line": "gazole",
       "mass_yield_percent": 34.0,
       "volume_yield": 0.335497,
-      "carrier": true
+      "carrier": true,
+      "detail_segments": [
+        {"text": "The "},
+        {"field": "label", "value": "Gazole", "label": "Gazole"},
+        {"text": " quotation less Brent, "},
+        {"field": "crack_usd_bbl", "value": 80.467624, "format": "usd_bbl", "signed": true},
+        {"text": " $/bbl, on "},
+        {"field": "volume_yield_percent", "value": 33.549669, "format": "percent"},
+        {"text": " percent of the barrel by volume"}
+      ]
     },
     {
       "id": "jet",
@@ -73,7 +82,16 @@
       "slate_line": "carbureacteur",
       "mass_yield_percent": 8.3,
       "volume_yield": 0.086628,
-      "carrier": false
+      "carrier": false,
+      "detail_segments": [
+        {"text": "The "},
+        {"field": "label", "value": "Jet", "label": "Jet"},
+        {"text": " quotation less Brent, "},
+        {"field": "crack_usd_bbl", "value": 71.868162, "format": "usd_bbl", "signed": true},
+        {"text": " $/bbl, on "},
+        {"field": "volume_yield_percent", "value": 8.662781, "format": "percent"},
+        {"text": " percent of the barrel by volume"}
+      ]
     },
     {
       "id": "gasoline",
@@ -95,7 +113,16 @@
       "slate_line": "eurobob",
       "mass_yield_percent": 12.0,
       "volume_yield": 0.132397,
-      "carrier": false
+      "carrier": false,
+      "detail_segments": [
+        {"text": "The "},
+        {"field": "label", "value": "Eurosuper", "label": "Eurosuper"},
+        {"text": " quotation less Brent, "},
+        {"field": "crack_usd_bbl", "value": 45.178502, "format": "usd_bbl", "signed": true},
+        {"text": " $/bbl, on "},
+        {"field": "volume_yield_percent", "value": 13.239735, "format": "percent"},
+        {"text": " percent of the barrel by volume"}
+      ]
     },
     {
       "id": "heating_oil",
@@ -117,7 +144,16 @@
       "slate_line": "fod",
       "mass_yield_percent": 8.2,
       "volume_yield": 0.080914,
-      "carrier": false
+      "carrier": false,
+      "detail_segments": [
+        {"text": "The "},
+        {"field": "label", "value": "Fioul domestique", "label": "Fioul domestique"},
+        {"text": " quotation less Brent, "},
+        {"field": "crack_usd_bbl", "value": 73.35353, "format": "usd_bbl", "signed": true},
+        {"text": " $/bbl, on "},
+        {"field": "volume_yield_percent", "value": 8.091391, "format": "percent"},
+        {"text": " percent of the barrel by volume"}
+      ]
     },
     {
       "id": "fuel_oil_1pct",
@@ -139,7 +175,16 @@
       "slate_line": "fioul_lourd_1pct",
       "mass_yield_percent": 8.8,
       "volume_yield": 0.074013,
-      "carrier": false
+      "carrier": false,
+      "detail_segments": [
+        {"text": "The "},
+        {"field": "label", "value": "Fioul lourd TBTS (< 1%)", "label": "Fioul lourd TBTS (< 1%)"},
+        {"text": " quotation less Brent, "},
+        {"field": "crack_usd_bbl", "value": -7.926394, "format": "usd_bbl", "signed": true},
+        {"text": " $/bbl, on "},
+        {"field": "volume_yield_percent", "value": 7.401325, "format": "percent"},
+        {"text": " percent of the barrel by volume"}
+      ]
     },
     {
       "id": "residual",
@@ -200,7 +245,16 @@
   "scale": {
     "low_usd_bbl": 0.0,
     "high_usd_bbl": 50.0,
-    "includes_zero": true
+    "includes_zero": true,
+    "segments": [
+      {"text": "On one scale, "},
+      {"field": "low_usd_bbl", "value": 0.0, "format": "usd_bbl"},
+      {"text": " to "},
+      {"field": "high_usd_bbl", "value": 50.0, "format": "usd_bbl"},
+      {"text": " $/bbl, "},
+      {"field": "margin_month", "value": "2026-08-01", "label": "August 2026"},
+      {"text": "."}
+    ]
   },
   "residual_history": {
     "months": [

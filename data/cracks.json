@@ -57,6 +57,34 @@
           {"date": "2023-09-08", "year": 2023, "week": 36, "value_usd_bbl": 35.821559, "evidence": "reconstructed", "printed_usd_bbl": null, "evidence_class": "cross_checked", "cross_checked": true, "n_independent_geometries": 4, "least_defended": false},
           {"date": "2024-09-06", "year": 2024, "week": 36, "value_usd_bbl": 15.444636, "evidence": "printed", "printed_usd_bbl": 15.548098, "evidence_class": "cross_checked", "cross_checked": true, "n_independent_geometries": 7, "least_defended": false},
           {"date": "2025-09-05", "year": 2025, "week": 36, "value_usd_bbl": 26.944787, "evidence": "reconstructed", "printed_usd_bbl": null, "evidence_class": "cross_checked", "cross_checked": true, "n_independent_geometries": 5, "least_defended": false}
+        ],
+        "heading_segments": [
+          {"text": "Gasoil, "},
+          {"field": "gasoil_usd_bbl", "value": 91.140128, "format": "usd_bbl"},
+          {"text": " $/bbl in the week to "},
+          {"field": "weekly_date", "value": "2026-09-04", "label": "4 September 2026"},
+          {"text": ", read off the ministry's chart, "},
+          {"field": "above_prior_maximum_usd_bbl", "value": 32.929984, "format": "usd_bbl"},
+          {"text": " above the highest same week of the "},
+          {"field": "n_years", "value": 4, "format": "count"},
+          {"text": " years before it."}
+        ],
+        "desc_segments": [
+          {"text": "Gasoil crack by week of the year, "},
+          {"field": "current_year", "value": 2026, "format": "year"},
+          {"text": " against "},
+          {"field": "first_prior_year", "value": 2022, "format": "year"},
+          {"text": " to "},
+          {"field": "last_prior_year", "value": 2025, "format": "year"},
+          {"text": ", one line per year. Latest "},
+          {"field": "gasoil_usd_bbl", "value": 91.140128, "format": "usd_bbl"},
+          {"text": " $/bbl in the week to "},
+          {"field": "weekly_date", "value": "2026-09-04", "label": "4 September 2026"},
+          {"text": ", against a range for that week of "},
+          {"field": "prior_minimum_usd_bbl", "value": 15.444636, "format": "usd_bbl"},
+          {"text": " to "},
+          {"field": "prior_maximum_usd_bbl", "value": 58.210144, "format": "usd_bbl"},
+          {"text": ". Squares are figures the ministry printed; a hatch under the axis marks the least defended weeks, a bracket the weeks with no second chart yet."}
         ]
       },
       "gasoline": {
@@ -83,6 +111,34 @@
           {"date": "2023-09-08", "year": 2023, "week": 36, "value_usd_bbl": 30.284404, "evidence": "reconstructed", "printed_usd_bbl": null, "evidence_class": "cross_checked", "cross_checked": true, "n_independent_geometries": 4, "least_defended": false},
           {"date": "2024-09-06", "year": 2024, "week": 36, "value_usd_bbl": 12.070241, "evidence": "printed", "printed_usd_bbl": 12.168868, "evidence_class": "cross_checked", "cross_checked": true, "n_independent_geometries": 7, "least_defended": false},
           {"date": "2025-09-05", "year": 2025, "week": 36, "value_usd_bbl": 23.8474, "evidence": "reconstructed", "printed_usd_bbl": null, "evidence_class": "cross_checked", "cross_checked": true, "n_independent_geometries": 5, "least_defended": false}
+        ],
+        "heading_segments": [
+          {"text": "Gasoline, "},
+          {"field": "gasoline_usd_bbl", "value": 65.914483, "format": "usd_bbl"},
+          {"text": " $/bbl in the week to "},
+          {"field": "weekly_date", "value": "2026-09-04", "label": "4 September 2026"},
+          {"text": ", read off the ministry's chart, "},
+          {"field": "above_prior_maximum_usd_bbl", "value": 35.630079, "format": "usd_bbl"},
+          {"text": " above the highest same week of the "},
+          {"field": "n_years", "value": 4, "format": "count"},
+          {"text": " years before it."}
+        ],
+        "desc_segments": [
+          {"text": "Gasoline crack by week of the year, "},
+          {"field": "current_year", "value": 2026, "format": "year"},
+          {"text": " against "},
+          {"field": "first_prior_year", "value": 2022, "format": "year"},
+          {"text": " to "},
+          {"field": "last_prior_year", "value": 2025, "format": "year"},
+          {"text": ", one line per year. Latest "},
+          {"field": "gasoline_usd_bbl", "value": 65.914483, "format": "usd_bbl"},
+          {"text": " $/bbl in the week to "},
+          {"field": "weekly_date", "value": "2026-09-04", "label": "4 September 2026"},
+          {"text": ", against a range for that week of "},
+          {"field": "prior_minimum_usd_bbl", "value": 12.070241, "format": "usd_bbl"},
+          {"text": " to "},
+          {"field": "prior_maximum_usd_bbl", "value": 30.284404, "format": "usd_bbl"},
+          {"text": ". Squares are figures the ministry printed; a hatch under the axis marks the least defended weeks, a bracket the weeks with no second chart yet."}
         ]
       }
     }

@@ -109,7 +109,10 @@
         "months": 135,
         "first_month": "2015-04-01",
         "last_month": "2026-06-01",
-        "newey_west_lag": 4
+        "newey_west_lag": 4,
+        "zero_segments": [
+          {"field": "interval_includes_zero", "value": "includes zero", "label": "includes zero"}
+        ]
       },
       {
         "id": "intake_trend",
@@ -135,10 +138,40 @@
         "months": 135,
         "first_month": "2015-04-01",
         "last_month": "2026-06-01",
-        "newey_west_lag": 4
+        "newey_west_lag": 4,
+        "zero_segments": [
+          {"text": "lower end "},
+          {"field": "kb_d_low", "value": 5.105956, "format": "kb_d", "signed": true},
+          {"text": ", "},
+          {"field": "lower_share_percent", "value": 1.133364, "format": "percent"},
+          {"text": " percent of the interval's width above zero"}
+        ]
       }
     ],
     "interval_level_percent": 95,
+    "strip_desc_segments": [
+      {"text": "Crude runs per "},
+      {"field": "move_usd_bbl", "value": 10.0, "format": "usd_bbl"},
+      {"text": " $/bbl of margin, each with its "},
+      {"field": "interval_level_percent", "value": 95, "format": "count"},
+      {"text": " percent interval, on one scale with zero marked: "},
+      {"field": "label", "value": "Utilisation of capacity, the planned model", "label": "Utilisation of capacity, the planned model"},
+      {"text": ", "},
+      {"field": "kb_d", "value": 59.338024, "format": "kb_d", "signed": true},
+      {"text": " kb/d, "},
+      {"field": "kb_d_low", "value": -290.113095, "format": "kb_d", "signed": true},
+      {"text": " to "},
+      {"field": "kb_d_high", "value": 408.789144, "format": "kb_d", "signed": true},
+      {"text": "; "},
+      {"field": "label", "value": "Crude intake with a trend", "label": "Crude intake with a trend"},
+      {"text": ", "},
+      {"field": "kb_d", "value": 230.362644, "format": "kb_d", "signed": true},
+      {"text": " kb/d, "},
+      {"field": "kb_d_low", "value": 5.105956, "format": "kb_d", "signed": true},
+      {"text": " to "},
+      {"field": "kb_d_high", "value": 455.619333, "format": "kb_d", "signed": true},
+      {"text": "."}
+    ],
     "disagreement": {
       "capacity_step_years_in_sample": [2017, 2026],
       "diagnostic_sum_of_lags": 0.405053,
@@ -166,10 +199,10 @@
       "first_month_not_fitted": "2026-03-01"
     },
     "post_break_months": [
-      {"month": "2026-03-01", "utilisation_percent": 78.679628, "implied_percent": 78.278995, "residual_pp": 0.400633, "residual_kb_d": 24.991465, "intake_kb_d": 4908.0352, "provisional": false, "status_word": "final"},
-      {"month": "2026-04-01", "utilisation_percent": 81.145019, "implied_percent": 83.448174, "residual_pp": -2.303155, "residual_kb_d": -143.67079, "intake_kb_d": 5061.8263, "provisional": false, "status_word": "final"},
-      {"month": "2026-05-01", "utilisation_percent": 81.399846, "implied_percent": 81.116471, "residual_pp": 0.283375, "residual_kb_d": 17.676939, "intake_kb_d": 5077.7224, "provisional": false, "status_word": "final"},
-      {"month": "2026-06-01", "utilisation_percent": 82.512732, "implied_percent": 85.179521, "residual_pp": -2.66679, "residual_kb_d": -166.354342, "intake_kb_d": 5147.1442, "provisional": true, "status_word": "provisional"}
+      {"month": "2026-03-01", "month_label": "March 2026", "utilisation_percent": 78.679628, "implied_percent": 78.278995, "residual_pp": 0.400633, "residual_kb_d": 24.991465, "intake_kb_d": 4908.0352, "provisional": false, "status_word": "final"},
+      {"month": "2026-04-01", "month_label": "April 2026", "utilisation_percent": 81.145019, "implied_percent": 83.448174, "residual_pp": -2.303155, "residual_kb_d": -143.67079, "intake_kb_d": 5061.8263, "provisional": false, "status_word": "final"},
+      {"month": "2026-05-01", "month_label": "May 2026", "utilisation_percent": 81.399846, "implied_percent": 81.116471, "residual_pp": 0.283375, "residual_kb_d": 17.676939, "intake_kb_d": 5077.7224, "provisional": false, "status_word": "final"},
+      {"month": "2026-06-01", "month_label": "June 2026", "utilisation_percent": 82.512732, "implied_percent": 85.179521, "residual_pp": -2.66679, "residual_kb_d": -166.354342, "intake_kb_d": 5147.1442, "provisional": true, "status_word": "provisional"}
     ],
     "n_post": 4,
     "min_post_months": 12,
@@ -182,6 +215,18 @@
       {"text": " months have runs data, against a bar of "},
       {"field": "min_post_months", "value": 12, "format": "count"},
       {"text": " set before looking. The rows describe those months and are not a test."}
+    ],
+    "latest_segments": [
+      {"text": "Utilisation in "},
+      {"field": "runs_month", "value": "2026-06-01", "label": "June 2026"},
+      {"text": " was "},
+      {"field": "latest_utilisation_percent", "value": 82.512732, "format": "percent"},
+      {"text": " percent of capacity"},
+      {"text": " against "},
+      {"field": "implied_percent", "value": 85.179521, "format": "percent"},
+      {"text": " percent that the margin implies, and the month is "},
+      {"field": "status_word", "value": "provisional", "label": "provisional"},
+      {"text": "."}
     ]
   }
 }

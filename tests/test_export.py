@@ -402,3 +402,26 @@ def test_validate_artifacts_passes_the_build_and_fails_a_tampered_one(inputs, tm
     assert "percentile_rank is missing" in bad.stdout
     assert "has a digit in its words" in bad.stdout
     assert "bare NaN token" in bad.stdout
+
+
+def test_every_sentence_the_now_sections_print_is_exported(built):
+    """docs/design.md Part 7, C4: the sections' sentences travel as segments
+    too, so the page composes none of them around a figure of its own."""
+    cracks = built["cracks"]["latest"]["products"]
+    for product in ("gasoil", "gasoline"):
+        assert cracks[product]["heading_segments"] and cracks[product]["desc_segments"]
+        words = "".join(s.get("text", "") for s in cracks[product]["heading_segments"])
+        assert "read off the ministry's chart" in words
+    stack = built["margin-stack"]
+    assert stack["scale"]["segments"]
+    for row in stack["rows"]:
+        if row["id"] not in ("residual", "official_margin", "gas_wedge", "margin_study_intensity"):
+            assert row["detail_segments"], row["id"]
+    runs = built["run-economics"]
+    zero = {m["id"]: m["zero_segments"] for m in runs["response"]["models"]}
+    assert zero["capacity"] == [{"field": "interval_includes_zero", "value": "includes zero", "label": "includes zero"}]
+    assert any(s.get("field") == "lower_share_percent" for s in zero["intake_trend"])
+    assert runs["response"]["strip_desc_segments"]
+    latest = runs["utilisation"]["latest_segments"]
+    assert any(s.get("field") == "status_word" and s["value"] == "provisional" for s in latest)
+    assert all(m["month_label"] for m in runs["utilisation"]["post_break_months"])
