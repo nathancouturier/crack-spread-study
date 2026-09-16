@@ -2700,3 +2700,418 @@ unchanged.
 856 passed and 5 skipped before this pass, 870 and 5 after. Every new test was
 proved by injecting the fault it is named after and watching it fail, and the
 injections and their output are in the pass report. The full gate was run.
+
+
+---
+
+# Self audit, Gate 4, the design and the shell
+
+Run against `642d555` on 2026-09-16, by an auditor who did not write the design,
+the shell or the export. Nothing in the repository was modified. Everything
+below was measured in headless Edge 153.0.4234.32 driven through the DevTools
+protocol, a fresh `--user-data-dir` per launch so no cached module graph was
+measured, against `python scripts/serve.py --port 8126` at
+`http://localhost:8126/crack-spread-study/`. The probe scripts are in the
+session scratchpad; the evidence (screenshots and three JSON reports,
+`a11y-report.json`, `brief-report.json`, `nan-trace-report.json`) is in
+`data/private/audit-gate4/`, gitignored.
+
+**What I ran of the gate, and what I did not.** I ran `python scripts/export.py
+--check` ("every artifact matches a rebuild from the committed caches, byte for
+byte"), `node tools/validate-artifacts.mjs` (22 passed, 0 failed),
+`check-literals`, `check-paths`, `check-styles`, `validate-format` (73 passed)
+and `check-dashes`, all PASS. I did NOT run `refresh.py --offline`, `pytest`,
+`validate-data` or `validate-engine`, and I report nothing about them.
+
+**Verdict in one line.** The Now view is honest and mostly well made, the
+verdict clause order, the colour roles and the motion all measure as the design
+says, and every asset loads from the subpath. It is not Gate 4 ready as a
+"professional" page for three reasons that no validator can see: the Provenance
+panel is close to unusable at 375 px and hides its own Source column at every
+desktop width; the scroll affordance the design relies on, the caption, is
+itself cut off inside the scroll container; and the Provenance prose is an
+engineering log (internal recon references, snake_case identifiers, a shouted
+"DELETES") that reads as machine written, which is the one thing the owner
+asked it not to do. The verdict also still claims a refiner "kept" a gross
+margin, and "its own" says the opposite of what the design says it says.
+
+---
+
+## Findings, ranked
+
+### Blocker
+
+**B1. At 375 px the manifest table has a 44 px window.** Measured: the sticky
+Series column is 291 px wide (`white-space: nowrap` on names such as
+`dgec_note_reconstructed_cracks_weekly`) inside a 335 px scroll box. Status sits
+at 311 to 361 px against a box edge of 355, so even Status, the column Part 6 F
+ordered second precisely so a failed row shows without scrolling, is cut. When
+the container is scrolled, the sticky column covers everything but a sliver
+(`manifest-375-scrolled.png`: "2026" is the only readable scrolled text). SPEC
+5.3 calls this panel first class. The response table has the same shape, milder:
+a 224 px sticky model column leaves 111 px.
+
+**B2. The captions that name the off screen columns are themselves off screen.**
+`caption` is inside `.table-scroll`, so it takes the table's width. At 375 px:
+response caption 777 px wide in a 335 px box, utilisation 425, manifest 1372.
+The words "The interval, zero, share, t and months columns are to the right"
+are cut mid sentence (`crop-now-375-light-open-3.png`). S6 made the caption the
+only scroll affordance on the site; as built there is none.
+
+### Serious
+
+**S1. The Source column is off screen at every desktop width, with no
+affordance, and keyboard focus does not bring it into view.** Measured content
+against box: 1440, 1372 in 1192; 1280, 1372 in 1192; 1024, 1372 in 942 (Vintage
+and Source off); 768, 1372 in 707 (Missing dates, Vintage, Source off). The
+visible edge shows clipped words ("DGEC, i", "ecologi"), which reads as a
+rendering bug, not as a scroll. `.caption-narrow` only displays at 600 px and
+below, so from 601 px up nothing says anything is to the right. Worse, at 1440
+a Tab onto a Source link leaves `scrollLeft` at 0 with the link's right edge at
+1459 against a box edge of 1316: the link starts inside the box (left 1272), so
+Chromium's scroll-into-view-if-needed treats it as visible and does not scroll.
+The focus ring is clipped by 94 to 172 px on every one of the 20 links. My
+judgement on the question the main session asked: not acceptable. The column
+that answers "where did this number come from" is the reason the panel exists.
+
+**S2. The response table hides Zero, Share, t and Months between 601 and about
+1100 px with no caption.** At 1024 Months is off; at 768 Zero, Share, t and
+Months are off, and "includes zero" is the finding. Same cause as S1. At 768
+Edge made the scroller keyboard focusable (it has no focusable child), which
+Safari does not do.
+
+**S3. The Provenance prose is an engineering log on a public page.** Rendered
+verbatim from the manifest: "recon 05 section 1.1", "recon 02 section 2.3"
+(documents a visitor cannot see), "opec.org answers HTTP 403 to every scripted
+request from this machine", "the manual_step field of those entries",
+"python -m crack.sources.dgec_note --collect , two requests" (space before the
+comma), a URL followed by " , ", "which is the most interesting period in the
+sample", "cannot be recovered from anywhere, at any price, ever", and "DELETES"
+in capitals. The heading "Work this pipeline cannot do for itself" is repeated
+word for word as the first sentence under it. Four credits repeat their name
+twice ("World Bank Commodity Price Data (The Pink Sheet). World Bank Commodity
+Price Data (The Pink Sheet).", likewise JODI, Energy Institute, S&P). Row labels
+are snake_case series ids. French names are printed without accents ("Direction
+generale de l'energie", "ministere de la Transition ecologique"), consistently
+across data and docs, so it is a choice, but it is misspelt French on a page
+that credits a French ministry. This is the part of the page that most "feels
+AI" and least like a research note.
+
+**S4. The verdict: "kept" and "its own".** (Main session point c.)
+`now.json` `net_of.costs_not_subtracted` reads "every cost of refining other than
+energy". A refiner does not keep a margin before every non energy cost; "kept"
+is the "made" of S13 in a different verb. And "a refiner kept 38.05 $/bbl after
+its own gas allowance": the nearest owner for "its" is "a refiner", so a trader
+reads "after the refinery's own gas", which is the reading Part 3 section 1 says
+the words exclude. The design's own sentence ("its own is the fewest words that
+say the gas assumption is the ministry's rather than a refinery's") is wrong on
+the grammar. A sceptical desk reader would misread it, and would then find the
+3.2 times gap two sections down and conclude the headline is flattering. "After
+the ministry's gas allowance" costs one word.
+
+**S5. The headline weekly figures quote the chart reading when the ministry
+printed the week.** `cracks.json` latest gasoil point: `value_usd_bbl`
+91.140128, `printed_usd_bbl` 91.114094, `evidence` "printed". The page leads
+with "Gasoil 91.14 ... read off the ministry's weekly chart" and adds "the note
+printed 91.11 and 65.94" at the end. A trader holding the note sees 91.11 and
+asks why the site prefers its own reading of a chart to the printed figure. The
+difference is small; the ordering is backwards.
+
+**S6. The accent zero rule crosses the model label at 375 px.** In the strip
+figure the rule runs from `STRIP_LABEL` to the bottom, so it passes through
+"Crude intake with a trend" (measured bbox: rule x 131.7, text 0 to 148.6;
+`strip-figure-375-3x.png`). Part 3 says no text sits on a mark.
+
+**S7. Focus rings are clipped by `.section__inner { overflow: hidden }`.** Every
+focusable element flush with the column's left edge inside an open section
+loses the left side of its ring: measured 6.0 px on the gasoil text alternative
+button in both themes (`focus-disclosure-light.png`, `-dark.png`). The ring is
+still visible on three sides, so this is visible focus, degraded.
+
+**S8. The Provenance table never says what is provisional.** SPEC 5.3: every
+chart can answer "whether any of it is provisional". `manifest_columns` is
+series, status, last value, last fetch, missing dates, vintage, source.
+`provisional_from` is in every manifest row and rendered nowhere on the page
+("provisional_from" and "provisional from" absent from the rendered text).
+`dgec_note_printed_monthly` shows Last value 2026-09-01 with no word that the
+September row is not final, and the JODI rows show June 2026 with nothing, while
+the dates list above says runs are provisional.
+
+### Minor
+
+- **M1. Words set in JetBrains Mono.** Every `td.num` that is not a number:
+  "none" (gaps, 16 cells), "4 dates, 2026-01-01 to 2026-07-01" and six like it,
+  and "-290.1 to +408.8" and "+5.1 to +455.6" where "to" is mono. Dates in the
+  Last value column are arguable figures. Everything else in mono is a table
+  figure or a tick: 16 `text.tick`, 106 `th.num` week numbers, 617 `td.num`,
+  the two totals. `check-styles` passes because it checks selectors, not the
+  text they hold.
+- **M2. The depth rail's "none" reads as the end of "4 prior years".** Week 53
+  is one week wide, its bracket is hidden under its own plate, and the
+  "4 prior years" right tick is hidden under the "none" plate, so the rail reads
+  "4 prior years ------ none" (`rails-3x.png`).
+- **M3. The accent zero rule crosses the ink interval line with no `--bg`
+  ring**, accent against ink 2.14 in light, the pairing S25 says always gets a
+  ring (`interval-cell-4x.png`).
+- **M4. "On one scale, 0.00 to 50.00 $/bbl"**: a scale said to the cent.
+  Totals print signed ("+38.05", "+34.96") where Part 3 section 4 signs steps.
+  "Difference, pp" prints three places (+0.401) against utilisation printed to
+  one (78.7 against 78.3).
+- **M5. The run kink is named without its value.** "the slope below the
+  estimated kink changes sign" on Now; 2.28 and 9.87 are in
+  `run-economics.json` and not on the page. Fine at Gate 4 (the scatter is
+  Runs view), odd in the sentence.
+- **M6. Missing dates "283 dates, 1987-06-15 to 2026-08-31"** for daily Brent
+  are market holidays counted as gaps; a reader takes 283 missing dates as a
+  data quality problem.
+- **M7. Two nearly identical Brent rows**, `eia_brent_daily` and
+  `fred_brent_daily`, same last value, same 283 gaps, with nothing saying why
+  both exist.
+
+---
+
+## The main session's observations, verified
+
+**a. Register.** Partly confirmed. Closed, at 1440 and 375, it reads as a
+research note: one serif sentence, three dated sentences, four hairline rows,
+no card, no badge. Open, the first three sections hold that. Two things break
+it: the Provenance prose (S3) and the manifest's machine ids. Also the waterfall
+caption is set at `--fs-body` 500, the same visual weight as the section name it
+sits under, so the caption competes with the heading.
+
+**b. Manifest table scroll.** Confirmed and worse than stated: S1, S2, B1, B2.
+1440: 1372 in 1192. 1280: 1372 in 1192. 1024: 1372 in 942. 375: 1372 in 335
+with a 44 px window. Body never scrolls: `scrollWidth` equals `clientWidth` at
+all five widths with every section open.
+
+**c. "Its own gas allowance".** Confirmed as a misreading risk, and the
+underlying claim is wrong in the design doc: S4.
+
+**d. Arrow glyphs on the depth rail.** Not confirmed as stated. There are no
+arrow glyphs: every SVG text code point on the page is ASCII (`railCodepoints`
+empty), and the rendered page contains no U+2190 to U+21FF, U+2192, U+2197,
+U+203A, U+00BB, U+00B7, U+2022, U+2027, U+22C5. What looks like arrows at 1x is
+the bracket: "2026, no second chart yet" spans weeks 18 to 36, its `--bg` plate
+is wider than the bracket, so only the two 4 px end ticks and a few px of line
+show, reading as "|- label -|". Fraunces coverage is irrelevant; rail labels are
+Figtree. It is within the rule. It is a legibility defect in the same family as
+M2: the bracket no longer shows its extent.
+
+**e. Gasoline 0.47 in the week of 10 April 2026.** Confirmed as data, with a
+qualification. Cache row `2026-04-10`: Eurosuper 1057.68 $/t, Brent date 126.50
+$/bbl, gasoline crack 0.46895, `n_notes` 2, `n_independent_geometries` 2,
+`cross_checked` True. Independent check: FRED `DCOILBRENTEU` that week reads
+138.21 (7 April), 122.11, 119.03, 119.07, 6 April missing, mean 124.6, so a
+Dated Brent week average of 126.50 is plausible. The qualification: "cross
+checked" means two readings of the ministry's chart agree, not a second price
+source, and no printed figure exists for week 15 (the weeks either side printed
+8.47 and 8.36). NaN elsewhere: the artifacts carry no NaN (JSON `null`, 46 per
+panel, none interior to a year). I injected holes in the browser: nulls at 2026
+weeks 10, 11, 19, 21 and NaN at 20 gave three separate paths, two dotted gap
+marks, no vertex on the zero baseline; `splitRuns` drops null, NaN, undefined
+and Infinity and keeps a real 0; `formatNumber` returns null for null and NaN
+and "0.00" for 0.
+
+**f. Threshold interval 2.03 to 11.28.** Confirmed against the artifact:
+`threshold_point_usd_bbl` 2.278972, `ci_low` 2.028972, `ci_high` 11.278972,
+search range -0.221028 to 11.278972, so 2.03 is one 0.25 grid step below the
+corrected 2.28 and 11.28 is the search edge. `export.py --check` rebuilds the
+artifact byte for byte from the committed caches. I did not re-run the Gate 3
+analysis itself.
+
+**g. Caching.** Real, bounded, and not guarded. GitHub Pages sends
+`Cache-Control: max-age=600` (not measured here; local `serve.py` is not Pages,
+this is from the platform's documented behaviour). Data is fetched with
+`{ cache: "no-cache" }` in `state.js`, so JSON always revalidates and is always
+new; ES modules and CSS carry no version and are heuristically fresh for up to
+ten minutes. So the mixed graph after a deploy is "old modules, new JSON", not
+the reverse. Two concrete ways it shows: an old `section-*.js` reading a renamed
+field prints "no figure for x" or throws inside `render`; and, independent of
+deploys, a visitor who lands before a weekly refresh and opens a section after
+it gets `now.json` from one run and `cracks.json` from the next, because
+sections load lazily, so the verdict and the Cracks section can disagree on
+dates within one page. Every artifact carries `schema_version` and `data_date`
+and no module reads either (grep of `src/`). Siblings: the Baltic map versions
+every module through an import map, `./src/state.js?v=026` and a `?v=026` on the
+entry script, which covers transitive imports; the portfolio puts `?v=2` on
+`styles.css`, `content.js`, `script.js`; the LME model does exactly what this
+site does, `fetch(path, { cache: "no-cache" })` and unversioned modules. So this
+site matches one sibling and not the other two. Risk: low probability, weekly,
+ten minute window, visible as a wrong or missing figure rather than a silent one
+in most cases, except the lazy load date mismatch, which is silent.
+
+---
+
+## SPEC.md section 11, points 7 to 10
+
+### 7. Relative paths from the subpath
+
+With all four sections and both text alternatives open: 24 requests, all 200,
+none outside `/crack-spread-study/`, no console error or warning, all three
+faces `loaded`. Internal links are `#view-title`, `#/now`, `#/now`. The two SVG
+references are `url(#hatch-N)` fragments. The favicon is `data:,`, so no request
+reaches the origin root. `check-paths` passes. Holds.
+
+### 8. Orphans
+
+**Orphan data**, present in the artifacts and rendered nowhere on Now (checked
+against the modules and against the rendered text):
+
+- `provenance.json`: `provisional_from` (S8), `first_date`, `rows`,
+  `observations`, `frequency`, `unit`, `note`, `licence_note`, gap reasons
+  (gaps render as a count and two dates), `mbr_anchors_*`, `product_anchors*`,
+  `brent_cross_check_*`, `run.*`.
+- `margin-stack.json`: `rows[].price_usd_t`, `bbl_per_t`, `brent_usd_bbl`,
+  `mass_yield_percent`, `factor_citation` (the ICE contract numbers behind 7.88,
+  7.45 and 6.35: rendered text contains no "6753" and no "$/t", though Part 4
+  item 2 asks for "each product's printed price, cited factor"),
+  `residual_history.months`, `residual_history.not_decomposed`.
+- `run-economics.json`: `r2`, `newey_west_lag`, `sum_of_lags*`,
+  `share_of_runs_low/high_percent`, `threshold_point_usd_bbl` (M5),
+  `threshold_without_episode_usd_bbl`, `months_below_*`, `bootstrap_*`,
+  `intake_kb_d`.
+- `cracks.json`: `latest.products.*.prior_years`, `position`,
+  `episode_years_in_range` (the unbuilt toggle, declared in
+  `section-cracks.js`), `prior_minimum_usd_bbl` and `prior_maximum_usd_bbl` per
+  week.
+- `now.json`: `percentile_10y`, `percentile_months_below`,
+  `margin_after_gas_usd_bbl`, `gas_usd_mmbtu`, `data_dates[].fetch_status`,
+  `verdict.headroom_segments`, `verdict.fallback_segments` (the runs section
+  reads the copies in `run-economics.json`, so two copies of one sentence exist
+  and only one is rendered).
+
+Most are Gate 5 material or reasonable supporting fields. Two are not: S8, and
+the factor citation, because a reader cannot check 7.88 or 6.35 anywhere on the
+page.
+
+**Orphan UI states.** None reachable with no data: the nav links only Now (C7),
+an unknown route renders a sentence and a link, closed bodies are inert and
+unfilled. The empty chart sentence in `section-cracks.js` is a hand written
+string without the series fetch time SPEC 7.3 asks for; it cannot be reached
+with the committed data.
+
+### 9. Accessibility, measured
+
+**Keyboard order**, closed, both themes: skip link, site name, Now, theme toggle,
+the four section buttons, then back to the top. Nothing inside a closed section
+takes focus; a programmatic `focus()` on a button inside a closed body fails and
+the body is `inert` at height 0. Opening each section with Enter as it is
+reached: cracks button, gasoil text alternative, gasoline text alternative,
+margin button, runs button, provenance button, then the 20 Source links. Enter
+on the skip link moves focus to `h1#view-title` and keeps `#/now`. The margin and
+runs sections have no focusable content at 1440. The order matches Part 3
+section 9.
+
+**Visible focus.** Every stop matches `:focus-visible` with `2px solid` accent,
+offset 4px. Ring contrast against the computed ground: 7.96 light (`#8E2B2B` on
+`#FBFAF8`), 3.79 dark (`#C0504A` on `#17181C`), both over 3.0, both equal to
+Part 6 C. Clipping: S7 (left 6 px inside sections) and S1 (Source links off
+screen).
+
+**Section controls.** All four are `h2 > button` with `aria-expanded` and
+`aria-controls` naming an existing `role="region"` body, `inert` while closed.
+Both text alternative buttons carry `aria-expanded` and a valid `aria-controls`.
+
+**SVGs.** Two `role="img"` seasonal panels, each with `title` and `desc` and
+`aria-labelledby` naming both; nine waterfall bars and two strip cells
+`aria-hidden`, backed by their table figures; the 375 px strip figure is
+`role="img"` with title and desc. Each seasonal panel has its week table. Holds.
+
+**Contrast, computed from `getComputedStyle` on every visible text node and SVG
+mark**, all sections and both tables open:
+
+| Rendered pair | Light | Dark | Design Part 6 C |
+|---|---|---|---|
+| text on ground, 1497 nodes | 17.01 | 17.01 | 17.01 |
+| muted text, 136 nodes, 12 to 15 px, 400 and 500 | 4.90 | 7.54 | 4.90 / 7.54 |
+| accent figure +38.05 | 7.96 | 5.15 (`#D66A62`) | 7.96 / 5.15 |
+| verdict, 28 px | 17.01 | 17.01 | 17.01 |
+| context marks, hatch | 4.90 | 7.54 | 4.90 / 7.54 |
+| accent dot, bar, zero rule | 7.96 | 3.79 | 7.96 / 3.79 |
+| series, printed squares, bars, intervals | 17.01 | 17.01 | 17.01 |
+| gridlines | 1.24 | 1.27 | 1.24 / 1.27, decorative |
+| connectors | 1.49 | 1.64 | 1.49 / 1.64, decorative |
+
+No text pair below 4.5, no data carrying mark below 3.0, every value equal to the
+design table. The measurement treats text as sitting on the page ground; the one
+place that is false is S6, text crossed by the accent rule.
+
+**Reduced motion.** Emulated `prefers-reduced-motion: reduce`: transition
+duration 1e-05 s on the section body and on `html`; the margin body goes 0 to
+914 px in one frame. Without it: 0.2 s, 40, 312, 544 ... 914 over 11 frames. No
+CSS animation on any element, no Web Animation other than that transition.
+
+**Greyscale.** `Emulation.setEmulatedVisionDeficiency` achromatopsia: gasoil
+solid and gasoline dashed are told apart, prior years by width and end label,
+positive steps filled and negative outlined, the accent bar goes mid grey and
+remains the only grey bar (`achromatopsia-cracks-margin-light.png`). Forcing
+every mark to one ink gives the same result (`one-ink-seasonal-2x.png`). Holds.
+
+### The brief, read literally against the rendered page, both themes
+
+| Banned | Measured | Result |
+|---|---|---|
+| all caps text | `text-transform` none everywhere; `font-variant-caps` normal everywhere; capital words: JODI, TBTS, OPEC, DGEC, RBRTE, FRED, MOMR, HTTP, REUTERS, ICIS, DCOILBRENTEU (names), and **DELETES** | one violation, S3 |
+| eyebrow above a heading | no `h1`, `h2`, `h3` has a preceding sibling label | pass |
+| middle dot meta strings | no U+00B7, U+2022, U+2027, U+22C5; no " \| " or " / " | pass |
+| arrows on buttons or links | no arrow code point in any text; no `::before` or `::after` content anywhere | pass; see d |
+| blur | `filter` and `backdrop-filter` none on every element | pass |
+| noise, gradient | no `background-image`, no `mask-image` | pass |
+| heavy shadow | `box-shadow` and `text-shadow` none on every element | pass |
+| same rounded card | one radius on the page, the theme toggle's 50 percent; no tinted block (only `--bg` on sticky cells, header, skip link) | pass |
+| watermark, AI tag | none rendered | pass |
+| JetBrains Mono only on figures and ticks | words in mono cells | M1 |
+
+### Five numbers traced (SPEC 2 rule 2)
+
+| On the page | Element | Artifact field |
+|---|---|---|
+| 38.05, verdict | `span.fig[data-field=mbr_usd_bbl]` | `now.json` `verdict.values.mbr_usd_bbl` 38.050505 |
+| 27.00, verdict | `[data-field=carrier_contribution_usd_bbl]` | `now.json` 26.996621, equal to `margin-stack.json` row `gasoil` 26.996621 |
+| 91.14, Cracks | `[data-field=gasoil_usd_bbl]` | `cracks.json` `latest.products.gasoil.value_usd_bbl` 91.140128 |
+| -290.1 to +408.8 | `td[data-field="kb_d_low kb_d_high"]` | `run-economics.json` capacity `kb_d_low` -290.113095, `kb_d_high` 408.789144 |
+| 82.5, June 2026 | `td[data-field=utilisation_percent]` | `run-economics.json` `post_break_months[3].utilisation_percent` 82.512732, `provisional` true |
+
+The waterfall sums: five products and the residual add to 38.050505, the
+official margin row. All five trace.
+
+### 10. What I am quietly unsure about
+
+- **The fold at 375 px** was measured only in Edge with its Figtree metrics: the
+  "Run economics and crude demand" name sits at about 705 of 812. Safari's text
+  rendering could push it out. I did not test Safari or Firefox at all, and
+  Safari does not make an overflowing table keyboard scrollable (S2).
+- **The Cache-Control value** on Pages is from platform knowledge, not measured;
+  the local server is not Pages.
+- **Focus into partially visible cells** (S1) is Chromium's scroll into view
+  behaviour; other engines may scroll.
+- **The threshold search stops at 11.28 $/bbl** while the margin sits at 38.05.
+  "The interval runs to the edge of the range searched" is true, but the edge is
+  a choice made at Gate 3, and a reader may take "unidentified" as a property of
+  the data rather than partly of the grid. Gate 3 was approved; I flag it, I did
+  not re-test it.
+- **"Cross checked" on the weekly series** means two readings of one chart. The
+  word "checked" on a single source reconstruction may be read as independent
+  verification, which it is not (see e).
+- **Whether the 120 months rank survives a revision.** The window is 2016-09 to
+  2026-08 on the official series; I did not check what the rank is on the
+  study's own intensity, which the page also shows (34.96).
+- **The accent-stripped French** in data and docs looks deliberate; I did not
+  find where the decision is written down.
+- **I did not audit the History, Model, Runs or Method views**, which do not
+  exist yet, nor the `engine.js` parity.
+
+## The eight to fix first
+
+1. B1 and B2: move the caption out of the scroll container, and let the manifest
+   series column wrap or use a readable label so the sticky column is not 87
+   percent of the box.
+2. S1 and S2: say what is to the right at every width where something is.
+3. S3: rewrite the manual steps and credits for a reader, not the pipeline.
+4. S4: "after the ministry's gas allowance", and a verb that does not claim
+   realised earnings.
+5. S8: a provisional column, or a word in Last value.
+6. S5: lead the weekly headline with the printed figure when there is one.
+7. S6 and S7: stop the strip rule above the labels; give focus rings room
+   inside `.section__inner`.
+8. M1: words out of mono cells.
