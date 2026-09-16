@@ -777,6 +777,189 @@ def decomposition_for_month(month: str) -> engine.Decomposition:
 
 
 # ---------------------------------------------------------------------------
+# SPEC.md section 4.3 layer 3 again, from the ministry's own monthly quotations
+# ---------------------------------------------------------------------------
+#
+# GATE 4. The decomposition above prices the margin with OPEC MOMR cracks, which
+# stop at 2026-02, so the landing month could not be split and the Gate 4 design
+# plan built a waterfall for February beside an August block with its product
+# rows empty. That premise was false. The ministry's weekly note of 4 September
+# 2026 prints FINAL August 2026 monthly averages in $/t for Eurosuper, Gazole,
+# Fioul domestique, Jet and Fioul lourd TBTS, and Brent date, and they are in
+# data/cache/dgec_note_printed_monthly.csv with provisional False. That is the
+# same ministry, the same month and the same Reuters basis as the MBR the
+# decomposition explains, which is strictly better than a second publisher's
+# February, and it removes the month mixing from the landing sentence.
+#
+# THE CRUDE LEG is DGEC's own published monthly Brent in $/bbl,
+# data/cache/dgec_brent_monthly.csv, so no factor touches it. The note's own
+# Brent date column in $/t is carried beside it, converted at
+# config.DGEC_BBL_PER_T_BRENT_NOTE, as a diagnostic only.
+#
+# ADDITIVE. Nothing above changes: decomposition_for_month, DGEC_VOLUME_YIELDS
+# and the parity fixture stay on the OPEC path, and the engine is generic over
+# products, so five keys go through the same engine.decompose_official as two.
+
+#: Printed monthly quotation column and the ministry's own label, per product.
+#: The label is what the page prints, SPEC.md section 4.2.
+DGEC_NOTE_MONTHLY_COLUMNS: Mapping[str, tuple] = {
+    "gasoil": ("gazole_usd_t", "Gazole"),
+    "gasoline": ("eurosuper_usd_t", "Eurosuper"),
+    "jet": ("jet_usd_t", "Jet"),
+    "heating_oil": ("fioul_domestique_usd_t", "Fioul domestique"),
+    "fuel_oil_1pct": ("fioul_lourd_tbts_usd_t", "Fioul lourd TBTS (< 1%)"),
+}
+
+#: Volume yields for the five products, one key picking the mass yield and the
+#: cited factor, exactly as DGEC_VOLUME_YIELDS does for two.
+DGEC_NOTE_VOLUME_YIELDS: Mapping[str, float] = {
+    product: engine.mass_yield_to_volume_yield(
+        config.DGEC_MASS_YIELDS[config.DGEC_NOTE_SLATE_LINE[product]],
+        config.DGEC_NOTE_PRODUCT_BBL_PER_T[product],
+        config.DGEC_BBL_PER_T_BRENT_MARGIN,
+    )
+    for product in sorted(config.DGEC_NOTE_PRODUCT_BBL_PER_T)
+}
+
+#: What the note does not quote, by the slate's own names. 23.2 percent of the
+#: tonne: propane 1.7, butane 1.2, naphta 8.2, essence export 11.9, sulphur 0.2.
+#: Plus, and this is not a slate line, the method's gas purchase, freight and
+#: insurance costs, which are inside the MBR and inside no crack.
+DGEC_NOTE_UNATTRIBUTED_SLATE_LINES: Sequence[str] = (
+    "butane",
+    "essence_export",
+    "naphta",
+    "propane",
+    "soufre",
+)
+
+
+def _note_month_row(month: str) -> pd.Series:
+    stamp = pd.Timestamp(month if len(month) > 7 else month + "-01").to_period("M")
+    printed = load("dgec_note_printed_monthly")
+    printed["period"] = pd.to_datetime(printed["date"]).dt.to_period("M")
+    row = printed[printed["period"] == stamp]
+    if row.empty:
+        raise KeyError("no monthly quotations printed by a DGEC note for %s" % stamp)
+    row = row.iloc[0]
+    provisional = str(row["provisional"]).strip().lower() == "true"
+    if provisional:
+        # A provisional quotation against a final margin mixes two vintages, and
+        # SPEC.md section 13 says never to blend them silently. Refused, named.
+        raise KeyError(
+            "the monthly quotations for %s are provisional in the note of %s, "
+            "and a provisional month is not decomposed" % (stamp, row["vintage"])
+        )
+    return row
+
+
+def note_cracks_for_month(month: str) -> Mapping[str, engine.Crack]:
+    """The five cracks from the ministry's final printed monthly averages.
+
+    Every product leg is a monthly quotation in $/t with its cited factor, every
+    crude leg is DGEC's published monthly Brent in $/bbl with the same date and
+    window, and engine.crack checks the alignment per product.
+
+    Raises:
+        KeyError: when no note printed the month, when the printed month is
+            still provisional, or when DGEC's Brent file has no value for it.
+    """
+    row = _note_month_row(month)
+    day = _iso(pd.Timestamp(row["date"]))
+    brent = brent_monthly("dgec")
+    brent_row = brent[brent["date"] == pd.Timestamp(day)]
+    if brent_row.empty or pd.isna(brent_row["brent_usd_bbl"].iloc[0]):
+        raise KeyError("no DGEC monthly Brent for %s" % day[:7])
+    crude = engine.Quote(
+        float(brent_row["brent_usd_bbl"].iloc[0]),
+        engine.USD_PER_BBL,
+        day,
+        engine.MONTHLY,
+        "Brent date, DGEC monthly",
+    )
+    return {
+        product: engine.crack(
+            engine.Quote(
+                float(row[column]), engine.USD_PER_T, day, engine.MONTHLY, label
+            ),
+            crude,
+            product_bbl_per_t=config.DGEC_NOTE_PRODUCT_BBL_PER_T[product],
+        )
+        for product, (column, label) in sorted(DGEC_NOTE_MONTHLY_COLUMNS.items())
+    }
+
+
+def note_decomposition_for_month(month: str) -> engine.Decomposition:
+    """One month's MBR taken apart with the ministry's own quotations.
+
+    Raises:
+        KeyError: no published MBR for the month, or no final printed
+            quotations, or no DGEC Brent. Each says which.
+    """
+    stamp = pd.Timestamp(month if len(month) > 7 else month + "-01").to_period("M")
+    mbr = load("dgec_mbr_monthly")
+    mbr["period"] = pd.to_datetime(mbr["date"]).dt.to_period("M")
+    row = mbr[mbr["period"] == stamp]
+    if row.empty or pd.isna(row["mbr_usd_bbl"].iloc[0]):
+        raise KeyError("no published MBR for %s" % stamp)
+    cracks = note_cracks_for_month(month)
+    return engine.decompose_official(
+        float(row["mbr_usd_bbl"].iloc[0]),
+        DGEC_NOTE_VOLUME_YIELDS,
+        engine.crack_values(cracks),
+        unattributed_products=DGEC_NOTE_UNATTRIBUTED_SLATE_LINES,
+    )
+
+
+def note_decomposition_history() -> pd.DataFrame:
+    """Every month a note printed FINAL monthly quotations and DGEC has an MBR.
+
+    Provisional months are listed with decomposed False and the reason, not
+    dropped, so the count of months this decomposition covers is visible.
+
+    Returns:
+        date, vintage, provisional, decomposed, reason, official_usd_bbl,
+        attributed_usd_bbl, residual_usd_bbl, carrier, and the note's own Brent
+        date in $/bbl at DGEC_BBL_PER_T_BRENT_NOTE beside DGEC's published Brent.
+    """
+    printed = load("dgec_note_printed_monthly")
+    brent = brent_monthly("dgec").set_index("date")["brent_usd_bbl"]
+    rows = []
+    for _, quoted in printed.iterrows():
+        day = pd.Timestamp(quoted["date"])
+        record = {
+            "date": day,
+            "vintage": str(quoted["vintage"]),
+            "provisional": str(quoted["provisional"]).strip().lower() == "true",
+            "note_brent_usd_bbl": float(quoted["brent_date_usd_t"])
+            / config.DGEC_BBL_PER_T_BRENT_NOTE,
+            "dgec_brent_usd_bbl": float(brent.get(day, math.nan)),
+        }
+        try:
+            result = note_decomposition_for_month(_iso(day))
+        except KeyError as error:
+            record.update(
+                decomposed=False,
+                reason=str(error).strip("'\""),
+                official_usd_bbl=math.nan,
+                attributed_usd_bbl=math.nan,
+                residual_usd_bbl=math.nan,
+                carrier=None,
+            )
+        else:
+            record.update(
+                decomposed=True,
+                reason="",
+                official_usd_bbl=result.official_usd_bbl,
+                attributed_usd_bbl=result.attributed_usd_bbl,
+                residual_usd_bbl=result.residual_usd_bbl,
+                carrier=result.carrier,
+            )
+        rows.append(record)
+    return pd.DataFrame(rows).sort_values("date").reset_index(drop=True)
+
+
+# ---------------------------------------------------------------------------
 # SPEC.md section 4.3 layer 2, the replication attempt on real months
 # ---------------------------------------------------------------------------
 
@@ -1019,6 +1202,16 @@ class LatestView:
     # itself is outputs.percentile_window_months, config.PERCENTILE_WINDOW_MONTHS.
     percentile_observations: int
     threshold_identified: bool
+    # GATE 4, ADDITIVE. The margin month itself taken apart with the ministry's
+    # own final printed quotations, when a note printed them, and None when it
+    # did not. The fields above keep their Gate 2 meaning: crack_month,
+    # decomposition and carrier remain the OPEC path, which is history now. The
+    # landing sentence's carrier is margin_carrier, from the same month as the
+    # margin it explains. See note_decomposition_for_month.
+    margin_decomposition: engine.Decomposition | None = None
+    margin_cracks: Mapping[str, engine.Crack] | None = None
+    margin_carrier: str | None = None
+    margin_decomposition_reason: str = ""
 
 
 def latest_view(
@@ -1108,6 +1301,14 @@ def latest_view(
     opec = load("opec_rotterdam_products_monthly")
     weekly = load("dgec_note_reconstructed_weekly")
 
+    try:
+        margin_decomposition = note_decomposition_for_month(margin_month[:7])
+        margin_cracks = note_cracks_for_month(margin_month[:7])
+        margin_reason = ""
+    except KeyError as error:
+        margin_decomposition, margin_cracks = None, None
+        margin_reason = str(error).strip("'\"")
+
     return LatestView(
         margin_month=margin_month,
         crack_month=crack_month,
@@ -1127,4 +1328,10 @@ def latest_view(
         weekly_crack_data_date=_iso(pd.to_datetime(weekly["date"]).max()),
         percentile_observations=bundle.percentile_observations,
         threshold_identified=bundle.threshold_identified,
+        margin_decomposition=margin_decomposition,
+        margin_cracks=margin_cracks,
+        margin_carrier=(
+            None if margin_decomposition is None else margin_decomposition.carrier
+        ),
+        margin_decomposition_reason=margin_reason,
     )

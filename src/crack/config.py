@@ -53,6 +53,12 @@ __all__ = [
     "BBL_PER_T_GASOLINE",
     "PRODUCT_BBL_PER_T",
     "DGEC_SLATE_LINE",
+    "ICE_SPEC_RETRIEVED",
+    "BBL_PER_T_JET",
+    "BBL_PER_T_HEATING_OIL",
+    "BBL_PER_T_FUEL_OIL_1PCT",
+    "DGEC_NOTE_PRODUCT_BBL_PER_T",
+    "DGEC_NOTE_SLATE_LINE",
     "MMBTU_PER_MWH",
     "DGEC_BBL_PER_T_BRENT_NOTE",
     "DGEC_BBL_PER_T_BRENT_MARGIN",
@@ -225,6 +231,96 @@ DGEC_SLATE_LINE: Mapping[str, str] = MappingProxyType(
     {
         "gasoil": "gazole",
         "gasoline": "eurobob",
+    }
+)
+
+# ---------------------------------------------------------------------------
+# Three more barrels per tonne factors, cited, for the ministry's own monthly
+# quotations. Gate 4.
+# ---------------------------------------------------------------------------
+#
+# WHY THESE EXIST NOW. Until Gate 4 the only month the margin could be split by
+# product was a month in the OPEC MOMR table, which stops at 2026-02, and this
+# file held no factor for any product but gasoil and gasoline. The Gate 4 brief
+# found that DGEC's weekly note of 4 September 2026 prints FINAL August 2026
+# monthly averages for five products and Brent date, in $/t
+# (data/cache/dgec_note_printed_monthly.csv), so the latest margin month can be
+# split from the same ministry, the same month and the same basis as the
+# official margin. Three of those five products need a factor, and SPEC.md
+# section 4.1 allows one only from the DGEC methodology note or an ICE contract
+# specification.
+#
+# THE METHODOLOGY NOTE WAS READ FIRST AND HOLDS NONE. Its only conversion factor
+# is the Brent equivalence of 7.55 bbl/t on page 4, DGEC_BBL_PER_T_BRENT_MARGIN
+# below. Its table 1 is mass yields and its product quotations are in $/t, and
+# it never states a factor for a product. Read in full on 2026-09-16 from
+# data/private/dgec_notes/mbr_method.pdf.
+#
+# SO ALL THREE ARE ICE CONTRACT CONVERSION FACTORS, the same kind of citation as
+# BBL_PER_T_GASOIL and BBL_PER_T_GASOLINE, each the "Conversion factor: 1 metric
+# tonne = N barrels" line of the ICE Futures Europe contract specification,
+# downloaded as the product guide PDF (https://www.ice.com/api/productguide/spec/
+# <id>/pdf) on 2026-09-16. The same download of 6753331 and 6753285 prints 7.45
+# and 8.33, which is the check that the page being read is the page SPEC.md
+# section 5.6 cites.
+#
+# WHAT A CONTRACT FACTOR IS AND IS NOT, said once for all three. It is the
+# convention an exchange settles a crack on, not a measured density of the
+# cargo the ministry quotes. DGEC's "Carbureacteur", "Fioul domestique" and
+# "Fioul lourd TBTS" are Reuters Rotterdam assessments, and the ICE contracts
+# settle on Platts assessments of the nearest product: jet CIF NWE cargoes,
+# gasoil 0.1 percent FOB ARA barges, fuel oil 1 percent FOB NWE cargoes. The
+# product label on the page stays the ministry's, SPEC.md section 4.2.
+#
+# ICE_SPEC_RETRIEVED records the date the three PDFs were read.
+ICE_SPEC_RETRIEVED = "2026-09-16"
+
+#: Jet. ICE Futures Europe, "Jet Fuel Crack, Jet CIF NWE Cargoes vs Brent 1st
+#: Line Future", contract symbol JNB, https://www.ice.com/products/6753303,
+#: "Conversion factor: 1 metric tonne = 7.88 barrels".
+BBL_PER_T_JET = 7.88
+
+#: Fioul domestique, heating oil at 0.1 percent sulphur. ICE Futures Europe,
+#: "Gasoil Crack, Gasoil 0.1% FOB ARA Barges (Platts) vs Brent 1st Line Future
+#: (in MTs)", https://www.ice.com/products/6753295, "conversion factor: 1 metric
+#: tonne = 7.45 barrels". The same number as BBL_PER_T_GASOIL and a separate
+#: constant, because it is cited from a different contract and would have to
+#: move on its own if ICE ever changed one of the two.
+BBL_PER_T_HEATING_OIL = 7.45
+
+#: Fioul lourd, the method's "Fioul lourd 1% S" and the note's "Fioul lourd TBTS
+#: (< 1%)". ICE Futures Europe, "Fuel Oil Crack, Fuel Oil 1% FOB NWE Cargoes vs
+#: Brent 1st Line Future", https://www.ice.com/products/6753289, "Conversion
+#: factor: 1 metric tonne = 6.35 barrels". Fuel oil is dense, so fewer barrels
+#: to the tonne than crude, and its crack against Brent is normally negative.
+BBL_PER_T_FUEL_OIL_1PCT = 6.35
+
+#: Every product the ministry's printed monthly quotations let this study crack,
+#: keyed by this study's product name, with its cited factor. A SEPARATE MAPPING
+#: FROM PRODUCT_BBL_PER_T ON PURPOSE: that one drives the OPEC decomposition and
+#: the engine parity fixture, which cover two products and must not move because
+#: a third source arrived. The gasoil and gasoline lines are the same constants.
+DGEC_NOTE_PRODUCT_BBL_PER_T: Mapping[str, float] = MappingProxyType(
+    {
+        "gasoil": BBL_PER_T_GASOIL,
+        "gasoline": BBL_PER_T_GASOLINE,
+        "jet": BBL_PER_T_JET,
+        "heating_oil": BBL_PER_T_HEATING_OIL,
+        "fuel_oil_1pct": BBL_PER_T_FUEL_OIL_1PCT,
+    }
+)
+
+#: The DGEC slate line each of those products is priced against, by one key, for
+#: the same reason as DGEC_SLATE_LINE. The gasoline line carries the approximation
+#: DGEC_SLATE_LINE already states: the method prices EuroBOB and the note prints
+#: Eurosuper.
+DGEC_NOTE_SLATE_LINE: Mapping[str, str] = MappingProxyType(
+    {
+        "gasoil": "gazole",
+        "gasoline": "eurobob",
+        "jet": "carbureacteur",
+        "heating_oil": "fod",
+        "fuel_oil_1pct": "fioul_lourd_1pct",
     }
 )
 
