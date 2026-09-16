@@ -358,8 +358,8 @@ def test_the_verdict_reads_as_the_design_says(built):
         for s in built["now"]["verdict"]["segments"]
     )
     assert words == (
-        "On the ministry's Rotterdam margin, a refiner kept 38.050505 $/bbl after its own gas allowance "
-        "in August 2026, the most in 120 months; gasoil carried 26.996621 of it, "
+        "On the ministry's Rotterdam measure, refiners' gross margin after the ministry's gas allowance "
+        "was 38.050505 $/bbl in August 2026, the most in 120 months; gasoil carried 26.996621 of it, "
         "and this sample cannot say whether runs have room to rise."
     )
     # SPEC.md section 7.2, said out loud: four clauses, the month once, and the
@@ -425,3 +425,119 @@ def test_every_sentence_the_now_sections_print_is_exported(built):
     latest = runs["utilisation"]["latest_segments"]
     assert any(s.get("field") == "status_word" and s["value"] == "provisional" for s in latest)
     assert all(m["month_label"] for m in runs["utilisation"]["post_break_months"])
+
+
+# ---------------------------------------------------------------------------
+# Gate 4 audit fixes (docs/self-audit.md, Self audit, Gate 4; docs/design.md
+# Part 7, C10 to C15)
+# ---------------------------------------------------------------------------
+
+
+def _words(segments):
+    return "".join(s["text"] if "text" in s else (s.get("label") or str(s["value"])) for s in segments)
+
+
+def test_no_sentence_claims_the_margin_was_kept_or_says_its_own_gas(built):
+    """S4. "Kept" claims realised earnings for a margin that nets out only
+    energy, and "its own gas allowance" reads as the refiner's gas. The verdict
+    says gross margin and names the ministry as the owner of the allowance."""
+    for name, payload in built.items():
+        for where, segments in _segment_lists(payload):
+            words = _words(segments)
+            assert " kept " not in words, (name, where, words)
+            assert "its own gas" not in words, (name, where, words)
+    verdict = _words(built["now"]["verdict"]["segments"])
+    assert "gross margin" in verdict and "the ministry's gas allowance" in verdict
+
+
+def test_the_weekly_headline_leads_with_the_figure_the_ministry_printed(built):
+    """S5. When the note printed the latest week, the summary and both panel
+    headings lead with the printed figure and give the chart reading second."""
+    latest = built["cracks"]["latest"]["products"]
+    summary = next(s for s in built["now"]["sections"] if s["id"] == "cracks")["summary_segments"]
+    numbers = [s["field"] for s in summary if "format" in s]
+    printed = {p: latest[p]["point"]["printed_usd_bbl"] for p in ("gasoil", "gasoline")}
+    assert all(v is not None for v in printed.values()), "today's latest week is printed; this test needs it"
+    assert numbers[:2] == ["gasoil_printed_usd_bbl", "gasoline_printed_usd_bbl"], numbers
+    assert numbers.index("gasoil_usd_bbl") > 1
+    for product in ("gasoil", "gasoline"):
+        heading = latest[product]["heading_segments"]
+        fields = [s["field"] for s in heading if "format" in s]
+        assert fields[0] == "%s_printed_usd_bbl" % product, fields
+        assert "%s_usd_bbl" % product in fields[1:]
+        assert "printed" in _words(heading)
+
+
+def test_an_unprinted_latest_week_leads_with_the_chart_reading(inputs):
+    info = dict(export.latest_week(inputs)["products"]["gasoil"])
+    info["point"] = {**info["point"], "printed_usd_bbl": None, "evidence": "reconstructed"}
+    heading = export._panel_heading("gasoil", info, "2026-09-04", 4)
+    fields = [s["field"] for s in heading if "format" in s]
+    assert fields[0] == "gasoil_usd_bbl"
+    assert "printed" not in _words(heading)
+
+
+def test_provenance_carries_a_reader_layer_for_every_series_and_step(built):
+    """S3, S8, M6, M7. The manifest stays whole for the machine; the page
+    reads labels, sources, provisional flags and manual steps written for a
+    reader, and a series or a step with no reader text fails the build."""
+    payload = built["provenance"]
+    reader = payload["reader"]
+    manifest = payload["manifest"]
+    assert set(reader["series"]) == {e["series"] for e in manifest["series"]}
+    labels = [r["label"] for r in reader["series"].values()]
+    assert len(set(labels)) == len(labels), "two series share a label"
+    engineering = ("recon", "HTTP", "this machine", "python", "--", "data/", "manual_step", " ,", "DELETES", "at any price")
+    for series_id, row in reader["series"].items():
+        assert "_" not in row["label"] and "_" not in row["source"], series_id
+        assert row["label"][0].isupper(), series_id
+        words = _words(row["provisional_segments"])
+        entry = next(e for e in manifest["series"] if e["series"] == series_id)
+        if entry["provisional_from"]:
+            assert words.startswith("provisional"), (series_id, words)
+        else:
+            assert words == "none flagged", (series_id, words)
+    steps = {s["id"]: s for s in reader["manual_steps"]}
+    assert set(steps) == {s["id"] for s in manifest["manual_steps"]}
+    for step in reader["manual_steps"]:
+        for key in ("what", "why", "cost", "how"):
+            text = step[key]
+            for bad in engineering:
+                assert bad not in text, (step["id"], key, bad)
+            assert not any(w.isupper() and len(w) > 4 for w in text.replace(",", " ").replace(".", " ").split()), (step["id"], key)
+    assert reader["manual_steps_heading"].rstrip(".").lower() not in reader["manual_steps_intro"].lower()
+    # The DGEC printed monthly series names the months the ministry still marks provisional.
+    printed = _words(reader["series"]["dgec_note_printed_monthly"]["provisional_segments"])
+    assert "December 2025" in printed and "September 2026" in printed and "August 2026" not in printed
+    # French names keep their accents on the page, escaped in the ASCII file.
+    dgec = next(a for a in payload["attributions"] if a["id"] == "dgec")
+    assert "é" in dgec["who"] and "ministère" in dgec["who"]
+    # The two Brent rows say why both exist.
+    assert reader["series"]["eia_brent_daily"]["label"] != reader["series"]["fred_brent_daily"]["label"]
+    assert reader["series"]["eia_brent_daily"].get("gaps_reason")
+
+
+def test_a_manifest_series_with_no_reader_label_fails_the_build(inputs):
+    manifest = dict(inputs.manifest)
+    manifest["series"] = list(manifest["series"]) + [{**manifest["series"][0], "series": "a_new_series"}]
+    with pytest.raises(KeyError, match="a_new_series"):
+        export.provenance_reader(manifest)
+
+
+def test_the_waterfall_scale_is_said_in_whole_dollars_when_it_is_whole(built):
+    """M4. The scale's ends are 1, 2, 5 ladder values; 0 to 50 is not said to the cent."""
+    scale = built["margin-stack"]["scale"]
+    formats = [s["format"] for s in scale["segments"] if "format" in s]
+    assert formats == ["count", "count"]
+    assert float(scale["low_usd_bbl"]).is_integer() and float(scale["high_usd_bbl"]).is_integer()
+
+
+def test_utilisation_differences_print_to_the_places_of_utilisation(built):
+    """M4. A difference of two figures printed to one place is printed to one place."""
+    assert export.DECIMALS["pp"] == export.DECIMALS["percent"] == 1
+
+
+def test_the_unidentified_paragraph_names_both_kinks(built):
+    """M5. The sentence says where the kink is with and without the episode."""
+    fields = [s.get("field") for s in built["run-economics"]["threshold"]["segments"]]
+    assert "threshold_point_usd_bbl" in fields and "threshold_without_episode_usd_bbl" in fields

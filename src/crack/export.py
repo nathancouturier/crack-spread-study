@@ -88,7 +88,10 @@ GENERATED_BY = "src/crack/export.py"
 ROUND_DP = 6
 
 #: Decimals per format, the one place the page's precision is decided. Part 3
-#: section 5 of docs/design.md: $/bbl 2, kb/d 1, t 2, R2 3, power 3, pp 3.
+#: section 5 of docs/design.md: $/bbl 2, kb/d 1, t 2, R2 3, power 3. pp is 1,
+#: not 3 (Part 7, C14): the only pp figure on the page is the difference of two
+#: utilisation figures printed to one place, and three places on it claimed a
+#: precision neither figure has.
 DECIMALS: Mapping[str, int] = {
     "usd_bbl": 2,
     "usd_t": 0,
@@ -97,7 +100,7 @@ DECIMALS: Mapping[str, int] = {
     "kb_d": 1,
     "t": 2,
     "r2": 3,
-    "pp": 3,
+    "pp": 1,
     "pp_per_usd_bbl": 3,
     "percent": 1,
     "ratio": 1,
@@ -549,7 +552,11 @@ def run_verdict(
             D("episode_first_month", facts["episode_first_month"]),
             T(" to "),
             D("episode_last_month", facts["episode_last_month"]),
-            T(" and the slope below the estimated kink changes sign, so the kink describes one episode rather than a level; its interval, "),
+            T(" and the estimated kink moves from "),
+            N("threshold_point_usd_bbl", threshold.point.threshold, "usd_bbl"),
+            T(" to "),
+            N("threshold_without_episode_usd_bbl", without.point.threshold, "usd_bbl"),
+            T(" $/bbl while the slope below it changes sign, so the kink describes one episode rather than a level; its interval, "),
             *interval,
         ]
         joiner = ", also"
@@ -748,20 +755,22 @@ def _verdict_rank_clause(rank: Mapping[str, Any]) -> list[Mapping[str, Any]]:
 
 def verdict_segments(values: Mapping[str, Any], run: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     """One sentence a trader would say out loud, SPEC.md section 7.2, in four
-    clauses: what the barrel kept after gas this month, where that sits in ten
-    years, which crack carried it, and whether runs have room to rise.
+    clauses: refiners' gross margin after gas this month, where that sits in
+    ten years, which crack carried it, and whether runs have room to rise.
 
-    The month is said once. "After its own gas allowance" says whose gas: the
-    MBR is net of gas at the ministry's embedded intensity, so the figure is the
-    ministry's and not a refinery's. The same barrel at the average US
-    refinery's gas use, and the ratio of the two intensities, are said in the
-    "Refining margin and gas" section, where the wedge is drawn
-    (margin-stack.json study_margin_segments). docs/design.md Part 7, C9."""
+    The month is said once. "Gross margin" and not "kept": the MBR nets out
+    crude, the gas the method buys, freight and insurance, and no other cost of
+    refining, so it is not what a refiner keeps. "The ministry's gas allowance"
+    and not "its own": the gas is the method's embedded intensity, and "its"
+    read as the refiner's. The same barrel at the average US refinery's gas
+    use, and the ratio of the two intensities, are said in the "Refining margin
+    and gas" section, where the wedge is drawn (margin-stack.json
+    study_margin_segments). docs/design.md Part 7, C9 and C10."""
     month = values["margin_month"]
     out: list[Mapping[str, Any]] = [
-        T("On the ministry's Rotterdam margin, a refiner kept "),
+        T("On the ministry's Rotterdam measure, refiners' gross margin after the ministry's gas allowance was "),
         N("mbr_usd_bbl", values["mbr_usd_bbl"], "usd_bbl"),
-        T(" $/bbl after its own gas allowance in "),
+        T(" $/bbl in "),
         D("margin_month", month),
         T(", "),
         *_verdict_rank_clause(values),
@@ -813,18 +822,39 @@ def now(inputs: Inputs) -> Mapping[str, Any]:
 
 def section_summaries(inputs: Inputs, values: Mapping[str, Any], run: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     latest = latest_week(inputs)
+    # When the ministry printed the latest week, the sentence leads with the
+    # printed figures and gives the chart reading second, because a reader
+    # holding the note sees the printed ones. The comparison with earlier years
+    # stays the chart reading's, because the earlier years are chart readings
+    # too. docs/design.md Part 7, C11.
+    printed = [latest["products"][p]["point"]["printed_usd_bbl"] for p in ("gasoil", "gasoline")]
     crack_segments: list[Mapping[str, Any]] = []
-    for i, product in enumerate(("gasoil", "gasoline")):
-        info = latest["products"][product]
+    if all(x is not None for x in printed):
         crack_segments += [
-            T("Gasoil " if i == 0 else " and gasoline "),
-            N("%s_usd_bbl" % product, info["value_usd_bbl"], "usd_bbl"),
+            T("Gasoil "),
+            N("gasoil_printed_usd_bbl", printed[0], "usd_bbl"),
+            T(" and gasoline "),
+            N("gasoline_printed_usd_bbl", printed[1], "usd_bbl"),
+            T(" $/bbl in the week to "),
+            D("weekly_date", latest["date"], kind="day"),
+            T(" as the ministry's note printed them, and "),
+            N("gasoil_usd_bbl", latest["products"]["gasoil"]["value_usd_bbl"], "usd_bbl"),
+            T(" and "),
+            N("gasoline_usd_bbl", latest["products"]["gasoline"]["value_usd_bbl"], "usd_bbl"),
+            T(" read off its weekly chart; "),
         ]
-    crack_segments += [
-        T(" $/bbl in the week to "),
-        D("weekly_date", latest["date"], kind="day"),
-        T(", read off the ministry's weekly chart; "),
-    ]
+    else:
+        for i, product in enumerate(("gasoil", "gasoline")):
+            info = latest["products"][product]
+            crack_segments += [
+                T("Gasoil " if i == 0 else " and gasoline "),
+                N("%s_usd_bbl" % product, info["value_usd_bbl"], "usd_bbl"),
+            ]
+        crack_segments += [
+            T(" $/bbl in the week to "),
+            D("weekly_date", latest["date"], kind="day"),
+            T(", read off the ministry's weekly chart; "),
+        ]
     positions = {p: latest["products"][p]["position"] for p in ("gasoil", "gasoline")}
     words = {"above": "above", "inside": "inside the range of", "below": "below", "none": "with nothing to compare against in"}
     if positions["gasoil"] == positions["gasoline"]:
@@ -835,19 +865,8 @@ def section_summaries(inputs: Inputs, values: Mapping[str, Any], run: Mapping[st
         ]
     crack_segments += [
         N("n_years", latest["n_years"], "count"),
-        T(" years the weekly series covers"),
+        T(" years the weekly series covers."),
     ]
-    printed = [latest["products"][p]["point"]["printed_usd_bbl"] for p in ("gasoil", "gasoline")]
-    if all(x is not None for x in printed):
-        crack_segments += [
-            T("; the note printed "),
-            N("gasoil_printed_usd_bbl", printed[0], "usd_bbl"),
-            T(" and "),
-            N("gasoline_printed_usd_bbl", printed[1], "usd_bbl"),
-            T("."),
-        ]
-    else:
-        crack_segments += [T(".")]
 
     margin_segments = [
         T("How the cracks build the ministry's NWE refining margin in "),
@@ -966,13 +985,26 @@ def _panel_heading(product: str, info: Mapping[str, Any], date: str, n_years: in
     the figure, that it is read off the chart, and how far it sits from the
     range of the prior years, with how many years that range holds."""
     name = PRODUCT_NAMES[product]
-    out = [
-        T(name[:1].upper() + name[1:] + ", "),
-        N("%s_usd_bbl" % product, info["value_usd_bbl"], "usd_bbl"),
-        T(" $/bbl in the week to "),
-        D("weekly_date", date, kind="day"),
-        T(", read off the ministry's chart, "),
-    ]
+    printed = info["point"]["printed_usd_bbl"]
+    if printed is not None:
+        # The printed figure first, the chart reading second (Part 7, C11).
+        out = [
+            T(name[:1].upper() + name[1:] + ", "),
+            N("%s_printed_usd_bbl" % product, printed, "usd_bbl"),
+            T(" $/bbl in the week to "),
+            D("weekly_date", date, kind="day"),
+            T(" as the ministry's note printed it; read off the ministry's chart, "),
+            N("%s_usd_bbl" % product, info["value_usd_bbl"], "usd_bbl"),
+            T(", "),
+        ]
+    else:
+        out = [
+            T(name[:1].upper() + name[1:] + ", "),
+            N("%s_usd_bbl" % product, info["value_usd_bbl"], "usd_bbl"),
+            T(" $/bbl in the week to "),
+            D("weekly_date", date, kind="day"),
+            T(", read off the ministry's chart, "),
+        ]
     position = info["position"]
     if position == "above":
         out += [N("above_prior_maximum_usd_bbl", info["above_prior_maximum_usd_bbl"], "usd_bbl"), T(" above the highest same week of the ")]
@@ -1196,6 +1228,9 @@ def margin_stack(inputs: Inputs) -> Mapping[str, Any]:
     low, high = min(ends), max(ends)
     scale_low = min(0.0, _ladder_ceiling(low))
     scale_high = max(0.0, _ladder_ceiling(high))
+    # Ladder values are said as whole dollars when they are whole: "0 to 50",
+    # not "0.00 to 50.00", a scale said to the cent (Part 7, C14).
+    scale_format = "count" if float(scale_low).is_integer() and float(scale_high).is_integer() else "usd_bbl"
     payload["month"] = month
     payload["month_label"] = month_label(month)
     payload["decomposed"] = decomposition is not None
@@ -1206,9 +1241,9 @@ def margin_stack(inputs: Inputs) -> Mapping[str, Any]:
         "includes_zero": True,
         "segments": [
             T("On one scale, "),
-            N("low_usd_bbl", scale_low, "usd_bbl"),
+            N("low_usd_bbl", scale_low, scale_format),
             T(" to "),
-            N("high_usd_bbl", scale_high, "usd_bbl"),
+            N("high_usd_bbl", scale_high, scale_format),
             T(" $/bbl, "),
             D("margin_month", month),
             T("."),
@@ -1256,7 +1291,7 @@ def margin_stack(inputs: Inputs) -> Mapping[str, Any]:
     payload["study_margin_segments"] = [
         T("At the average US refinery's gas use, "),
         N("intensity_ratio", wedge.ratio, "ratio"),
-        T(" times the ministry's, the same barrel would have kept "),
+        T(" times the ministry's, the same barrel's gross margin would have been "),
         N("margin_study_intensity_usd_bbl", running, "usd_bbl"),
         T(" $/bbl in "),
         D("margin_month", month),
@@ -1468,7 +1503,10 @@ def run_economics(inputs: Inputs) -> Mapping[str, Any]:
 ATTRIBUTIONS: Sequence[Mapping[str, Any]] = (
     {
         "id": "dgec",
-        "who": "DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique",
+        # Accented, as the ministry writes its name; escaped so this file and the
+        # artifact stay ASCII. The rest of the repository writes these names
+        # without accents, in code and docs a reader of the page never sees.
+        "who": "DGEC, Direction g\u00e9n\u00e9rale de l'\u00e9nergie et du climat, minist\u00e8re de la Transition \u00e9cologique",
         "credit_line": "Source: DGEC, prices credited DGEC-Reuters",
         "third_party": "Every DGEC price table carries 'Source : DGEC-REUTERS'; the assessments are Reuters'. Parsed values are republished with attribution and the note PDFs are not.",
         "licence": "Licence Ouverte 2.0, attribution and the date of last update",
@@ -1532,6 +1570,187 @@ ATTRIBUTIONS: Sequence[Mapping[str, Any]] = (
     },
 )
 
+# ---------------------------------------------------------------------------
+# The reader layer of provenance.json
+# ---------------------------------------------------------------------------
+#
+# The manifest is the pipeline's own record, written for whoever maintains the
+# adapters: series ids, recon references, command lines, a note in capitals
+# where something is urgent. It is exported whole, because SPEC.md section 5.3
+# makes it a first class artifact. What the Provenance section PRINTS is this
+# layer, written for a reader of the page: a plain label and source per series,
+# whether any of it is provisional, and the manual steps in sentences. A series
+# or a manual step the manifest gains without a reader entry fails the build
+# (provenance_reader raises), so nothing reaches the page in the pipeline's
+# words and nothing is silently left off it. docs/design.md Part 7, C12.
+
+SERIES_READER: Mapping[str, Mapping[str, str]] = {
+    "anchors": {
+        "label": "Published margin and price anchors, typed from the ministry's notes",
+        "source": "DGEC, checked by hand",
+    },
+    "dgec_brent_monthly": {
+        "label": "Brent, monthly average, from the ministry's history file",
+        "source": "DGEC, prices from Reuters",
+    },
+    "dgec_mbr_monthly": {
+        "label": "Gross refining margin on Brent, monthly, the official margin",
+        "source": "DGEC, prices from Reuters",
+    },
+    "dgec_note_printed_monthly": {
+        "label": "Rotterdam product prices, monthly, as the weekly note prints them",
+        "source": "DGEC weekly note, prices from Reuters",
+    },
+    "dgec_note_printed_weekly": {
+        "label": "Rotterdam product prices, weekly, as the weekly note prints them",
+        "source": "DGEC weekly note, prices from Reuters",
+    },
+    "dgec_note_reconstructed_weekly": {
+        "label": "Rotterdam product prices, weekly, read off the weekly note's chart",
+        "source": "DGEC weekly note, chart read by this study",
+    },
+    "dgec_note_reconstructed_cracks_weekly": {
+        "label": "Gasoil and gasoline cracks, weekly, from the chart reading",
+        "source": "Computed by this study",
+    },
+    "ei_refinery_capacity_annual": {
+        "label": "Refinery capacity, annual, five northwest European countries",
+        "source": "Energy Institute Statistical Review",
+    },
+    "eia_brent_daily": {
+        "label": "Brent spot, daily, from the EIA",
+        "source": "US Energy Information Administration",
+        "gaps_reason": "holidays with no published price, not lost data",
+    },
+    "eia_refinery_fuel_2023": {
+        "label": "US refinery gas use in one year, typed from EIA tables",
+        "source": "US Energy Information Administration",
+    },
+    "events": {
+        "label": "Dated events, each with its source",
+        "source": "This study, every entry cited",
+    },
+    "fred_brent_daily": {
+        "label": "Brent spot, daily, the same EIA series through FRED, which the analysis reads",
+        "source": "US Energy Information Administration, through FRED",
+        "gaps_reason": "holidays with no published price, not lost data",
+    },
+    "fred_eurusd_daily": {
+        "label": "Euro in US dollars, daily",
+        "source": "Federal Reserve Board, through FRED",
+    },
+    "jodi_nwe_crude_imports_monthly": {
+        "label": "Crude imports, monthly, five northwest European countries",
+        "source": "JODI-Oil World Database",
+    },
+    "jodi_nwe_refinery_intake_monthly": {
+        "label": "Refinery crude intake, monthly, five northwest European countries",
+        "source": "JODI-Oil World Database",
+    },
+    "jodi_nwe_refinery_output_monthly": {
+        "label": "Refinery output by product, monthly, five northwest European countries",
+        "source": "JODI-Oil World Database",
+    },
+    "opec_rotterdam_products_monthly": {
+        "label": "Rotterdam product prices, monthly, from OPEC's monthly report",
+        "source": "OPEC Monthly Oil Market Report, prices from Argus",
+    },
+    "sp_global_reference": {
+        "label": "Reference figures quoted from two S&P Global articles",
+        "source": "S&P Global Commodity Insights",
+    },
+    "ttf_daily": {
+        "label": "Dutch TTF gas, front month, daily",
+        "source": "Yahoo Finance, symbol TTF=F",
+    },
+    "worldbank_gas_europe_monthly": {
+        "label": "Natural gas in Europe, monthly",
+        "source": "World Bank Pink Sheet",
+    },
+}
+
+#: What the Last fetch column says for a series no machine fetches.
+NOT_FETCHED_WORDS = "typed from cited documents, not fetched"
+
+MANUAL_STEPS_HEADING = "Work done by hand"
+MANUAL_STEPS_INTRO = (
+    "Two gaps no scheduled fetch can close on its own. Each says what it is, why, "
+    "what it costs while it is not done, and how it is done."
+)
+
+MANUAL_STEPS_READER: Mapping[str, Mapping[str, str]] = {
+    "momr_unarchived_2026": {
+        "what": "Six issues of OPEC's Monthly Oil Market Report, April to September 2026, have to be saved by hand.",
+        "why": "OPEC's website refuses automated downloads, so the study reads past issues from the Internet Archive, which holds every issue from January 2001 to March 2026 and none after.",
+        "cost": "Until they are saved, the monthly OPEC crack series ends at February 2026 and misses the whole of the 2026 episode. The ministry's weekly cracks and its monthly margin both cover 2026, so the study still sees it; its longest crack series does not.",
+        "how": "Each issue is opened in a browser and saved, and the parser reads the saved copies. The reports themselves are not published here, only the prices read from them.",
+    },
+    "dgec_weekly_note_collection": {
+        "what": "The ministry's weekly note has to be saved in the week it appears. It is the only source of the weekly Rotterdam prices.",
+        "why": "The ministry keeps only the latest note online and removes each one when the next is published, and the Internet Archive holds only ten of them. A week that is not saved cannot be recovered.",
+        "cost": "A permanent gap in the weekly series. The chart reading is calibrated on the figures each note prints, so a missed note also takes away that week's calibration.",
+        "how": "Once a week the note that is online is downloaded and the weekly series are rebuilt from it. The notes themselves are not published here, only the prices read from them.",
+    },
+}
+
+
+def _provisional_segments(entry: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    """Whether any of a series is provisional, SPEC.md section 5.3, in words.
+
+    A cache that carries the source's own flag per row (the ministry's printed
+    monthly prices) is read row by row, because a month goes final while a later
+    one is still provisional and the flags are not contiguous. Otherwise the
+    manifest's provisional_from bounds a trailing run to the last date."""
+    start = entry.get("provisional_from")
+    if not start:
+        return [T("none flagged")]
+    months: list[str] = []
+    try:
+        frame = series.load(entry["series"])
+    except Exception:  # a seed or a cache with no frame: the manifest bound stands
+        frame = None
+    if frame is not None and "provisional" in frame.columns:
+        flagged = frame[frame["provisional"].astype(str).str.strip().str.lower() == "true"]
+        months = sorted(_iso(d) for d in flagged["date"])
+    if months:
+        out: list[Mapping[str, Any]] = [T("provisional: ")]
+        for i, month in enumerate(months):
+            if i:
+                out.append(T(" and " if i == len(months) - 1 else ", "))
+            out.append(D("provisional_month", month))
+        return out
+    last = entry.get("last_date")
+    if last and str(last)[:7] == str(start)[:7]:
+        return [T("provisional: "), D("provisional_from", start)]
+    return [T("provisional from "), D("provisional_from", start), T(" to "), D("last_date", last)]
+
+
+def provenance_reader(manifest: Mapping[str, Any]) -> Mapping[str, Any]:
+    """The words the Provenance section prints. Raises KeyError, naming it, for a
+    manifest series or manual step with no reader entry."""
+    rows = {}
+    for entry in manifest["series"]:
+        name = entry["series"]
+        if name not in SERIES_READER:
+            raise KeyError("no reader label in export.SERIES_READER for the manifest series %s" % name)
+        row = dict(SERIES_READER[name])
+        if not entry.get("machine_fetched", True) or not entry.get("fetched_at"):
+            row["fetch_words"] = NOT_FETCHED_WORDS
+        row["provisional_segments"] = _provisional_segments(entry)
+        rows[name] = row
+    steps = []
+    for step in manifest.get("manual_steps", []):
+        if step["id"] not in MANUAL_STEPS_READER:
+            raise KeyError("no reader text in export.MANUAL_STEPS_READER for the manual step %s" % step["id"])
+        steps.append({"id": step["id"], "status": step["status"], **MANUAL_STEPS_READER[step["id"]]})
+    return {
+        "series": rows,
+        "manual_steps_heading": MANUAL_STEPS_HEADING,
+        "manual_steps_intro": MANUAL_STEPS_INTRO,
+        "manual_steps": steps,
+    }
+
+
 FONTS: Mapping[str, Any] = {
     "faces": [
         {"family": "Fraunces", "use": "the verdict and view titles", "licence": "SIL Open Font License 1.1"},
@@ -1545,7 +1764,7 @@ FONTS: Mapping[str, Any] = {
 def provenance(inputs: Inputs) -> Mapping[str, Any]:
     manifest = inputs.manifest
     last = sorted(e["fetched_at"] for e in manifest["series"] if e.get("fetched_at"))[-1]
-    payload = _header("provenance", last[:10], "the manifest whole, and the attribution and licence line for every source")
+    payload = _header("provenance", last[:10], "the manifest whole, the words the Provenance section prints for each series and manual step, and the attribution and licence line for every source")
     payload["conventions"] = _conventions()
     names = {e["series"] for e in manifest["series"]}
     attributions = []
@@ -1568,7 +1787,8 @@ def provenance(inputs: Inputs) -> Mapping[str, Any]:
     ice["retrieved"] = config.ICE_SPEC_RETRIEVED
     payload["attributions"] = attributions
     payload["fonts"] = FONTS
-    payload["manifest_columns"] = ["series", "status", "last_date", "fetched_at", "gaps", "vintage", "source"]
+    payload["manifest_columns"] = ["series", "status", "last_date", "provisional", "fetched_at", "gaps", "vintage", "source"]
+    payload["reader"] = provenance_reader(manifest)
     payload["manifest"] = manifest
     return payload
 

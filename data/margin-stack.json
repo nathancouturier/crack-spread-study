@@ -15,7 +15,7 @@
       "kb_d": 1,
       "t": 2,
       "r2": 3,
-      "pp": 3,
+      "pp": 1,
       "pp_per_usd_bbl": 3,
       "percent": 1,
       "ratio": 1,
@@ -248,9 +248,9 @@
     "includes_zero": true,
     "segments": [
       {"text": "On one scale, "},
-      {"field": "low_usd_bbl", "value": 0.0, "format": "usd_bbl"},
+      {"field": "low_usd_bbl", "value": 0, "format": "count"},
       {"text": " to "},
-      {"field": "high_usd_bbl", "value": 50.0, "format": "usd_bbl"},
+      {"field": "high_usd_bbl", "value": 50, "format": "count"},
       {"text": " $/bbl, "},
       {"field": "margin_month", "value": "2026-08-01", "label": "August 2026"},
       {"text": "."}
@@ -296,7 +296,7 @@
   "study_margin_segments": [
     {"text": "At the average US refinery's gas use, "},
     {"field": "intensity_ratio", "value": 3.219417, "format": "ratio"},
-    {"text": " times the ministry's, the same barrel would have kept "},
+    {"text": " times the ministry's, the same barrel's gross margin would have been "},
     {"field": "margin_study_intensity_usd_bbl", "value": 34.962813, "format": "usd_bbl"},
     {"text": " $/bbl in "},
     {"field": "margin_month", "value": "2026-08-01", "label": "August 2026"},

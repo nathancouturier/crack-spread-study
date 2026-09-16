@@ -80,7 +80,7 @@ throws("an undeclared format throws, naming it", () => format.formatNumber(1, "e
 throws("no decimals table throws", () => format.formatNumber(1, "usd_bbl", undefined), "conventions.decimals");
 
 // ----------------------------------------------------------- segments ---
-check("text segment", format.segmentText({ text: "a refiner kept " }, dec), { text: "a refiner kept ", kind: "text", field: null, missing: false });
+check("text segment", format.segmentText({ text: "refiners' gross margin was " }, dec), { text: "refiners' gross margin was ", kind: "text", field: null, missing: false });
 check("label segment", format.segmentText({ field: "margin_month", value: "2026-08-01", label: "August 2026" }, dec), { text: "August 2026", kind: "label", field: "margin_month", missing: false });
 check("signed number segment", format.segmentText({ field: "capacity_kb_d", value: -12.34, format: "kb_d", signed: true }, dec), { text: MINUS + "12.3", kind: "number", field: "capacity_kb_d", missing: false });
 check("missing number segment keeps its field", format.segmentText({ field: "headroom_usd_bbl", value: null, format: "usd_bbl" }, dec), { text: null, kind: "number", field: "headroom_usd_bbl", missing: true });
@@ -150,12 +150,13 @@ check("now.json carries numeric segments to check", numeric > 0, true);
 // The verdict is one sentence a trader would say out loud, SPEC.md section 7.2:
 // four clauses, the month said once, no fifth clause for the US gas intensity,
 // which lives in the margin section. docs/design.md Part 3 section 1 and Part 7,
-// C9. Read through format.js, as the page reads it.
+// C9 and C10. Read through format.js, as the page reads it.
 const spoken = now.verdict.segments.map((segment) => format.segmentText(segment, decimals).text).join("");
 const verdictFields = now.verdict.segments.filter((segment) => segment.field).map((segment) => segment.field);
 check("the verdict names the margin month once", verdictFields.filter((field) => field === "margin_month").length, 1);
 check("the verdict holds no US intensity figure", verdictFields.some((field) => field === "margin_study_intensity_usd_bbl" || field === "intensity_ratio"), false);
-check("the verdict says whose gas", spoken.includes("after its own gas allowance"), true);
+check("the verdict says whose gas", spoken.includes("after the ministry's gas allowance") && !spoken.includes("its own gas"), true);
+check("the verdict claims a gross margin, not earnings kept", spoken.includes("gross margin") && !/kept/.test(spoken), true);
 check("the verdict is one sentence", (spoken.match(/[.]\s/g) || []).length === 0 && spoken.endsWith("."), true);
 const stack = JSON.parse(readFileSync(path.join(ROOT, "data/margin-stack.json"), "utf8"));
 const movedFields = stack.study_margin_segments.filter((segment) => segment.field).map((segment) => segment.field);

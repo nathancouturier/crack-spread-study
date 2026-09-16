@@ -3,7 +3,7 @@
   "artifact": "provenance",
   "generated_by": "src/crack/export.py",
   "data_date": "2026-09-13",
-  "describes": "the manifest whole, and the attribution and licence line for every source",
+  "describes": "the manifest whole, the words the Provenance section prints for each series and manual step, and the attribution and licence line for every source",
   "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
   "conventions": {
     "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
@@ -15,7 +15,7 @@
       "kb_d": 1,
       "t": 2,
       "r2": 3,
-      "pp": 3,
+      "pp": 1,
       "pp_per_usd_bbl": 3,
       "percent": 1,
       "ratio": 1,
@@ -30,7 +30,7 @@
   "attributions": [
     {
       "id": "dgec",
-      "who": "DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique",
+      "who": "DGEC, Direction g\u00e9n\u00e9rale de l'\u00e9nergie et du climat, minist\u00e8re de la Transition \u00e9cologique",
       "credit_line": "Source: DGEC, prices credited DGEC-Reuters",
       "third_party": "Every DGEC price table carries 'Source : DGEC-REUTERS'; the assessments are Reuters'. Parsed values are republished with attribution and the note PDFs are not.",
       "licence": "Licence Ouverte 2.0, attribution and the date of last update",
@@ -142,7 +142,171 @@
     ],
     "substitution": "Body text is set in Figtree, an open licensed stand in for Satoshi, the portfolio's face, whose licence does not allow a copy in a public repository."
   },
-  "manifest_columns": ["series", "status", "last_date", "fetched_at", "gaps", "vintage", "source"],
+  "manifest_columns": ["series", "status", "last_date", "provisional", "fetched_at", "gaps", "vintage", "source"],
+  "reader": {
+    "series": {
+      "anchors": {
+        "label": "Published margin and price anchors, typed from the ministry's notes",
+        "source": "DGEC, checked by hand",
+        "fetch_words": "typed from cited documents, not fetched",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "dgec_brent_monthly": {
+        "label": "Brent, monthly average, from the ministry's history file",
+        "source": "DGEC, prices from Reuters",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "dgec_mbr_monthly": {
+        "label": "Gross refining margin on Brent, monthly, the official margin",
+        "source": "DGEC, prices from Reuters",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "dgec_note_printed_monthly": {
+        "label": "Rotterdam product prices, monthly, as the weekly note prints them",
+        "source": "DGEC weekly note, prices from Reuters",
+        "provisional_segments": [
+          {"text": "provisional: "},
+          {"field": "provisional_month", "value": "2025-12-01", "label": "December 2025"},
+          {"text": ", "},
+          {"field": "provisional_month", "value": "2026-04-01", "label": "April 2026"},
+          {"text": " and "},
+          {"field": "provisional_month", "value": "2026-09-01", "label": "September 2026"}
+        ]
+      },
+      "dgec_note_printed_weekly": {
+        "label": "Rotterdam product prices, weekly, as the weekly note prints them",
+        "source": "DGEC weekly note, prices from Reuters",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "dgec_note_reconstructed_cracks_weekly": {
+        "label": "Gasoil and gasoline cracks, weekly, from the chart reading",
+        "source": "Computed by this study",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "dgec_note_reconstructed_weekly": {
+        "label": "Rotterdam product prices, weekly, read off the weekly note's chart",
+        "source": "DGEC weekly note, chart read by this study",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "ei_refinery_capacity_annual": {
+        "label": "Refinery capacity, annual, five northwest European countries",
+        "source": "Energy Institute Statistical Review",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "eia_brent_daily": {
+        "label": "Brent spot, daily, from the EIA",
+        "source": "US Energy Information Administration",
+        "gaps_reason": "holidays with no published price, not lost data",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "eia_refinery_fuel_2023": {
+        "label": "US refinery gas use in one year, typed from EIA tables",
+        "source": "US Energy Information Administration",
+        "fetch_words": "typed from cited documents, not fetched",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "events": {
+        "label": "Dated events, each with its source",
+        "source": "This study, every entry cited",
+        "fetch_words": "typed from cited documents, not fetched",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "fred_brent_daily": {
+        "label": "Brent spot, daily, the same EIA series through FRED, which the analysis reads",
+        "source": "US Energy Information Administration, through FRED",
+        "gaps_reason": "holidays with no published price, not lost data",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "fred_eurusd_daily": {
+        "label": "Euro in US dollars, daily",
+        "source": "Federal Reserve Board, through FRED",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "jodi_nwe_crude_imports_monthly": {
+        "label": "Crude imports, monthly, five northwest European countries",
+        "source": "JODI-Oil World Database",
+        "provisional_segments": [
+          {"text": "provisional: "},
+          {"field": "provisional_from", "value": "2026-06-01", "label": "June 2026"}
+        ]
+      },
+      "jodi_nwe_refinery_intake_monthly": {
+        "label": "Refinery crude intake, monthly, five northwest European countries",
+        "source": "JODI-Oil World Database",
+        "provisional_segments": [
+          {"text": "provisional: "},
+          {"field": "provisional_from", "value": "2026-06-01", "label": "June 2026"}
+        ]
+      },
+      "jodi_nwe_refinery_output_monthly": {
+        "label": "Refinery output by product, monthly, five northwest European countries",
+        "source": "JODI-Oil World Database",
+        "provisional_segments": [
+          {"text": "provisional: "},
+          {"field": "provisional_from", "value": "2026-06-01", "label": "June 2026"}
+        ]
+      },
+      "opec_rotterdam_products_monthly": {
+        "label": "Rotterdam product prices, monthly, from OPEC's monthly report",
+        "source": "OPEC Monthly Oil Market Report, prices from Argus",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "sp_global_reference": {
+        "label": "Reference figures quoted from two S&P Global articles",
+        "source": "S&P Global Commodity Insights",
+        "fetch_words": "typed from cited documents, not fetched",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "ttf_daily": {
+        "label": "Dutch TTF gas, front month, daily",
+        "source": "Yahoo Finance, symbol TTF=F",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
+      "worldbank_gas_europe_monthly": {
+        "label": "Natural gas in Europe, monthly",
+        "source": "World Bank Pink Sheet",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      }
+    },
+    "manual_steps_heading": "Work done by hand",
+    "manual_steps_intro": "Two gaps no scheduled fetch can close on its own. Each says what it is, why, what it costs while it is not done, and how it is done.",
+    "manual_steps": [
+      {"id": "momr_unarchived_2026", "status": "outstanding", "what": "Six issues of OPEC's Monthly Oil Market Report, April to September 2026, have to be saved by hand.", "why": "OPEC's website refuses automated downloads, so the study reads past issues from the Internet Archive, which holds every issue from January 2001 to March 2026 and none after.", "cost": "Until they are saved, the monthly OPEC crack series ends at February 2026 and misses the whole of the 2026 episode. The ministry's weekly cracks and its monthly margin both cover 2026, so the study still sees it; its longest crack series does not.", "how": "Each issue is opened in a browser and saved, and the parser reads the saved copies. The reports themselves are not published here, only the prices read from them."},
+      {"id": "dgec_weekly_note_collection", "status": "standing", "what": "The ministry's weekly note has to be saved in the week it appears. It is the only source of the weekly Rotterdam prices.", "why": "The ministry keeps only the latest note online and removes each one when the next is published, and the Internet Archive holds only ten of them. A week that is not saved cannot be recovered.", "cost": "A permanent gap in the weekly series. The chart reading is calibrated on the figures each note prints, so a missed note also takes away that week's calibration.", "how": "Once a week the note that is online is downloaded and the weekly series are rebuilt from it. The notes themselves are not published here, only the prices read from them."}
+    ]
+  },
   "manifest": {
     "schema_version": 1,
     "generated_at": "2026-09-13T18:14:35Z",

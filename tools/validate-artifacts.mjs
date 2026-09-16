@@ -186,6 +186,16 @@ const REQUIRED = {
     "manifest.series[].licence_note",
     "manifest.manual_steps[].id",
     "manifest.manual_steps[].status",
+    "manifest_columns",
+    "reader.series",
+    "reader.manual_steps_heading",
+    "reader.manual_steps_intro",
+    "reader.manual_steps[].id",
+    "reader.manual_steps[].status",
+    "reader.manual_steps[].what",
+    "reader.manual_steps[].why",
+    "reader.manual_steps[].cost",
+    "reader.manual_steps[].how",
   ],
 };
 
@@ -336,6 +346,35 @@ for (const [name, specs] of Object.entries(REQUIRED)) {
           problems.push(at + " is a date or word segment with no label");
         }
       });
+    }
+    return problems;
+  });
+}
+
+if (loaded.provenance) {
+  // docs/design.md Part 7, C12 and C13: the Provenance section prints a reader
+  // label for every manifest series, and says whether any of it is provisional
+  // (SPEC.md section 5.3). A series the page would print as a bare id, or a
+  // flagged series whose row would not say provisional, fails here.
+  check("provenance.json every manifest series has a reader label and its provisional words", () => {
+    const problems = [];
+    const reader = loaded.provenance.reader || {};
+    const rows = reader.series || {};
+    for (const entry of loaded.provenance.manifest.series) {
+      const row = rows[entry.series];
+      if (!row) {
+        problems.push(entry.series + " has no reader row");
+        continue;
+      }
+      if (typeof row.label !== "string" || !row.label || /_/.test(row.label)) problems.push(entry.series + " reader label is missing or has an underscore: " + JSON.stringify(row.label));
+      if (typeof row.source !== "string" || !row.source) problems.push(entry.series + " reader source is missing");
+      const words = (row.provisional_segments || []).map((segment) => segment.text !== undefined ? segment.text : segment.label).join("");
+      if (entry.provisional_from && !/^provisional/.test(words)) problems.push(entry.series + " is provisional from " + entry.provisional_from + " and its reader words are " + JSON.stringify(words));
+      if (!entry.provisional_from && words !== "none flagged") problems.push(entry.series + " is not flagged and its reader words are " + JSON.stringify(words));
+    }
+    const stepIds = new Set((reader.manual_steps || []).map((step) => step.id));
+    for (const step of loaded.provenance.manifest.manual_steps || []) {
+      if (!stepIds.has(step.id)) problems.push("the manual step " + step.id + " has no reader text");
     }
     return problems;
   });
