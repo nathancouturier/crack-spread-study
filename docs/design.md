@@ -498,7 +498,7 @@ assert every figure in the sentence came from one. Clauses, in order:
 
 | Clause | Field(s) | Template when | Wording |
 |---|---|---|---|
-| margin | `margin_month`, `mbr_usd_bbl` | always | "On the ministry's Rotterdam margin, a refiner kept {mbr} $/bbl after its own gas allowance in {margin_month}," |
+| margin | `margin_month`, `mbr_usd_bbl` | always | "On the ministry's Rotterdam measure, refiners' gross margin after the ministry's gas allowance was {mbr} $/bbl in {margin_month}," (Part 7, C10) |
 | rank | `percentile_rank`, `percentile_observations` | rank equals n | "the most in {n} months;" |
 | | | rank equals 1 | "the least in {n} months;" |
 | | | otherwise | "more than in {rank minus 1} of {n} months;" |
@@ -507,11 +507,11 @@ assert every figure in the sentence came from one. Clauses, in order:
 | runs | `threshold_identified`, `headroom_usd_bbl` | unidentified | "and this sample cannot say whether runs have room to rise." |
 | | | identified | "and runs sit {headroom} $/bbl above the level at which they get cut." |
 
-Today it reads (Part 7, C1 and C9, `data/now.json`): "On the ministry's
-Rotterdam margin, a refiner kept 38.05 $/bbl after its own gas allowance in
-August 2026, the most in 120 months; gasoil carried 27.00 of it, and this sample
-cannot say whether runs have room to rise." Thirty seven words, four clauses,
-the month once. The trailing window ends at the margin month, so "the most in
+Today it reads (Part 7, C1, C9 and C10, `data/now.json`): "On the ministry's
+Rotterdam measure, refiners' gross margin after the ministry's gas allowance was
+38.05 $/bbl in August 2026, the most in 120 months; gasoil carried 27.00 of it,
+and this sample cannot say whether runs have room to rise." Forty words, four
+clauses, the month once. The trailing window ends at the margin month, so "the most in
 120 months" needs no second date, and the carrier is split on the same month's
 printed prices, so it needs none either.
 
@@ -524,6 +524,10 @@ section, where the wedge that produces them is drawn: `margin-stack.json`
 ministry's, the same barrel would have kept 34.96 $/bbl in August 2026 rather
 than 38.05; the gap is the extra gas, −3.09 $/bbl", and the wedge row's second
 line now carries the ratio too.
+
+**Corrected at Gate 4, Part 7, C10.** The paragraph below defended "kept" and
+"its own", and both were wrong: "kept" claims earnings on a margin that nets out
+only energy, and "its" reads as the refiner's gas. It is kept for the record.
 
 Why this wording (S13, C9): "Rotterdam refiners made" claimed realised earnings
 for an indicator the ministry computes on a notional slate. "A refiner kept ...
@@ -625,6 +629,8 @@ the hairline belongs to the four section rows and to table headers only.
   demand".
 - Provenance: the manifest table (section 5 table rules, column order in Part 6
   section F), the two manual steps verbatim, failed and stale rows first.
+  **Corrected at Gate 4, Part 7, C12:** not verbatim. The page prints a reader
+  layer the export writes, with a Provisional column (C13).
 
 **First ten seconds, 1440 x 900** (about 780px of viewport). Header 56, verdict
 three lines at 28px about 110, padding 56, dates four rows 80, four headers 4 x
@@ -635,7 +641,7 @@ three lines at 28px about 110, padding 56, dates four rows 80, four headers 4 x
 | tracked | the dates list, "Weekly cracks run to the week of 4 September 2026 ... last fetched"; the cracks header |
 | NWE refining margins | the verdict's first clause; the "Refining margin and gas" section name and its "NWE refining margin" summary |
 | across gasoil and gasoline cracks | the "Gasoil and gasoline cracks" section name with both values; the verdict's carrier clause |
-| run economics | the "Run economics and crude demand" section name; its first sentence "No level at which runs get cut can be identified"; "after its own gas allowance" and "runs have room to rise" in the verdict; the 34.96 at the US gas use in the margin section (C9) |
+| run economics | the "Run economics and crude demand" section name; its first sentence "No level at which runs get cut can be identified"; "gross margin after the ministry's gas allowance" and "runs have room to rise" in the verdict (C10); the 34.96 at the US gas use in the margin section (C9) |
 | linked to crude demand | the same section name; kb/d per 10 $/bbl for both models with t in its summary; the nav's "Runs and crude demand" |
 
 **375 x 812** (about 700px of viewport), re-estimated (S21). At 480px and below
@@ -980,7 +986,7 @@ margin total.
 
 **Table rules, site wide.** Figures JetBrains Mono 400 `--fs-meta`, right
 aligned, sign always printed, fixed decimals per unit from the artifact ($/bbl 2,
-kb/d 1, t 2, R2 3, power 3, pp 3). Labels Figtree 400 `--fs-body-s`, left. Column
+kb/d 1, t 2, R2 3, power 3, pp 1 (Part 7, C14; it was 3)). Labels Figtree 400 `--fs-body-s`, left. Column
 headers Figtree 500 `--fs-meta` `--text-muted`, sentence case, units in the
 header ("kb/d per 10 $/bbl"), no `letter-spacing`. Hairline `--border-strong`
 under the header row, `--border` above a total or a note row, none between rows.
@@ -994,6 +1000,8 @@ which are the scroll affordances of every dashboard kit and both of which are on
 the banned list in all but name (a heavy shadow, a gradient wash). Instead, below
 600px, the table's `caption` ends with the columns that start off screen: "t, R2
 and the number of months are to the right." They never become cards.
+**Corrected at Gate 4, Part 7, C13:** the caption sits above the scroll box, not
+inside it, and names what is off screen at every width, measured.
 
 **Response table** (Now, run economics section; Runs view in full):
 
@@ -1025,7 +1033,8 @@ rows, so "includes zero" is not quieter than the row that does not.
 
 **At 600px and below** (S31) the strips leave the table: a figure directly above
 it, the full 335px, one 28px row per model, each labelled at its left end in Figtree
-`--fs-meta` ("Planned model", "With a trend"), the accent zero rule through both.
+`--fs-meta` ("Planned model", "With a trend"), the accent zero rule through both
+rows and stopping at each label line (Part 7, C15).
 The strip is the only picture of the run economics finding and it must not sit
 behind a sideways scroll. The table under it scrolls with the model name sticky.
 
@@ -1763,7 +1772,8 @@ one (S31).
 
 The Gate 4 brief overrides Part 3 where they disagree and asks for each change to
 be recorded here. Every one of these is already folded into Parts 0, 3, 4 and 5,
-tagged with its C number.
+tagged with its C number. C10 to C15 answer the adversarial Gate 4 audit
+(`docs/self-audit.md`, "Self audit, Gate 4"), whose finding numbers they cite.
 
 ### C1. August 2026 can be decomposed, so the Now view does not mix months
 
@@ -1899,3 +1909,159 @@ ratio moved to `margin-stack.json`: `study_margin_segments`, printed under the
 waterfall, and the ratio in `wedge_segments`, the wedge row's second line.
 `tests/test_export.py` pins the new sentence whole, the single month and the
 moved fields; `tools/validate-format.mjs` checks the same through `format.js`.
+
+### C10. The verdict says gross margin, and whose gas allowance
+
+**What the plan said.** C9's wording, "a refiner kept 38.05 $/bbl after its own
+gas allowance", and the argument that "its own" is the fewest words that say
+the gas assumption is the ministry's.
+
+**Why that was wrong.** The Gate 4 audit, S4. `now.json`
+`net_of.costs_not_subtracted` reads "every cost of refining other than energy",
+so a refiner does not keep this margin: "kept" is the "made" of S13 in another
+verb. And the nearest owner for "its" is "a refiner", so a desk reader takes
+"its own gas allowance" as the refinery's gas, the reading the words were meant
+to exclude, and then finds the US gas use 3.2 times higher two sections down.
+
+**What was built.** `crack.export.verdict_segments`: "On the ministry's
+Rotterdam measure, refiners' gross margin after the ministry's gas allowance was
+38.05 $/bbl in August 2026, the most in 120 months; gasoil carried 27.00 of it,
+and this sample cannot say whether runs have room to rise." Forty words, within
+the 40 `tests/test_export.py` allows; "a refiner's" became "refiners'" to stay
+inside it. `study_margin_segments` says "the same barrel's gross margin would
+have been 34.96" instead of "would have kept", and the waterfall caption says
+"its gross margin at the average US refinery's gas use". `tests/test_export.py`
+fails on " kept " or "its own gas" in any exported sentence;
+`tools/validate-format.mjs` reads the verdict for the same through `format.js`.
+
+### C11. The weekly headline leads with the printed figure
+
+**Why.** Audit S5. The latest week, 4 September 2026, was printed by the
+ministry: gasoil 91.11, gasoline 65.94. The page led with its own chart reading,
+91.14 and 65.91, and put the printed figures last. A reader holding the note
+asks why the site prefers its reading of a chart to the number printed beside
+it.
+
+**What was built.** When both products are printed for the latest week, the
+Cracks summary reads "Gasoil 91.11 and gasoline 65.94 $/bbl in the week to
+4 September 2026 as the ministry's note printed them, and 91.14 and 65.91 read
+off its weekly chart; both above the same week in each of the 4 years the
+weekly series covers." Each panel heading leads the same way. The comparison
+with earlier years stays the chart reading's, because the earlier years are
+chart readings too, and the margin by which it is above (32.93) is still said
+against the chart reading. A week the note did not print keeps Part 3's form.
+The panel's current year line and its end label are the reconstruction, as
+before; the printed square is on it.
+
+### C12. Provenance prints words written for a reader, not the manifest's
+
+**What the plan said.** Part 3 section 1: "the two manual steps verbatim", and
+the manifest's series ids as row labels.
+
+**Why that was wrong.** Audit S3. The manifest is the pipeline's record for its
+maintainer, and printed verbatim it put "recon 05 section 1.1", "HTTP 403 ...
+from this machine", a command line with a space before its comma, "DELETES" in
+capitals and snake_case ids on a public page, with the heading repeated as the
+first sentence and four credits naming their source twice. It read as an
+engineering log, the one thing the owner asked the page not to be. The row
+labels were also the width problem of B1.
+
+**What was built.** `provenance.json` keeps the manifest whole (SPEC.md section
+5.3) and gains `reader`: `export.SERIES_READER` gives every series a label and a
+source in plain words, including why two Brent rows exist and that the 283
+missing Brent dates are holidays with no published price (audit M6, M7);
+`export.MANUAL_STEPS_READER` says each manual step as what, why, what it costs
+while not done, and how, with no internal reference; a heading and an intro
+that do not repeat each other. A manifest series or step with no reader entry
+raises `KeyError` in the build, so nothing new reaches the page in the
+pipeline's words and nothing is silently dropped. The page prints a credit line
+only when it adds to the name. The DGEC name keeps its French accents on the
+page, escaped as `\u00e9` so the artifact stays ASCII; code and docs keep
+writing it without them, which a reader of the page never sees.
+
+### C13. Wide tables: caption above, off screen columns named at every width, a Provisional column
+
+**What the plan said.** Part 3 section 5 (S6): the table's `caption` is the only
+scroll affordance, ending below 600px with the columns that start off screen,
+written by hand per table. Part 6 section F: the manifest's series column sticky.
+
+**Why that was wrong.** Audit B1, B2, S1, S2, S8, all measured:
+- a `caption` inside the scroll box takes the table's width, so at 375 px the
+  response caption was 777px wide in a 335px box and the words naming the off
+  screen columns were themselves off screen;
+- above 600px nothing was said, while the manifest's Source column was off
+  screen at 1440, 1280, 1024 and 768, and the response table hid Zero, Share, t
+  and Months between 601 and about 1100px, where "includes zero" is the finding;
+- the manifest's sticky column was a 291px unbreakable id in a 335px box, a 44px
+  window; the response table's 14rem model column left 111px;
+- a Tab onto a partly visible Source link did not scroll it into view, leaving
+  its ring outside the box;
+- no column said which months are provisional (SPEC.md section 5.3).
+
+**What was built.** `src/dom.js` `scrollTable`. The caption is a paragraph above
+the scroll box; the table names it with `aria-labelledby`. The paragraph ends
+with a sentence measured from the header cells at every width and scroll
+position, "The vintage and source columns are to the right.", "The columns from
+2024 on are to the right." past four columns, a matching sentence for columns
+scrolled off to the left, and nothing when the table fits. While the table
+overflows, the box is a focusable region, so the keyboard can scroll it in
+engines that do not make an overflowing box focusable; the keyboard order of
+Part 3 section 9 gains that stop inside an open section, before the controls
+the table holds. A control that takes focus inside the box is scrolled until its
+whole ring shows. No shadow, no fade, no arrow: the affordance is still words.
+
+At 600px and below the manifest's series label and the response table's model
+name wrap inside a 9.5rem sticky column, under half of the 335px box, and the
+two model equations leave that column for a list under the table. Above 600px
+the manifest columns are narrowed so that at 1280px and wider the whole table
+fits (1192px in a 1192px box, measured). The manifest gains a Provisional column
+after Last value, from `reader.series[].provisional_segments`: "provisional:
+December 2025, April 2026 and September 2026" for the printed monthly prices,
+read from the ministry's own per row flag because the flags are not contiguous;
+"provisional: June 2026" for the three JODI series; "none flagged" otherwise.
+`tools/validate-artifacts.mjs` fails a flagged series whose words do not say
+provisional.
+
+### C14. Precision and signs
+
+Audit M4 and M5. The waterfall scale is said in whole dollars when its ladder
+ends are whole ("0 to 50 $/bbl", format `count`), not to the cent. Waterfall
+totals print unsigned; steps keep their sign. `pp` prints to one place, not
+three, because the one pp figure on the page is the difference of two
+utilisation figures printed to one place: "+0.401" beside 78.7 and 78.3 claimed
+a precision neither has. The unidentified paragraph names both kinks, "the
+estimated kink moves from 2.28 to 9.87 $/bbl while the slope below it changes
+sign", from `threshold_point_usd_bbl` and `threshold_without_episode_usd_bbl`.
+
+### C15. Marks and rings that no validator measured
+
+Audit S6, S7, M1, M2, M3.
+- **The strip figure's zero rule** runs through each interval row and stops at
+  the label line above the next, so it never crosses "Crude intake with a
+  trend". It was one rule from the first label to the bottom.
+- **Where the zero rule crosses an ink interval line** a 2px `--bg` ring sits
+  under it (`.mark-accent-rule-ring`, 5.5px), the S25 rule for accent on ink.
+  It is drawn only where the interval actually spans zero, so the fallback's
+  lower tick, a pixel or two from the rule, is never covered.
+- **Focus rings.** `.section__inner` must clip for the height motion, and it
+  clipped the left 6px of every ring flush with the column. It now reaches 8px
+  past the column on both sides and is padded back by 8px, so nothing moves and
+  every ring is inside. The seasonal panel's grid column is `minmax(0, 1fr)`,
+  because an open week table had widened the right panel past the section and
+  cut its ring and its caption. A scroll box keeps 8px under its last row.
+- **Words out of the figure face.** The interval cell sets its two ends in
+  `span.num` and "to" in Figtree; "none", the missing dates and the provisional
+  words are Figtree with tabular figures. Dates in Last value stay in mono, as
+  figures.
+- **Rail labels.** A label sits centred on its bracket over a plate only when
+  the plate leaves both end ticks showing; otherwise it moves just right of the
+  bracket, else just left, else onto its own line under the chart. "none" now
+  sits beside week 53 instead of over the end tick of "4 prior years", and at
+  375 px "2026, no second chart yet" takes a line under the rails instead of
+  leaving two stubs that read as arrows.
+
+**How all of it is held.** `tools/check-layout.mjs` measures each of these in
+headless Chromium at 375, 768, 1024, 1280 and 1440 px in both themes, with every
+section and text alternative open, and fails naming the finding. It is not in
+`make gate`, because the gate runs without a browser or a server; `make layout`
+runs it.

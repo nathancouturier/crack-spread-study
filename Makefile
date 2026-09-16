@@ -10,7 +10,7 @@
 # and the four site checks in validate and gate.
 
 .DEFAULT_GOAL := help
-.PHONY: help data data-offline data-jobs note fixtures build build-check test validate gate serve
+.PHONY: help data data-offline data-jobs note fixtures build build-check test validate gate serve layout screenshots
 
 help:
 	@echo "targets"
@@ -54,6 +54,10 @@ help:
 	@echo "                                 node tools/check-dashes.mjs"
 	@echo "  make serve         serve the site at its Pages subpath, http://localhost:8000/crack-spread-study/"
 	@echo "                     equivalent: python scripts/serve.py --port 8000"
+	@echo "  make layout        measure the Now view in headless Chromium, needs make serve running"
+	@echo "                     equivalent: node tools/check-layout.mjs --base http://localhost:8000/crack-spread-study/"
+	@echo "  make screenshots   full page PNGs of the Now view into assets/, needs make serve running"
+	@echo "                     equivalent: node scripts/screenshots.mjs --base http://localhost:8000/crack-spread-study/"
 
 # Fetches from the network. Keeps the previous cache on any failure, and exits
 # non zero if any series ends up failed. SPEC.md section 5.4.
@@ -242,3 +246,26 @@ gate:
 # http://localhost:8000/crack-spread-study/
 serve:
 	python scripts/serve.py --port 8000
+
+# The two browser tools. Neither is in the gate, because the gate runs with no
+# browser and no server; both need `make serve` running in another shell, and
+# any Chromium (Edge, Chrome, Chromium), found by tools/browser.mjs: --browser
+# <path>, else the CRACK_BROWSER environment variable, else the usual install
+# paths. Each run uses a fresh browser profile, because ES modules are cached
+# hard and a reused profile can measure a module graph no longer on disk.
+#
+#   layout        tools/check-layout.mjs. The findings of the Gate 4 audit that
+#                 only a rendered page shows, one check each: sticky columns,
+#                 clipped captions, off screen columns the caption must name,
+#                 clipped focus rings, Provenance prose, marks through labels,
+#                 words in the figure face, page overflow, console errors. Five
+#                 widths, both themes, every section open. About three minutes.
+#   screenshots   scripts/screenshots.mjs. Whole page PNGs, every pixel of the
+#                 height, desktop 1440 and mobile 375, light and dark, closed
+#                 and open, into assets/. Prints each file's size and any
+#                 console error. Point --base at the live subpath for Gate 5.
+layout:
+	node tools/check-layout.mjs --base http://localhost:8000/crack-spread-study/
+
+screenshots:
+	node scripts/screenshots.mjs --base http://localhost:8000/crack-spread-study/
