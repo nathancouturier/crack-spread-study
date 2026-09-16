@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "artifact": "now",
+  "generated_by": "src/crack/export.py",
+  "data_date": "2026-08-01",
+  "describes": "the landing sentence and the three data dates",
+  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "conventions": {
+    "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
+    "decimals": {
+      "usd_bbl": 2,
+      "usd_t": 0,
+      "usd_mmbtu": 2,
+      "mmbtu_per_bbl": 3,
+      "kb_d": 1,
+      "t": 2,
+      "r2": 3,
+      "pp": 3,
+      "pp_per_usd_bbl": 3,
+      "percent": 1,
+      "ratio": 1,
+      "yield_percent": 1,
+      "bbl_per_t": 2,
+      "count": 0,
+      "year": 0
+    },
+    "rounding": "Floats are stored to 6 places. The page prints the decimals of the format a value names.",
+    "segments": "A sentence is a list of segments. A text segment holds words only. A value segment names its field and holds a value with a format, or an ISO date or a word with its label."
+  },
+  "verdict": {
+    "values": {
+      "margin_month": "2026-08-01",
+      "mbr_usd_bbl": 38.050505,
+      "margin_after_gas_usd_bbl": 38.050505,
+      "margin_basis": "net_of_gas",
+      "net_of": {
+        "gas": true,
+        "embedded_gas_intensity_mmbtu_per_bbl": 0.065903,
+        "embedded_gas_mass_yield_percent": 1.0,
+        "costs_subtracted": ["Brent date", "purchased natural gas", "crude freight", "insurance and losses"],
+        "costs_not_subtracted": "every cost of refining other than energy, which the ministry's note says the profession does not value the same way",
+        "other_variable_cost_usd_bbl": 0.0,
+        "source": "https://www.ecologie.gouv.fr/sites/default/files/documents/Mode%20de%20calcul%20de%20la%20marge%20brute%20de%20raffinage%20sur%20brent.pdf"
+      },
+      "percentile_10y": 100.0,
+      "percentile_rank": 120,
+      "percentile_months_below": 119,
+      "percentile_observations": 120,
+      "percentile_window_months": 120,
+      "percentile_window_first_month": "2016-09-01",
+      "percentile_window_last_month": "2026-08-01",
+      "gas_usd_mmbtu": 21.11,
+      "study_gas_intensity_mmbtu_per_bbl": 0.21217,
+      "gas_wedge_usd_bbl": 3.087691,
+      "margin_study_intensity_usd_bbl": 34.962813,
+      "intensity_ratio": 3.219417,
+      "crack_month": "2026-08-01",
+      "carrier": "gasoil",
+      "carrier_name": "gasoil",
+      "carrier_label": "Gazole",
+      "carrier_contribution_usd_bbl": 26.996621,
+      "carrier_reason": null,
+      "threshold_identified": false,
+      "headroom_usd_bbl": null,
+      "run_verdict": "unidentified"
+    },
+    "segments": [
+      {"text": "On the ministry's Rotterdam margin, a refiner kept "},
+      {"field": "mbr_usd_bbl", "value": 38.050505, "format": "usd_bbl"},
+      {"text": " $/bbl after gas in "},
+      {"field": "margin_month", "value": "2026-08-01", "label": "August 2026"},
+      {"text": ", "},
+      {"text": "the most in the "},
+      {"field": "percentile_observations", "value": 120, "format": "count"},
+      {"text": " months to "},
+      {"field": "margin_month", "value": "2026-08-01", "label": "August 2026"},
+      {"text": ", or "},
+      {"field": "margin_study_intensity_usd_bbl", "value": 34.962813, "format": "usd_bbl"},
+      {"text": " at the average US refinery's gas use, "},
+      {"field": "intensity_ratio", "value": 3.219417, "format": "ratio"},
+      {"text": " times the ministry's; "},
+      {"field": "carrier_name", "value": "gasoil", "label": "gasoil"},
+      {"text": " carried the barrel, "},
+      {"field": "carrier_contribution_usd_bbl", "value": 26.996621, "format": "usd_bbl"},
+      {"text": " $/bbl of it at the ministry's own prices for "},
+      {"field": "crack_month", "value": "2026-08-01", "label": "August 2026"},
+      {"text": ", "},
+      {"text": "and this sample cannot say whether runs have room to rise."}
+    ],
+    "headroom_segments": [
+      {"text": "Headroom to the level at which runs get cut is "},
+      {"field": "verdict", "value": "unidentified", "label": "unidentified"},
+      {"text": ". "},
+      {"text": "Take out "},
+      {"field": "episode_first_month", "value": "2020-07-01", "label": "July 2020"},
+      {"text": " to "},
+      {"field": "episode_last_month", "value": "2022-03-01", "label": "March 2022"},
+      {"text": " and the slope below the estimated kink changes sign, so the kink describes one episode rather than a level; its interval, "},
+      {"field": "threshold_ci_low_usd_bbl", "value": 2.028972, "format": "usd_bbl"},
+      {"text": " to "},
+      {"field": "threshold_ci_high_usd_bbl", "value": 11.278972, "format": "usd_bbl"},
+      {"text": " $/bbl"},
+      {"text": ", also runs to the edge of the range searched"},
+      {"text": "."}
+    ],
+    "fallback_segments": [
+      {"text": "The only reading of today's level this study defends is its rank: "},
+      {"field": "mbr_usd_bbl", "value": 38.050505, "format": "usd_bbl"},
+      {"text": " is "},
+      {"text": "the most in the "},
+      {"field": "percentile_observations", "value": 120, "format": "count"},
+      {"text": " months to "},
+      {"field": "margin_month", "value": "2026-08-01", "label": "August 2026"},
+      {"text": "."}
+    ]
+  },
+  "data_dates": [
+    {
+      "id": "margins",
+      "date": "2026-08-01",
+      "label": "August 2026",
+      "provisional": false,
+      "status_word": "final",
+      "fetch_status": "ok",
+      "vintage": "Historique de la marge brute de raffinage sur Brent depuis 2015 (moyennes mensuelles).xlsx, last month 2026-08, Last-Modified Fri, 11 Sep 2026 14:52:54 GMT",
+      "quotations_vintage": "2026-09-04",
+      "quotations_provisional": false,
+      "fetched_at": "2026-09-12T08:51:10Z",
+      "series": ["dgec_mbr_monthly", "dgec_note_printed_monthly", "dgec_brent_monthly"],
+      "segments": [
+        {"text": "Margins run to "},
+        {"field": "date", "value": "2026-08-01", "label": "August 2026"},
+        {"text": " and are "},
+        {"field": "status_word", "value": "final", "label": "final"},
+        {"text": "; the monthly prices that split them are "},
+        {"field": "quotations_status_word", "value": "final", "label": "final"},
+        {"text": " in the ministry's note of "},
+        {"field": "quotations_vintage", "value": "2026-09-04", "label": "4 September 2026"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "weekly_cracks",
+      "date": "2026-09-04",
+      "label": "4 September 2026",
+      "provisional": false,
+      "status_word": "reconstructed",
+      "fetch_status": "ok",
+      "vintage": "latest note prints the week ending 2026-09-04",
+      "fetched_at": "2026-09-13T18:11:38Z",
+      "series": ["dgec_note_reconstructed_weekly", "dgec_note_printed_weekly"],
+      "segments": [
+        {"text": "Weekly cracks run to the week of "},
+        {"field": "date", "value": "2026-09-04", "label": "4 September 2026"},
+        {"text": ", read off the ministry's weekly chart; last fetched on "},
+        {"field": "fetched_at", "value": "2026-09-13T18:11:38Z", "label": "13 September 2026 at 18:11 UTC"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "runs",
+      "date": "2026-06-01",
+      "label": "June 2026",
+      "provisional": true,
+      "status_word": "provisional",
+      "fetch_status": "ok",
+      "vintage": "JODI-Oil World Database, annual CSV files last written Thu, 20 Aug 2026 10:15:22 GMT",
+      "fetched_at": "2026-09-13T06:54:21Z",
+      "series": ["jodi_nwe_refinery_intake_monthly"],
+      "segments": [
+        {"text": "Refinery runs stop at "},
+        {"field": "date", "value": "2026-06-01", "label": "June 2026"},
+        {"text": " and are "},
+        {"field": "status_word", "value": "provisional", "label": "provisional"},
+        {"text": "; JODI revises recent months."}
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "id": "cracks",
+      "name": "Gasoil and gasoline cracks",
+      "artifact": "data/cracks.json",
+      "summary_segments": [
+        {"text": "Gasoil "},
+        {"field": "gasoil_usd_bbl", "value": 91.140128, "format": "usd_bbl"},
+        {"text": " and gasoline "},
+        {"field": "gasoline_usd_bbl", "value": 65.914483, "format": "usd_bbl"},
+        {"text": " $/bbl in the week to "},
+        {"field": "weekly_date", "value": "2026-09-04", "label": "4 September 2026"},
+        {"text": ", read off the ministry's weekly chart; "},
+        {"text": "both above the same week in each of the "},
+        {"field": "n_years", "value": 4, "format": "count"},
+        {"text": " years the weekly series covers"},
+        {"text": "; the note printed "},
+        {"field": "gasoil_printed_usd_bbl", "value": 91.114094, "format": "usd_bbl"},
+        {"text": " and "},
+        {"field": "gasoline_printed_usd_bbl", "value": 65.944778, "format": "usd_bbl"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "margin",
+      "name": "Refining margin and gas",
+      "artifact": "data/margin-stack.json",
+      "summary_segments": [
+        {"text": "How the cracks build the ministry's NWE refining margin in "},
+        {"field": "margin_month", "value": "2026-08-01", "label": "August 2026"},
+        {"text": ", on the ministry's own prices for that month, and what it is worth at the average US refinery's gas use."}
+      ]
+    },
+    {
+      "id": "runs",
+      "name": "Run economics and crude demand",
+      "artifact": "data/run-economics.json",
+      "summary_segments": [
+        {"text": "No level at which runs get cut can be identified. "},
+        {"text": "Crude runs move "},
+        {"field": "capacity_kb_d", "value": 59.338024, "format": "kb_d", "signed": true},
+        {"text": " kb/d per "},
+        {"field": "move_usd_bbl", "value": 10.0, "format": "usd_bbl"},
+        {"text": " $/bbl of margin on the planned model, t "},
+        {"field": "capacity_t", "value": 0.332809, "format": "t", "signed": true},
+        {"text": ", and "},
+        {"field": "fallback_kb_d", "value": 230.362644, "format": "kb_d", "signed": true},
+        {"text": " on a model with a trend, t "},
+        {"field": "fallback_t", "value": 2.004391, "format": "t", "signed": true},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "provenance",
+      "name": "Provenance",
+      "artifact": "data/provenance.json",
+      "summary_segments": [
+        {"text": "None of the "},
+        {"field": "series_count", "value": 20, "format": "count"},
+        {"text": " series failed or went stale"},
+        {"text": " at the last fetch, "},
+        {"field": "last_fetched_at", "value": "2026-09-13T18:11:38Z", "label": "13 September 2026 at 18:11 UTC"},
+        {"text": "; "},
+        {"field": "manual_steps_outstanding", "value": 1, "format": "count"},
+        {"text": " manual step is outstanding: the OPEC archive stops, so the monthly OPEC history of the cracks ends at "},
+        {"field": "opec_last_date", "value": "2026-02-01", "label": "February 2026"},
+        {"text": "."}
+      ]
+    }
+  ]
+}

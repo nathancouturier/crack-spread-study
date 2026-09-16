@@ -1,0 +1,1156 @@
+{
+  "schema_version": 1,
+  "artifact": "provenance",
+  "generated_by": "src/crack/export.py",
+  "data_date": "2026-09-13",
+  "describes": "the manifest whole, and the attribution and licence line for every source",
+  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "conventions": {
+    "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
+    "decimals": {
+      "usd_bbl": 2,
+      "usd_t": 0,
+      "usd_mmbtu": 2,
+      "mmbtu_per_bbl": 3,
+      "kb_d": 1,
+      "t": 2,
+      "r2": 3,
+      "pp": 3,
+      "pp_per_usd_bbl": 3,
+      "percent": 1,
+      "ratio": 1,
+      "yield_percent": 1,
+      "bbl_per_t": 2,
+      "count": 0,
+      "year": 0
+    },
+    "rounding": "Floats are stored to 6 places. The page prints the decimals of the format a value names.",
+    "segments": "A sentence is a list of segments. A text segment holds words only. A value segment names its field and holds a value with a format, or an ISO date or a word with its label."
+  },
+  "attributions": [
+    {
+      "id": "dgec",
+      "who": "DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique",
+      "credit_line": "Source: DGEC, prices credited DGEC-Reuters",
+      "third_party": "Every DGEC price table carries 'Source : DGEC-REUTERS'; the assessments are Reuters'. Parsed values are republished with attribution and the note PDFs are not.",
+      "licence": "Licence Ouverte 2.0, attribution and the date of last update",
+      "series": ["dgec_mbr_monthly", "dgec_brent_monthly", "dgec_note_printed_monthly", "dgec_note_printed_weekly", "dgec_note_reconstructed_weekly", "dgec_note_reconstructed_cracks_weekly", "anchors"],
+      "date_of_last_update": {
+        "dgec_mbr_monthly": "2026-08-01",
+        "dgec_brent_monthly": "2026-08-01",
+        "dgec_note_printed_monthly": "2026-09-01",
+        "dgec_note_printed_weekly": "2026-09-04",
+        "dgec_note_reconstructed_weekly": "2026-09-04",
+        "dgec_note_reconstructed_cracks_weekly": "2026-09-04",
+        "anchors": "2026-08-01"
+      }
+    },
+    {
+      "id": "opec_argus",
+      "who": "OPEC Monthly Oil Market Report, Rotterdam product assessments by Argus",
+      "credit_line": "Argus, via the OPEC Monthly Oil Market Report",
+      "third_party": "The table credits Argus. OPEC is acknowledged as copyright holder, for non commercial use.",
+      "licence": "OPEC permits non commercial reproduction with full acknowledgement",
+      "series": ["opec_rotterdam_products_monthly"],
+      "date_of_last_update": {
+        "opec_rotterdam_products_monthly": "2026-02-01"
+      }
+    },
+    {
+      "id": "world_bank",
+      "who": "World Bank Commodity Price Data (The Pink Sheet)",
+      "credit_line": "World Bank Commodity Price Data (The Pink Sheet)",
+      "third_party": "The Europe gas series is credited in the workbook to Bloomberg Finance L.P. and World Gas Intelligence.",
+      "licence": "CC BY 4.0",
+      "series": ["worldbank_gas_europe_monthly"],
+      "date_of_last_update": {
+        "worldbank_gas_europe_monthly": "2026-08-01"
+      }
+    },
+    {
+      "id": "jodi",
+      "who": "JODI-Oil World Database, International Energy Forum",
+      "credit_line": "JODI-Oil World Database",
+      "third_party": "",
+      "licence": "Website terms with all rights reserved and no data licence; a small filtered extract is committed with attribution, a weaker position than any other source here",
+      "series": ["jodi_nwe_refinery_intake_monthly", "jodi_nwe_refinery_output_monthly", "jodi_nwe_crude_imports_monthly"],
+      "date_of_last_update": {
+        "jodi_nwe_refinery_intake_monthly": "2026-06-01",
+        "jodi_nwe_refinery_output_monthly": "2026-06-01",
+        "jodi_nwe_crude_imports_monthly": "2026-06-01"
+      }
+    },
+    {
+      "id": "energy_institute",
+      "who": "Energy Institute Statistical Review of World Energy 2026",
+      "credit_line": "Energy Institute Statistical Review of World Energy 2026",
+      "third_party": "The capacity sheet includes ICIS and S&P Global Energy data, so the table is not published; only the derived utilisation is.",
+      "licence": "Quotation with attribution; extensive reproduction needs permission",
+      "series": ["ei_refinery_capacity_annual"],
+      "date_of_last_update": {
+        "ei_refinery_capacity_annual": "2025-12-31"
+      }
+    },
+    {
+      "id": "fred_eia",
+      "who": "U.S. Energy Information Administration, retrieved from FRED, Federal Reserve Bank of St. Louis",
+      "credit_line": "U.S. Energy Information Administration, Crude Oil Prices: Brent - Europe [DCOILBRENTEU], retrieved from FRED",
+      "third_party": "",
+      "licence": "EIA data is US public domain with an acknowledgment; FRED asks for citation",
+      "series": ["fred_brent_daily", "fred_eurusd_daily", "eia_brent_daily", "eia_refinery_fuel_2023"],
+      "date_of_last_update": {
+        "fred_brent_daily": "2026-09-09",
+        "fred_eurusd_daily": "2026-09-04",
+        "eia_brent_daily": "2026-09-09",
+        "eia_refinery_fuel_2023": "2023-12-31"
+      }
+    },
+    {
+      "id": "sp_global",
+      "who": "S&P Global Commodity Insights",
+      "credit_line": "S&P Global Commodity Insights, articles of 28 March 2022 and 17 October 2022",
+      "third_party": "",
+      "licence": "Ordinary quotation of individual figures with a link; never charted as a series",
+      "series": ["sp_global_reference"],
+      "date_of_last_update": {
+        "sp_global_reference": "2022-10-17"
+      }
+    },
+    {
+      "id": "ice",
+      "who": "ICE Futures Europe contract specifications",
+      "credit_line": "Conversion factors from ICE Futures Europe crack contract specifications",
+      "third_party": "",
+      "licence": "Cited, no ICE data is used",
+      "series": [],
+      "date_of_last_update": {},
+      "factors": [
+        {"product": "fuel_oil_1pct", "label": "Fioul lourd TBTS (< 1%)", "bbl_per_t": 6.35, "contract": "ICE Fuel Oil Crack, Fuel Oil 1% FOB NWE Cargoes vs Brent 1st Line Future", "url": "https://www.ice.com/products/6753289"},
+        {"product": "gasoil", "label": "Gazole", "bbl_per_t": 7.45, "contract": "ICE Gasoil Crack, Low Sulphur Gasoil 1st Line vs Brent 1st Line Future", "url": "https://www.ice.com/products/6753331"},
+        {"product": "gasoline", "label": "Eurosuper", "bbl_per_t": 8.33, "contract": "ICE Gasoline Crack, Argus Eurobob Oxy FOB Rotterdam Barges vs Brent 1st Line Future", "url": "https://www.ice.com/products/6753285"},
+        {"product": "heating_oil", "label": "Fioul domestique", "bbl_per_t": 7.45, "contract": "ICE Gasoil Crack, Gasoil 0.1% FOB ARA Barges (Platts) vs Brent 1st Line Future (in MTs)", "url": "https://www.ice.com/products/6753295"},
+        {"product": "jet", "label": "Jet", "bbl_per_t": 7.88, "contract": "ICE Jet Fuel Crack, Jet CIF NWE Cargoes vs Brent 1st Line Future", "url": "https://www.ice.com/products/6753303"}
+      ],
+      "retrieved": "2026-09-16"
+    }
+  ],
+  "fonts": {
+    "faces": [
+      {"family": "Fraunces", "use": "the verdict and view titles", "licence": "SIL Open Font License 1.1"},
+      {"family": "Figtree", "use": "body text", "licence": "SIL Open Font License 1.1"},
+      {"family": "JetBrains Mono", "use": "figures in tables and on axes", "licence": "SIL Open Font License 1.1"}
+    ],
+    "substitution": "Body text is set in Figtree, an open licensed stand in for Satoshi, the portfolio's face, whose licence does not allow a copy in a public repository."
+  },
+  "manifest_columns": ["series", "status", "last_date", "fetched_at", "gaps", "vintage", "source"],
+  "manifest": {
+    "schema_version": 1,
+    "generated_at": "2026-09-13T18:14:35Z",
+    "series": [
+      {
+        "series": "anchors",
+        "source": "DGEC, ministere de la Transition ecologique, transcribed by this study",
+        "url": null,
+        "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        "machine_fetched": false,
+        "fetched_at": null,
+        "checked_at": "2026-09-13T18:14:35Z",
+        "rows": 15,
+        "observations": 10,
+        "file_rows": 15,
+        "first_date": "2022-03-01",
+        "last_date": "2026-08-01",
+        "frequency": "monthly",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "2026-09-13",
+        "method": "seed",
+        "committable": true,
+        "licence_note": "Licence Ouverte 2.0 expressly permits extraction, transformation, redistribution and publication, including commercially, on condition of attribution to the concedant and a statement of the date of last update. Attribute to DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique, with the URL and the note date. One doubt, raised at recon 02 section 6.4 rather than hidden: every DGEC price table carries 'Source : DGEC-REUTERS' and the underlying assessments are a commercial vendor's. The ministry's carve out is for an explicit reservation of third party rights and a source credit is not one, so on the face of the documents reuse is permitted. Mitigation: republish the parsed values with attribution, never the NPG PDFs themselves.",
+        "status": "ok",
+        "note": "9 of 9 published MBR anchors reproduce from data/cache/dgec_mbr_monthly.csv to the two decimals DGEC prints, RE MEASURED BY THIS RUN rather than read out of the seed file, and Brent date at 628 $/t for July 2026 reproduces from the published $/bbl at DGEC's own 7.5 bbl/t. The SPEC.md section 5.5 Brent cross check passes on 140 of 140 months against a 95 percent bar, worst month 0.2649 $/bbl, no outliers. 5 of the five July 2026 product anchors are UNVERIFIED and the file says why: the August 2026 notes are deleted from the ministry site and were never archived. tests/test_dgec_anchor.py checks those five against data/cache/dgec_note_printed_monthly.csv and skips only while that file carries no July 2026 row, which it does not today.",
+        "file": "data/seed/anchors.json",
+        "unit": "USD per barrel and USD per tonne",
+        "observation_column": null,
+        "mbr_anchors": 9,
+        "mbr_anchors_reproduced": 9,
+        "mbr_anchors_reproduced_against": "data/cache/dgec_mbr_monthly.csv",
+        "mbr_anchors_that_do_not_reproduce": [],
+        "product_anchors": 5,
+        "product_anchors_unverified": 5,
+        "brent_cross_check_months": 140,
+        "brent_cross_check_within_tolerance": 140,
+        "brent_cross_check_max_usd_bbl": 0.264861478260876
+      },
+      {
+        "series": "dgec_brent_monthly",
+        "source": "DGEC via ecologie.gouv.fr, assessments credited to Reuters",
+        "url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-12T08:51:08Z",
+        "checked_at": null,
+        "rows": 140,
+        "observations": 140,
+        "file_rows": 140,
+        "first_date": "2015-01-01",
+        "last_date": "2026-08-01",
+        "frequency": "monthly",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "Historique du cours du Brent depuis 2015 (moyennes mensuelles)_0.xlsx, last month 2026-08, Last-Modified Mon, 07 Sep 2026 08:10:35 GMT",
+        "method": "published",
+        "committable": true,
+        "licence_note": "Licence Ouverte 2.0 expressly permits extraction, transformation, redistribution and publication, including commercially, on condition of attribution to the concedant and a statement of the date of last update. Attribute to DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique, with the URL and the note date. One doubt, raised at recon 02 section 6.4 rather than hidden: every DGEC price table carries 'Source : DGEC-REUTERS' and the underlying assessments are a commercial vendor's. The ministry's carve out is for an explicit reservation of third party rights and a source credit is not one, so on the face of the documents reuse is permitted. Mitigation: republish the parsed values with attribution, never the NPG PDFs themselves.",
+        "status": "ok",
+        "note": "Brent date monthly averages, means of the daily London closes, read from sheet 'Cours du Brent' of the ministry's own history workbook. 140 months, 2015-01 to 2026-08. The $/b column is DGEC's; brent_usd_t is DERIVED here by multiplying it by 7.5 bbl/t, which is the factor the weekly note itself uses to print Brent date in its $/t quotation table, recovered by recon 02 section 4.3 on five month pairs and reproducing SPEC.md section 5.5's July 2026 anchor of 628 $/t exactly. It is NOT the 7.55 bbl/t the methodology note states for the CAF Brent inside the margin calculation; the two are used in different places and swapping them is a silent 0.67 percent error on the crude leg. The link was discovered from the landing page because the Drupal _N counter in the path is unstable and the spelling the visible label claims returns HTTP 404, recon 02 section 1.2: this run used https://www.ecologie.gouv.fr/sites/default/files/documents/Historique%20du%20cours%20du%20Brent%20depuis%202015%20%28moyennes%20mensuelles%29_0.xlsx. No provisional month, and the reason is the note rather than the calendar. This workbook publishes complete months and its last is 2026-08. A month being over does NOT make its figure final: SPEC.md section 5.5 gives August 2026 as 38.05 provisional on 28 August, after the month had ended. What establishes finality is the ministry's own marker: DGEC prints '(donnees provisoires)' under the provisional column of the weekly note and drops it when the figure goes final, and the note of 4 September 2026 prints 38,05 for August 2026 in a column with no marker. That is decoded by crack.sources.dgec_note, carried per row in dgec_note_printed_monthly, and asserted by tests/test_dgec_anchor.py::test_august_2026_is_final_and_is_not_flagged_provisional. WHAT REMAINS UNCERTAIN: this workbook carries no provisional marker of its own at all, so for any month where no preserved note survives there is no positive evidence of finality, only the absence of a reason to doubt it. The corpus is ten notes.",
+        "file": "data/cache/dgec_brent_monthly.csv",
+        "unit": "USD per barrel, plus USD per tonne derived at 7.5 bbl/t",
+        "observation_column": "brent_usd_bbl",
+        "licence": "Licence Ouverte 2.0 (Etalab)",
+        "attribution": "DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique. Assessments credited 'Source : DGEC-REUTERS'. Licence Ouverte 2.0 requires the source and the date of last update of the data reused, which is the vintage field.",
+        "discovered_url": "https://www.ecologie.gouv.fr/sites/default/files/documents/Historique%20du%20cours%20du%20Brent%20depuis%202015%20%28moyennes%20mensuelles%29_0.xlsx",
+        "last_modified": "Mon, 07 Sep 2026 08:10:35 GMT",
+        "derived_columns": [
+          {"column": "brent_usd_t", "from": "brent_usd_bbl", "factor_bbl_per_t": 7.5, "note": "Derived by this project, not published in this workbook. The weekly note prints the same quantity rounded to the whole dollar. The factor is the note's own, recovered by recon 02 section 4.3 on five month pairs, and must never be confused with the 7.55 bbl/t the methodology note states for the CAF Brent inside the margin calculation."}
+        ],
+        "source_line": "Source : Reuters / DGEC",
+        "assessment_note": "A mean of daily Brent date London closes assessed by Reuters. This is a different assessment from EIA Europe Brent spot, which is what the SPEC.md section 5.5 cross check compares it against."
+      },
+      {
+        "series": "dgec_mbr_monthly",
+        "source": "DGEC via ecologie.gouv.fr, assessments credited to Reuters",
+        "url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-12T08:51:10Z",
+        "checked_at": null,
+        "rows": 140,
+        "observations": 140,
+        "file_rows": 140,
+        "first_date": "2015-01-01",
+        "last_date": "2026-08-01",
+        "frequency": "monthly",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "Historique de la marge brute de raffinage sur Brent depuis 2015 (moyennes mensuelles).xlsx, last month 2026-08, Last-Modified Fri, 11 Sep 2026 14:52:54 GMT",
+        "method": "published",
+        "committable": true,
+        "licence_note": "Licence Ouverte 2.0 expressly permits extraction, transformation, redistribution and publication, including commercially, on condition of attribution to the concedant and a statement of the date of last update. Attribute to DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique, with the URL and the note date. One doubt, raised at recon 02 section 6.4 rather than hidden: every DGEC price table carries 'Source : DGEC-REUTERS' and the underlying assessments are a commercial vendor's. The ministry's carve out is for an explicit reservation of third party rights and a source credit is not one, so on the face of the documents reuse is permitted. Mitigation: republish the parsed values with attribution, never the NPG PDFs themselves.",
+        "status": "ok",
+        "note": "Gross refining margin on Brent, the marge brute de raffinage sur Brent, read from sheet 'Marge brute raffinage sur Brent' of the ministry's own history workbook. 140 months, 2015-01 to 2026-08, in $/b and EUR/t. Both value columns are located by the unit label on the header row and never by position: they are adjacent, they differ by a factor of about seven, and swapping them would have no other symptom. There is no centimes per litre column in this file and none is computed here. This is DGEC's own published figure and it is never overwritten by a replication. The link was discovered from the landing page, this run used https://www.ecologie.gouv.fr/sites/default/files/documents/Historique%20de%20la%20marge%20brute%20de%20raffinage%20sur%20Brent%20depuis%202015%20%28moyennes%20mensuelles%29.xlsx. No provisional month, and the reason is the note rather than the calendar. This workbook publishes complete months and its last is 2026-08. A month being over does NOT make its figure final: SPEC.md section 5.5 gives August 2026 as 38.05 provisional on 28 August, after the month had ended. What establishes finality is the ministry's own marker: DGEC prints '(donnees provisoires)' under the provisional column of the weekly note and drops it when the figure goes final, and the note of 4 September 2026 prints 38,05 for August 2026 in a column with no marker. That is decoded by crack.sources.dgec_note, carried per row in dgec_note_printed_monthly, and asserted by tests/test_dgec_anchor.py::test_august_2026_is_final_and_is_not_flagged_provisional. WHAT REMAINS UNCERTAIN: this workbook carries no provisional marker of its own at all, so for any month where no preserved note survives there is no positive evidence of finality, only the absence of a reason to doubt it. The corpus is ten notes.",
+        "file": "data/cache/dgec_mbr_monthly.csv",
+        "unit": "USD per barrel and EUR per tonne",
+        "observation_column": "mbr_usd_bbl",
+        "licence": "Licence Ouverte 2.0 (Etalab)",
+        "attribution": "DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique. Assessments credited 'Source : DGEC-REUTERS'. Licence Ouverte 2.0 requires the source and the date of last update of the data reused, which is the vintage field.",
+        "discovered_url": "https://www.ecologie.gouv.fr/sites/default/files/documents/Historique%20de%20la%20marge%20brute%20de%20raffinage%20sur%20Brent%20depuis%202015%20%28moyennes%20mensuelles%29.xlsx",
+        "last_modified": "Fri, 11 Sep 2026 14:52:54 GMT",
+        "method_change": {
+          "published_since": "1998",
+          "revised": "2014, with IFPEN",
+          "detailed_method_in_force_from": "2016-01-01",
+          "recomputed_backwards_over": "2014 to 2015",
+          "break_inside_the_published_window": false,
+          "note": "The methodology note says 'La DGEC calcule et diffuse une marge brute de raffinage sur Brent depuis 1998', that the method was revised with IFPEN in 2014, that 'Le detail du mode de calcul de la marge brute utilise a partir du 1er janvier 2016 figure en annexe', and that 'Afin d'assurer la continuite statistique, la marge de raffinage a ete retroactivement recalculee sur la base de la nouvelle methodologie pour la periode 2014-2015'. The published file starts 2015-01, inside that recomputed window, so the entire series available to this project is on one method and contains no break to mark. SPEC.md section 4.3 expects a break; there is none to draw, and the Method view says so rather than drawing a line where nothing happened. The pre 2014 method is not comparable and the pre 2015 data is not published.",
+          "source": "Mode de calcul de la marge brute de raffinage sur brent, edition of 1 August 2019, https://www.ecologie.gouv.fr/sites/default/files/documents/Mode%20de%20calcul%20de%20la%20marge%20brute%20de%20raffinage%20sur%20brent.pdf"
+        },
+        "note_leads_file": "The weekly note leads this workbook by at least one month. On 2026-09-11 the MBR workbook ended 2026-07 while the note of 4 September 2026 already printed August 2026 at 38.05 $/b, final, in the column carrying no '(donnees provisoires)' marker. An adapter reading only the workbook is therefore a month stale on the headline margin. The splice of the note's last complete month onto the workbook is recon 02 open question 5 and is NOT done here: it would mix two vintages of one series under one label. When it is done it gets its own flagged column.",
+        "units_not_in_file": "SPEC.md section 5.1 says the MBR is published in $/bbl, EUR/t and c EUR/l. This workbook carries $/b and EUR/t only; there is no centimes per litre column, recon 02 section 1.4. That unit exists solely in the weekly note, whose MBR table prints all three. None is computed here: it would need a litres per tonne density for DGEC's product basket that DGEC does not publish, and the result would be this study's number wearing the ministry's label.",
+        "replication_note": "SPEC.md section 4.3 layer 2 asks for this margin to be recomputed from DGEC's own published quotations to within 0.50 $/bbl. Recon 02 section 5.6 established that it cannot be: EuroBOB, essence export, naphta, propane and butane, the PEG Nord day ahead gas price, the GRTgaz transport tariff and the Sullom Voe to Le Havre Aframax freight are never published, which is five of the ten product quotations plus the gas and freight legs. The spec's own fallback applies: name the missing inputs and use the official series. The partial attribution of section 4.3 layer 3 over the five published quotations, 59.3 percent of the mass yield, is what can honestly be built, with everything else on a residual line."
+      },
+      {
+        "series": "dgec_note_printed_monthly",
+        "source": "DGEC, ministere de la Transition ecologique, weekly note, printed table, monthly columns",
+        "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
+        "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-13T18:11:38Z",
+        "checked_at": null,
+        "rows": 7,
+        "observations": 7,
+        "file_rows": 7,
+        "first_date": "2025-11-01",
+        "last_date": "2026-09-01",
+        "frequency": "monthly",
+        "gaps": ["2026-01-01", "2026-05-01", "2026-06-01", "2026-07-01"],
+        "provisional_from": "2025-12-01",
+        "vintage": "latest note prints the week ending 2026-09-04",
+        "method": "parsed",
+        "committable": true,
+        "licence_note": "Licence Ouverte 2.0 expressly permits extraction, transformation, redistribution and publication, including commercially, on condition of attribution to the concedant and a statement of the date of last update. Attribute to DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique, with the URL and the note date. One doubt, raised at recon 02 section 6.4 rather than hidden: every DGEC price table carries 'Source : DGEC-REUTERS' and the underlying assessments are a commercial vendor's. The ministry's carve out is for an explicit reservation of third party rights and a source credit is not one, so on the face of the documents reuse is permitted. Mitigation: republish the parsed values with attribution, never the NPG PDFs themselves.",
+        "status": "ok",
+        "note": "Built from the 10 weekly note PDFs preserved under data/private/dgec_notes/, which were machine fetched from ecologie.gouv.fr and the Internet Archive. The PDFs are not committed. The ministry publishes one note at a time and deletes the previous one, so this corpus cannot be rebuilt from the web and the only way the series grows is prospective collection: run 'python -m crack.sources.dgec_note --collect' weekly. READ fetched_at CAREFULLY: it is when this run read the preserved documents, not when the documents were downloaded, and last_date is the honest end of the data. THE MONTHLY COLUMNS OF THE PRINTED QUOTATION TABLE, WITH THE MINISTRY'S OWN PROVISIONAL MARKER CARRIED PER ROW. SPEC.md section 2 rule 5. The six column layout that prints monthly averages first appears in the December 2025 note, recon 02 section 3.3, so this series is 7 months from 6 of the 10 preserved notes and there is no earlier monthly product history to be had: DGEC publishes monthly workbooks for Brent and for the MBR and none for the products. 3 month(s) are still flagged provisional by the ministry, 2025-12, 2026-04, 2026-09, and the flag is per row because a month goes final while a later one is still provisional. 2 month(s) have been revised since their first print and revision_history carries every vintage of every month with its flag and its seven values, so the revision is readable out of this file and not only out of the PDFs. The two that matter: March 2026 was printed provisional at 946 $/t Eurosuper on 20 March and 976 on 27 March, then FINAL at 988 on 3 April, and April 2026 moved from 1,431 $/t Gazole to 1,288 between two PROVISIONAL prints three weeks apart, a 143 $/t revision. max_revision_usd_t is NaN where a month has been printed once, because a revision over one print is undefined rather than zero. THIS IS THE ONLY MONTHLY SERIES IN THE PROJECT CARRYING JET AND FIOUL LOURD TBTS AS DGEC $/t QUOTATIONS: neither is plotted on the page 3 chart, so neither has a weekly reconstruction, and DGEC publishes no monthly product workbook. The neighbours are not substitutes and are named rather than ignored: opec_rotterdam_products_monthly carries Argus assessments of jet and of 1 percent fuel oil at the same hub, on a different specification and in $/bbl, and jodi_nwe_refinery_output_monthly carries jetkero volumes, which are not a price. The gaps are real: the notes print no monthly column for a month no preserved note happened to cover.",
+        "file": "data/cache/dgec_note_printed_monthly.csv",
+        "unit": "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
+        "observation_column": "brent_date_usd_t",
+        "manual_step": [
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note.", "how": "python -m crack.sources.dgec_note --collect , two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.", "cadence": "weekly, every week, without exception", "status": "standing"}
+        ]
+      },
+      {
+        "series": "dgec_note_printed_weekly",
+        "source": "DGEC, ministere de la Transition ecologique, weekly note, printed table",
+        "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
+        "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-13T18:11:38Z",
+        "checked_at": null,
+        "rows": 18,
+        "observations": 18,
+        "file_rows": 18,
+        "first_date": "2024-06-21",
+        "last_date": "2026-09-04",
+        "frequency": "weekly",
+        "gaps": ["2024-07-01", "2024-07-08", "2024-07-15", "2024-07-22", "2024-08-12", "2024-08-19", "2024-09-09", "2024-09-16", "2024-09-23", "2024-09-30", "2024-10-07", "2024-10-14", "2024-10-21", "2024-10-28", "2024-11-04", "2024-11-11", "2024-11-18", "2024-11-25", "2024-12-02", "2024-12-09", "2024-12-16", "2024-12-23", "2024-12-30", "2025-01-20", "2025-01-27", "2025-02-03", "2025-02-10", "2025-02-17", "2025-02-24", "2025-03-03", "2025-03-10", "2025-03-17", "2025-03-24", "2025-03-31", "2025-04-07", "2025-04-14", "2025-04-21", "2025-04-28", "2025-05-05", "2025-05-12", "2025-05-19", "2025-05-26", "2025-06-02", "2025-06-09", "2025-06-16", "2025-06-23", "2025-06-30", "2025-07-07", "2025-07-14", "2025-07-21", "2025-07-28", "2025-08-04", "2025-08-11", "2025-08-18", "2025-08-25", "2025-09-01", "2025-09-08", "2025-09-15", "2025-09-22", "2025-09-29", "2025-10-06", "2025-10-13", "2025-10-20", "2025-10-27", "2025-11-03", "2025-11-10", "2025-11-17", "2025-11-24", "2025-12-01", "2025-12-22", "2025-12-29", "2026-01-05", "2026-01-12", "2026-01-19", "2026-01-26", "2026-02-02", "2026-02-09", "2026-02-16", "2026-02-23", "2026-03-02", "2026-04-06", "2026-04-27", "2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17"],
+        "provisional_from": null,
+        "vintage": "latest note prints the week ending 2026-09-04",
+        "method": "parsed",
+        "committable": true,
+        "licence_note": "Licence Ouverte 2.0 expressly permits extraction, transformation, redistribution and publication, including commercially, on condition of attribution to the concedant and a statement of the date of last update. Attribute to DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique, with the URL and the note date. One doubt, raised at recon 02 section 6.4 rather than hidden: every DGEC price table carries 'Source : DGEC-REUTERS' and the underlying assessments are a commercial vendor's. The ministry's carve out is for an explicit reservation of third party rights and a source credit is not one, so on the face of the documents reuse is permitted. Mitigation: republish the parsed values with attribution, never the NPG PDFs themselves.",
+        "status": "ok",
+        "note": "Built from the 10 weekly note PDFs preserved under data/private/dgec_notes/, which were machine fetched from ecologie.gouv.fr and the Internet Archive. The PDFs are not committed. The ministry publishes one note at a time and deletes the previous one, so this corpus cannot be rebuilt from the web and the only way the series grows is prospective collection: run 'python -m crack.sources.dgec_note --collect' weekly. READ fetched_at CAREFULLY: it is when this run read the preserved documents, not when the documents were downloaded, and last_date is the honest end of the data. These are the figures printed in the tables, parsed by row and column label. Two weekly columns per note, three of them reprints of a week an adjacent note already printed, so 18 distinct weeks. Jet and Fioul lourd appear HERE and in dgec_note_printed_monthly and nowhere else: they are not on the page 3 chart and therefore have no weekly reconstruction. A spread, a disagreement or a revision computed over a single reading is NaN in these files and never 0. Zero is a measurement meaning two or more readings agreed; an empty cell means there was only ever one reading and the quantity is undefined. 25 of the 219 reconstructed weeks and 16 of the 18 printed weeks are in the second case. Anything rendering these columns must print the empty cell as 'no cross check', never as '0.00'.",
+        "file": "data/cache/dgec_note_printed_weekly.csv",
+        "unit": "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
+        "observation_column": "brent_date_usd_t",
+        "manual_step": [
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note.", "how": "python -m crack.sources.dgec_note --collect , two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.", "cadence": "weekly, every week, without exception", "status": "standing"}
+        ]
+      },
+      {
+        "series": "dgec_note_reconstructed_cracks_weekly",
+        "source": "computed by this study from dgec_note_reconstructed_weekly",
+        "url": "",
+        "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-13T18:11:38Z",
+        "checked_at": null,
+        "rows": 219,
+        "observations": 219,
+        "file_rows": 219,
+        "first_date": "2022-07-01",
+        "last_date": "2026-09-04",
+        "frequency": "weekly",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "latest note prints the week ending 2026-09-04",
+        "method": "derived",
+        "committable": true,
+        "licence_note": "Licence Ouverte 2.0 expressly permits extraction, transformation, redistribution and publication, including commercially, on condition of attribution to the concedant and a statement of the date of last update. Attribute to DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique, with the URL and the note date. One doubt, raised at recon 02 section 6.4 rather than hidden: every DGEC price table carries 'Source : DGEC-REUTERS' and the underlying assessments are a commercial vendor's. The ministry's carve out is for an explicit reservation of third party rights and a source credit is not one, so on the face of the documents reuse is permitted. Mitigation: republish the parsed values with attribution, never the NPG PDFs themselves. This series is additionally computed by this study from a reconstruction by this study. It is not a DGEC figure and must never be presented as one.",
+        "status": "ok",
+        "note": "crack = product $/t divided by the ICE contract factor, minus Brent date $/t divided by 7.5, SPEC.md section 4.2 with config.DGEC_BBL_PER_T_BRENT_NOTE. Both legs come from the same chart on the same page of the same note, so they share a date and an averaging window. EVERY VALUE HERE INHERITS THE RECONSTRUCTION: see dgec_note_reconstructed_weekly, whose measured error is 0.17 to 0.44 $/t, about 0.02 to 0.06 $/bbl on gasoil. THE 0.17 TO 0.44 $/t ERROR IS A LEAVE ONE SERIES OUT FIGURE. The per note offset is fitted on three products' anchors and used to predict the fourth's, and all eight anchors of every note sit on the LAST TWO WEEKS of a 105 week chart. It is therefore out of sample across products and in sample across time, and it does NOT bound the other 103 weeks. The figure that does speak to time is the note pair overlap, 0.30 $/t mean absolute and 1.68 $/t worst single week, and that is the one to quote next to a week in the middle of the series. The gasoline crack disagrees with the OPEC Rotterdam premium gasoline 98 crack by up to 13 $/bbl because the two sources quote different products and imply 6.937 to 8.333 barrels per tonne, mean 7.7185, over the 44 months 2022-07 to 2026-02 where both exist, rather than the contract's 8.33. That gap is reported, not tuned away. The provenance columns of dgec_note_reconstructed_weekly travel with every row here, evidence_class included.",
+        "file": "data/cache/dgec_note_reconstructed_cracks_weekly.csv",
+        "unit": "USD per barrel",
+        "observation_column": "crack_gasoil_usd_bbl",
+        "manual_step": [
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note.", "how": "python -m crack.sources.dgec_note --collect , two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.", "cadence": "weekly, every week, without exception", "status": "standing"}
+        ]
+      },
+      {
+        "series": "dgec_note_reconstructed_weekly",
+        "source": "DGEC, ministere de la Transition ecologique, weekly note, page 3 chart, decoded by this study",
+        "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
+        "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-13T18:11:38Z",
+        "checked_at": null,
+        "rows": 219,
+        "observations": 219,
+        "file_rows": 219,
+        "first_date": "2022-07-01",
+        "last_date": "2026-09-04",
+        "frequency": "weekly",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "latest note prints the week ending 2026-09-04",
+        "method": "reconstructed",
+        "committable": true,
+        "licence_note": "Licence Ouverte 2.0 expressly permits extraction, transformation, redistribution and publication, including commercially, on condition of attribution to the concedant and a statement of the date of last update. Attribute to DGEC, Direction generale de l'energie et du climat, ministere de la Transition ecologique, with the URL and the note date. One doubt, raised at recon 02 section 6.4 rather than hidden: every DGEC price table carries 'Source : DGEC-REUTERS' and the underlying assessments are a commercial vendor's. The ministry's carve out is for an explicit reservation of third party rights and a source credit is not one, so on the face of the documents reuse is permitted. Mitigation: republish the parsed values with attribution, never the NPG PDFs themselves. This series is additionally a reconstruction by this study, not a DGEC publication. It must be labelled as such everywhere it appears, with its measured error next to it, and it must never be presented as a DGEC figure.",
+        "status": "ok",
+        "note": "Built from the 10 weekly note PDFs preserved under data/private/dgec_notes/, which were machine fetched from ecologie.gouv.fr and the Internet Archive. The PDFs are not committed. The ministry publishes one note at a time and deletes the previous one, so this corpus cannot be rebuilt from the web and the only way the series grows is prospective collection: run 'python -m crack.sources.dgec_note --collect' weekly. READ fetched_at CAREFULLY: it is when this run read the preserved documents, not when the documents were downloaded, and last_date is the honest end of the data. RECONSTRUCTED FROM THE VECTOR POLYLINE ON PAGE 3 OF THE DGEC WEEKLY NOTE, CALIBRATED AGAINST THE PRINTED WEEKLY AVERAGES ON THE SAME PAGE. Measured error, recon 05 sections 11 and 12: 0.17 to 0.44 $/t mean absolute out of sample by leave one series out, worst single anchor 0.87 $/t, mean absolute agreement between overlapping notes 0.30 $/t, worst single week 1.68 $/t. THE 0.17 TO 0.44 $/t ERROR IS A LEAVE ONE SERIES OUT FIGURE. The per note offset is fitted on three products' anchors and used to predict the fourth's, and all eight anchors of every note sit on the LAST TWO WEEKS of a 105 week chart. It is therefore out of sample across products and in sample across time, and it does NOT bound the other 103 weeks. The figure that does speak to time is the note pair overlap, 0.30 $/t mean absolute and 1.68 $/t worst single week, and that is the one to quote next to a week in the middle of the series. 25 of the 219 weeks are covered by a single chart geometry and therefore have NO cross check, flagged as cross_checked false, and evidence_class splits them by kind: 6 of them, 2022-07-01 to 2022-08-05, are marked single_geometry_oldest. THE SIX OLDEST RECONSTRUCTED WEEKS, 2022-07-01 to 2022-08-05, carry two weaknesses at once and are the least defended data in this project. They are covered by exactly ONE chart geometry, so cross_checked is False and no second note can contradict them, AND they sit at the far left of that one note's chart, 105 weeks from its nearest calibration anchor, where the only evidence about the fit is the tick residual. Every other uncorroborated week has at most one of the two problems: the 19 newest single geometry weeks are uncorroborated but sit ON the anchored end. evidence_class marks these six 'single_geometry_oldest' so the compounding is a value in the data and not a sentence in a document. The gates are blind to a smooth distortion anchored at the right hand end. The audit tilted a real note's chart, leaving the anchored right end untouched and bending the left: a 10 point tilt moved the oldest week by 73.49 $/t, about 10 $/bbl on the gasoil crack, while the headline anchor residual gate read 0.711 against its limit of 1.50 and every other gate passed. A 1 point tilt moved it 7.35 $/t at a gate reading of 0.391. What defends the series against this is not the gates, it is the overlap between notes, because a given week sits at a different horizontal position in each note that plots it: 194 of 219 weeks have two or more independent geometries. The 25 that do not have no defence against it, and the six marked single_geometry_oldest have none and sit where the distortion is largest. A decoded value is the calibrated height of a point on a raster free vector curve, but the curve itself was drawn from rounded data onto a finite grid, so two different weekly prices can land on the same point height. Eurosuper reads exactly 719.1192666134755 on 2024-09-20, 2024-09-27 and 2024-11-01, and nothing in this file distinguishes a genuinely flat week from two different prices quantised onto one height. The printed table is the only cure and it covers 18 weeks. Treat an exact repeat of a reconstructed value at adjacent weeks as 'indistinguishable at the resolution of the chart', never as 'the price did not move'. A spread, a disagreement or a revision computed over a single reading is NaN in these files and never 0. Zero is a measurement meaning two or more readings agreed; an empty cell means there was only ever one reading and the quantity is undefined. 25 of the 219 reconstructed weeks and 16 of the 18 printed weeks are in the second case. Anything rendering these columns must print the empty cell as 'no cross check', never as '0.00'. brent_date_usd_t is the least accurately decoded of the four plotted series. It is the lowest line on a chart scaled for the product lines, so the same pixel error is a larger relative error, and the worst single week disagreement between two notes in the whole overlap test, 1.68 $/t, is on Brent. Where a Brent figure matters, prefer dgec_brent_monthly, which DGEC publishes as a workbook. wb_NPG-2026.04.03 and NPG-2026.09.04 both draw a 400 to 1500 axis over 12 ticks at the same 4.3212 point pitch, so over their 83 common weeks the decoder cannot disagree with itself: their standard deviation is exactly 0.00 and their difference a constant 0.18 $/t. That pair proves the decoder is deterministic and proves the two notes carry the same underlying values. It proves nothing about accuracy. The independent evidence comes from the pairs with different axis scales, which is most of them, and they give the 0.30 $/t figure. n_independent_geometries counts distinct chart geometries rather than notes so that this is visible per week. Jet and Fioul lourd are NOT plotted on this chart and are deliberately absent: reconstructing them would be a synthetic series.",
+        "file": "data/cache/dgec_note_reconstructed_weekly.csv",
+        "unit": "USD per tonne",
+        "observation_column": "gazole_usd_t",
+        "reconstruction": {
+          "method": "reconstructed from the vector polyline on page 3 of the DGEC weekly note, calibrated against the printed weekly averages on the same page",
+          "calibration": "one additive offset per note, fitted by least squares on that note's own eight printed anchors, four plotted series times the two printed weeks. The offset runs -2.38 to +2.82 $/t across the corpus and changes sign between notes, so it can never be a constant",
+          "error_usd_t": {
+            "out_of_sample_mae_usd_t": [0.17, 0.44],
+            "out_of_sample_worst_usd_t": 0.87,
+            "note_pair_mean_absolute_usd_t": 0.3,
+            "note_pair_worst_week_usd_t": 1.68,
+            "method": "leave one series out: the per note offset is fitted on three products' six printed anchors and used to predict the fourth product's two, rotating through all four products in all ten notes"
+          },
+          "error_bar_axis": "THE 0.17 TO 0.44 $/t ERROR IS A LEAVE ONE SERIES OUT FIGURE. The per note offset is fitted on three products' anchors and used to predict the fourth's, and all eight anchors of every note sit on the LAST TWO WEEKS of a 105 week chart. It is therefore out of sample across products and in sample across time, and it does NOT bound the other 103 weeks. The figure that does speak to time is the note pair overlap, 0.30 $/t mean absolute and 1.68 $/t worst single week, and that is the one to quote next to a week in the middle of the series.",
+          "gates_are_blind_to": "The gates are blind to a smooth distortion anchored at the right hand end. The audit tilted a real note's chart, leaving the anchored right end untouched and bending the left: a 10 point tilt moved the oldest week by 73.49 $/t, about 10 $/bbl on the gasoil crack, while the headline anchor residual gate read 0.711 against its limit of 1.50 and every other gate passed. A 1 point tilt moved it 7.35 $/t at a gate reading of 0.391. What defends the series against this is not the gates, it is the overlap between notes, because a given week sits at a different horizontal position in each note that plots it: 194 of 219 weeks have two or more independent geometries. The 25 that do not have no defence against it, and the six marked single_geometry_oldest have none and sit where the distortion is largest.",
+          "least_defended_weeks": "THE SIX OLDEST RECONSTRUCTED WEEKS, 2022-07-01 to 2022-08-05, carry two weaknesses at once and are the least defended data in this project. They are covered by exactly ONE chart geometry, so cross_checked is False and no second note can contradict them, AND they sit at the far left of that one note's chart, 105 weeks from its nearest calibration anchor, where the only evidence about the fit is the tick residual. Every other uncorroborated week has at most one of the two problems: the 19 newest single geometry weeks are uncorroborated but sit ON the anchored end. evidence_class marks these six 'single_geometry_oldest' so the compounding is a value in the data and not a sentence in a document.",
+          "quantisation": "A decoded value is the calibrated height of a point on a raster free vector curve, but the curve itself was drawn from rounded data onto a finite grid, so two different weekly prices can land on the same point height. Eurosuper reads exactly 719.1192666134755 on 2024-09-20, 2024-09-27 and 2024-11-01, and nothing in this file distinguishes a genuinely flat week from two different prices quantised onto one height. The printed table is the only cure and it covers 18 weeks. Treat an exact repeat of a reconstructed value at adjacent weeks as 'indistinguishable at the resolution of the chart', never as 'the price did not move'.",
+          "undefined_spread": "A spread, a disagreement or a revision computed over a single reading is NaN in these files and never 0. Zero is a measurement meaning two or more readings agreed; an empty cell means there was only ever one reading and the quantity is undefined. 25 of the 219 reconstructed weeks and 16 of the 18 printed weeks are in the second case. Anything rendering these columns must print the empty cell as 'no cross check', never as '0.00'.",
+          "evidence_classes": ["cross_checked", "single_geometry_interior", "single_geometry_newest", "single_geometry_oldest", "no_coverage"],
+          "least_accurate_series": "brent_date_usd_t is the least accurately decoded of the four plotted series. It is the lowest line on a chart scaled for the product lines, so the same pixel error is a larger relative error, and the worst single week disagreement between two notes in the whole overlap test, 1.68 $/t, is on Brent. Where a Brent figure matters, prefer dgec_brent_monthly, which DGEC publishes as a workbook.",
+          "degeneracy": "wb_NPG-2026.04.03 and NPG-2026.09.04 both draw a 400 to 1500 axis over 12 ticks at the same 4.3212 point pitch, so over their 83 common weeks the decoder cannot disagree with itself: their standard deviation is exactly 0.00 and their difference a constant 0.18 $/t. That pair proves the decoder is deterministic and proves the two notes carry the same underlying values. It proves nothing about accuracy. The independent evidence comes from the pairs with different axis scales, which is most of them, and they give the 0.30 $/t figure. n_independent_geometries counts distinct chart geometries rather than notes so that this is visible per week.",
+          "not_reconstructed": "Jet and Fioul lourd TBTS are not plotted on the chart and are therefore absent from this series. They exist only in dgec_note_printed_weekly, 18 observations",
+          "gates": {
+            "chart_series": 4,
+            "min_points": 50,
+            "min_y_ticks": 4,
+            "max_tick_residual_usd_t": 2.0,
+            "anchors": 8,
+            "max_anchor_residual_usd_t": 1.5,
+            "weeks_per_point": [0.98, 1.02]
+          }
+        },
+        "manual_step": [
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note.", "how": "python -m crack.sources.dgec_note --collect , two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.", "cadence": "weekly, every week, without exception", "status": "standing"}
+        ]
+      },
+      {
+        "series": "ei_refinery_capacity_annual",
+        "source": "Energy Institute Statistical Review of World Energy",
+        "url": "https://www.energyinst.org/__data/assets/file/0008/1827620/EI-Stats-Review-ALL-data.xlsx",
+        "page_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-11T00:00:00Z",
+        "checked_at": "2026-09-13T06:54:19Z",
+        "rows": 61,
+        "observations": 61,
+        "file_rows": 61,
+        "first_date": "1965-12-31",
+        "last_date": "2025-12-31",
+        "frequency": "annual",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "2026 Energy Institute Statistical Review of World Energy",
+        "method": "published",
+        "committable": false,
+        "licence_note": "The review permits quotation with attribution but says that 'for extensive reproduction of tables and/or charts, permission must first be obtained'. Committing the capacity table, even five country rows, is extensive reproduction of a table and is NOT permitted without written permission from statisticalreview@energyinst.org. Worse, the capacity sheet is footnoted as including data from ICIS and S&P Global Energy, and 'The redistribution or reproduction of data whose source is S&P Global Energy or S&P Global Inc, is strictly prohibited without its prior authorisation'. The footnote does not say which rows came from which supplier, so the S&P part cannot be stripped out. The raw capacity therefore stays in data/private/ and only utilisation, the ratio of a JODI series to an EI series, is published. SPEC.md section 6.1 already provides the fallback if even that is refused: use intake with a trend and closure dummies, and say so.",
+        "status": "ok",
+        "note": "Atmospheric distillation capacity at year end on a calendar-day basis, thousand barrels daily, for BE, DE, FR, NL, GB, read from the sheet 'Oil refinery - capacity' by row label and by the year printed above each column. THE LATEST YEAR IS 2025 AND THERE IS NO 2026 CAPACITY ANYWHERE IN THIS WORKBOOK, while the study's live months are 2026, so any 2026 utilisation rests on an assumption no source has published and must be labelled where it is made. The five country total for 2025 is 6238.0 kb/d. THIS CACHE IS NOT COMMITTABLE: the Review permits quotation with attribution but requires written permission for extensive reproduction of tables, and the capacity sheet is footnoted 'Source: Includes data from ICIS and S&P Global Energy' while the Review states that redistribution of S&P sourced data is strictly prohibited. The footnote does not say which rows came from which supplier, so the S&P part cannot be stripped out. See the module docstring for the three options open at Gate 1 and for the reason publishing only the ratio does not by itself withhold the table.",
+        "file": "data/private/ei_refinery_capacity_annual.csv",
+        "unit": "thousand barrels daily, capacity at year end",
+        "observation_column": "nwe5_capacity_kb_d",
+        "workbook": {
+          "origin": "adopted",
+          "obtained_at": "2026-09-11T00:00:00Z",
+          "obtained_from": "data\\private\\probe\\ei\\EI-Stats-Review-ALL-data.xlsx",
+          "sha256": "846e72c22d0a6cc14358d0faa0caafa99d6080c65218b19954dd62b11b72c448",
+          "content_length": 3973716
+        },
+        "live_fetch": "BLOCKED. energyinst.org answered HTTP 403 with Server: cloudflare and Cf-Mitigated: challenge to every request from this machine on 2026-09-13, on https://www.energyinst.org/statistical-review/resources-and-data-downloads as well as on the workbook itself, after serving both to the same machine on 2026-09-11. It is an interactive bot challenge and this project does not defeat those. The workbook is downloaded by hand and adopted, and this series is therefore not part of the weekly refresh job.",
+        "latest_year": 2025,
+        "sheet": "Oil refinery - capacity",
+        "countries": {
+          "Belgium": "BE",
+          "Germany": "DE",
+          "France": "FR",
+          "Netherlands": "NL",
+          "United Kingdom": "GB"
+        },
+        "sheet_source_footnote": "Source: Includes data from ICIS and S&P Global Energy",
+        "prohibition": "REPRODUCTION OF THIS TABLE IS NOT PERMITTED. The Energy Institute Statistical Review 2026 says: 'Publishers are welcome to quote from this Review provided that they attribute the source to Energy Institute Statistical Review of World Energy 2026. However, for extensive reproduction of tables and/or charts, permission must first be obtained from: EI Statistical Review of World Energy, 61 New Cavendish Street, London W1G 7AR, statisticalreview@energyinst.org'. It also says: 'The redistribution or reproduction of data whose source is S&P Global Energy or S&P Global Inc, is strictly prohibited without its prior authorisation.' The capacity sheet itself is footnoted 'Source: Includes data from ICIS and S&P Global Energy' and does not say which rows came from which supplier, so the S&P sourced part cannot be separated out. This cache therefore lives in data/private/, is gitignored, and is never deployed.",
+        "gate_1_decision": {
+          "question": "SPEC.md section 5.4 requires every cache committed so the site builds with no network, and SPEC.md non negotiable 6 requires anything that cannot be redistributed to stay in data/private/. Both cannot hold for this series. The owner chooses.",
+          "options": ["Ask EI for written permission to publish five country rows, statisticalreview@energyinst.org.", "Publish only the derived utilisation ratio and keep the capacity private. NOTE that the intake is itself committed, so a full precision published ratio hands the capacity back by division. See the module docstring.", "Take SPEC.md section 6.1's own fallback and model intake with a trend and closure dummies instead, saying so on the page."],
+          "chosen": null
+        },
+        "currency_note": "The latest published year is 2025. There is no 2026 capacity in this workbook and none anywhere else in the Review, so the manifest says which year the denominator is from rather than implying it is current. crack.sources.ei.capacity_monthly returns NaN past the last published year end rather than carrying it forward.",
+        "revision_note": "EI states that 'Each year revisions are made to historical data when updated or where more reliable data sources have become available'. The download URL carries an edition specific asset id and is not versioned, so the vintage above is read from the workbook's own Contents sheet and data/private/ei/index.json records a sha256 of the bytes that were parsed.",
+        "workbook_fetched_this_run": false
+      },
+      {
+        "series": "eia_brent_daily",
+        "source": "US Energy Information Administration, series RBRTE",
+        "url": "https://www.eia.gov/dnav/pet/hist_xls/RBRTEd.xls",
+        "page_url": "https://www.eia.gov/dnav/pet/hist/RBRTEd.htm",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-12T08:30:00Z",
+        "checked_at": null,
+        "rows": 9973,
+        "observations": 9973,
+        "file_rows": 9973,
+        "first_date": "1987-05-20",
+        "last_date": "2026-09-09",
+        "frequency": "daily",
+        "gaps": ["1987-06-15", "1987-12-25", "1988-01-01", "1988-01-07", "1988-01-26", "1988-04-01", "1988-04-04", "1988-12-26", "1989-01-02", "1989-03-24", "1989-03-27", "1989-05-01", "1989-12-25", "1989-12-26", "1990-01-01", "1990-04-13", "1990-04-16", "1990-05-28", "1990-12-25", "1991-01-01", "1991-03-29", "1991-05-27", "1991-12-25", "1992-01-01", "1992-04-17", "1992-05-25", "1992-12-25", "1992-12-28", "1993-01-01", "1993-02-03", "1993-04-09", "1993-04-12", "1993-05-03", "1993-05-31", "1993-08-30", "1993-12-27", "1993-12-28", "1994-01-03", "1994-04-01", "1994-04-04", "1994-05-02", "1994-05-30", "1994-08-29", "1994-12-26", "1994-12-27", "1995-01-02", "1995-04-14", "1995-04-17", "1995-05-29", "1995-08-28", "1995-12-25", "1995-12-26", "1996-01-01", "1996-04-05", "1996-04-08", "1996-05-06", "1996-05-27", "1996-08-26", "1996-12-25", "1996-12-26", "1997-01-01", "1997-01-14", "1997-02-07", "1997-03-07", "1997-05-26", "1997-07-01", "1997-07-04", "1997-07-08", "1997-08-22", "1997-09-01", "1997-11-11", "1997-12-25", "1997-12-26", "1998-01-01", "1998-04-10", "1998-04-13", "1998-05-04", "1998-05-25", "1998-08-31", "1998-12-25", "1998-12-28", "1999-01-01", "1999-02-15", "1999-04-02", "1999-04-05", "1999-05-03", "1999-05-31", "1999-07-05", "1999-08-30", "1999-12-24", "1999-12-27", "1999-12-28", "1999-12-31", "2000-01-03", "2000-04-21", "2000-04-24", "2000-05-01", "2000-05-29", "2000-12-25", "2000-12-26", "2001-01-01", "2001-05-28", "2001-12-25", "2001-12-26", "2002-01-01", "2002-05-06", "2002-06-03", "2002-06-04", "2002-12-25", "2002-12-26", "2003-01-01", "2003-12-25", "2003-12-26", "2004-01-01", "2005-01-03", "2005-03-25", "2005-12-27", "2006-01-02", "2006-04-14", "2006-04-17", "2006-12-25", "2006-12-26", "2007-01-01", "2007-01-15", "2007-02-19", "2007-04-06", "2007-04-09", "2007-05-28", "2007-07-04", "2007-09-03", "2007-11-22", "2007-12-25", "2007-12-26", "2008-01-01", "2008-01-21", "2008-02-18", "2008-03-21", "2008-05-26", "2008-07-04", "2008-09-01", "2008-11-27", "2008-12-25", "2009-01-01", "2009-01-19", "2009-02-16", "2009-04-10", "2009-05-25", "2009-07-03", "2009-09-07", "2009-11-26", "2009-12-25", "2010-01-01", "2010-01-18", "2010-02-15", "2010-04-02", "2010-05-31", "2010-07-05", "2010-09-06", "2010-11-25", "2010-12-24", "2011-01-17", "2011-02-21", "2011-04-22", "2011-04-25", "2011-04-29", "2011-05-30", "2011-07-04", "2011-08-29", "2011-09-05", "2011-11-24", "2011-12-26", "2011-12-27", "2012-01-02", "2012-01-16", "2012-02-20", "2012-04-03", "2012-04-06", "2012-04-09", "2012-05-07", "2012-05-28", "2012-07-04", "2012-09-03", "2012-11-22", "2012-12-25", "2013-01-01", "2013-01-21", "2013-02-18", "2013-03-29", "2013-05-27", "2013-07-04", "2013-09-02", "2013-11-28", "2013-12-25", "2014-01-01", "2014-02-17", "2014-04-18", "2014-07-04", "2014-09-01", "2014-11-27", "2014-12-25", "2015-01-01", "2015-01-19", "2015-04-03", "2015-05-25", "2015-08-31", "2015-12-25", "2016-01-01", "2016-02-15", "2016-03-25", "2016-05-30", "2016-12-26", "2016-12-27", "2017-01-02", "2017-04-14", "2017-12-25", "2017-12-26", "2018-01-01", "2018-03-30", "2018-04-02", "2018-05-07", "2018-05-28", "2018-12-24", "2018-12-25", "2018-12-26", "2018-12-31", "2019-01-01", "2019-04-19", "2019-05-27", "2019-12-25", "2020-01-01", "2020-04-10", "2020-04-13", "2020-05-08", "2020-05-25", "2020-08-31", "2020-12-25", "2021-01-01", "2021-04-02", "2021-04-05", "2021-05-03", "2021-05-31", "2021-08-30", "2021-12-27", "2021-12-28", "2022-04-15", "2022-04-18", "2022-05-02", "2022-06-02", "2022-08-29", "2022-09-19", "2022-12-26", "2022-12-27", "2023-01-02", "2023-04-07", "2023-04-10", "2023-05-01", "2023-05-08", "2023-05-29", "2023-08-28", "2023-12-25", "2023-12-26", "2024-01-01", "2024-03-29", "2024-04-01", "2024-05-06", "2024-05-27", "2024-08-26", "2024-12-25", "2024-12-26", "2025-01-01", "2025-04-18", "2025-04-21", "2025-05-05", "2025-05-26", "2025-08-25", "2025-12-25", "2025-12-26", "2026-01-01", "2026-04-03", "2026-04-06", "2026-05-04", "2026-05-25", "2026-08-31"],
+        "provisional_from": null,
+        "vintage": null,
+        "method": "published",
+        "committable": true,
+        "licence_note": "US government publications are in the public domain. EIA states 'You may use and/or distribute any of our data, files, databases, reports, graphs, charts, and other information products', asking for an acknowledgment that includes the publication date. The only unambiguous grant in this project.",
+        "status": "ok",
+        "note": "Europe Brent spot price FOB, daily, US dollars per barrel, EIA series RBRTE, read from the published RBRTEd.xls workbook. 9973 of 9973 rows carry a price. EIA omits a day it did not publish rather than emitting a blank row, so the weekdays in the gap list are holidays on a UK and European calendar and not lost data. This is the same series FRED redistributes as DCOILBRENTEU, and recon 04 section 1.7 measured a maximum absolute difference of 0.0 between the two across all 9,973 shared dates. It is fetched as the redistributable cross check on fred_brent_daily, SPEC.md section 5.1 names FRED as the source the analysis reads, and this one carries EIA's explicit public domain grant. Acknowledge EIA with the publication date.",
+        "file": "data/cache/eia_brent_daily.csv",
+        "unit": "USD per barrel",
+        "observation_column": "brent_usd_bbl"
+      },
+      {
+        "series": "eia_refinery_fuel_2023",
+        "source": "US Energy Information Administration",
+        "url": null,
+        "page_url": "https://www.eia.gov/petroleum/refinerycapacity/",
+        "machine_fetched": false,
+        "fetched_at": null,
+        "checked_at": "2026-09-13T18:14:35Z",
+        "rows": 4,
+        "observations": 4,
+        "file_rows": 4,
+        "first_date": "2023-01-01",
+        "last_date": "2023-12-31",
+        "frequency": "annual",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "EIA Refinery Capacity Report, 2024 edition, released 12 June 2024",
+        "method": "seed",
+        "committable": true,
+        "licence_note": "U.S. government publications are in the public domain and are not subject to copyright protection. EIA states: 'You may use and/or distribute any of our data, files, databases, reports, graphs, charts, and other information products that are on our website or that you receive through our email distribution service. However, if you use or reproduce any of our information products, you should use an acknowledgment, which includes the publication date.' See https://www.eia.gov/about/copyrights_reuse.php . This is the only unambiguous grant in this project.",
+        "status": "ok",
+        "note": "Four figures for the United States in 2023, typed by hand from the tables named against each one, because tables 10a and 10b of the EIA Refinery Capacity Report exist only as a PDF: the workbook that accompanies the report carries the per refinery capacity sheet and nothing else. The gas intensity is DERIVED from them, never typed, and comes to 0.212174 MMBtu per barrel against the SPEC.md section 4.4 band of 0.12 to 0.30. It is a US figure and therefore an upper end default for Europe, where refiners burn proportionally more of their own still gas. Source: U.S. Energy Information Administration, Refinery Capacity Report (June 2024), Natural Gas Navigator (2026) and Petroleum and Other Liquids (2026)",
+        "file": "data/seed/eia_refinery_fuel_2023.json",
+        "unit": "million cubic feet, Btu per cubic foot, thousand barrels",
+        "observation_column": null,
+        "figures": {
+          "refinery_fuel_gas_mmcf": {
+            "value": 1021246.0,
+            "unit": "million cubic feet",
+            "label_as_printed": "Natural Gas (million cubic feet)",
+            "source_url": "https://www.eia.gov/petroleum/refinerycapacity/archive/2024/table10.pdf"
+          },
+          "hydrogen_feedstock_gas_mmcf": {
+            "value": 172313.0,
+            "unit": "million cubic feet",
+            "label_as_printed": "Natural Gas Used As Feedstock For Hydrogen Production",
+            "source_url": "https://www.eia.gov/petroleum/refinerycapacity/archive/2024/table10.pdf"
+          },
+          "gas_heat_content_btu_per_cf": {
+            "value": 1036.0,
+            "unit": "Btu per cubic foot",
+            "label_as_printed": "U.S. Heat Content of Natural Gas Deliveries to Consumers (BTU per Cubic Foot)",
+            "source_url": "https://www.eia.gov/dnav/ng/xls/NG_CONS_HEAT_A_EPG0_VGTH_BTUCF_A.xls"
+          },
+          "crude_inputs_thousand_bbl": {
+            "value": 5827889.0,
+            "unit": "thousand barrels",
+            "label_as_printed": "U.S. Refinery and Blender Net Input of Crude Oil (Thousand Barrels)",
+            "source_url": "https://www.eia.gov/dnav/pet/hist_xls/MCRRIUS1a.xls"
+          }
+        },
+        "derived_gas_intensity_mmbtu_per_bbl": 0.2121741035218756
+      },
+      {
+        "series": "events",
+        "source": "this study, every entry cited",
+        "url": null,
+        "page_url": "https://nathancouturier.github.io/crack-spread-study/",
+        "machine_fetched": false,
+        "fetched_at": null,
+        "checked_at": "2026-09-13T18:14:35Z",
+        "rows": 21,
+        "observations": 21,
+        "file_rows": 21,
+        "first_date": "2004-05-01",
+        "last_date": "2026-04-07",
+        "frequency": "daily",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "2026-09-13",
+        "method": "seed",
+        "committable": true,
+        "licence_note": "The list is this project's own. Each entry links the source that establishes the event, and the linked sources carry their own terms.",
+        "status": "ok",
+        "note": "21 dated entries, every one with a source_url, SPEC.md section 6.5. 11 of them are structural breaks the committed caches already carry: the OPEC Rotterdam specification changes, the two World Bank Europe gas definition changes, and the DGEC margin method. 8 URLs refuse automated access and are named in urls_that_refuse_automated_access; each of those entries records what came back and where its figures were transcribed from. Dates carry a declared precision and no day is claimed that a source does not name.",
+        "file": "data/seed/events.json",
+        "unit": "none",
+        "observation_column": null,
+        "date_padding_note": "first_date and last_date are range bounds. An event that names only a month is padded to the first of that month for them. The event's own date and date_precision in data/seed/events.json are what a chart marker must read.",
+        "events": 21,
+        "events_with_source_url": 21,
+        "structural_breaks": 11,
+        "urls_that_refuse_automated_access": ["opec_gasoline_spec_2004_05", "opec_gasoil_spec_2005_03", "opec_gasoline_spec_2005_03", "opec_gasoil_spec_2008_06", "opec_gasoline_spec_2008_06", "opec_gasoline_spec_2013_07", "sp_record_diesel_cracks_week_to_2022_03_25", "sp_ara_diesel_cracks_2022_10_13"]
+      },
+      {
+        "series": "fred_brent_daily",
+        "source": "US Energy Information Administration, retrieved from FRED",
+        "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILBRENTEU",
+        "page_url": "https://fred.stlouisfed.org/series/DCOILBRENTEU",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-12T08:29:49Z",
+        "checked_at": null,
+        "rows": 9973,
+        "observations": 9973,
+        "file_rows": 10256,
+        "first_date": "1987-05-20",
+        "last_date": "2026-09-09",
+        "frequency": "daily",
+        "gaps": ["1987-06-15", "1987-12-25", "1988-01-01", "1988-01-07", "1988-01-26", "1988-04-01", "1988-04-04", "1988-12-26", "1989-01-02", "1989-03-24", "1989-03-27", "1989-05-01", "1989-12-25", "1989-12-26", "1990-01-01", "1990-04-13", "1990-04-16", "1990-05-28", "1990-12-25", "1991-01-01", "1991-03-29", "1991-05-27", "1991-12-25", "1992-01-01", "1992-04-17", "1992-05-25", "1992-12-25", "1992-12-28", "1993-01-01", "1993-02-03", "1993-04-09", "1993-04-12", "1993-05-03", "1993-05-31", "1993-08-30", "1993-12-27", "1993-12-28", "1994-01-03", "1994-04-01", "1994-04-04", "1994-05-02", "1994-05-30", "1994-08-29", "1994-12-26", "1994-12-27", "1995-01-02", "1995-04-14", "1995-04-17", "1995-05-29", "1995-08-28", "1995-12-25", "1995-12-26", "1996-01-01", "1996-04-05", "1996-04-08", "1996-05-06", "1996-05-27", "1996-08-26", "1996-12-25", "1996-12-26", "1997-01-01", "1997-01-14", "1997-02-07", "1997-03-07", "1997-05-26", "1997-07-01", "1997-07-04", "1997-07-08", "1997-08-22", "1997-09-01", "1997-11-11", "1997-12-25", "1997-12-26", "1998-01-01", "1998-04-10", "1998-04-13", "1998-05-04", "1998-05-25", "1998-08-31", "1998-12-25", "1998-12-28", "1999-01-01", "1999-02-15", "1999-04-02", "1999-04-05", "1999-05-03", "1999-05-31", "1999-07-05", "1999-08-30", "1999-12-24", "1999-12-27", "1999-12-28", "1999-12-31", "2000-01-03", "2000-04-21", "2000-04-24", "2000-05-01", "2000-05-29", "2000-12-25", "2000-12-26", "2001-01-01", "2001-05-28", "2001-12-25", "2001-12-26", "2002-01-01", "2002-05-06", "2002-06-03", "2002-06-04", "2002-12-25", "2002-12-26", "2003-01-01", "2003-12-25", "2003-12-26", "2004-01-01", "2005-01-03", "2005-03-25", "2005-12-27", "2006-01-02", "2006-04-14", "2006-04-17", "2006-12-25", "2006-12-26", "2007-01-01", "2007-01-15", "2007-02-19", "2007-04-06", "2007-04-09", "2007-05-28", "2007-07-04", "2007-09-03", "2007-11-22", "2007-12-25", "2007-12-26", "2008-01-01", "2008-01-21", "2008-02-18", "2008-03-21", "2008-05-26", "2008-07-04", "2008-09-01", "2008-11-27", "2008-12-25", "2009-01-01", "2009-01-19", "2009-02-16", "2009-04-10", "2009-05-25", "2009-07-03", "2009-09-07", "2009-11-26", "2009-12-25", "2010-01-01", "2010-01-18", "2010-02-15", "2010-04-02", "2010-05-31", "2010-07-05", "2010-09-06", "2010-11-25", "2010-12-24", "2011-01-17", "2011-02-21", "2011-04-22", "2011-04-25", "2011-04-29", "2011-05-30", "2011-07-04", "2011-08-29", "2011-09-05", "2011-11-24", "2011-12-26", "2011-12-27", "2012-01-02", "2012-01-16", "2012-02-20", "2012-04-03", "2012-04-06", "2012-04-09", "2012-05-07", "2012-05-28", "2012-07-04", "2012-09-03", "2012-11-22", "2012-12-25", "2013-01-01", "2013-01-21", "2013-02-18", "2013-03-29", "2013-05-27", "2013-07-04", "2013-09-02", "2013-11-28", "2013-12-25", "2014-01-01", "2014-02-17", "2014-04-18", "2014-07-04", "2014-09-01", "2014-11-27", "2014-12-25", "2015-01-01", "2015-01-19", "2015-04-03", "2015-05-25", "2015-08-31", "2015-12-25", "2016-01-01", "2016-02-15", "2016-03-25", "2016-05-30", "2016-12-26", "2016-12-27", "2017-01-02", "2017-04-14", "2017-12-25", "2017-12-26", "2018-01-01", "2018-03-30", "2018-04-02", "2018-05-07", "2018-05-28", "2018-12-24", "2018-12-25", "2018-12-26", "2018-12-31", "2019-01-01", "2019-04-19", "2019-05-27", "2019-12-25", "2020-01-01", "2020-04-10", "2020-04-13", "2020-05-08", "2020-05-25", "2020-08-31", "2020-12-25", "2021-01-01", "2021-04-02", "2021-04-05", "2021-05-03", "2021-05-31", "2021-08-30", "2021-12-27", "2021-12-28", "2022-04-15", "2022-04-18", "2022-05-02", "2022-06-02", "2022-08-29", "2022-09-19", "2022-12-26", "2022-12-27", "2023-01-02", "2023-04-07", "2023-04-10", "2023-05-01", "2023-05-08", "2023-05-29", "2023-08-28", "2023-12-25", "2023-12-26", "2024-01-01", "2024-03-29", "2024-04-01", "2024-05-06", "2024-05-27", "2024-08-26", "2024-12-25", "2024-12-26", "2025-01-01", "2025-04-18", "2025-04-21", "2025-05-05", "2025-05-26", "2025-08-25", "2025-12-25", "2025-12-26", "2026-01-01", "2026-04-03", "2026-04-06", "2026-05-04", "2026-05-25", "2026-08-31"],
+        "provisional_from": null,
+        "vintage": null,
+        "method": "published",
+        "committable": true,
+        "licence_note": "FRED tags both series 'public domain: citation requested' and asks that the data source be cited and FRED acknowledged. One real tension, recorded at recon 04 section 1.8 rather than paraphrased away: the same legal page prohibits 'data mining, mirroring, robots, scraping, or similar data-gathering or extraction methods except as expressly allowed by the terms of use applicable to the FRED API', and a scheduled job that commits fredgraph.csv into a public repository is arguably a mirror. The clean way out is to take Brent from EIA directly and EUR/USD from the Federal Reserve Board H.10, both US federal publishers with no mirroring clause. See docs/open-questions.md.",
+        "status": "ok",
+        "note": "Europe Brent spot price FOB, daily, US dollars per barrel, published by the US Energy Information Administration as series RBRTE and redistributed by FRED as DCOILBRENTEU. 9973 of 10256 rows carry a value and 283 are blank in the source, all of them holidays on this series' own calendar. A blank is NaN in the cache, never a zero, and it counts as a gap exactly as a missing row would. rows and observations count the published values, file_rows counts the lines. Fetched from the keyless fredgraph.csv endpoint with the project token user agent, which is required: a browser user agent gets the connection reset from this machine, recon 04 section 1.2. FRED publishes this series on behalf of another agency, so cite both, and see docs/open-questions.md for the mirroring clause that a committed cache sits awkwardly against.",
+        "file": "data/cache/fred_brent_daily.csv",
+        "unit": "USD per barrel",
+        "observation_column": "brent_usd_bbl"
+      },
+      {
+        "series": "fred_eurusd_daily",
+        "source": "Board of Governors of the Federal Reserve System, retrieved from FRED",
+        "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXUSEU",
+        "page_url": "https://fred.stlouisfed.org/series/DEXUSEU",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-12T08:28:27Z",
+        "checked_at": null,
+        "rows": 6941,
+        "observations": 6941,
+        "file_rows": 7220,
+        "first_date": "1999-01-04",
+        "last_date": "2026-09-04",
+        "frequency": "daily",
+        "gaps": ["1999-01-18", "1999-02-15", "1999-05-31", "1999-07-05", "1999-09-06", "1999-10-11", "1999-11-11", "1999-11-25", "2000-01-17", "2000-02-21", "2000-05-29", "2000-07-04", "2000-09-04", "2000-10-09", "2000-11-23", "2000-12-25", "2001-01-01", "2001-01-15", "2001-02-19", "2001-05-28", "2001-07-04", "2001-09-03", "2001-09-11", "2001-10-08", "2001-11-12", "2001-11-22", "2001-12-25", "2002-01-01", "2002-01-21", "2002-02-18", "2002-05-27", "2002-07-04", "2002-09-02", "2002-10-14", "2002-11-11", "2002-11-28", "2002-12-25", "2003-01-01", "2003-01-20", "2003-02-17", "2003-05-26", "2003-07-04", "2003-09-01", "2003-10-13", "2003-11-11", "2003-11-27", "2003-12-25", "2004-01-01", "2004-01-19", "2004-02-16", "2004-05-31", "2004-07-05", "2004-09-06", "2004-10-11", "2004-11-11", "2004-11-25", "2005-01-17", "2005-02-21", "2005-05-30", "2005-07-04", "2005-09-05", "2005-10-10", "2005-11-11", "2005-11-24", "2005-12-26", "2006-01-02", "2006-01-16", "2006-02-20", "2006-05-29", "2006-07-04", "2006-09-04", "2006-10-09", "2006-11-23", "2006-12-25", "2007-01-01", "2007-01-15", "2007-02-19", "2007-05-28", "2007-07-04", "2007-11-12", "2007-12-25", "2008-01-01", "2008-01-21", "2008-02-18", "2008-05-26", "2008-07-04", "2008-09-01", "2008-10-13", "2008-11-11", "2008-11-27", "2008-12-25", "2009-01-01", "2009-01-19", "2009-02-16", "2009-05-25", "2009-09-07", "2009-10-12", "2009-11-11", "2009-11-26", "2009-12-25", "2010-01-01", "2010-01-18", "2010-02-15", "2010-05-31", "2010-07-05", "2010-09-06", "2010-10-11", "2010-11-11", "2010-11-25", "2010-12-24", "2010-12-31", "2011-01-17", "2011-02-21", "2011-05-30", "2011-07-04", "2011-09-05", "2011-10-10", "2011-11-11", "2011-11-24", "2011-12-26", "2012-01-02", "2012-01-16", "2012-02-20", "2012-05-28", "2012-07-04", "2012-09-03", "2012-10-08", "2012-11-12", "2012-11-22", "2012-12-25", "2013-01-01", "2013-01-21", "2013-02-18", "2013-05-27", "2013-07-04", "2013-09-02", "2013-10-14", "2013-11-11", "2013-11-28", "2013-12-25", "2014-01-01", "2014-01-20", "2014-02-17", "2014-05-26", "2014-07-04", "2014-09-01", "2014-10-13", "2014-11-11", "2014-11-27", "2014-12-25", "2014-12-26", "2015-01-01", "2015-01-19", "2015-02-16", "2015-05-25", "2015-07-03", "2015-09-07", "2015-10-12", "2015-11-11", "2015-11-26", "2015-12-25", "2016-01-01", "2016-01-18", "2016-02-15", "2016-05-30", "2016-07-04", "2016-09-05", "2016-10-10", "2016-11-11", "2016-11-24", "2016-12-26", "2017-01-02", "2017-01-16", "2017-01-20", "2017-02-20", "2017-05-29", "2017-07-04", "2017-09-04", "2017-10-09", "2017-11-10", "2017-11-23", "2017-12-25", "2018-01-01", "2018-01-15", "2018-02-19", "2018-05-28", "2018-07-04", "2018-09-03", "2018-10-08", "2018-11-12", "2018-11-22", "2018-12-05", "2018-12-24", "2018-12-25", "2019-01-01", "2019-01-14", "2019-01-21", "2019-02-18", "2019-02-20", "2019-05-27", "2019-07-04", "2019-09-02", "2019-10-14", "2019-11-11", "2019-11-28", "2019-12-25", "2020-01-01", "2020-01-20", "2020-02-17", "2020-05-25", "2020-07-03", "2020-09-07", "2020-10-12", "2020-11-11", "2020-11-26", "2020-11-27", "2020-12-24", "2020-12-25", "2021-01-01", "2021-01-18", "2021-01-20", "2021-02-15", "2021-05-31", "2021-07-05", "2021-09-06", "2021-10-11", "2021-11-11", "2021-11-25", "2021-12-24", "2021-12-31", "2022-01-17", "2022-02-21", "2022-05-30", "2022-06-20", "2022-07-04", "2022-09-05", "2022-10-10", "2022-11-11", "2022-11-24", "2022-12-26", "2023-01-02", "2023-01-16", "2023-02-20", "2023-05-29", "2023-06-19", "2023-07-04", "2023-09-04", "2023-10-09", "2023-11-10", "2023-11-23", "2023-12-25", "2024-01-01", "2024-01-15", "2024-02-19", "2024-05-27", "2024-06-19", "2024-07-04", "2024-09-02", "2024-10-14", "2024-11-11", "2024-11-28", "2024-12-25", "2025-01-01", "2025-01-20", "2025-02-17", "2025-05-26", "2025-06-19", "2025-07-04", "2025-09-01", "2025-10-13", "2025-11-11", "2025-11-27", "2025-12-25", "2026-01-01", "2026-01-19", "2026-02-16", "2026-05-25", "2026-06-19", "2026-07-03"],
+        "provisional_from": null,
+        "vintage": null,
+        "method": "published",
+        "committable": true,
+        "licence_note": "FRED tags both series 'public domain: citation requested' and asks that the data source be cited and FRED acknowledged. One real tension, recorded at recon 04 section 1.8 rather than paraphrased away: the same legal page prohibits 'data mining, mirroring, robots, scraping, or similar data-gathering or extraction methods except as expressly allowed by the terms of use applicable to the FRED API', and a scheduled job that commits fredgraph.csv into a public repository is arguably a mirror. The clean way out is to take Brent from EIA directly and EUR/USD from the Federal Reserve Board H.10, both US federal publishers with no mirroring clause. See docs/open-questions.md.",
+        "status": "ok",
+        "note": "Noon buying rates in New York City for cable transfers, US dollars to one euro, daily, from the Federal Reserve Board H.10 release. The orientation is dollars per euro, which is what SPEC.md section 4.4's chain ttf_eur_mwh * eurusd / MMBTU_PER_MWH needs, so nothing is inverted anywhere. H.10 goes out on Monday afternoons covering the previous week, so this series can sit five business days behind Brent. 6941 of 7220 rows carry a value and 279 are blank in the source, all of them holidays on this series' own calendar. A blank is NaN in the cache, never a zero, and it counts as a gap exactly as a missing row would. rows and observations count the published values, file_rows counts the lines. Fetched from the keyless fredgraph.csv endpoint with the project token user agent, which is required: a browser user agent gets the connection reset from this machine, recon 04 section 1.2. FRED publishes this series on behalf of another agency, so cite both, and see docs/open-questions.md for the mirroring clause that a committed cache sits awkwardly against.",
+        "file": "data/cache/fred_eurusd_daily.csv",
+        "unit": "US dollars per one euro",
+        "observation_column": "eurusd"
+      },
+      {
+        "series": "jodi_nwe_crude_imports_monthly",
+        "source": "JODI-Oil World Database, International Energy Forum",
+        "url": "https://www.jodidata.org/oil/database/data-downloads.aspx",
+        "page_url": "https://www.jodidata.org/oil/database/data-downloads.aspx",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-13T06:54:21Z",
+        "checked_at": null,
+        "rows": 294,
+        "observations": 294,
+        "file_rows": 294,
+        "first_date": "2002-01-01",
+        "last_date": "2026-06-01",
+        "frequency": "monthly",
+        "gaps": [],
+        "provisional_from": "2026-06-01",
+        "vintage": "JODI-Oil World Database, annual CSV files last written Thu, 20 Aug 2026 10:15:22 GMT",
+        "method": "published",
+        "committable": true,
+        "licence_note": "The JODI terms of use are website terms, not a data licence: 'The Intellectual Property rights in the JODI Website, and in the material published on it, are protected by Intellectual Property laws and treaties around the world. All such rights are reserved.' The downloads page says the data can be downloaded for free, which is a statement about access and not about republication. There is no explicit permission to redistribute. Recon 03 section 1.9 reads this as: committing a small derived extract with clear attribution is normal practice and is what every energy analyst does, but it is not covered by a grant and is materially weaker than FRED or EIA. Use with attribution, do not mirror the raw annual files, and ask JODIinfo@ief.org before Gate 5.",
+        "status": "ok",
+        "note": "Crude oil imports, JODI flow TOTIMPSB, 'Imports/Exports : Goods having physically crossed the international boundaries, excluding transit trade, international marine and aviation bunkers.', for BE, DE, FR, NL, GB, in thousand barrels per day, from 2002-01. SPEC.md section 6.1 shows this next to intake as the physical footprint of the same crude demand and fits no separate model to it. Imports and intake differ by stock change, domestic production, backflows and direct use, so they are not two measurements of one quantity. Latest month 2026-06, 294 of 294 months carry all five countries.",
+        "file": "data/cache/jodi_nwe_crude_imports_monthly.csv",
+        "unit": "thousand barrels per day",
+        "observation_column": "nwe5_totimpsb_crudeoil_kbd",
+        "assessment_codes": {
+          "definitions": {
+            "1": "Results of the assessment show reasonable levels of comparability",
+            "2": "Consult metadata/Use with caution",
+            "3": "Data has not been assessed",
+            "4": "Data under verification"
+          },
+          "source": "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi-oil-wdb-item-names-ver2017.pdf",
+          "counts": {
+            "1": 1468,
+            "2": 2,
+            "3": 0,
+            "4": 0
+          },
+          "by_key": {
+            "TOTIMPSB/CRUDEOIL": {
+              "2": {
+                "cells": 2,
+                "first_date": "2026-06-01",
+                "last_date": "2026-06-01",
+                "meaning": "Consult metadata/Use with caution"
+              }
+            }
+          },
+          "flagged_cells": [
+            {"date": "2026-06-01", "ref_area": "NL", "flow": "TOTIMPSB", "product": "CRUDEOIL", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "GB", "flow": "TOTIMPSB", "product": "CRUDEOIL", "code": "2", "meaning": "Consult metadata/Use with caution"}
+          ],
+          "note": "SPEC.md section 5.1 requires JODI's assessment code carried into the manifest. Every cell of this cache carries one, and the counts above are over the country level cells only, the nwe5 columns being this study's sums rather than JODI observations. THE CODES ARE CATEGORIES AND NOT A SCALE: 3 means the data has not been assessed, which is not worse than 2, and 3 attaches to whole lines rather than to recent cells. Code 4 is defined by JODI and appears nowhere in the 50 files, so it is listed here and expected to stay at zero rather than arrive one day as an integer nothing can describe."
+        },
+        "countries": {
+          "BE": "Belgium",
+          "DE": "Germany",
+          "FR": "France",
+          "NL": "Netherlands",
+          "GB": "United Kingdom, which JODI codes GB and SPEC.md section 5.1 calls UK"
+        },
+        "flow_definitions": {
+          "TOTIMPSB": "Imports/Exports : Goods having physically crossed the international boundaries, excluding transit trade, international marine and aviation bunkers."
+        },
+        "product_names": {
+          "CRUDEOIL": "Crude oil"
+        },
+        "lag_note": "JODI publishes around the 20th of each month, on the dates in its own update calendar, https://www.jodidata.org/_resources/files/downloads/jodi-update-schedule-2026.pdf. Recon 03 section 1.7 measured the lag at 2 months and 11 days on 2026-09-11, widening to 2 months and 22 days the day before a release. SPEC.md section 13 says about two months, which understates it, and SPEC.md section 7.2 already requires the runs data date shown separately from the margin data date.",
+        "coverage_note": "Everything in this cache runs from 2002-01 except total refinery feed, jet and naphtha, which JODI only began collecting in 2009-01. A study window advertised as starting in 2002 therefore has no jet line and no total feed for its first seven years.",
+        "aggregate_rule": "nwe5 is the sum of BE, DE, FR, NL, GB and is NaN unless all five reported that month. A four country sum presented as five would understate NWE crude demand by up to a fifth with nothing on the page to show it.",
+        "revision_note": "JODI revises history. Recon 03 found the 2002 file rewritten on 2025-10-21. data/private/jodi_raw/index.json records a sha256 and the server's Last-Modified for every annual file, so a revision to a closed year is visible rather than silent.",
+        "fetch_report": {
+          "policy": "none",
+          "fetched": [],
+          "reused": [],
+          "verified": [],
+          "page_url": "https://www.jodidata.org/oil/database/data-downloads.aspx",
+          "discovered": 0,
+          "note": "offline, nothing was fetched",
+          "reused_report": true
+        }
+      },
+      {
+        "series": "jodi_nwe_refinery_intake_monthly",
+        "source": "JODI-Oil World Database, International Energy Forum",
+        "url": "https://www.jodidata.org/oil/database/data-downloads.aspx",
+        "page_url": "https://www.jodidata.org/oil/database/data-downloads.aspx",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-13T06:54:21Z",
+        "checked_at": null,
+        "rows": 294,
+        "observations": 294,
+        "file_rows": 294,
+        "first_date": "2002-01-01",
+        "last_date": "2026-06-01",
+        "frequency": "monthly",
+        "gaps": [],
+        "provisional_from": "2026-06-01",
+        "vintage": "JODI-Oil World Database, annual CSV files last written Thu, 20 Aug 2026 10:15:22 GMT",
+        "method": "published",
+        "committable": true,
+        "licence_note": "The JODI terms of use are website terms, not a data licence: 'The Intellectual Property rights in the JODI Website, and in the material published on it, are protected by Intellectual Property laws and treaties around the world. All such rights are reserved.' The downloads page says the data can be downloaded for free, which is a statement about access and not about republication. There is no explicit permission to redistribute. Recon 03 section 1.9 reads this as: committing a small derived extract with clear attribution is normal practice and is what every energy analyst does, but it is not covered by a grant and is materially weaker than FRED or EIA. Use with attribution, do not mirror the raw annual files, and ask JODIinfo@ief.org before Gate 5.",
+        "status": "ok",
+        "note": "Refinery intake, JODI flow REFINOBS, 'Refinery intake : Observed refinery throughputs.', for BE, DE, FR, NL, GB, in thousand barrels per day. TWO DENOMINATORS ARE PUBLISHED HERE AND NEITHER IS CHOSEN. nwe5_refinobs_crudeoil_kbd is crude oil only and runs from 2002-01. nwe5_refinobs_totcrude_kbd is total refinery feed, crude plus NGL plus other feedstocks, and runs from 2009-01. Refinery output over the first is 1.13 to 1.16 because gross output includes refinery fuel and comes from all feed; over the second it is 1.01 to 1.03, which is volume gain and is physically right. Recon 03 section 1.8. SPEC.md section 4.3 layer 4 has not made this choice, so the analysis gate makes it in the open and the Method view states it. ONE FACT THAT BEARS ON THAT CHOICE AND IS NOT IN RECON 03: JODI carries assessment code 3, 'Data has not been assessed', on every total refinery feed cell in all five countries for the whole life of the series, while crude only intake is code 1 almost everywhere. The physically better denominator is the one JODI has never checked. Both are published here with their codes so the choice can be made on the evidence. Latest month 2026-06, 294 of 294 months carry all five countries on the crude series.",
+        "file": "data/cache/jodi_nwe_refinery_intake_monthly.csv",
+        "unit": "thousand barrels per day",
+        "observation_column": "nwe5_refinobs_crudeoil_kbd",
+        "assessment_codes": {
+          "definitions": {
+            "1": "Results of the assessment show reasonable levels of comparability",
+            "2": "Consult metadata/Use with caution",
+            "3": "Data has not been assessed",
+            "4": "Data under verification"
+          },
+          "source": "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi-oil-wdb-item-names-ver2017.pdf",
+          "counts": {
+            "1": 1469,
+            "2": 1,
+            "3": 1050,
+            "4": 0
+          },
+          "by_key": {
+            "REFINOBS/CRUDEOIL": {
+              "2": {
+                "cells": 1,
+                "first_date": "2026-06-01",
+                "last_date": "2026-06-01",
+                "meaning": "Consult metadata/Use with caution"
+              }
+            },
+            "REFINOBS/TOTCRUDE": {
+              "3": {
+                "cells": 1050,
+                "first_date": "2009-01-01",
+                "last_date": "2026-06-01",
+                "meaning": "Data has not been assessed"
+              }
+            }
+          },
+          "flagged_cells": [
+            {"date": "2026-06-01", "ref_area": "DE", "flow": "REFINOBS", "product": "CRUDEOIL", "code": "2", "meaning": "Consult metadata/Use with caution"}
+          ],
+          "note": "SPEC.md section 5.1 requires JODI's assessment code carried into the manifest. Every cell of this cache carries one, and the counts above are over the country level cells only, the nwe5 columns being this study's sums rather than JODI observations. THE CODES ARE CATEGORIES AND NOT A SCALE: 3 means the data has not been assessed, which is not worse than 2, and 3 attaches to whole lines rather than to recent cells. Code 4 is defined by JODI and appears nowhere in the 50 files, so it is listed here and expected to stay at zero rather than arrive one day as an integer nothing can describe."
+        },
+        "countries": {
+          "BE": "Belgium",
+          "DE": "Germany",
+          "FR": "France",
+          "NL": "Netherlands",
+          "GB": "United Kingdom, which JODI codes GB and SPEC.md section 5.1 calls UK"
+        },
+        "flow_definitions": {
+          "REFINOBS": "Refinery intake : Observed refinery throughputs."
+        },
+        "product_names": {
+          "CRUDEOIL": "Crude oil",
+          "TOTCRUDE": "Total"
+        },
+        "lag_note": "JODI publishes around the 20th of each month, on the dates in its own update calendar, https://www.jodidata.org/_resources/files/downloads/jodi-update-schedule-2026.pdf. Recon 03 section 1.7 measured the lag at 2 months and 11 days on 2026-09-11, widening to 2 months and 22 days the day before a release. SPEC.md section 13 says about two months, which understates it, and SPEC.md section 7.2 already requires the runs data date shown separately from the margin data date.",
+        "coverage_note": "Everything in this cache runs from 2002-01 except total refinery feed, jet and naphtha, which JODI only began collecting in 2009-01. A study window advertised as starting in 2002 therefore has no jet line and no total feed for its first seven years.",
+        "aggregate_rule": "nwe5 is the sum of BE, DE, FR, NL, GB and is NaN unless all five reported that month. A four country sum presented as five would understate NWE crude demand by up to a fifth with nothing on the page to show it.",
+        "revision_note": "JODI revises history. Recon 03 found the 2002 file rewritten on 2025-10-21. data/private/jodi_raw/index.json records a sha256 and the server's Last-Modified for every annual file, so a revision to a closed year is visible rather than silent.",
+        "fetch_report": {
+          "policy": "none",
+          "fetched": [],
+          "reused": [],
+          "verified": [],
+          "page_url": "https://www.jodidata.org/oil/database/data-downloads.aspx",
+          "discovered": 0,
+          "note": "offline, nothing was fetched"
+        }
+      },
+      {
+        "series": "jodi_nwe_refinery_output_monthly",
+        "source": "JODI-Oil World Database, International Energy Forum",
+        "url": "https://www.jodidata.org/oil/database/data-downloads.aspx",
+        "page_url": "https://www.jodidata.org/oil/database/data-downloads.aspx",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-13T06:54:21Z",
+        "checked_at": null,
+        "rows": 294,
+        "observations": 294,
+        "file_rows": 294,
+        "first_date": "2002-01-01",
+        "last_date": "2026-06-01",
+        "frequency": "monthly",
+        "gaps": [],
+        "provisional_from": "2026-06-01",
+        "vintage": "JODI-Oil World Database, annual CSV files last written Thu, 20 Aug 2026 10:15:22 GMT",
+        "method": "published",
+        "committable": true,
+        "licence_note": "The JODI terms of use are website terms, not a data licence: 'The Intellectual Property rights in the JODI Website, and in the material published on it, are protected by Intellectual Property laws and treaties around the world. All such rights are reserved.' The downloads page says the data can be downloaded for free, which is a statement about access and not about republication. There is no explicit permission to redistribute. Recon 03 section 1.9 reads this as: committing a small derived extract with clear attribution is normal practice and is what every energy analyst does, but it is not covered by a grant and is materially weaker than FRED or EIA. Use with attribution, do not mirror the raw annual files, and ask JODIinfo@ief.org before Gate 5.",
+        "status": "ok",
+        "note": "Refinery output by product, JODI flow REFGROUT, 'Refinery output : Gross output (including refinery fuel).', for BE, DE, FR, NL, GB, in thousand barrels per day. IT IS GROSS OUTPUT, INCLUDING REFINERY FUEL, FROM ALL REFINERY FEED, so it is not on the same base as crude intake and the ratio of the two is about 1.14, not 1. 'Total oil products : Sum of categories (5) to (12) excluding (9).', so category 9, kerosene type jet fuel, is already inside kerosenes and a sum of these columns that includes jetkero double counts jet. Sum with kerosene instead: recon 03 checked the arithmetic and got 5,867.4 against a printed 5,867.0 for 2026-06. Jet and naphtha start 2009-01, everything else 2002-01. Latest month 2026-06.",
+        "file": "data/cache/jodi_nwe_refinery_output_monthly.csv",
+        "unit": "thousand barrels per day",
+        "observation_column": "nwe5_refgrout_totprods_kbd",
+        "assessment_codes": {
+          "definitions": {
+            "1": "Results of the assessment show reasonable levels of comparability",
+            "2": "Consult metadata/Use with caution",
+            "3": "Data has not been assessed",
+            "4": "Data under verification"
+          },
+          "source": "https://www.jodidata.org/_resources/files/downloads/oil-data/jodi-oil-wdb-item-names-ver2017.pdf",
+          "counts": {
+            "1": 9437,
+            "2": 13,
+            "3": 0,
+            "4": 0
+          },
+          "by_key": {
+            "REFGROUT/GASOLINE": {
+              "2": {
+                "cells": 2,
+                "first_date": "2026-06-01",
+                "last_date": "2026-06-01",
+                "meaning": "Consult metadata/Use with caution"
+              }
+            },
+            "REFGROUT/GASDIES": {},
+            "REFGROUT/JETKERO": {
+              "2": {
+                "cells": 3,
+                "first_date": "2026-06-01",
+                "last_date": "2026-06-01",
+                "meaning": "Consult metadata/Use with caution"
+              }
+            },
+            "REFGROUT/KEROSENE": {
+              "2": {
+                "cells": 3,
+                "first_date": "2026-06-01",
+                "last_date": "2026-06-01",
+                "meaning": "Consult metadata/Use with caution"
+              }
+            },
+            "REFGROUT/RESFUEL": {
+              "2": {
+                "cells": 2,
+                "first_date": "2026-06-01",
+                "last_date": "2026-06-01",
+                "meaning": "Consult metadata/Use with caution"
+              }
+            },
+            "REFGROUT/NAPHTHA": {
+              "2": {
+                "cells": 2,
+                "first_date": "2026-06-01",
+                "last_date": "2026-06-01",
+                "meaning": "Consult metadata/Use with caution"
+              }
+            },
+            "REFGROUT/TOTPRODS": {
+              "2": {
+                "cells": 1,
+                "first_date": "2026-06-01",
+                "last_date": "2026-06-01",
+                "meaning": "Consult metadata/Use with caution"
+              }
+            }
+          },
+          "flagged_cells": [
+            {"date": "2026-06-01", "ref_area": "DE", "flow": "REFGROUT", "product": "GASOLINE", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "NL", "flow": "REFGROUT", "product": "GASOLINE", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "DE", "flow": "REFGROUT", "product": "JETKERO", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "NL", "flow": "REFGROUT", "product": "JETKERO", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "GB", "flow": "REFGROUT", "product": "JETKERO", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "DE", "flow": "REFGROUT", "product": "KEROSENE", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "NL", "flow": "REFGROUT", "product": "KEROSENE", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "GB", "flow": "REFGROUT", "product": "KEROSENE", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "DE", "flow": "REFGROUT", "product": "RESFUEL", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "NL", "flow": "REFGROUT", "product": "RESFUEL", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "DE", "flow": "REFGROUT", "product": "NAPHTHA", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "NL", "flow": "REFGROUT", "product": "NAPHTHA", "code": "2", "meaning": "Consult metadata/Use with caution"},
+            {"date": "2026-06-01", "ref_area": "DE", "flow": "REFGROUT", "product": "TOTPRODS", "code": "2", "meaning": "Consult metadata/Use with caution"}
+          ],
+          "note": "SPEC.md section 5.1 requires JODI's assessment code carried into the manifest. Every cell of this cache carries one, and the counts above are over the country level cells only, the nwe5 columns being this study's sums rather than JODI observations. THE CODES ARE CATEGORIES AND NOT A SCALE: 3 means the data has not been assessed, which is not worse than 2, and 3 attaches to whole lines rather than to recent cells. Code 4 is defined by JODI and appears nowhere in the 50 files, so it is listed here and expected to stay at zero rather than arrive one day as an integer nothing can describe."
+        },
+        "countries": {
+          "BE": "Belgium",
+          "DE": "Germany",
+          "FR": "France",
+          "NL": "Netherlands",
+          "GB": "United Kingdom, which JODI codes GB and SPEC.md section 5.1 calls UK"
+        },
+        "flow_definitions": {
+          "REFGROUT": "Refinery output : Gross output (including refinery fuel)."
+        },
+        "product_names": {
+          "GASDIES": "Gas/diesel oil",
+          "GASOLINE": "Motor and aviation gasoline",
+          "JETKERO": "of which: kerosene type jet fuel",
+          "KEROSENE": "Kerosenes",
+          "NAPHTHA": "Naphtha",
+          "RESFUEL": "Fuel oil",
+          "TOTPRODS": "Total oil products"
+        },
+        "lag_note": "JODI publishes around the 20th of each month, on the dates in its own update calendar, https://www.jodidata.org/_resources/files/downloads/jodi-update-schedule-2026.pdf. Recon 03 section 1.7 measured the lag at 2 months and 11 days on 2026-09-11, widening to 2 months and 22 days the day before a release. SPEC.md section 13 says about two months, which understates it, and SPEC.md section 7.2 already requires the runs data date shown separately from the margin data date.",
+        "coverage_note": "Everything in this cache runs from 2002-01 except total refinery feed, jet and naphtha, which JODI only began collecting in 2009-01. A study window advertised as starting in 2002 therefore has no jet line and no total feed for its first seven years.",
+        "aggregate_rule": "nwe5 is the sum of BE, DE, FR, NL, GB and is NaN unless all five reported that month. A four country sum presented as five would understate NWE crude demand by up to a fifth with nothing on the page to show it.",
+        "revision_note": "JODI revises history. Recon 03 found the 2002 file rewritten on 2025-10-21. data/private/jodi_raw/index.json records a sha256 and the server's Last-Modified for every annual file, so a revision to a closed year is visible rather than silent.",
+        "fetch_report": {
+          "policy": "none",
+          "fetched": [],
+          "reused": [],
+          "verified": [],
+          "page_url": "https://www.jodidata.org/oil/database/data-downloads.aspx",
+          "discovered": 0,
+          "note": "offline, nothing was fetched",
+          "reused_report": true
+        }
+      },
+      {
+        "series": "opec_rotterdam_products_monthly",
+        "source": "OPEC Monthly Oil Market Report, refined product prices table, Rotterdam barges FOB. Assessments credited to Argus. Retrieved from the Internet Archive",
+        "url": "http://web.archive.org/cdx/search/cdx?url=opec.org*&filter=original:.*[Mm][Oo][Mm][Rr].*\\.pdf&filter=mimetype:application/pdf&filter=statuscode:200&fl=timestamp,original,statuscode,mimetype,length&collapse=urlkey&limit=20000",
+        "page_url": "https://www.opec.org/monthly-oil-market-report.html",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-12T23:50:18Z",
+        "checked_at": null,
+        "rows": 305,
+        "observations": 305,
+        "file_rows": 305,
+        "first_date": "2000-10-01",
+        "last_date": "2026-02-01",
+        "frequency": "monthly",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "OPEC MOMR issues 2001-01 to 2026-03, 301 parsed",
+        "method": "parsed",
+        "committable": true,
+        "licence_note": "OPEC permits the information in the MOMR to be 'used and/or reproduced for educational and other non-commercial purposes without the OPEC Secretariat's prior written permission, provided that it is fully acknowledged as the copyright holder'. Full reproduction of the report itself is not permitted, so the parsed values may be cached and the PDFs may not. The table credits Argus, and OPEC's own wording says third party copyright must be acknowledged by obtaining authorisation from the owner, so credit 'Argus, via the OPEC Monthly Oil Market Report' on every chart and do not offer the product price series as a bulk download.",
+        "status": "ok",
+        "note": "Rotterdam barges FOB product prices in US dollars per barrel, read out of the 'Refined product prices, US$/b' table of the OPEC Monthly Oil Market Report. 303 issue(s) in the Internet Archive index, 302 opened, 301 parsed, 1 failed to parse, 0 could not be downloaded. 305 month(s), 2000-10 to 2026-02. Every value is the figure printed by the latest issue that carried the month; n_issues counts how many issues printed it and max_disagreement_usd_bbl is the largest gap between any two of them on any product THEY SPECIFIED THE SAME WAY, so a revision is visible rather than averaged away. Where two issues specified a row differently the gap is a respecification and not a disagreement, and it travels in max_respec_gap_usd_bbl with the slots named in respecified. TWO SPECIFICATION BREAKS travel in the data: gasoil_spec runs 0.2 percent sulphur to 50 ppm to 10 ppm and gasoline_spec runs unleaded to 50 ppm and 10 ppm to 98, and any chart spanning one must mark it. The archive's last issue is 2026-03, so the series ends where the archive ends; the issues after it are published but not archived and are listed in unarchived_issues. The PDFs are cached under data/private/momr/ and are never committed, only these parsed values are.",
+        "file": "data/cache/opec_rotterdam_products_monthly.csv",
+        "unit": "USD per barrel",
+        "observation_column": "gasoil_usd_bbl",
+        "licence": "OPEC copyright. Non commercial reuse of the information permitted with OPEC acknowledged. Full reproduction of the report is not",
+        "attribution": "OPEC Monthly Oil Market Report, table 'Refined product prices, US$/b'. The assessments are Argus's: credit 'Argus, via the OPEC Monthly Oil Market Report' wherever these numbers appear. The PDFs themselves are not redistributable and are not committed.",
+        "specification_breaks": [
+          {
+            "product": "gasoil",
+            "column": "gasoil_usd_bbl",
+            "spec_column": "gasoil_spec",
+            "sequence": ["0.2% S", "50 ppm", "10 ppm"],
+            "what": "The Rotterdam gasoil row is a 0.2 percent sulphur gasoil in 2001 and 2003, a 50 ppm gasoil/diesel in 2006 and a 10 ppm gasoil/diesel from 2011. Sulphur specification drives the price, so the level before and after a change is not the same product and the series is not continuous across it.",
+            "source": "OPEC MOMR, refined product prices table, recon 05 section 1.4"
+          },
+          {
+            "product": "gasoline",
+            "column": "premium_gasoline_usd_bbl",
+            "spec_column": "gasoline_spec",
+            "sequence": ["unleaded", "unleaded 50 ppm", "unleaded 10 ppm", "unleaded 95", "unleaded 98"],
+            "what": "The Rotterdam premium gasoline row is an unspecified unleaded grade to 2003, then a sulphur graded row and an octane graded row printed side by side through the middle of the sample, then premium unleaded 98 alone from 2015. Octane and sulphur are both priced, so this is a break in the definition of the series and not a move in the market.",
+            "source": "OPEC MOMR, refined product prices table, recon 05 section 1.4"
+          }
+        ],
+        "specification_timeline": [
+          {"product": "gasoline", "spec_column": "gasoline_spec", "specification": "unleaded", "first_month": "2000-10", "last_month": "2004-04", "months": 43},
+          {"product": "gasoline", "spec_column": "gasoline_spec", "specification": "unleaded 95", "first_month": "2004-05", "last_month": "2005-02", "months": 10},
+          {"product": "gasoline", "spec_column": "gasoline_spec", "specification": "unleaded 50 ppm", "first_month": "2005-03", "last_month": "2008-05", "months": 39},
+          {"product": "gasoline", "spec_column": "gasoline_spec", "specification": "unleaded 10 ppm", "first_month": "2008-06", "last_month": "2013-06", "months": 61},
+          {"product": "gasoline", "spec_column": "gasoline_spec", "specification": "unleaded 98", "first_month": "2013-07", "last_month": "2026-02", "months": 152},
+          {"product": "gasoil", "spec_column": "gasoil_spec", "specification": "0.2% S", "first_month": "2000-10", "last_month": "2005-02", "months": 53},
+          {"product": "gasoil", "spec_column": "gasoil_spec", "specification": "50 ppm", "first_month": "2005-03", "last_month": "2008-05", "months": 39},
+          {"product": "gasoil", "spec_column": "gasoil_spec", "specification": "10 ppm", "first_month": "2008-06", "last_month": "2026-02", "months": 213}
+        ],
+        "overlap_rule": "Each issue prints two or three months, so most months are printed by two or three issues. The value kept is the one from the LATEST issue that carried the month, because a later issue is the revision of an earlier one. n_issues counts the issues that printed the month, max_disagreement_usd_bbl is the largest gap between any two of them on a product THEY BOTH SPECIFIED THE SAME WAY, source_issue names the issue the value came from and issues names every issue that printed it. Nothing is averaged. A gap between two issues that specified a row differently is a respecification, not a disagreement: it is carried in max_respec_gap_usd_bbl with the slots and both specifications named in respecified, so the two cannot be read as one. max_disagreement_usd_bbl is NaN when more than one issue printed the month but no slot was specified the same way twice, because that is no cross check rather than a clean one.",
+        "issues_indexed": 303,
+        "issues_opened": 302,
+        "issues_parsed": 301,
+        "issues_failed": [
+          {"issue": "2009-07", "page": 44, "why": "the row 'Premium gasoline (unleaded 10 58.56 68.88 85.27 16.39' carries an unclosed bracket, so its specification is clipped by the column width and the product cannot be identified. The number that looks like part of the label would otherwise be read as a price"}
+        ],
+        "issues_not_downloaded": [],
+        "unarchived_issues": "Recon 05 section 1.2: the Internet Archive holds issues to 2026-03 and the six issues from 2026-04 to 2026-09 are published but not archived. opec.org answers HTTP 403 to every scripted request from this machine, so they cannot be fetched here. Closing that hole is a MANUAL step: the owner opens the MOMR download page in his own browser, saves the PDF into data/private/momr/ as momr-<yyyy>-<mm>.pdf, and reruns this adapter, which will pick the file up and extend the series. Until that happens the series ends where the archive ends and this field says so.",
+        "pdf_cache": "C:\\Users\\natxa\\.claude\\crack-spread-study\\data\\private\\momr",
+        "manual_step": [
+          {"id": "momr_unarchived_2026", "what": "Six OPEC Monthly Oil Market Report issues, April to September 2026, are not in the Internet Archive and cannot be fetched by this pipeline.", "why": "opec.org answers HTTP 403 to every scripted request from this machine, recon 05 section 1.1, so the adapter resolves issues through the Wayback Machine instead. The archive holds every issue from January 2001 to March 2026 and stops there. Nothing in this repository can close that gap on its own.", "cost_if_skipped": "The headline monthly crack series ends at 2026-02 and the whole 2026 episode, which is the most interesting period in the sample, is missing from it. The weekly DGEC reconstruction covers 2026 and the official monthly MBR covers it, so the study is not blind, but its longest crack series is.", "how": "Open each issue in a browser from https://www.opec.org/monthly-oil-market-report.html , save the PDF into data/private/momr/ under the name the index expects, then run python -m crack.sources.opec_momr to reparse. The PDFs are never committed, only the parsed values are.", "cadence": "monthly, or once when the archive catches up", "status": "outstanding"}
+        ]
+      },
+      {
+        "series": "sp_global_reference",
+        "source": "S&P Global Commodity Insights",
+        "url": null,
+        "page_url": "https://www.spglobal.com/energy/en/news-research/latest-news/crude-oil/032822-refinery-margin-tracker-record-high-global-diesel-cracks-propel-margins-upward",
+        "machine_fetched": false,
+        "fetched_at": null,
+        "checked_at": "2026-09-13T18:14:35Z",
+        "rows": 5,
+        "observations": 5,
+        "file_rows": 5,
+        "first_date": "2022-03-25",
+        "last_date": "2022-10-17",
+        "frequency": "monthly",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "2026-09-13",
+        "method": "seed",
+        "committable": true,
+        "licence_note": "Two individual figures quoted from two news articles with attribution and a link, which is ordinary quotation. The underlying assessments are S&P's and are NOT redistributable as a series. Do not build a chart out of them, do not extend them, and do not present them as a comparable series.",
+        "status": "ok",
+        "note": "5 figures quoted from two dated S&P Global articles, SPEC.md sections 3, 4.4, 5.1 and 5.5. They live in the sp_global_reference block of data/seed/anchors.json and have their own manifest entry because their terms differ from the DGEC anchors in the same file. BOTH ARTICLE URLS ANSWER HTTP 403 to automated access, with a bot token user agent and with a browser user agent, so the figures are transcribed from SPEC.md, which quotes the articles, rather than re read from source. They are order of magnitude references and never a benchmark: SPEC.md section 6.6 forbids tuning toward them and nothing here is fitted to them.",
+        "file": "data/seed/anchors.json",
+        "unit": "USD per barrel",
+        "observation_column": null,
+        "references": 5,
+        "shares_file_with": "anchors"
+      },
+      {
+        "series": "ttf_daily",
+        "source": "Yahoo Finance, symbol TTF=F, CME listed calendar month future",
+        "url": "https://query1.finance.yahoo.com/v8/finance/chart/TTF=F?period1=0&period2=9999999999&interval=1d",
+        "page_url": "https://finance.yahoo.com/quote/TTF%3DF/",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-12T08:28:47Z",
+        "checked_at": null,
+        "rows": 2235,
+        "observations": 2235,
+        "file_rows": 2235,
+        "first_date": "2017-10-23",
+        "last_date": "2026-09-11",
+        "frequency": "daily",
+        "gaps": ["2017-11-23", "2017-12-25", "2018-01-01", "2018-01-15", "2018-02-19", "2018-03-30", "2018-05-28", "2018-07-04", "2018-09-03", "2018-11-22", "2018-12-05", "2018-12-25", "2019-01-01", "2019-01-21", "2019-02-18", "2019-04-19", "2019-05-27", "2019-07-04", "2019-09-02", "2019-11-28", "2019-12-25", "2020-01-01", "2020-01-20", "2020-02-17", "2020-04-10", "2020-05-25", "2020-07-03", "2020-09-07", "2020-11-26", "2020-12-25", "2021-01-01", "2021-01-18", "2021-02-15", "2021-04-02", "2021-05-31", "2021-07-05", "2021-09-06", "2021-11-25", "2021-12-24", "2022-01-17", "2022-02-21", "2022-04-15", "2022-05-30", "2022-06-20", "2022-07-04", "2022-09-05", "2022-11-24", "2022-12-26", "2023-01-02", "2023-01-16", "2023-02-20", "2023-04-07", "2023-05-29", "2023-06-19", "2023-07-04", "2023-09-04", "2023-12-25", "2024-01-01", "2024-01-15", "2024-02-19", "2024-03-29", "2024-04-01", "2024-05-27", "2024-06-19", "2024-07-04", "2024-09-02", "2024-11-28", "2024-12-25", "2025-01-01", "2025-01-20", "2025-02-17", "2025-04-18", "2025-05-26", "2025-06-19", "2025-09-01", "2025-11-27", "2025-12-25", "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25", "2026-06-19", "2026-07-03", "2026-09-07"],
+        "provisional_from": null,
+        "vintage": null,
+        "method": "published",
+        "committable": false,
+        "licence_note": "There is no public Yahoo Finance data licence. The applicable general term forbids users to 'reproduce, modify, rent, lease, sell, trade, distribute, transmit, broadcast, publicly perform, create derivative works based on, or exploit for any commercial purposes' any portion of the services, and yfinance carries no redistribution grant of its own. Committing this cache to a public repository would be redistribution of Yahoo sourced data, so it is NOT committed. The site is complete without it: the monthly gas series the analysis runs on comes from the World Bank pink sheet, which is CC BY 4.0 and already in $/MMBtu.",
+        "status": "ok",
+        "note": "Dutch TTF continuous front month, Yahoo Finance symbol TTF=F, one row per settled session, prices exactly as Yahoo serves them. Fetch path used: yfinance. UNIT: EUR per MWh. Yahoo documents the unit nowhere. It was established numerically, by reproducing the World Bank pink sheet's Natural gas, Europe series to a median 0.02 percent over 106 months after converting with DEXUSEU and MMBTU_PER_MWH, recon 04 section 4.5. That is a construction proof, not a citation. ROLLS ARE UNADJUSTED AND UNDOCUMENTED. Yahoo publishes no roll convention and no roll dates, and expired dated contracts are delisted, so the splice points cannot be recovered from free data. One roll was observed directly, 2026-08-28 into TTFV26.NYM, the October 2026 contract: TTF=F matched TTFV26.NYM exactly on all ten sessions from 2026-08-28 to 2026-09-11 and never matched TTFX26.NYM, the November contract. One directly observed roll out of roughly a hundred in the series.. roll_jump_candidates lists 17 day on day close move(s) of 20 percent or more, and they are CANDIDATES a human reads, not roll dates: some are splices and some are the invasion of Ukraine and the Hormuz episode, and this series cannot tell them apart. No price is adjusted anywhere. 529 row(s) carry a settlement repeated into all four OHLC fields and 469 carry zero volume, all of them at the start of the series. The first bar with a real range is 2018-03-14 and the first with volume is 2018-02-27. Those early rows are a usable price and a useless liquidity signal. THIS CACHE IS NOT COMMITTED. It is written to data/private, which is gitignored, because Yahoo grants no redistribution right, recon 04 section 3.9. It is the optional daily display layer of SPEC.md section 5.1 and nothing the analysis depends on: the monthly gas series is worldbank_gas_europe_monthly, already in $/MMBtu and CC BY 4.0. The consequence, stated rather than hidden, is that anything derived from this file cannot be rebuilt offline from a fresh checkout. The series starts 2017-10-23, 33 months into a sample beginning in 2015, and it is not extended backwards.",
+        "file": "data/private/ttf_daily.csv",
+        "unit": "EUR per MWh for the prices, lots for volume",
+        "observation_column": "close",
+        "fetch_path": "yfinance",
+        "roll_jump_candidates": [
+          {"date": "2019-09-30", "previous_date": "2019-09-27", "close": 16.389999389648438, "previous_close": 11.9399995803833, "percent": 37.27, "sessions_to_month_end": 0},
+          {"date": "2020-05-29", "previous_date": "2020-05-28", "close": 4.385000228881836, "previous_close": 3.509999990463257, "percent": 24.93, "sessions_to_month_end": 0},
+          {"date": "2020-08-28", "previous_date": "2020-08-27", "close": 11.170000076293945, "previous_close": 8.869999885559082, "percent": 25.93, "sessions_to_month_end": 1},
+          {"date": "2021-10-05", "previous_date": "2021-10-04", "close": 116.0199966430664, "previous_close": 96.6520004272461, "percent": 20.04, "sessions_to_month_end": 18},
+          {"date": "2021-12-21", "previous_date": "2021-12-20", "close": 180.26699829101562, "previous_close": 146.92599487304688, "percent": 22.69, "sessions_to_month_end": 7},
+          {"date": "2021-12-23", "previous_date": "2021-12-22", "close": 132.57899475097656, "previous_close": 172.875, "percent": -23.31, "sessions_to_month_end": 5},
+          {"date": "2022-02-24", "previous_date": "2022-02-23", "close": 134.3159942626953, "previous_close": 88.89099884033203, "percent": 51.1, "sessions_to_month_end": 2},
+          {"date": "2022-02-25", "previous_date": "2022-02-24", "close": 94.4219970703125, "previous_close": 134.3159942626953, "percent": -29.7, "sessions_to_month_end": 1},
+          {"date": "2022-03-01", "previous_date": "2022-02-28", "close": 121.67400360107422, "previous_close": 98.59500122070312, "percent": 23.41, "sessions_to_month_end": 22},
+          {"date": "2022-03-02", "previous_date": "2022-03-01", "close": 165.54299926757812, "previous_close": 121.67400360107422, "percent": 36.05, "sessions_to_month_end": 21},
+          {"date": "2022-03-09", "previous_date": "2022-03-08", "close": 155.8800048828125, "previous_close": 214.5540008544922, "percent": -27.35, "sessions_to_month_end": 16},
+          {"date": "2022-06-15", "previous_date": "2022-06-14", "close": 120.33200073242188, "previous_close": 97.04000091552734, "percent": 24.0, "sessions_to_month_end": 10},
+          {"date": "2023-03-10", "previous_date": "2023-03-09", "close": 52.856998443603516, "previous_close": 43.5989990234375, "percent": 21.23, "sessions_to_month_end": 15},
+          {"date": "2023-06-05", "previous_date": "2023-06-02", "close": 28.47800064086914, "previous_close": 23.68899917602539, "percent": 20.22, "sessions_to_month_end": 18},
+          {"date": "2023-08-09", "previous_date": "2023-08-08", "close": 39.823001861572266, "previous_close": 31.06599998474121, "percent": 28.19, "sessions_to_month_end": 16},
+          {"date": "2026-03-02", "previous_date": "2026-02-27", "close": 44.50600051879883, "previous_close": 31.958999633789062, "percent": 39.26, "sessions_to_month_end": 21},
+          {"date": "2026-03-03", "previous_date": "2026-03-02", "close": 54.290000915527344, "previous_close": 44.50600051879883, "percent": 21.98, "sessions_to_month_end": 20}
+        ],
+        "roll_jump_threshold_percent": 20.0,
+        "observed_roll": {
+          "date": "2026-08-28",
+          "into": "TTFV26.NYM, the October 2026 contract",
+          "evidence": "TTF=F matched TTFV26.NYM exactly on all ten sessions from 2026-08-28 to 2026-09-11 and never matched TTFX26.NYM, the November contract. One directly observed roll out of roughly a hundred in the series."
+        },
+        "early_flat_bars": {
+          "flat_bars": 529,
+          "zero_volume_bars": 469,
+          "first_non_flat_bar": "2018-03-14",
+          "first_bar_with_volume": "2018-02-27"
+        }
+      },
+      {
+        "series": "worldbank_gas_europe_monthly",
+        "source": "World Bank Commodity Price Data (The Pink Sheet)",
+        "url": "https://www.worldbank.org/en/research/commodity-markets",
+        "page_url": "https://www.worldbank.org/en/research/commodity-markets",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-12T08:28:45Z",
+        "checked_at": null,
+        "rows": 800,
+        "observations": 800,
+        "file_rows": 800,
+        "first_date": "1960-01-01",
+        "last_date": "2026-08-01",
+        "frequency": "monthly",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "Updated on September 02, 2026",
+        "method": "published",
+        "committable": true,
+        "licence_note": "World Bank data is licensed CC BY 4.0 with an added mediation and arbitration clause for disputes, which is not a use restriction. Attribute as 'World Bank Commodity Price Data (The Pink Sheet)'. Two caveats recorded at recon 04 section 4.7: the general datasets page carries a narrower clause scoped to material outside the open data licence, and the Europe gas series itself credits Bloomberg Finance L.P. and World Gas Intelligence, so do not strip the attribution and do not present it as this project's own assessment.",
+        "status": "ok",
+        "note": "Natural gas, Europe, monthly, US dollars per MMBtu, read straight from the pink sheet's 'Monthly Prices' sheet by matching the row 5 label 'Natural gas, Europe' and checking the unit cell under it still reads '($/mmbtu)'. 800 of 800 periods carry a value. THIS IS THE PRIMARY MONTHLY GAS SERIES, not a fallback: it is already in the unit SPEC.md section 4.4 needs, so gas_usd_mmbtu is read and never computed, with no FX and no conversion factor. From April 2015 it IS TTF by the publisher's own definition, and before that it is an average import border price plus a spot component which must never be labelled TTF. Three definition changes are carried in structural_breaks and SPEC.md section 4.3 requires the 2015-04 one marked on every chart that spans it. The workbook URL was discovered from the landing page because the document id segment of the path rots, recon 04 section 4.1: this run used https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx. Attribution is a licence condition, CC BY 4.0, and the series itself credits Bloomberg Finance L.P. and World Gas Intelligence.",
+        "file": "data/cache/worldbank_gas_europe_monthly.csv",
+        "unit": "USD per MMBtu",
+        "observation_column": "gas_usd_mmbtu",
+        "structural_breaks": [
+          {"date": "2000-06-01", "note": "From June 2000 the series is an average import border price plus a spot price component, excluding the UK. What it was before June 2000 is not stated in the workbook."},
+          {"date": "2010-04-01", "note": "From April 2010 the same construction includes the UK."},
+          {"date": "2015-04-01", "note": "From April 2015 the series is the Netherlands Title Transfer Facility, TTF, by the publisher's own definition. Before it, the series is an average import border price plus a spot component including the UK and must be labelled that way, never as TTF. The level fell from 8.27 to 6.77 $/MMBtu across this one month, 18.1 percent. No free overlap series exists that would separate the definition change from the market move, recon 04 section 5.3, so the split is not asserted."}
+        ],
+        "series_description": "Natural Gas (Europe), from April 2015, Netherlands Title Transfer Facility (TTF); April 2010 to March 2015, average import border price and a spot price component, including UK; during June 2000 - March 2010 prices excludes UK. Bloomberg Finance L.P. Finance L.P.; World Gas Intelligence; World Bank.",
+        "open_question": "The Description sheet prints this series' description in a row whose first cell is '*', and row 107 of that sheet says '* denotes forecast series'. Nothing in the workbook says whether that marks a series the World Bank publishes forecasts for in the Commodity Markets Outlook, which is the reading that makes sense for a historical monthly file, or something about the history itself. Recon 04 open question 3. Unresolved, and not resolved by guessing.",
+        "discovered_url": "https://thedocs.worldbank.org/en/doc/74e8be41ceb20fa0da750cda2f6b9e4e-0050012026/related/CMO-Historical-Data-Monthly.xlsx"
+      }
+    ],
+    "manual_steps": [
+      {
+        "id": "momr_unarchived_2026",
+        "series": ["opec_rotterdam_products_monthly"],
+        "what": "Six OPEC Monthly Oil Market Report issues, April to September 2026, are not in the Internet Archive and cannot be fetched by this pipeline.",
+        "why": "opec.org answers HTTP 403 to every scripted request from this machine, recon 05 section 1.1, so the adapter resolves issues through the Wayback Machine instead. The archive holds every issue from January 2001 to March 2026 and stops there. Nothing in this repository can close that gap on its own.",
+        "cost_if_skipped": "The headline monthly crack series ends at 2026-02 and the whole 2026 episode, which is the most interesting period in the sample, is missing from it. The weekly DGEC reconstruction covers 2026 and the official monthly MBR covers it, so the study is not blind, but its longest crack series is.",
+        "how": "Open each issue in a browser from https://www.opec.org/monthly-oil-market-report.html , save the PDF into data/private/momr/ under the name the index expects, then run python -m crack.sources.opec_momr to reparse. The PDFs are never committed, only the parsed values are.",
+        "cadence": "monthly, or once when the archive catches up",
+        "status": "outstanding"
+      },
+      {
+        "id": "dgec_weekly_note_collection",
+        "series": ["dgec_note_printed_weekly", "dgec_note_printed_monthly", "dgec_note_reconstructed_weekly", "dgec_note_reconstructed_cracks_weekly"],
+        "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.",
+        "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.",
+        "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note.",
+        "how": "python -m crack.sources.dgec_note --collect , two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.",
+        "cadence": "weekly, every week, without exception",
+        "status": "standing"
+      }
+    ],
+    "manual_steps_note": "Work this pipeline cannot do for itself. Each entry says what it is, why it exists, what it costs to skip it and how to do it. They are repeated against the series they affect in the manual_step field of those entries.",
+    "run": {
+      "mode": "offline",
+      "started_at": "2026-09-13T18:14:34Z",
+      "finished_at": "2026-09-13T18:14:35Z",
+      "script": "scripts/refresh.py"
+    }
+  }
+}

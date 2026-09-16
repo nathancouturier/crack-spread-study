@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "artifact": "margin-stack",
+  "generated_by": "src/crack/export.py",
+  "data_date": "2026-08-01",
+  "describes": "the waterfall from product contributions to the ministry's margin, then the gas wedge to the margin at this study's gas intensity",
+  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "conventions": {
+    "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
+    "decimals": {
+      "usd_bbl": 2,
+      "usd_t": 0,
+      "usd_mmbtu": 2,
+      "mmbtu_per_bbl": 3,
+      "kb_d": 1,
+      "t": 2,
+      "r2": 3,
+      "pp": 3,
+      "pp_per_usd_bbl": 3,
+      "percent": 1,
+      "ratio": 1,
+      "yield_percent": 1,
+      "bbl_per_t": 2,
+      "count": 0,
+      "year": 0
+    },
+    "rounding": "Floats are stored to 6 places. The page prints the decimals of the format a value names.",
+    "segments": "A sentence is a list of segments. A text segment holds words only. A value segment names its field and holds a value with a format, or an ISO date or a word with its label."
+  },
+  "month": "2026-08-01",
+  "month_label": "August 2026",
+  "decomposed": true,
+  "rows": [
+    {
+      "id": "gasoil",
+      "kind": "step",
+      "value_usd_bbl": 26.996621,
+      "start_usd_bbl": 0.0,
+      "end_usd_bbl": 26.996621,
+      "name": "gasoil",
+      "label": "Gazole",
+      "price_usd_t": 1278.0,
+      "bbl_per_t": 7.45,
+      "factor_citation": {
+        "contract": "ICE Gasoil Crack, Low Sulphur Gasoil 1st Line vs Brent 1st Line Future",
+        "url": "https://www.ice.com/products/6753331"
+      },
+      "product_usd_bbl": 171.543624,
+      "brent_usd_bbl": 91.076,
+      "crack_usd_bbl": 80.467624,
+      "slate_line": "gazole",
+      "mass_yield_percent": 34.0,
+      "volume_yield": 0.335497,
+      "carrier": true
+    },
+    {
+      "id": "jet",
+      "kind": "step",
+      "value_usd_bbl": 6.225782,
+      "start_usd_bbl": 26.996621,
+      "end_usd_bbl": 33.222403,
+      "name": "jet",
+      "label": "Jet",
+      "price_usd_t": 1284.0,
+      "bbl_per_t": 7.88,
+      "factor_citation": {
+        "contract": "ICE Jet Fuel Crack, Jet CIF NWE Cargoes vs Brent 1st Line Future",
+        "url": "https://www.ice.com/products/6753303"
+      },
+      "product_usd_bbl": 162.944162,
+      "brent_usd_bbl": 91.076,
+      "crack_usd_bbl": 71.868162,
+      "slate_line": "carbureacteur",
+      "mass_yield_percent": 8.3,
+      "volume_yield": 0.086628,
+      "carrier": false
+    },
+    {
+      "id": "gasoline",
+      "kind": "step",
+      "value_usd_bbl": 5.981514,
+      "start_usd_bbl": 33.222403,
+      "end_usd_bbl": 39.203917,
+      "name": "gasoline",
+      "label": "Eurosuper",
+      "price_usd_t": 1135.0,
+      "bbl_per_t": 8.33,
+      "factor_citation": {
+        "contract": "ICE Gasoline Crack, Argus Eurobob Oxy FOB Rotterdam Barges vs Brent 1st Line Future",
+        "url": "https://www.ice.com/products/6753285"
+      },
+      "product_usd_bbl": 136.254502,
+      "brent_usd_bbl": 91.076,
+      "crack_usd_bbl": 45.178502,
+      "slate_line": "eurobob",
+      "mass_yield_percent": 12.0,
+      "volume_yield": 0.132397,
+      "carrier": false
+    },
+    {
+      "id": "heating_oil",
+      "kind": "step",
+      "value_usd_bbl": 5.935321,
+      "start_usd_bbl": 39.203917,
+      "end_usd_bbl": 45.139238,
+      "name": "heating oil",
+      "label": "Fioul domestique",
+      "price_usd_t": 1225.0,
+      "bbl_per_t": 7.45,
+      "factor_citation": {
+        "contract": "ICE Gasoil Crack, Gasoil 0.1% FOB ARA Barges (Platts) vs Brent 1st Line Future (in MTs)",
+        "url": "https://www.ice.com/products/6753295"
+      },
+      "product_usd_bbl": 164.42953,
+      "brent_usd_bbl": 91.076,
+      "crack_usd_bbl": 73.35353,
+      "slate_line": "fod",
+      "mass_yield_percent": 8.2,
+      "volume_yield": 0.080914,
+      "carrier": false
+    },
+    {
+      "id": "fuel_oil_1pct",
+      "kind": "step",
+      "value_usd_bbl": -0.586658,
+      "start_usd_bbl": 45.139238,
+      "end_usd_bbl": 44.55258,
+      "name": "fuel oil",
+      "label": "Fioul lourd TBTS (< 1%)",
+      "price_usd_t": 528.0,
+      "bbl_per_t": 6.35,
+      "factor_citation": {
+        "contract": "ICE Fuel Oil Crack, Fuel Oil 1% FOB NWE Cargoes vs Brent 1st Line Future",
+        "url": "https://www.ice.com/products/6753289"
+      },
+      "product_usd_bbl": 83.149606,
+      "brent_usd_bbl": 91.076,
+      "crack_usd_bbl": -7.926394,
+      "slate_line": "fioul_lourd_1pct",
+      "mass_yield_percent": 8.8,
+      "volume_yield": 0.074013,
+      "carrier": false
+    },
+    {
+      "id": "residual",
+      "kind": "step",
+      "value_usd_bbl": -6.502075,
+      "start_usd_bbl": 44.55258,
+      "end_usd_bbl": 38.050505,
+      "name": "everything the cracks do not price",
+      "contains": {
+        "slate_lines": [
+          {"slate_line": "butane", "name": "butane", "mass_yield_percent": 1.2},
+          {"slate_line": "essence_export", "name": "export gasoline", "mass_yield_percent": 11.9},
+          {"slate_line": "naphta", "name": "naphtha", "mass_yield_percent": 8.2},
+          {"slate_line": "propane", "name": "propane", "mass_yield_percent": 1.7},
+          {"slate_line": "soufre", "name": "sulphur", "mass_yield_percent": 0.2}
+        ],
+        "unattributed_mass_yield_percent": 23.2,
+        "method_costs": ["purchased natural gas", "crude freight, Sullom Voe to Le Havre", "insurance and losses"],
+        "approximations": ["the gasoline line prices the method's EuroBOB yield with the ministry's Eurosuper quotation, a finished gasoline and a different product", "each product converts to barrels at an ICE contract factor, a settlement convention and not the density of the cargo the ministry quotes"]
+      },
+      "covered_volume_yield": 0.709449,
+      "residual_share": -0.17088
+    },
+    {
+      "id": "official_margin",
+      "kind": "total",
+      "value_usd_bbl": 38.050505,
+      "start_usd_bbl": 0.0,
+      "end_usd_bbl": 38.050505,
+      "name": "official margin, the ministry's MBR",
+      "accent": true
+    },
+    {
+      "id": "gas_wedge",
+      "kind": "step",
+      "value_usd_bbl": -3.087691,
+      "start_usd_bbl": 38.050505,
+      "end_usd_bbl": 34.962813,
+      "name": "extra gas at the average US refinery's use",
+      "gas_usd_mmbtu": 21.11,
+      "gas_source": "World Bank Commodity Price Data (The Pink Sheet), natural gas, Europe",
+      "embedded_intensity_mmbtu_per_bbl": 0.065903,
+      "study_intensity_mmbtu_per_bbl": 0.21217,
+      "embedded_cost_usd_bbl": 1.391217,
+      "study_cost_usd_bbl": 4.478909,
+      "intensity_ratio": 3.219417
+    },
+    {
+      "id": "margin_study_intensity",
+      "kind": "total",
+      "value_usd_bbl": 34.962813,
+      "start_usd_bbl": 0.0,
+      "end_usd_bbl": 34.962813,
+      "name": "at that gas use",
+      "accent": false
+    }
+  ],
+  "scale": {
+    "low_usd_bbl": 0.0,
+    "high_usd_bbl": 50.0,
+    "includes_zero": true
+  },
+  "residual_history": {
+    "months": [
+      {"month": "2025-11-01", "residual_usd_bbl": -4.847633, "official_usd_bbl": 16.469831, "carrier": "gasoil", "quotations_vintage": "2025-12-19"},
+      {"month": "2026-02-01", "residual_usd_bbl": -6.802232, "official_usd_bbl": 6.501493, "carrier": "gasoil", "quotations_vintage": "2026-03-27"},
+      {"month": "2026-03-01", "residual_usd_bbl": -9.103608, "official_usd_bbl": 24.71577, "carrier": "gasoil", "quotations_vintage": "2026-04-24"},
+      {"month": "2026-08-01", "residual_usd_bbl": -6.502075, "official_usd_bbl": 38.050505, "carrier": "gasoil", "quotations_vintage": "2026-09-04"}
+    ],
+    "not_decomposed": [
+      {"month": "2025-12-01", "reason": "the monthly quotations for 2025-12 are provisional in the note of 2025-12-19, and a provisional month is not decomposed"},
+      {"month": "2026-04-01", "reason": "the monthly quotations for 2026-04 are provisional in the note of 2026-04-24, and a provisional month is not decomposed"},
+      {"month": "2026-09-01", "reason": "no published MBR for 2026-09"}
+    ],
+    "negative": 4,
+    "decomposed": 4,
+    "segments": [
+      {"text": "On the ministry's own monthly prices this line has been negative in "},
+      {"field": "negative", "value": 4, "format": "count"},
+      {"text": " of the "},
+      {"field": "decomposed", "value": 4, "format": "count"},
+      {"text": " months a note printed final prices for."}
+    ]
+  },
+  "residual_segments": [
+    {"text": "The cracks cover "},
+    {"field": "covered_volume_yield_percent", "value": 70.944901, "format": "percent"},
+    {"text": " percent of the barrel; everything else, and the ministry's gas, freight and insurance costs, adds up to this line."}
+  ],
+  "wedge_segments": [
+    {"field": "study_intensity_mmbtu_per_bbl", "value": 0.21217, "format": "mmbtu_per_bbl"},
+    {"text": " MMBtu/bbl here against the ministry's "},
+    {"field": "embedded_intensity_mmbtu_per_bbl", "value": 0.065903, "format": "mmbtu_per_bbl"},
+    {"text": ", at "},
+    {"field": "gas_usd_mmbtu", "value": 21.11, "format": "usd_mmbtu"},
+    {"text": " $/MMBtu."}
+  ]
+}
