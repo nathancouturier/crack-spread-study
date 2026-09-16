@@ -16,6 +16,7 @@ Thumbs.db
 
 # Local agent settings, machine specific
 .claude/settings.local.json
+.claude/launch.json
 
 # Working file for the build, not part of the deliverable
 .build-progress.md
