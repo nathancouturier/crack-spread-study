@@ -6,7 +6,8 @@
 #
 # Targets are added as the phase gates in SPEC.md section 10 are approved. Gates
 # 1 to 3 built the data layer, the engine and the analysis. Gate 4 adds build and
-# build-check, which write and check the site facing JSON artifacts in data/.
+# build-check, which write and check the site facing JSON artifacts in data/,
+# and the four site checks in validate and gate.
 
 .DEFAULT_GOAL := help
 .PHONY: help data data-offline data-jobs note fixtures build build-check test validate gate serve
@@ -34,6 +35,10 @@ help:
 	@echo "                     equivalent: node tools/validate-data.mjs"
 	@echo "                                 node tools/validate-engine.mjs"
 	@echo "                                 node tools/validate-artifacts.mjs"
+	@echo "                                 node tools/check-literals.mjs"
+	@echo "                                 node tools/check-paths.mjs"
+	@echo "                                 node tools/check-styles.mjs"
+	@echo "                                 node tools/validate-format.mjs"
 	@echo "                                 node tools/check-dashes.mjs"
 	@echo "  make gate          the deploy gate: everything that must pass before a change lands"
 	@echo "                     equivalent: python scripts/refresh.py --offline"
@@ -42,9 +47,13 @@ help:
 	@echo "                                 node tools/validate-engine.mjs"
 	@echo "                                 python scripts/export.py --check"
 	@echo "                                 node tools/validate-artifacts.mjs"
+	@echo "                                 node tools/check-literals.mjs"
+	@echo "                                 node tools/check-paths.mjs"
+	@echo "                                 node tools/check-styles.mjs"
+	@echo "                                 node tools/validate-format.mjs"
 	@echo "                                 node tools/check-dashes.mjs"
-	@echo "  make serve         serve the repo root over http on port 8000"
-	@echo "                     equivalent: python -m http.server 8000"
+	@echo "  make serve         serve the site at its Pages subpath, http://localhost:8000/crack-spread-study/"
+	@echo "                     equivalent: python scripts/serve.py --port 8000"
 
 # Fetches from the network. Keeps the previous cache on any failure, and exits
 # non zero if any series ends up failed. SPEC.md section 5.4.
@@ -157,13 +166,27 @@ test:
 # ever be red. The bar that IS asserted, and that fails this target, is
 # SPEC.md section 7.1's 1e-9. Read the measurement anyway: drift shows up there
 # many orders of magnitude before it reaches the bar.
+#
+# The four site checks, added at Gate 4, read the frontend rather than the data:
+#   check-literals   SPEC.md section 2 rule 2: no number in src/ or index.html
+#                    that no artifact supplied, outside a commented allowlist
+#   check-paths      every path relative, nothing from another host, so the
+#                    /crack-spread-study/ subpath cannot break
+#   check-styles     the CSS docs/design.md Part 5 bans, and mono only on
+#                    figures and ticks
+#   validate-format  src/format.js, router.js and state.js under plain node, and
+#                    the verdict read back through format.js
 validate:
 	node tools/validate-data.mjs
 	node tools/validate-engine.mjs
 	node tools/validate-artifacts.mjs
+	node tools/check-literals.mjs
+	node tools/check-paths.mjs
+	node tools/check-styles.mjs
+	node tools/validate-format.mjs
 	node tools/check-dashes.mjs
 
-# The deploy gate, SPEC.md non negotiable 7. Seven commands, in this order,
+# The deploy gate, SPEC.md non negotiable 7. Eleven commands, in this order,
 # none of which touches the network. Today it is the WHOLE gate, because it is
 # the only gate: .github/workflows/ is empty and there is no CI. SPEC.md non
 # negotiable 7 says the CI gate is the deploy gate and SPEC.md section 10 puts
@@ -176,8 +199,10 @@ validate:
 # the parity validator, which is where a JavaScript change fails. Then the
 # artifacts: build-check first, because a stale artifact would make the artifact
 # validator pass on numbers that no longer describe the caches, then the
-# validator, which reads them in JavaScript. Dashes last: it is the only one
-# that never depends on a number.
+# validator, which reads them in JavaScript. Then the four site checks, which
+# read src/, styles/ and index.html: literals, paths, styles, then the format
+# validator, which also reads the verdict in now.json back through format.js.
+# Dashes last: it is the only one that never depends on a number.
 #
 # TWO STEPS ARE MISSING HERE AND BOTH BELONG IN THE WORKFLOW WHEN IT IS
 # WRITTEN. Both are `git diff --exit-code` and both only mean anything on a
@@ -205,10 +230,15 @@ gate:
 	node tools/validate-engine.mjs
 	python scripts/export.py --check
 	node tools/validate-artifacts.mjs
+	node tools/check-literals.mjs
+	node tools/check-paths.mjs
+	node tools/check-styles.mjs
+	node tools/validate-format.mjs
 	node tools/check-dashes.mjs
 
-# The site is served from a subpath on GitHub Pages, so open
-# http://localhost:8000/ and check that every asset path is relative. There is
-# no site yet: SPEC.md section 10 puts it behind Gate 4.
+# The site is served from a subpath on GitHub Pages. scripts/serve.py mounts
+# the repository at /crack-spread-study/ and answers 404 everywhere else, so a
+# root relative path fails here as it would on Pages. Open
+# http://localhost:8000/crack-spread-study/
 serve:
-	python -m http.server 8000
+	python scripts/serve.py --port 8000
