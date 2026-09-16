@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#FBFAF8">
+<title>Now, NWE crack spread study</title>
+<meta name="description" content="Northwest European refining margins: the gasoil and gasoline cracks, the margin they add up to, what it is worth after gas, and how it feeds through to refinery runs and crude demand.">
+
+<!-- Every path on this page is relative. The site is served from the subpath
+     /crack-spread-study/, never from a domain root, so a leading slash breaks
+     the deploy. tools/check-paths.mjs fails the gate on one, and
+     scripts/serve.py reproduces the subpath locally. SPEC.md section 0.1. -->
+
+<!-- An empty data URI, so the browser does not ask the origin root for a
+     favicon, which on a project page is somebody else's file. -->
+<link rel="icon" href="data:,">
+
+<!-- The theme, set before the first paint. docs/design.md Part 3 section 7,
+     declared difference 3: the portfolio sets data-theme from script at the end
+     of the page, which paints one light frame for a visitor who chose dark. This
+     reads the same key, nc-theme, which the portfolio shares because both sites
+     live on the same origin. A blocked store falls back to light, the value the
+     html element already ships with. src/theme.js owns the toggle after load. -->
+<script>
+  (function () {
+    try {
+      if (localStorage.getItem("nc-theme") === "dark") {
+        document.documentElement.setAttribute("data-theme", "dark");
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", "#17181C");
+      }
+    } catch (error) {
+      /* storage blocked: stay light */
+    }
+  })();
+</script>
+
+<link rel="preload" href="vendor/figtree/figtree.v2.002.latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="vendor/jetbrains-mono/jetbrains-mono.v2.211.latin.woff2" as="font" type="font/woff2" crossorigin>
+
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/layout.css">
+<link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+
+<!-- The skip link goes to the view's h1. src/ui.js moves focus there itself so
+     the address keeps the route; without script the fragment still scrolls. -->
+<a class="skip-link" href="#view-title" data-skip>Skip to the verdict</a>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="site-name" href="#/now">NWE crack spread study</a>
+    <!-- One link per view that exists. docs/design.md Part 7, C7: History,
+         Model, Runs and crude demand, Events and Method arrive at Gate 5, and
+         a link to a view with no data behind it is an orphan UI state, SPEC.md
+         section 11 point 8. src/ui.js builds this list from the route table,
+         so a view that is registered is linked and one that is not, is not. -->
+    <nav class="site-nav" aria-label="Views">
+      <ul class="site-nav__list" id="site-nav-list"></ul>
+    </nav>
+    <div class="site-header__tools">
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Press T to toggle" aria-pressed="false"><span id="theme-icon" aria-hidden="true">&#x263E;&#xFE0E;</span></button>
+    </div>
+  </div>
+</header>
+
+<main id="view" class="view">
+  <p class="state-message">Loading the study. Every figure on this page is read from a JSON file in data/.</p>
+</main>
+
+<noscript>
+  <div class="view">
+    <p class="state-message">This page builds itself from the JSON files in data/, so with JavaScript turned off nothing is drawn. The numbers are not hidden: the landing sentence is in data/now.json, readable as text in this repository.</p>
+  </div>
+</noscript>
+
+<script type="module" src="src/ui.js"></script>
+
+</body>
+</html>

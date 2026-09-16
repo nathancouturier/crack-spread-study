@@ -1,0 +1,180 @@
+/* layout.css
+ *
+ * The page frame: reset, ground, header, nav, the content column, focus, the
+ * skip link and reduced motion. docs/design.md Part 3 sections 1, 6, 7, 8, 9.
+ * components.css holds what sits inside the column.
+ *
+ * What is NOT copied from the portfolio, on purpose, and why:
+ *   html { scroll-behavior: smooth }       Part 3 section 8: scroll-behavior is
+ *                                          auto; a route change does not move.
+ *   the body's horizontal overflow clip    Part 3 section 7, S22: it would hide
+ *                                          the exact failure the 375 px check
+ *                                          exists to catch.
+ *   body::before, body::after              the portfolio's grid texture and
+ *                                          grain overlay. Noise overlays banned.
+ *   h1, h2, h3, h4 font-variation-settings Part 3 section 6: it overrides
+ *                                          font-weight, and the cut has no SOFT.
+ *   .eyebrow, .mono tracking               uppercase eyebrows and positive
+ *                                          tracking are banned, S32.
+ *   .nav background blur                   glassmorphism is banned.
+ *
+ * Paths: this file loads nothing. If it ever does, relative url() only.
+ */
+
+/* -------------------------------------------------------------- reset --- */
+
+/* The portfolio's reset, section 0 of its styles.css, minus the smooth scroll. */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+img, picture, svg, video { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+input, textarea, select { font: inherit; }
+
+/* The portfolio's focus rule, verbatim. Part 3 section 9: 7.96 light and 3.79
+ * dark on --bg, above 3.0 for a non text indicator. Never removed, never
+ * replaced by a colour change. */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }
+
+/* ------------------------------------------------------------- ground --- */
+
+/* The portfolio's global type rule. The weight is set here and not inherited
+ * from the font: Figtree's default instance is Light 300. The transition is the
+ * one motion the theme toggle is allowed, Part 3 section 8. */
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff-body);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  transition: background-color var(--t-base) var(--ease-out), color var(--t-base) var(--ease-out);
+}
+
+/* Every heading element resets to the body face and a stated weight, so no
+ * heading falls back to a browser default bold or to Fraunces by accident. The
+ * two Fraunces headings, the verdict and a view title, say so in
+ * components.css. */
+h1, h2, h3, h4 {
+  font-family: var(--ff-body);
+  font-size: inherit;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* ---------------------------------------------------------- skip link --- */
+
+/* First in the tab order, off screen until it has focus. Part 3 section 9. */
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: 0;
+  transform: translateY(-200%);
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 500;
+  font-size: var(--fs-body-s);
+  border: 1px solid var(--border-strong);
+  z-index: 10;
+}
+.skip-link:focus-visible,
+.skip-link:focus {
+  transform: none;
+}
+
+/* ------------------------------------------------------------- header --- */
+
+/* 56px, solid --bg, a hairline below, not sticky. Part 3 section 1. */
+.site-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.site-header__inner {
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 0 2rem;
+}
+
+.site-name {
+  font-weight: 600;
+  font-size: var(--fs-body-s);
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.site-nav {
+  flex: 1 1 auto;
+}
+
+.site-nav__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+/* The links are at least 44px tall for touch, Part 3 section 9, with the text
+ * centred in that height. The current view is --text with a 2px --text
+ * underline; the others --text-muted, 4.90 light and 7.54 dark. */
+.site-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 500;
+  font-size: var(--fs-body-s);
+  color: var(--text-muted);
+}
+.site-nav__link[aria-current="page"] {
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+.site-header__tools {
+  margin-left: auto;
+}
+
+/* Below 768px the header is two rows: the name and the toggle, then the nav,
+ * wrapping. No hamburger, no horizontally scrolling nav. */
+@media (max-width: 767.98px) {
+  .site-header__inner {
+    flex-wrap: wrap;
+    padding-block: 6px;
+  }
+  .site-name { order: 1; }
+  .site-header__tools { order: 2; }
+  .site-nav { order: 3; flex-basis: 100%; }
+}
+
+/* ---------------------------------------------------- content column --- */
+
+.view {
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+  padding-block: 28px 56px;
+}
+
+/* Nothing removes an outline anywhere. The element that receives focus on a
+ * route change and from the skip link is the view's h1, tabindex -1, never the
+ * column, so the ring lands on a sentence rather than around the whole page. */
+
+/* ----------------------------------------------------- reduced motion --- */
+
+/* The portfolio's block, verbatim, minus its hero and reveal selectors, which
+ * do not exist on this site. Part 3 section 8. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

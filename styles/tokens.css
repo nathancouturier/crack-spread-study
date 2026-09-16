@@ -1,0 +1,205 @@
+/* tokens.css
+ *
+ * Three things, in this order, and nothing that draws.
+ *
+ *   1  The portfolio's custom properties, the :root and [data-theme="dark"]
+ *      blocks of nathancouturier.github.io/styles.css, lines 21 to 87 of the
+ *      copy served by Pages and kept at data/private/probe/portfolio_styles_pages.css.
+ *      SPEC.md section 0.2: copied verbatim. Every declaration, name and value,
+ *      is byte for byte the portfolio's. Two COMMENTS inside the block are not:
+ *      the portfolio writes "light", a middle dot, "encre neutre", an em dash,
+ *      "paper-led", and "dark", a middle dot, "ink ground". SPEC.md section 0.1
+ *      bans the em dash from every file and design.md Part 5 item 18 bans the
+ *      middle dot from styles/, so those two characters became commas. Nothing
+ *      else in the block was touched. docs/design.md Part 7, C6.
+ *   2  The three @font-face blocks and the one --ff-body override.
+ *   3  The named chart roles of docs/design.md Part 3 section 7, as aliases, so
+ *      no chart rule and no chart code ever names a raw palette token.
+ *
+ * WHAT THE TOKENS MAY NOT BE USED FOR. They are copied whole so the file stays a
+ * verbatim copy, and several of them are unusable on this site. docs/design.md
+ * Part 6 section C measured every pairing in both themes:
+ *
+ *   --text-dim        nothing. 2.54 light and 3.47 dark on --bg, fails text in
+ *                     both themes and fails 3.0 for a mark in light.
+ *   --accent-deep     nothing. 2.14 on --bg in dark.
+ *   --accent          text in LIGHT only (7.96). In dark it is 3.79, a mark only,
+ *                     so dark accent text is --accent-bright (5.15). Use the
+ *                     roles below, which already make that switch.
+ *   --border          marks no value is read from: gridlines, section hairlines.
+ *   --border-strong   decorative marks only, never a mark that carries data
+ *                     (1.49 light, 1.64 dark).
+ *   --bg-card, --bg-tint
+ *                     nothing. A tinted block is the rounded card's near relative
+ *                     and SPEC.md section 0.2 bans it.
+ *   --bg-elev         the field background of Model inputs, nothing else.
+ *   --shadow-sm, --shadow, --shadow-lg, --grain-opacity
+ *                     nothing. Present because the block is verbatim; referenced
+ *                     by no rule. Heavy shadows and noise overlays are banned.
+ *
+ * Paths are relative to this file, which sits in styles/, so the fonts are at
+ * ../vendor/. Never a leading slash: the site is served from the subpath
+ * /crack-spread-study/. tools/check-paths.mjs fails the gate on one.
+ */
+
+/* ------------------------------------------ 1. the portfolio, verbatim --- */
+
+:root {
+  /* light, "encre neutre", paper-led (default) */
+  --bg:           #FBFAF8;  /* papier      */
+  --bg-elev:      #FFFFFF;
+  --bg-card:      #F5F3ED;
+  --bg-tint:      rgba(142, 43, 43, 0.045);
+  --border:       #E5E2DB;  /* filet       */
+  --border-strong:#D3CFC4;
+  --text:         #17181C;  /* encre       */
+  --text-muted:   #6A6E76;  /* gris texte  */
+  --text-dim:     #9C9FA6;
+  --accent:       #8E2B2B;  /* brique      */
+  --accent-bright:#A4332E;
+  --accent-deep:  #6B2020;
+  --shadow-sm: 0 1px 2px rgba(23,24,28,0.05);
+  --shadow:    0 8px 24px rgba(23,24,28,0.08);
+  --shadow-lg: 0 24px 64px rgba(23,24,28,0.12);
+  --grain-opacity: 0.03;
+
+  /* type scale */
+  --fs-display-xl: clamp(3.25rem, 9vw, 8rem);
+  --fs-display-l:  clamp(2.25rem, 5.2vw, 4.25rem);
+  --fs-display-m:  clamp(1.75rem, 3vw, 2.5rem);
+  --fs-display-s:  clamp(1.375rem, 2vw, 1.75rem);
+  --fs-body-l:     clamp(1.0625rem, 1.15vw, 1.1875rem);
+  --fs-body:       1rem;
+  --fs-body-s:     0.9375rem;
+  --fs-meta:       0.8125rem;
+  --fs-caption:    0.75rem;
+
+  /* spacing */
+  --container: 1280px;
+  --gutter: clamp(1.25rem, 4vw, 2.75rem);
+  --section-y: clamp(4.5rem, 10vw, 8.5rem);
+
+  /* type families */
+  --ff-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --ff-body:    "Satoshi", system-ui, -apple-system, Helvetica, sans-serif;
+  --ff-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* easings */
+  --ease-out:   cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out:cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 200ms;
+  --t-base: 380ms;
+  --t-slow: 700ms;
+}
+
+[data-theme="dark"] {
+  /* dark, ink ground, brique brightened for contrast */
+  --bg:           #17181C;  /* encre       */
+  --bg-elev:      #202126;
+  --bg-card:      #1E1F24;
+  --bg-tint:      rgba(192, 80, 74, 0.05);
+  --border:       #2B2C31;
+  --border-strong:#3C3D43;
+  --text:         #FBFAF8;  /* papier      */
+  --text-muted:   #A6A9B0;
+  --text-dim:     #6A6E76;  /* gris texte  */
+  --accent:       #C0504A;
+  --accent-bright:#D66A62;
+  --accent-deep:  #8E2B2B;  /* true brique */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow:    0 8px 24px rgba(0,0,0,0.45);
+  --shadow-lg: 0 24px 64px rgba(0,0,0,0.55);
+  --grain-opacity: 0.05;
+}
+
+/* ------------------------------------------------------------ 2. faces --- */
+
+/* Fraunces, display. Its default instance is Black at optical size 9, so every
+ * rule that names this family sets font-weight. font-optical-sizing stays auto
+ * and font-variation-settings is never written, because it would override
+ * font-weight. It has no tnum and no U+2191 or U+2193. vendor/README.md. */
+@font-face {
+  font-family: "Fraunces";
+  src: url("../vendor/fraunces/fraunces.v1.000.latin.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* JetBrains Mono, figures in table cells and tick values on axes only. Its
+ * digits are one width by construction. */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../vendor/jetbrains-mono/jetbrains-mono.v2.211.latin.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Figtree, every word on the page. Its default instance is Light 300 and its
+ * digits are proportional by default, so body sets weight 400 and any element
+ * that can hold a figure sets tabular-nums. vendor/README.md. */
+@font-face {
+  font-family: "Figtree";
+  src: url("../vendor/figtree/figtree.v2.002.latin.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* THE ONE OVERRIDE OF THE VERBATIM BLOCK. The portfolio's body face is
+   * Satoshi, whose ITF Free Font License forbids a copy in a public repository,
+   * and SPEC.md section 0.1 forbids the Fontshare CDN the portfolio loads it
+   * from. Figtree is the openly licensed stand in the LME sibling measured as
+   * closest. The fallback stack after it is the portfolio's own. */
+  --ff-body: "Figtree", system-ui, -apple-system, Helvetica, sans-serif;
+}
+
+/* ------------------------------------------------------ 3. chart roles --- */
+
+/* docs/design.md Part 3 section 7, measured in Part 6 section C. A chart rule
+ * names a role, never a palette token, so a theme change needs no redraw and a
+ * restricted token cannot reach a mark by accident. The measured contrast on
+ * --bg is in each comment, light then dark. */
+:root {
+  /* series: gasoil and gasoline, every current year, fits, interval lines,
+   * bars. 17.01 / 17.01. Gasoil and gasoline share this ink and are told apart
+   * by line style and a direct end label, never by colour. */
+  --role-series: var(--text);
+
+  /* context marks that CARRY DATA: prior year lines, zero lines, leaders,
+   * cursor, break rules, event top ticks, the evidence rail, hatch strokes.
+   * 4.90 / 7.54. */
+  --role-context: var(--text-muted);
+
+  /* decorative marks, never read alone: gridlines. 1.24 / 1.27. */
+  --role-grid: var(--border);
+
+  /* decorative marks, never read alone: waterfall connectors, event full
+   * height hairlines, the monthly prior year hairlines, rules under table
+   * headers. 1.49 / 1.64, so never a mark a value is read from. */
+  --role-decor: var(--border-strong);
+
+  /* the one accent MARK on a chart: a dot, a rule, the one bar. 7.96 / 3.79,
+   * both above 3.0 for a mark. Wherever it touches ink it gets --role-ring,
+   * because accent against --text is 2.14 in light. */
+  --role-mark-accent: var(--accent);
+
+  /* accent TEXT: a figure or a label. --accent in light (7.96); in dark
+   * --accent is 3.79 and fails text, so the dark block below switches it to
+   * --accent-bright (5.15). */
+  --role-text-accent: var(--accent);
+
+  /* the 2px ring around an accent mark and the halo behind an accent label,
+   * so accent never touches ink. 17.01 against --text. */
+  --role-ring: var(--bg);
+
+  /* the flat span fill, #EDECEB light and #252629 dark. No text is ever set
+   * on it: --text-muted on it is 4.34 in light. */
+  --role-span-fill: color-mix(in srgb, var(--text) 6%, var(--bg));
+}
+
+[data-theme="dark"] {
+  --role-text-accent: var(--accent-bright);
+}

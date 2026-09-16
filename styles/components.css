@@ -1,0 +1,272 @@
+/* components.css
+ *
+ * What sits inside the content column: the verdict, the data dates, the theme
+ * toggle, the four section rows and their opening motion, the loading, empty
+ * and error sentences, figures, tables, and the chart mark classes that read
+ * the roles in tokens.css. docs/design.md Part 3.
+ *
+ * The property and token bans of docs/design.md Part 5 items 15 and 25 are
+ * enforced by tools/check-styles.mjs, which reads declarations with comments
+ * stripped. The two rules no grep can see are kept by hand: every rule naming
+ * Fraunces sets font-weight, and JetBrains Mono appears only on .num (table
+ * figures) and .tick (axis values).
+ */
+
+/* ------------------------------------------------------------ figures --- */
+
+/* A figure inside a sentence. It keeps the face of the sentence around it and
+ * only switches the digits to tabular lining, because Figtree's digits are
+ * proportional by default. Part 3 section 6. */
+.fig {
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+
+/* A figure in a table cell. The only non tick use of JetBrains Mono. */
+.num {
+  font-family: var(--ff-mono);
+  font-weight: 400;
+  font-size: var(--fs-meta);
+  text-align: right;
+  white-space: nowrap;
+}
+.num--total { font-weight: 600; }
+
+/* A status word inside a data date sentence: final, provisional,
+ * reconstructed. Weight 500, the same colour as the sentence. No pill, no
+ * badge, no muted tone. Part 3 section 1. */
+.status-word { font-weight: 500; }
+
+/* ------------------------------------------------------- theme toggle --- */
+
+/* The portfolio's round icon button, at the 44px touch minimum instead of its
+ * 36px, and without its hover lift or colour transition: Part 3 section 8
+ * animates nothing on hover. The glyph is U+263E or U+2600 followed by U+FE0E,
+ * which none of the vendored faces carry, so it is set in the system stack. */
+.theme-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI Symbol", sans-serif;
+  font-weight: 400;
+  font-size: var(--fs-body);
+  line-height: 1;
+}
+
+/* ---------------------------------------------------------------- now --- */
+
+/* The verdict, one sentence. Fraunces 400, the portfolio's display letter
+ * spacing, the one negative value on the site. Fraunces has no tnum (vendor
+ * README), and the verdict's figures never change in place, so proportional
+ * digits are harmless there; the declaration is kept so a fallback face that
+ * does carry tnum aligns. */
+.verdict {
+  font-family: var(--ff-display);
+  font-weight: 400;
+  font-size: var(--fs-display-s);
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  max-width: 34em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* A view title on any view that is not Now, and on the unknown address page. */
+.view-title {
+  font-family: var(--ff-display);
+  font-weight: 500;
+  font-size: var(--fs-display-s);
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  max-width: 34em;
+}
+
+/* The data dates: a list of sentences, never one line, never a dl. */
+.data-dates {
+  margin-top: 20px;
+  display: grid;
+  gap: 2px;
+  font-weight: 400;
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+  color: var(--text);
+  max-width: 64em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@media (max-width: 480px) {
+  .verdict { font-size: var(--fs-body-l); }
+  .data-dates { line-height: 1.3; }
+}
+
+/* ----------------------------------------------------- the four sections --- */
+
+/* Each section is an h2 holding a full width button, min height 56px, a
+ * hairline above. Inside: the name, the summary sentence, and the word Show or
+ * Hide at the right edge. No chevron, no plus, no arrow. Part 3 section 1. */
+.sections { margin-top: 24px; }
+
+.section { border-top: 1px solid var(--border); }
+.section:last-child { border-bottom: 1px solid var(--border); }
+
+.section__heading { font-size: inherit; font-weight: inherit; }
+
+.section__button {
+  width: 100%;
+  min-height: 56px;
+  padding-block: 10px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 2px 24px;
+  text-align: left;
+  color: var(--text);
+}
+
+.section__name {
+  font-weight: 600;
+  font-size: var(--fs-body);
+}
+
+.section__summary {
+  grid-column: 1;
+  font-weight: 400;
+  font-size: var(--fs-body-s);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.section__toggle-word {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-weight: 500;
+  font-size: var(--fs-meta);
+}
+
+@media (max-width: 480px) {
+  .section__summary { font-size: var(--fs-meta); }
+}
+
+/* The body opens by grid-template-rows 0fr to 1fr over --t-fast, the first of
+ * the three motions Part 3 section 8 allows. The inner wrapper clips. */
+.section__body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--t-fast) var(--ease-out);
+}
+.section__body[data-open="true"] { grid-template-rows: 1fr; }
+.section__body > .section__inner { overflow: hidden; min-height: 0; }
+.section__body[data-open="true"] > .section__inner { padding-block: 8px 32px; }
+
+/* Blocks inside an open section: 24px apart and a sentence heading, never a
+ * rule, a tint or a frame. */
+.block + .block { margin-top: 24px; }
+.block__heading {
+  font-weight: 500;
+  font-size: var(--fs-body);
+  margin-bottom: 8px;
+}
+
+/* ------------------------------------------ loading, empty and error --- */
+
+/* SPEC.md section 7.3. A loading state is the sentence "Loading {series}". An
+ * error or an empty chart is a sentence that says what happened, when, and
+ * what to do, set in body type at full ink: not red, not dimmed, not smaller
+ * than the figures it stands in for. */
+.state-message {
+  font-weight: 400;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--text);
+  max-width: 48em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.state-message + .state-message { margin-top: 8px; }
+.state-message a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* ------------------------------------------------------------- tables --- */
+
+/* Site wide table rules, Part 3 section 5. Labels Figtree 400, figures in .num,
+ * headers Figtree 500 --text-muted sentence case, a --border-strong hairline
+ * under the header row, --border above a total or note row, no zebra, no rule
+ * between rows. Rows 32px, 40px below 768px. */
+.table {
+  border-collapse: collapse;
+  font-size: var(--fs-body-s);
+}
+.table caption {
+  text-align: left;
+  font-weight: 500;
+  font-size: var(--fs-body);
+  margin-bottom: 8px;
+  caption-side: top;
+}
+.table th,
+.table td {
+  height: 32px;
+  padding: 4px 12px 4px 0;
+  vertical-align: middle;
+  text-align: left;
+  font-weight: 400;
+}
+.table thead th {
+  font-weight: 500;
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-strong);
+}
+.table tr.is-total > *,
+.table tr.is-note > * { border-top: 1px solid var(--border); }
+
+@media (max-width: 767.98px) {
+  .table th, .table td { height: 40px; }
+}
+
+/* A wide table scrolls inside its own container, never the page. No shadow on
+ * the sticky edge, no fade on the container: the caption says what is off
+ * screen. */
+.table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.table-scroll .table th:first-child,
+.table-scroll .table td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--bg);
+  border-right: 1px solid var(--border-strong);
+}
+
+/* ------------------------------------------------------ chart marks --- */
+
+/* SVG marks take colour from these classes, never from a fill or stroke
+ * attribute holding a value, so a theme change needs no redraw. Each class
+ * reads one role from tokens.css. */
+.mark-series { stroke: var(--role-series); fill: none; }
+.mark-series-fill { fill: var(--role-series); stroke: none; }
+.mark-context { stroke: var(--role-context); fill: none; }
+.mark-grid { stroke: var(--role-grid); fill: none; }
+.mark-decor { stroke: var(--role-decor); fill: none; }
+.mark-accent { stroke: var(--role-mark-accent); fill: none; }
+.mark-accent-fill { fill: var(--role-mark-accent); stroke: var(--role-ring); }
+.mark-ring { stroke: var(--role-ring); fill: none; }
+.mark-span { fill: var(--role-span-fill); stroke: none; }
+.text-accent { color: var(--role-text-accent); fill: var(--role-text-accent); }
+
+/* Axis tick values: the only other use of JetBrains Mono. */
+.tick {
+  font-family: var(--ff-mono);
+  font-weight: 400;
+  font-size: var(--fs-caption);
+  fill: var(--text-muted);
+}
