@@ -283,8 +283,15 @@ implying they were re read.
 
 ### 2.10 ICE, cited but never fetched
 
-No ICE data is used. The two conversion factors come from published contract
-specifications and two press releases date the two specification breaks. Recorded
+No ICE data is used. Five conversion factors come from published contract
+specifications and two press releases date the two specification breaks. Gasoil
+7.45 (6753331) and gasoline 8.33 (6753285) since Gate 1; at Gate 4, for the
+decomposition of the ministry's printed monthly prices, jet 7.88 (6753303),
+heating oil at 0.1 percent 7.45 (6753295) and fuel oil at 1 percent 6.35
+(6753289). Each is the "Conversion factor: 1 metric tonne = N barrels" line of
+the contract specification PDF, read on 2026-09-16 by downloading the five PDFs
+once each, by hand, for citation. That is reading a document, not gathering data,
+but the robots clause below is broad, so it is recorded here. Recorded
 because SPEC.md section 5.2 contemplates a daily futures layer and its terms
 explain why that layer cannot be built from free sources. Verbatim, from the ICE
 terms of use:
