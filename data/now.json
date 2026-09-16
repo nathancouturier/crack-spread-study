@@ -212,7 +212,7 @@
         {"text": "Crude runs move "},
         {"field": "capacity_kb_d", "value": 59.338024, "format": "kb_d", "signed": true},
         {"text": " kb/d per "},
-        {"field": "move_usd_bbl", "value": 10.0, "format": "usd_bbl"},
+        {"field": "move_usd_bbl", "value": 10, "format": "count"},
         {"text": " $/bbl of margin on the planned model, t "},
         {"field": "capacity_t", "value": 0.332809, "format": "t", "signed": true},
         {"text": ", and "},

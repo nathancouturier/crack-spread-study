@@ -151,7 +151,7 @@
     "interval_level_percent": 95,
     "strip_desc_segments": [
       {"text": "Crude runs per "},
-      {"field": "move_usd_bbl", "value": 10.0, "format": "usd_bbl"},
+      {"field": "move_usd_bbl", "value": 10, "format": "count"},
       {"text": " $/bbl of margin, each with its "},
       {"field": "interval_level_percent", "value": 95, "format": "count"},
       {"text": " percent interval, on one scale with zero marked: "},

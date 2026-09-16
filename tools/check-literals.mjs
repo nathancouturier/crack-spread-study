@@ -46,6 +46,11 @@
 //      cite a document and are never drawn as a figure.
 //   6  HTML_ATTRIBUTES: an attribute name and exact value, for markup such as
 //      tabindex="-1" and the viewport meta.
+//   7  LAYOUT_CONSTANTS: a name and its exact value, per file, allowed only as
+//      the property `NAME: value` alone on its line, the form of a frozen
+//      geometry block such as GEOMETRY in src/charts.js. A drawing surface
+//      decision (a height, a padding, a dot radius), never an observation.
+//      Changing the value fails, and so does the same figure anywhere else.
 //
 // SELF TEST. Before scanning, the tool plants market values in synthetic files
 // and asserts it reports each one, and asserts that the allowed forms pass. If
@@ -75,8 +80,53 @@ const UNIT_CONSTANTS = {
   ],
 };
 
-// Rule 3. Declared snippets, by file. `count` is exact.
+// Rule 7. Layout constants, by file, as `NAME: value` in a frozen block.
+// docs/design.md Part 3 sections 2 to 5 give the sizes; each is in CSS pixels
+// unless it says otherwise.
+const LAYOUT_CONSTANTS = {
+  "src/charts.js": [
+    { name: "PANEL_HEIGHT", value: "220", why: "seasonal plot height, Part 3 section 3" },
+    { name: "RAIL_HEIGHT", value: "14", why: "a rail under the axis, Part 3 section 3" },
+    { name: "PAD_TOP", value: "28", why: "room for the unit title" },
+    { name: "PAD_LEFT", value: "44", why: "room for tick values" },
+    { name: "PAD_RIGHT", value: "84", why: "room for end labels" },
+    { name: "AXIS_GAP", value: "16", why: "plot edge to x tick values" },
+    { name: "AXIS_BELOW", value: "10", why: "x tick values to the first rail" },
+    { name: "TICK_LENGTH", value: "4", why: "an axis tick" },
+    { name: "LABEL_GAP", value: "8", why: "mark to label, Part 3 section 2" },
+    { name: "LABEL_SPACING", value: "14", why: "end labels closer than this are spread" },
+    { name: "DOT_RADIUS", value: "4", why: "the accent dot, Part 3 section 2" },
+    { name: "RING_WIDTH", value: "2", why: "the --bg ring, S25" },
+    { name: "ISOLATED_RADIUS", value: "1.5", why: "a value with gaps on both sides, Part 3 section 2" },
+    { name: "SQUARE", value: "5", why: "a printed week, Part 3 section 2" },
+    { name: "HATCH_PITCH", value: "4", why: "the least defended hatch, Part 3 section 2" },
+    { name: "HATCH_ANGLE", value: "45", why: "the hatch angle in degrees" },
+    { name: "HATCH_MIN_WIDTH", value: "6", why: "the hatch at any zoom" },
+    { name: "BRACKET_TICK", value: "4", why: "a bracket's end tick" },
+    { name: "Y_TICKS", value: "5", why: "4 to 6 ticks, Part 3 section 2" },
+    { name: "X_TICKS", value: "5", why: "about five week labels" },
+    { name: "HALF", value: "0.5", why: "halving, for centring" },
+    { name: "COORD_DECIMALS", value: "2", why: "places in a pixel coordinate" },
+    { name: "BAR_THICKNESS", value: "14", why: "a waterfall bar in a 32px row" },
+    { name: "SMALL_STEP", value: "4", why: "steps narrower than this are circles, Part 3 section 4" },
+    { name: "SMALL_RADIUS", value: "2.5", why: "the 5px circle, Part 3 section 4" },
+    { name: "OUTLINE_INSET", value: "0.75", why: "half the 1.5px outline" },
+    { name: "STRIP_ROW", value: "28", why: "an interval strip row, Part 3 section 5" },
+    { name: "STRIP_END_TICK", value: "6", why: "interval end ticks, Part 3 section 5" },
+    { name: "STRIP_PAD", value: "8", why: "space under the strip figure" },
+    { name: "STRIP_LABEL", value: "16", why: "the model label above a narrow strip" },
+  ],
+};
+
+// Rule 3. Declared snippets, by file. `count` is exact: a snippet counts once
+// per literal inside it.
 const DECLARED = {
+  "src/charts.js": [
+    // The mantissas of decimal notation, a fact about how numbers are written
+    // and not about the market. Three literals: 2, 5 and 10.
+    { snippet: "Object.freeze([1, 2, 5, 10])", count: 3, why: "the 1, 2, 5, 10 tick ladder" },
+    { snippet: "Math.pow(10, Math.floor(Math.log10(rough)))", count: 1, why: "the power of ten under a tick step" },
+  ],
   "src/engine.js": [
     // An ISO calendar date, YYYY-MM-DD, is ten characters. A format fact used
     // to reject a malformed date before any arithmetic, not a market value.
@@ -272,6 +322,14 @@ export function checkScript(relative, source, baseIndex = 0, fullSource = source
     const lineStart = source.lastIndexOf("\n", token.index - 1) + 1;
     const lineEnd = source.indexOf("\n", token.index);
     const localLine = source.slice(lineStart, lineEnd < 0 ? source.length : lineEnd);
+    const layout = (LAYOUT_CONSTANTS[relative] || []).find((u) =>
+      u.value === token.text &&
+      new RegExp("^\\s*" + u.name + "\\s*:\\s*$").test(source.slice(lineStart, token.index)) &&
+      /^\s*,?\s*$/.test(source.slice(token.index + token.text.length, lineEnd < 0 ? source.length : lineEnd)));
+    if (layout) {
+      allowed.push({ ...where, literal: token.text, rule: "layout constant " + layout.name });
+      continue;
+    }
     const entry = declared.find((d) => {
       const pos = localLine.indexOf(d.snippet);
       if (pos < 0) return false;
@@ -383,6 +441,9 @@ function selfTest() {
   const ENGINE_DECLARED = (DECLARED["src/engine.js"] || [])
     .map((entry) => (entry.snippet + ";\n").repeat(entry.count))
     .join("");
+  // The charts cases carry the declared snippets once each, as the real
+  // charts.js does, so only the planted value can be reported.
+  const CHARTS_DECLARED = (DECLARED["src/charts.js"] || []).map((entry) => entry.snippet + ";\n").join("");
   const cases = [
     { name: "a market value in code", file: "src/planted.js", kind: "js", source: "const margin = 38.05;\n", expect: ["38.05"] },
     { name: "a market value in a string", file: "src/planted.js", kind: "js", source: 'el("p", { text: "a refiner kept 38.05 $/bbl" });\n', expect: ["38.05"] },
@@ -395,6 +456,9 @@ function selfTest() {
     { name: "a unit constant with a moved value", file: "src/engine.js", kind: "js", source: ENGINE_DECLARED + "export const BBL_PER_T_GASOIL = 7.46;\n", expect: ["7.46"] },
     { name: "a unit constant used outside its declaration", file: "src/engine.js", kind: "js", source: ENGINE_DECLARED + "export const BBL_PER_T_GASOIL = 7.45;\nconst x = price / 7.45;\n", expect: ["7.45"] },
     { name: "a declared snippet appearing more often than declared", file: "src/engine.js", kind: "js", source: ENGINE_DECLARED + "if (date.length !== 10) {}\n", expect: ["date.length !== 10"] },
+    { name: "a layout constant with a moved value", file: "src/charts.js", kind: "js", source: CHARTS_DECLARED + "const GEOMETRY = Object.freeze({\n  PANEL_HEIGHT: 221,\n});\n", expect: ["221"] },
+    { name: "a layout constant's figure used elsewhere", file: "src/charts.js", kind: "js", source: CHARTS_DECLARED + "const GEOMETRY = Object.freeze({\n  PANEL_HEIGHT: 220,\n});\nconst h = 220;\n", expect: ["220"] },
+    { name: "a layout constant's name beside a market value", file: "src/charts.js", kind: "js", source: CHARTS_DECLARED + "const x = { PANEL_HEIGHT: 220 + 38.05 };\n", expect: ["220", "38.05"] },
     { name: "a value in page text", file: "index.html", kind: "html", source: "<p>Margin 38.05 $/bbl</p>\n", expect: ["38.05"] },
     { name: "a value in an inline script", file: "index.html", kind: "html", source: "<script>var m = 38.05;</script>\n", expect: ["38.05"] },
     { name: "a value in a data attribute", file: "index.html", kind: "html", source: '<span data-value="38.05">x</span>\n', expect: ["38.05"] },

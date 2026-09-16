@@ -89,3 +89,48 @@ export function failureMessages(failures) {
 export function emptySeriesMessage(details) {
   return el("p", { class: "state-message", text: emptySeriesSentence(details) });
 }
+
+/** A sentence element of segments: el(tag) with appendSegments. */
+export function sentence(tag, segments, decimals, className) {
+  return appendSegments(el(tag, { class: className }), segments, decimals);
+}
+
+/** A button that shows and hides a region under it, named for what the region
+ *  holds (docs/design.md Part 3 section 9, S7). The region is built on first
+ *  open by `build`, so a closed alternative costs nothing. Enter and Space work
+ *  because it is a native button. */
+export function disclosure(label, build) {
+  const region = el("div", { class: "disclosure__region", id: uniqueId("alt") });
+  region.hidden = true;
+  const button = el("button", {
+    class: "disclosure__button",
+    text: label,
+    attrs: { type: "button", "aria-expanded": "false", "aria-controls": region.id },
+  });
+  let built = false;
+  button.addEventListener("click", () => {
+    const open = button.getAttribute("aria-expanded") !== "true";
+    if (open && !built) {
+      region.appendChild(build());
+      built = true;
+    }
+    button.setAttribute("aria-expanded", open ? "true" : "false");
+    region.hidden = !open;
+  });
+  return el("div", { class: "disclosure" }, [button, region]);
+}
+
+let uniqueCounter = 0;
+/** A document unique id. */
+export function uniqueId(prefix) {
+  uniqueCounter += 1;
+  return prefix + "-" + String(uniqueCounter);
+}
+
+/** A table cell holding a figure, or the words for a missing one. */
+export function figureCell(text, field, className) {
+  if (text === null) {
+    return el("td", { class: "num is-missing", text: missingFigureText(field) });
+  }
+  return el("td", { class: className ? "num " + className : "num", text, attrs: { "data-field": field } });
+}

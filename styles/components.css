@@ -270,3 +270,258 @@
   font-size: var(--fs-caption);
   fill: var(--text-muted);
 }
+
+/* ------------------------------------------- inside the four sections --- */
+
+/* The body under a section button is inert while closed (src/now.js), so its
+ * contents take no focus and are not read; the height motion above is the one
+ * transition. */
+
+.lead {
+  font-weight: 400;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  max-width: 48em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.lead + .lead { margin-top: 8px; }
+
+/* The word unidentified where a headroom figure would sit: body size, weight
+ * 500, the same ink as the figures beside it. Part 3 section 5, S17. */
+.verdict-word { font-weight: 500; }
+
+.block p,
+p.block,
+.prose {
+  max-width: 64em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.block > p + p,
+.block > .table-scroll + p,
+.block > p + .table-scroll { margin-top: 8px; }
+.note,
+.scale-note { font-size: var(--fs-meta); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The caption words naming the columns off screen appear only where they are
+ * off screen. Part 3 section 5, S6. */
+.caption-narrow { display: none; }
+@media (max-width: 600px) {
+  .caption-narrow { display: inline; }
+}
+
+.table th.col-num,
+.table td.num,
+.table th.num { text-align: right; }
+.table .is-missing { font-family: var(--ff-body); }
+
+/* A text link inside a table or a sentence. Underlined, never an arrow. */
+.text-link {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* ------------------------------------------------ text alternatives --- */
+
+/* The button under a chart that opens its table, named for what the table
+ * holds. A plain underlined button, at least 44px tall, Part 3 section 9. */
+.disclosure { margin-top: 8px; }
+.disclosure__button {
+  min-height: 44px;
+  font-weight: 500;
+  font-size: var(--fs-body-s);
+  color: var(--text);
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+.disclosure__region { margin-top: 8px; }
+
+/* ------------------------------------------------------------ charts --- */
+
+.chart-frame {
+  width: 100%;
+  min-width: 0;
+}
+.chart { display: block; overflow: visible; }
+
+/* Words on a chart are Figtree; tick values keep .tick's JetBrains Mono. */
+.chart text:not(.tick) {
+  font-family: var(--ff-body);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.chart-caption {
+  font-weight: 400;
+  font-size: var(--fs-caption);
+  fill: var(--text-muted);
+}
+.chart-caption-strong {
+  font-weight: 500;
+  font-size: var(--fs-meta);
+  fill: var(--text);
+}
+.chart-axis-title {
+  font-weight: 500;
+  font-size: var(--fs-caption);
+  fill: var(--text-muted);
+}
+.chart-end-label {
+  font-weight: 500;
+  font-size: var(--fs-meta);
+  fill: var(--text);
+}
+/* A 3px --bg halo where a label crosses a line, Part 3 section 2. */
+.halo {
+  paint-order: stroke;
+  stroke: var(--role-ring);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+/* Stroke widths and dash patterns, Part 3 sections 2 and 3. */
+.mark-series,
+.mark-context,
+.mark-grid,
+.mark-decor { stroke-width: 1px; }
+.series-current .mark-series { stroke-width: 2px; stroke-linejoin: round; stroke-linecap: round; }
+.series-dashed .mark-series { stroke-dasharray: 6 4; stroke-linecap: butt; }
+.series-prior .mark-context { stroke-width: 1px; stroke-linejoin: round; }
+.mark-context-fill { fill: var(--role-context); stroke: none; }
+.mark-gap { stroke: var(--role-context); stroke-width: 1px; stroke-dasharray: 1 3; fill: none; }
+.mark-printed { fill: var(--role-ring); stroke: var(--role-series); stroke-width: 1.5px; }
+.mark-ring-fill { fill: var(--role-ring); stroke: none; }
+.mark-accent-dot { fill: var(--role-mark-accent); stroke: none; }
+.mark-hatch { stroke: var(--role-context); stroke-width: 1px; }
+.mark-hatch-area { stroke: none; }
+.mark-connector { stroke: var(--role-decor); stroke-width: 1px; stroke-dasharray: 1 2; fill: none; }
+.mark-negative { fill: none; stroke: var(--role-series); stroke-width: 1.5px; }
+/* The one accent bar, ringed in --bg where it meets the zero rule. */
+.mark-accent-bar { fill: var(--role-mark-accent); stroke: var(--role-ring); stroke-width: 2px; paint-order: stroke; }
+.mark-interval { stroke: var(--role-series); stroke-width: 2px; fill: none; }
+.mark-accent-rule { stroke: var(--role-mark-accent); stroke-width: 1.5px; }
+
+/* The two seasonal panels: side by side above 768px, stacked below. */
+.panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 32px;
+}
+.panels + .block { margin-top: 24px; }
+@media (max-width: 767.98px) {
+  .panels { grid-template-columns: minmax(0, 1fr); }
+}
+.panel { margin: 0; min-width: 0; }
+/* Above 768px the two panels share rows, so a heading that wraps to one more
+ * line on one side does not drop that side's plot below the other's. */
+@media (min-width: 768px) {
+  .panels { grid-template-rows: auto auto auto; }
+  .panel { display: grid; grid-template-rows: subgrid; grid-row: span 3; row-gap: 0; }
+  .panel__heading { align-self: end; }
+}
+.panel__heading {
+  font-weight: 500;
+  font-size: var(--fs-body-s);
+  line-height: 1.4;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ---------------------------------------------------------- waterfall --- */
+
+/* Three columns: the line and its second line, the bar, the figure. The bar
+ * sits absolutely in its cell so it never sets the row's height. Totals in
+ * weight 600 with a --border-strong rule above. Part 3 section 4. */
+.waterfall { width: 100%; max-width: 64rem; }
+.waterfall__name {
+  width: 40%;
+  padding-right: 16px;
+}
+.table th.waterfall__name { font-weight: 400; }
+.waterfall__line { display: block; font-size: var(--fs-body-s); }
+.waterfall__detail {
+  display: block;
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.table td.waterfall__bar {
+  position: relative;
+  min-width: 160px;
+  padding: 0;
+}
+.waterfall__bar > svg { position: absolute; left: 0; top: 0; }
+.table .waterfall__row > th,
+.table .waterfall__row > td.num { padding-block: 6px; }
+.table td.num.num--total,
+.table .waterfall .num { width: 9ch; padding-left: 12px; padding-right: 0; }
+.table tr.waterfall__row.is-total > * { border-top: 1px solid var(--border-strong); }
+.waterfall__row.is-total .waterfall__line { font-weight: 600; }
+
+/* At 600px and below each row is two lines inside the same tr: the name and
+ * its second line across the width, then the bar and the figure. Grid on the
+ * tr, with the table roles written in the markup. Part 3 section 4, S31. */
+@media (max-width: 600px) {
+  .waterfall,
+  .waterfall tbody,
+  .waterfall thead,
+  .waterfall caption { display: block; width: 100%; }
+  .waterfall thead tr,
+  .waterfall__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 9ch;
+  }
+  .waterfall__row { grid-template-rows: auto 32px; }
+  .waterfall thead th.waterfall__bar-head { display: none; }
+  .waterfall__name { width: auto; grid-column: 1 / -1; padding-right: 0; }
+  .table td.waterfall__bar { min-width: 0; height: 32px; }
+  .table .waterfall__row > * { height: auto; }
+}
+
+/* ------------------------------------------------------ run economics --- */
+
+.model-name { min-width: 14rem; max-width: 24rem; }
+.table th.model-name { font-weight: 400; }
+.model-name__label { display: block; }
+.model-name__equation {
+  display: block;
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.zero-cell { min-width: 12rem; font-size: var(--fs-meta); }
+.table td.strip-cell { position: relative; min-width: 200px; padding: 0; }
+.strip-cell > svg { position: absolute; left: 0; top: 0; }
+
+/* The strips: a table column above 600px, one figure above the table at 600px
+ * and below, never inside a sideways scroll. */
+.strip-figure { display: none; margin-bottom: 12px; }
+@media (max-width: 600px) {
+  .strip-figure { display: block; }
+  .table .strip-col { display: none; }
+}
+
+/* --------------------------------------------------------- provenance --- */
+
+.manifest-table td { vertical-align: top; }
+.table th.manifest__series { font-weight: 500; white-space: nowrap; vertical-align: top; }
+.manifest__vintage { min-width: 16rem; max-width: 28rem; font-size: var(--fs-meta); }
+.manifest__source { min-width: 14rem; font-size: var(--fs-meta); }
+.manifest__fetch { min-width: 11rem; }
+.manual-step + .manual-step { margin-top: 16px; }
+.manual-step .prose + .prose { margin-top: 4px; }
+.manual-step__what { font-weight: 500; }
+.credit-list { display: grid; gap: 8px; }

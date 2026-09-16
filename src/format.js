@@ -132,6 +132,23 @@ export function segmentText(segment, decimals) {
   return { text, kind: "number", field: segment.field, missing: text === null };
 }
 
+/** A whole sentence of segments as plain text, for an SVG title or desc,
+ *  where no span can carry the field. A missing number reads as the words
+ *  "no figure for {field}". */
+export function segmentsText(segments, decimals) {
+  return segments
+    .map((segment) => {
+      const piece = segmentText(segment, decimals);
+      return piece.missing ? missingFigureText(piece.field) : piece.text;
+    })
+    .join("");
+}
+
+/** A figure for a table cell: hyphen minus, sign when asked, or null. */
+export function formatCell(value, format, decimals, signed) {
+  return formatNumber(value, format, decimals, { signed: signed === true, context: "table" });
+}
+
 /* ------------------------------------------------------------- time --- */
 
 /* The parts Intl is asked for. "2-digit" is Intl's own option vocabulary, a

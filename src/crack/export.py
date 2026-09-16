@@ -868,7 +868,7 @@ def section_summaries(inputs: Inputs, values: Mapping[str, Any], run: Mapping[st
         T("Crude runs move "),
         N("capacity_kb_d", cap.translation.kb_d, "kb_d", signed=True),
         T(" kb/d per "),
-        N("move_usd_bbl", cap.translation.move_usd_bbl, "usd_bbl"),
+        N("move_usd_bbl", cap.translation.move_usd_bbl, "count"),
         T(" $/bbl of margin on the planned model, t "),
         N("capacity_t", cap.sum_b_t, "t", signed=True),
         T(", and "),
@@ -1358,7 +1358,7 @@ def run_economics(inputs: Inputs) -> Mapping[str, Any]:
         ],
         "interval_level_percent": 95,
     }
-    strip = [T("Crude runs per "), N("move_usd_bbl", cap.translation.move_usd_bbl, "usd_bbl"), T(" $/bbl of margin, each with its "),
+    strip = [T("Crude runs per "), N("move_usd_bbl", cap.translation.move_usd_bbl, "count"), T(" $/bbl of margin, each with its "),
              N("interval_level_percent", 95, "count"), T(" percent interval, on one scale with zero marked: ")]
     for i, model in enumerate(payload["response"]["models"]):
         strip += [
