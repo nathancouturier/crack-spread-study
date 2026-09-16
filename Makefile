@@ -4,14 +4,12 @@
 # target below is a single command you can paste into a shell instead, and the
 # help target prints those commands. Recipes use tabs, POSIX sh.
 #
-# Targets are added as the phase gates in SPEC.md section 10 are approved. At
-# Gate 2 the data layer and the engine exist. Still absent, and deliberately:
-# build, and anything that writes a site facing JSON artifact, which SPEC.md
-# section 10 forbids before the data and the engine are approved. There is no
-# site to build yet.
+# Targets are added as the phase gates in SPEC.md section 10 are approved. Gates
+# 1 to 3 built the data layer, the engine and the analysis. Gate 4 adds build and
+# build-check, which write and check the site facing JSON artifacts in data/.
 
 .DEFAULT_GOAL := help
-.PHONY: help data data-offline data-jobs note fixtures test validate gate serve
+.PHONY: help data data-offline data-jobs note fixtures build build-check test validate gate serve
 
 help:
 	@echo "targets"
@@ -25,18 +23,25 @@ help:
 	@echo "                     equivalent: python -m crack.sources.dgec_note --collect"
 	@echo "  make fixtures      re-export the engine parity fixture from src/crack/engine.py"
 	@echo "                     equivalent: python scripts/gen_fixtures.py"
+	@echo "  make build         write the site facing artifacts data/*.json from the committed caches"
+	@echo "                     equivalent: python scripts/export.py"
+	@echo "  make build-check   rebuild the artifacts in memory, write nothing, fail if one is stale"
+	@echo "                     equivalent: python scripts/export.py --check"
 	@echo "  make test          the python suite, then the python to javascript parity check"
 	@echo "                     equivalent: python -m pytest tests"
 	@echo "                                 node tools/validate-engine.mjs"
 	@echo "  make validate      run the node validators, no network, no python"
 	@echo "                     equivalent: node tools/validate-data.mjs"
 	@echo "                                 node tools/validate-engine.mjs"
+	@echo "                                 node tools/validate-artifacts.mjs"
 	@echo "                                 node tools/check-dashes.mjs"
 	@echo "  make gate          the deploy gate: everything that must pass before a change lands"
 	@echo "                     equivalent: python scripts/refresh.py --offline"
 	@echo "                                 python -m pytest tests"
 	@echo "                                 node tools/validate-data.mjs"
 	@echo "                                 node tools/validate-engine.mjs"
+	@echo "                                 python scripts/export.py --check"
+	@echo "                                 node tools/validate-artifacts.mjs"
 	@echo "                                 node tools/check-dashes.mjs"
 	@echo "  make serve         serve the repo root over http on port 8000"
 	@echo "                     equivalent: python -m http.server 8000"
@@ -93,6 +98,33 @@ note:
 fixtures:
 	python scripts/gen_fixtures.py
 
+# Write the site facing JSON artifacts, SPEC.md sections 2 rule 2 and 8, from
+# the committed caches through crack.series and crack.analysis. SPEC.md section
+# 5.4: make build never fetches, and nothing under it opens a socket.
+#
+# Five files, one per concern: now, cracks, margin-stack, run-economics and
+# provenance. An artifact whose bytes did not change is not rewritten.
+#
+# BYTE IDEMPOTENT. No artifact carries a generation timestamp, floats are
+# rounded to six places, the threshold bootstrap has a fixed seed, and text is
+# ASCII with LF. Building twice on an unchanged tree leaves it clean.
+#
+# ONE HONEST LIMIT. Utilisation divides by the Energy Institute capacity table,
+# which lives in data/private because its terms forbid committing it. A fresh
+# clone cannot run this target or build-check. Gate 5 has to decide how the
+# workflow gets that file or what it checks instead; until then both targets
+# run only on a machine that holds data/private.
+build:
+	python scripts/export.py
+
+# Rebuild every artifact in memory and compare bytes with the committed file.
+# Writes nothing. Exits 1 naming each stale artifact, so a change to a cache,
+# the engine or the analysis that was never rebuilt fails the gate rather than
+# shipping a page that disagrees with the model. About ten seconds, most of it
+# the two 2,000 replication threshold bootstraps.
+build-check:
+	python scripts/export.py --check
+
 # The python suite, then the parity check. SPEC.md section 7.1 puts the parity
 # validator in `make test` by name, so it is here and not only in the gate:
 # the engine exists twice and the inner loop has to be able to see them drift.
@@ -128,9 +160,10 @@ test:
 validate:
 	node tools/validate-data.mjs
 	node tools/validate-engine.mjs
+	node tools/validate-artifacts.mjs
 	node tools/check-dashes.mjs
 
-# The deploy gate, SPEC.md non negotiable 7. Five commands, in this order,
+# The deploy gate, SPEC.md non negotiable 7. Seven commands, in this order,
 # none of which touches the network. Today it is the WHOLE gate, because it is
 # the only gate: .github/workflows/ is empty and there is no CI. SPEC.md non
 # negotiable 7 says the CI gate is the deploy gate and SPEC.md section 10 puts
@@ -140,8 +173,11 @@ validate:
 # The order is the order in which a failure is cheapest to read. The offline
 # refresh first, because a broken cache makes everything after it lie. Then
 # pytest, which is where a Python change fails. Then the data validator, then
-# the parity validator, which is where a JavaScript change fails. Dashes last:
-# it is the only one that never depends on a number.
+# the parity validator, which is where a JavaScript change fails. Then the
+# artifacts: build-check first, because a stale artifact would make the artifact
+# validator pass on numbers that no longer describe the caches, then the
+# validator, which reads them in JavaScript. Dashes last: it is the only one
+# that never depends on a number.
 #
 # TWO STEPS ARE MISSING HERE AND BOTH BELONG IN THE WORKFLOW WHEN IT IS
 # WRITTEN. Both are `git diff --exit-code` and both only mean anything on a
@@ -167,6 +203,8 @@ gate:
 	python -m pytest tests
 	node tools/validate-data.mjs
 	node tools/validate-engine.mjs
+	python scripts/export.py --check
+	node tools/validate-artifacts.mjs
 	node tools/check-dashes.mjs
 
 # The site is served from a subpath on GitHub Pages, so open
