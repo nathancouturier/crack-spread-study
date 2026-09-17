@@ -63,6 +63,9 @@
 //      contains one, which is finding 1
 //  12  gas wedge cases: the two intensities at one gas price that replaced that
 //      subtraction, which neither the fixture nor this tool had ever compared
+//  13  since Gate 5, the Model view: src/model-calc.js compute over
+//      data/fixtures/model-cases.json, every preset of data/model.json and
+//      every named edit, field by field (docs/design.md Part 8.2)
 //
 // On a disagreement it prints the case, the field, both values and the
 // difference. A validator that says only "mismatch" costs an afternoon.
@@ -118,6 +121,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import * as engine from "../src/engine.js";
+import * as calc from "../src/model-calc.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
@@ -1018,6 +1022,62 @@ check("every case agrees, line by line", () => {
       problems.push("the fixture contains no " + kind + " case");
     }
   });
+  return problems;
+});
+
+/* ------------------------------------------------------- the Model view --- */
+
+// docs/design.md Part 8.2, "The parity". The Model view computes through one
+// function, src/model-calc.js compute, and prints its fields. What crack.engine
+// computes in Python for every preset in data/model.json and every named edit
+// is in data/fixtures/model-cases.json (scripts/gen_model_cases.py); every
+// field is compared here on the parity channel, null only against null, to the
+// fixture's own 1e-9. The fixture must also cover every preset the artifact
+// ships, so a preset added to the export without a case fails here.
+const MODEL_FIXTURE = path.join(ROOT, "data", "fixtures", "model-cases.json");
+const MODEL_ARTIFACT = path.join(ROOT, "data", "model.json");
+let modelCases = 0;
+
+check("the Model view's compute agrees with crack.engine on every preset and edit", () => {
+  const problems = [];
+  {
+    const cases = JSON.parse(readFileSync(MODEL_FIXTURE, "utf8"));
+    const model = JSON.parse(readFileSync(MODEL_ARTIFACT, "utf8"));
+    if (cases.fixture !== "model-cases") problems.push("the model fixture names itself " + cases.fixture);
+    if (!(cases.tolerance <= TOLERANCE)) problems.push("the model fixture's tolerance is " + cases.tolerance + ", looser than " + TOLERANCE);
+    const order = model.products.map((p) => p.id);
+    if (order.join(",") !== cases.products.join(",")) problems.push("the fixture's products are " + cases.products.join(",") + ", model.json's are " + order.join(","));
+    if (model.breakeven_target.value_usd_bbl !== cases.breakeven_target_usd_bbl) problems.push("the fixture's breakeven target differs from model.json's");
+    for (const preset of model.presets) {
+      const own = cases.cases.find((c) => c.preset === preset.id && c.edit === null);
+      if (!own) {
+        problems.push("no case for the preset " + preset.id);
+        continue;
+      }
+      const values = { ...preset.inputs, mbr_usd_bbl: preset.official.mbr_usd_bbl };
+      if (JSON.stringify(values) !== JSON.stringify(own.inputs)) problems.push("the case for " + preset.id + " does not hold model.json's inputs; regenerate the fixture");
+    }
+    for (const testCase of cases.cases) {
+      modelCases += 1;
+      const where = "model " + testCase.name;
+      const got = calc.compute(testCase.inputs, cases.breakeven_target_usd_bbl, cases.products);
+      for (const [field, jsKey] of Object.entries(calc.FIXTURE_FIELDS)) {
+        const expected = testCase.expected[field];
+        const actual = got[jsKey];
+        if (Array.isArray(expected)) {
+          if (!Array.isArray(actual) || expected.join(",") !== actual.join(",")) {
+            failures.push({ where, what: field, expected: expected.join(",") || "(none)", actual: Array.isArray(actual) ? actual.join(",") || "(none)" : show(actual), difference: "different lists" });
+          }
+        } else if (expected && typeof expected === "object") {
+          compareMapping(where, field, expected, actual || {});
+        } else {
+          compare(where, field, expected, actual);
+        }
+      }
+      if (got.thresholdIdentified !== false || got.headroomUsdBbl !== null) problems.push(where + ": a threshold or a headroom appeared");
+    }
+  }
+  if (modelCases === 0) problems.push("the model fixture holds no case");
   return problems;
 });
 
