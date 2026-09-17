@@ -2549,9 +2549,9 @@ def model(inputs: Inputs) -> Mapping[str, Any]:
         if official["mbr_usd_bbl"] is None:
             official_label = [T("No ministry MBR for "), *period, T(": the published series starts in "), D("mbr_first_month", mbr_entry["first_date"]), T(" and is not extended.")]
         elif single:
-            official_label = [T("The ministry's MBR for "), *period, T(", "), W("status_word", "provisional" if status_provisional else "final"), T(", already net of its own gas")]
+            official_label = [T("The ministry's MBR for "), *period, T(", "), W("status_word", "provisional" if status_provisional else "final"), T(", already net of the ministry's own gas allowance")]
         else:
-            official_label = [T("The ministry's MBR for "), *period, T(", the mean of the "), N("months_published", official["months_published"], "count"), T(" months it published, already net of its own gas")]
+            official_label = [T("The ministry's MBR for "), *period, T(", the mean of the "), N("months_published", official["months_published"], "count"), T(" months it published, already net of the ministry's own gas allowance")]
         ttf = _num(gas["ttf_eur_mwh"])
         eurusd = _num(gas["eurusd"])
         mbr = _num(official["mbr_usd_bbl"])

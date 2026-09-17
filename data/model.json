@@ -387,7 +387,7 @@
           {"field": "period", "value": "2026-08-01", "label": "August 2026"},
           {"text": ", "},
           {"field": "status_word", "value": "final", "label": "final"},
-          {"text": ", already net of its own gas"}
+          {"text": ", already net of the ministry's own gas allowance"}
         ],
         "gap_segments": [
           {"text": "It holds the part of the barrel the five products do not price and the ministry's gas, freight and insurance costs; the prices are the ministry's own."}
@@ -543,7 +543,7 @@
           {"field": "period", "value": 2019, "format": "year"},
           {"text": ", the mean of the "},
           {"field": "months_published", "value": 12, "format": "count"},
-          {"text": " months it published, already net of its own gas"}
+          {"text": " months it published, already net of the ministry's own gas allowance"}
         ],
         "gap_segments": [
           {"text": "It holds the part of the barrel the products do not price, the ministry's gas, freight and insurance costs, and the difference between OPEC's quotations and the Reuters prices the ministry uses, and heating oil, which has no price here."}
@@ -685,7 +685,7 @@
           {"field": "period", "value": "2022-10-01", "label": "October 2022"},
           {"text": ", "},
           {"field": "status_word", "value": "final", "label": "final"},
-          {"text": ", already net of its own gas"}
+          {"text": ", already net of the ministry's own gas allowance"}
         ],
         "gap_segments": [
           {"text": "It holds the part of the barrel the products do not price, the ministry's gas, freight and insurance costs, and the difference between OPEC's quotations and the Reuters prices the ministry uses, and heating oil, which has no price here."}
@@ -833,7 +833,7 @@
           {"field": "period", "value": "2026-07-01", "label": "July 2026"},
           {"text": ", "},
           {"field": "status_word", "value": "final", "label": "final"},
-          {"text": ", already net of its own gas"}
+          {"text": ", already net of the ministry's own gas allowance"}
         ],
         "gap_segments": [
           {"text": "It holds the part of the barrel the products do not price, the ministry's gas, freight and insurance costs, the difference between this study's reading of the weekly chart and the prices the ministry used, and jet and fuel oil, which have no price here."}
