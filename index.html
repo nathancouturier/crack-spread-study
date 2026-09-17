@@ -36,12 +36,47 @@
   })();
 </script>
 
+<!-- Content hashes, so a deploy changes the URL of every file whose bytes
+     changed and a cache cannot hand this page yesterday's module beside today's
+     data. make build writes the import map below from the bytes on disk, and
+     the ?v= on the stylesheets and the entry module; make build-check fails if
+     any of them is stale. src/crack/versions.py says why and what it cannot
+     do; src/state.js holds the guard for that part. The map must come before
+     the first module script. -->
+<!-- build:versions, written by make build from the bytes on disk; do not edit by hand -->
+<script type="importmap">
+{
+  "imports": {
+    "./data/cracks.json": "./data/cracks.json?v=5bec004e84c2",
+    "./data/manifest.json": "./data/manifest.json?v=8f2c975115fc",
+    "./data/margin-stack.json": "./data/margin-stack.json?v=b6c633b0adb3",
+    "./data/now.json": "./data/now.json?v=4b626c817f78",
+    "./data/provenance.json": "./data/provenance.json?v=c720f8074418",
+    "./data/run-economics.json": "./data/run-economics.json?v=f85251a99858",
+    "./src/charts.js": "./src/charts.js?v=5dc8f77cb373",
+    "./src/dom.js": "./src/dom.js?v=caaafb659d55",
+    "./src/engine.js": "./src/engine.js?v=d4dd59c29a28",
+    "./src/format.js": "./src/format.js?v=a88d51c1a4d9",
+    "./src/now.js": "./src/now.js?v=01a2054e3347",
+    "./src/router.js": "./src/router.js?v=b27c71cdfdb2",
+    "./src/section-cracks.js": "./src/section-cracks.js?v=e95307250fdc",
+    "./src/section-margin.js": "./src/section-margin.js?v=e72d7976f93e",
+    "./src/section-provenance.js": "./src/section-provenance.js?v=8a8b2faf4232",
+    "./src/section-runs.js": "./src/section-runs.js?v=8ba6a2183d2f",
+    "./src/state.js": "./src/state.js?v=fca592859295",
+    "./src/theme.js": "./src/theme.js?v=f91f79f267f3",
+    "./src/ui.js": "./src/ui.js?v=3ed3e341bd56"
+  }
+}
+</script>
+<!-- /build:versions -->
+
 <link rel="preload" href="vendor/figtree/figtree.v2.002.latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="vendor/jetbrains-mono/jetbrains-mono.v2.211.latin.woff2" as="font" type="font/woff2" crossorigin>
 
-<link rel="stylesheet" href="styles/tokens.css">
-<link rel="stylesheet" href="styles/layout.css">
-<link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/tokens.css?v=c21de6526fdd">
+<link rel="stylesheet" href="styles/layout.css?v=97016dfb521f">
+<link rel="stylesheet" href="styles/components.css?v=1f2765df109e">
 </head>
 <body>
 
@@ -76,7 +111,7 @@
   </div>
 </noscript>
 
-<script type="module" src="src/ui.js"></script>
+<script type="module" src="src/ui.js?v=3ed3e341bd56"></script>
 
 </body>
 </html>

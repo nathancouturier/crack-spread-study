@@ -55,7 +55,7 @@ from typing import Any, Callable, Mapping, Sequence
 import numpy as np
 import pandas as pd
 
-from crack import analysis, config, engine, series
+from crack import analysis, config, engine, series, versions
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -1899,15 +1899,31 @@ def write_all(directory: Path = DATA, inputs: Inputs | None = None) -> list[Mapp
 
 
 def check(directory: Path = DATA, inputs: Inputs | None = None) -> int:
-    """Rebuild in memory, write nothing, return 1 when anything is stale."""
+    """Rebuild in memory, write nothing, return 1 when anything is stale.
+
+    For the committed data/ directory this also checks the content hashes in
+    index.html (src/crack/versions.py): a module, stylesheet or artifact whose
+    bytes changed while index.html still names the old hash is stale too,
+    because a deploy of it would keep yesterday's URL."""
     stale = stale_artifacts(build(inputs), directory)
     print("checked %d artifacts in %s" % (len(ARTIFACTS), directory))
     for name in stale:
         print("  STALE    data/%s.json" % name)
+    stale_versions: list[str] = []
+    if Path(directory).resolve() == DATA.resolve():
+        stale_versions = versions.stale_entries(REPO_ROOT)
+        print("checked the content hashes in index.html")
+        for entry in stale_versions:
+            print("  STALE    index.html version of %s" % entry)
     if stale:
         print("The committed artifacts do not match the caches and the analysis. Run: make build")
+    if stale_versions:
+        print("index.html names a hash that is not the file's. Run: make build")
+    if stale or stale_versions:
         return 1
     print("every artifact matches a rebuild from the committed caches, byte for byte")
+    if Path(directory).resolve() == DATA.resolve():
+        print("every module, stylesheet and artifact URL in index.html carries its current hash")
     return 0
 
 
@@ -1923,6 +1939,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     print("export, from the committed caches, no network")
     for item in report:
         print("  %-16s %8d bytes   %s" % (item["artifact"], item["bytes"], "written" if item["changed"] else "unchanged"))
+    if directory.resolve() == DATA.resolve():
+        # After the artifacts, so their hashes are the bytes just written.
+        written = versions.write(REPO_ROOT)
+        print("  %-16s %s" % ("index.html", "versions written" if written else "versions unchanged"))
     return 0
 
 

@@ -13,19 +13,39 @@
  * of the failed fetch, and that time only exists if it is written down here at
  * the moment it happens.
  *
- * Numeric literals: none. tools/check-literals.mjs.
+ * Numeric literals: SCHEMA_ONE, the schema version this page reads, which is
+ * 1 and passes tools/check-literals.mjs as a count. A version 2 would have to
+ * be declared there with its reason.
  */
+
+/* THE SCHEMA GUARD. Every artifact carries schema_version and its own name
+ * (src/crack/export.py _header). This page was written against the layout of
+ * one schema version per artifact, declared below, and refuses any other: an
+ * artifact whose version or name it does not know is not drawn, and the page
+ * says which file and what to do. That is the backstop for a mixed deploy, when
+ * a cache hands an old copy of this module a new artifact or the other way
+ * round (src/crack/versions.py): a layout read with the wrong expectations can
+ * print a wrong number without any error, and a refusal cannot. A schema bump
+ * in the export must change the number here in the same commit, and
+ * tools/validate-format.mjs fails the gate on every committed artifact this
+ * page would refuse. */
+const SCHEMA_ONE = 1;
 
 /* Every artifact the site reads, by name, with what it holds in words for the
  * failure sentence. Paths are relative to index.html: a leading slash would
  * break the subpath deploy. */
 const ARTIFACTS = Object.freeze({
-  now: { path: "data/now.json", holds: "the landing sentence and the data dates" },
-  cracks: { path: "data/cracks.json", holds: "the gasoil and gasoline cracks against the same week in earlier years" },
-  marginStack: { path: "data/margin-stack.json", holds: "the waterfall from the cracks to the refining margin" },
-  runEconomics: { path: "data/run-economics.json", holds: "the run cut threshold and the response of crude runs to the margin" },
-  provenance: { path: "data/provenance.json", holds: "the manifest of every series, its source and its last fetch" },
+  now: { path: "data/now.json", artifact: "now", schema: SCHEMA_ONE, holds: "the landing sentence and the data dates" },
+  cracks: { path: "data/cracks.json", artifact: "cracks", schema: SCHEMA_ONE, holds: "the gasoil and gasoline cracks against the same week in earlier years" },
+  marginStack: { path: "data/margin-stack.json", artifact: "margin-stack", schema: SCHEMA_ONE, holds: "the waterfall from the cracks to the refining margin" },
+  runEconomics: { path: "data/run-economics.json", artifact: "run-economics", schema: SCHEMA_ONE, holds: "the run cut threshold and the response of crude runs to the margin" },
+  provenance: { path: "data/provenance.json", artifact: "provenance", schema: SCHEMA_ONE, holds: "the manifest of every series, its source and its last fetch" },
 });
+
+/** The artifact names this build of the page reads, for a validator. */
+export function artifactNames() {
+  return Object.keys(ARTIFACTS);
+}
 
 const loaded = new Map();
 const failures = new Map();
@@ -42,11 +62,46 @@ function failureRecord(name, what, detail) {
   };
 }
 
+/* The URL to fetch: the path with its content hash, from the import map in
+ * index.html, which import.meta.resolve applies (src/crack/versions.py). The
+ * path is relative to index.html and this module sits one directory below it.
+ * An engine without import.meta.resolve, or without import maps, gets the plain
+ * path, which still loads the file and is still checked by the schema guard. */
+export function artifactUrl(path) {
+  try {
+    if (typeof import.meta.resolve === "function") return import.meta.resolve("../" + path);
+  } catch (error) {
+    /* fall through to the plain path */
+  }
+  return path;
+}
+
+/* Why this page will not read a parsed artifact, or null when it will. */
+export function refusal(name, data) {
+  const expected = ARTIFACTS[name];
+  if (!data || typeof data !== "object" || Array.isArray(data)) {
+    return "the file holds no artifact header, so this page cannot tell what it is";
+  }
+  if (data.artifact !== expected.artifact) {
+    return "the file names itself as a different artifact, so it is not the file this page asked for";
+  }
+  if (data.schema_version !== expected.schema) {
+    return "the file declares a schema version this page does not read, so it was written for a different version of the site than the code now running";
+  }
+  return null;
+}
+
+/* What to do about a refusal: the likely cause is a deploy while the page was
+ * open, and one reload fetches the code and the data together. */
+const REFUSAL_TODO =
+  "Reload the page: the site was probably updated while this copy was open, and a reload fetches the code and the data together. " +
+  "Nothing from this file is shown, rather than read with the wrong layout.";
+
 async function fetchArtifact(name) {
   const { path } = ARTIFACTS[name];
   let response;
   try {
-    response = await fetch(path, { cache: "no-cache" });
+    response = await fetch(artifactUrl(path), { cache: "no-cache" });
   } catch (error) {
     throw failureRecord(name, "the request did not complete, so the network or the server is unreachable", String(error && error.message ? error.message : error));
   }
@@ -54,11 +109,15 @@ async function fetchArtifact(name) {
     const statusText = response.statusText ? " " + response.statusText : "";
     throw failureRecord(name, "the server answered " + String(response.status) + statusText);
   }
+  let data;
   try {
-    return await response.json();
+    data = await response.json();
   } catch (error) {
     throw failureRecord(name, "the file arrived but is not valid JSON", String(error && error.message ? error.message : error));
   }
+  const refused = refusal(name, data);
+  if (refused) throw { ...failureRecord(name, refused), todo: REFUSAL_TODO };
+  return data;
 }
 
 /** Load one artifact, or hand back the copy already held. A second caller

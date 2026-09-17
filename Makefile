@@ -124,6 +124,14 @@ fixtures:
 # Five files, one per concern: now, cracks, margin-stack, run-economics and
 # provenance. An artifact whose bytes did not change is not rewritten.
 #
+# Then the content hashes in index.html, src/crack/versions.py: an import map
+# giving every module in src/ and every artifact in data/ a ?v= of its sha256,
+# and the same on the stylesheets and the entry module. Pages serves every file
+# with a short max age, so without them a deploy can pair yesterday's module
+# with today's artifact; with them, a changed file gets a new URL. What a query
+# string cannot do is covered in src/state.js, which refuses an artifact whose
+# schema_version or name it does not know and says so by file name.
+#
 # BYTE IDEMPOTENT. No artifact carries a generation timestamp, floats are
 # rounded to six places, the threshold bootstrap has a fixed seed, and text is
 # ASCII with LF. Building twice on an unchanged tree leaves it clean.
@@ -136,8 +144,9 @@ fixtures:
 build:
 	python scripts/export.py
 
-# Rebuild every artifact in memory and compare bytes with the committed file.
-# Writes nothing. Exits 1 naming each stale artifact, so a change to a cache,
+# Rebuild every artifact in memory and compare bytes with the committed file,
+# and recompute the content hashes in index.html. Writes nothing. Exits 1 naming
+# each stale artifact and each file whose hash index.html no longer matches, so a change to a cache,
 # the engine or the analysis that was never rebuilt fails the gate rather than
 # shipping a page that disagrees with the model. About ten seconds, most of it
 # the two 2,000 replication threshold bootstraps.

@@ -44,6 +44,11 @@
 //       the cent
 //   P   the page body never scrolls sideways, and the console logs no error
 //       and throws no exception (messages from browser extensions excepted)
+//   V   the deploy guard, docs: src/crack/versions.py. Every module, stylesheet
+//       and artifact the page loaded carries the ?v= hash index.html names; and
+//       with data/now.json served under a schema version the page does not read,
+//       planted through the DevTools protocol, the view draws no verdict and says
+//       which file it refused and to reload. Once, at 1280 px in light.
 
 import { argValue, launch, openNow } from "./browser.mjs";
 
@@ -287,6 +292,40 @@ const PROBE = String.raw`(async () => {
   return problems;
 })()`;
 
+/* V: versioned URLs, then a planted schema mismatch. */
+async function deployGuard(page) {
+  const problems = [];
+  await openNow(page, BASE, { theme: "light", width: 1280, height: 900 });
+  const loaded = await page.evaluate("performance.getEntriesByType('resource').map((e) => e.name)");
+  const html = await page.evaluate("fetch(location.href.split('#')[0], { cache: 'no-store' }).then((r) => r.text())");
+  const own = loaded.filter((url) => /\/(src|styles|data)\/[\w.-]+\.(js|css|json)(\?|$)/.test(url));
+  if (!own.some((url) => /\/data\//.test(url))) problems.push("no artifact was loaded, so nothing was measured");
+  for (const url of own) {
+    const match = /\/((?:src|styles|data)\/[\w.-]+\.(?:js|css|json))(?:\?v=([0-9a-f]+))?$/.exec(url);
+    if (!match || !match[2]) problems.push("loaded without a content hash: " + url);
+    else if (!html.includes(match[1] + "?v=" + match[2])) problems.push("loaded under a hash index.html does not name: " + url);
+  }
+  await page.send("Fetch.enable", { patterns: [{ urlPattern: "*data/now.json*" }] });
+  page.on("Fetch.requestPaused", async (paused) => {
+    const original = await fetch(paused.request.url);
+    const body = (await original.text()).replace('"schema_version": 1', '"schema_version": 2');
+    await page.send("Fetch.fulfillRequest", {
+      requestId: paused.requestId,
+      responseCode: 200,
+      responseHeaders: [{ name: "Content-Type", value: "application/json; charset=utf-8" }],
+      body: Buffer.from(body).toString("base64"),
+    });
+  });
+  await page.reload();
+  await page.waitFor("document.querySelector('#view [role=\"alert\"]') || document.querySelector('.verdict')");
+  const shown = await page.evaluate("({ verdict: !!document.querySelector('.verdict'), text: document.querySelector('#view').innerText })");
+  if (shown.verdict) problems.push("with now.json under an unknown schema version the verdict was still drawn");
+  if (!/data\/now\.json/.test(shown.text)) problems.push("the refusal does not name data/now.json: " + JSON.stringify(shown.text.slice(0, 120)));
+  if (!/Reload the page/.test(shown.text)) problems.push("the refusal does not say to reload");
+  await page.send("Fetch.disable");
+  return problems;
+}
+
 const browser = await launch(argv);
 console.log("check-layout.mjs, " + BASE + ", " + browser.executable);
 const found = [];
@@ -304,6 +343,9 @@ try {
       }
     }
   }
+  if (!ONLY.length || ONLY.includes("V")) {
+    for (const problem of await deployGuard(page)) found.push({ check: "V", problem, width: 1280, theme: "light" });
+  }
 } finally {
   await browser.close();
 }
@@ -315,7 +357,7 @@ for (const f of selected) {
   if (!byCheck.has(key)) byCheck.set(key, []);
   byCheck.get(key).push(f.theme + " " + f.width);
 }
-const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "P"].filter((c) => !ONLY.length || ONLY.includes(c));
+const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
 for (const check of checks) {
   const lines = [...byCheck.entries()].filter(([key]) => key.startsWith(check + "  "));
   if (!lines.length) {

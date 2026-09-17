@@ -51,6 +51,11 @@
 //      geometry block such as GEOMETRY in src/charts.js. A drawing surface
 //      decision (a height, a padding, a dot radius), never an observation.
 //      Changing the value fails, and so does the same figure anywhere else.
+//   8  CONTENT_HASH: in index.html only, a string that is exactly a relative
+//      path followed by ?v= and twelve lower case hex digits, the form
+//      src/crack/versions.py writes into the import map. A hash is an address,
+//      not a figure, and one made of digits alone would otherwise fail by
+//      chance. Any other digit in the import map is still reported.
 //
 // SELF TEST. Before scanning, the tool plants market values in synthetic files
 // and asserts it reports each one, and asserts that the allowed forms pass. If
@@ -157,6 +162,9 @@ const HTML_ATTRIBUTES = [
   { attr: "content", value: "width=device-width, initial-scale=1", why: "the viewport meta" },
   { attr: "tabindex", value: "-1", why: "focusable by script only" },
 ];
+
+// Rule 8. A versioned path in the import map, exact form, index.html only.
+const CONTENT_HASH = /^\.\/(?:src|data|styles)\/[\w.-]+\?v=[0-9a-f]{12}$/;
 
 // ---------------------------------------------------------------- lexer ---
 
@@ -356,6 +364,10 @@ export function checkScript(relative, source, baseIndex = 0, fullSource = source
   }
 
   for (const piece of strings) {
+    if (relative === "index.html" && CONTENT_HASH.test(piece.text)) {
+      if (/\d/.test(piece.text)) allowed.push({ file: relative, line: lineOf(fullSource, baseIndex + piece.index), literal: JSON.stringify(piece.text), rule: "content hash", text: "" });
+      continue;
+    }
     if (STRING_VOCABULARY.has(piece.text)) {
       if (/\d/.test(piece.text)) allowed.push({ file: relative, line: lineOf(fullSource, baseIndex + piece.index), literal: JSON.stringify(piece.text), rule: "API vocabulary", text: "" });
       continue;
@@ -467,6 +479,8 @@ function selfTest() {
     { name: "a value in page text", file: "index.html", kind: "html", source: "<p>Margin 38.05 $/bbl</p>\n", expect: ["38.05"] },
     { name: "a value in an inline script", file: "index.html", kind: "html", source: "<script>var m = 38.05;</script>\n", expect: ["38.05"] },
     { name: "a value in a data attribute", file: "index.html", kind: "html", source: '<span data-value="38.05">x</span>\n', expect: ["38.05"] },
+    { name: "a value hidden in the import map", file: "index.html", kind: "html", source: '<script type="importmap">{"imports": {"./src/ui.js": "./src/ui.js?v=38.05", "./data/now.json": "./data/now.json?v=123456789012 91"}}</script>\n', expect: ["38.05", "123456789012", "91"] },
+    { name: "a content hash outside index.html is not a hash", file: "src/planted.js", kind: "js", source: 'const url = "./src/ui.js?v=123456789012";\n', expect: ["123456789012"] },
     {
       name: "allowed forms",
       file: "src/planted.js",
@@ -487,7 +501,7 @@ function selfTest() {
       name: "allowed html",
       file: "index.html",
       kind: "html",
-      source: '<meta name="viewport" content="width=device-width, initial-scale=1">\n<h1 tabindex="-1">x</h1><link href="vendor/figtree/figtree.v2.002.latin.woff2"><span>&#x263E;&#xFE0E;</span><!-- 38.05 -->\n',
+      source: '<script type="importmap">{"imports": {"./src/ui.js": "./src/ui.js?v=123456789012", "./data/now.json": "./data/now.json?v=0a1b2c3d4e5f"}}</script>\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<h1 tabindex="-1">x</h1><link href="vendor/figtree/figtree.v2.002.latin.woff2"><span>&#x263E;&#xFE0E;</span><!-- 38.05 -->\n',
       expect: [],
     },
   ];

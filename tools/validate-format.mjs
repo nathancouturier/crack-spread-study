@@ -126,6 +126,61 @@ check("unknown section ids are dropped", state.openSections({ open: "cracks,hist
 check("no open parameter", state.openSections({}, sections), []);
 check("params for none open", state.openParams([]), {});
 
+// ------------------------------------------------------- schema guard ---
+// src/state.js refuses an artifact whose schema_version or artifact name this
+// page does not know (src/crack/versions.py says why). Two halves, both run with
+// a stub fetch so no server is needed:
+//   planted   a mismatch must fail the load, name the file, give the reload
+//             advice, and hand the view no data at all
+//   committed every artifact the page reads, as committed, must pass the guard,
+//             so an export that bumps a schema without the page fails here, in
+//             the gate, and not on a visitor's screen
+const committedBytes = (relative) => readFileSync(path.join(ROOT, relative), "utf8");
+const realFetch = globalThis.fetch;
+let served = null;
+globalThis.fetch = async (url) => {
+  const text = served(String(url));
+  return { ok: true, status: 200, statusText: "OK", json: async () => JSON.parse(text) };
+};
+try {
+  const nowText = committedBytes("data/now.json");
+  served = () => nowText.replace('"schema_version": 1', '"schema_version": 2');
+  let result = await state.loadAll(["now"]);
+  check("a planted schema version is refused", result.ok, false);
+  check("the refusal hands the view no data", Object.keys(result.data).length, 0);
+  const [said, todo] = result.failures.length ? format.loadFailureSentences(result.failures[0]) : ["", ""];
+  check("the refusal names the file", said.includes("data/now.json"), true);
+  check("the refusal says the schema is not one this page reads", said.includes("schema version this page does not read"), true);
+  check("the refusal says to reload, because a deploy happened", /^Reload the page: the site was probably updated/.test(todo), true);
+  check("the refusal prints no figure", /\d/.test(said.replace(/\d{1,2} \w+ \d{4} at \d{2}:\d{2} UTC/, "")), false);
+  state.forget("now");
+
+  served = () => nowText.replace('"artifact": "now"', '"artifact": "cracks"');
+  result = await state.loadAll(["now"]);
+  check("an artifact under the wrong name is refused", result.ok, false);
+  state.forget("now");
+
+  served = () => "[1, 2, 3]";
+  result = await state.loadAll(["now"]);
+  check("a file with no header is refused", result.ok, false);
+  state.forget("now");
+
+  const asked = [];
+  served = (url) => {
+    asked.push(url);
+    const match = /data\/([\w-]+\.json)/.exec(url);
+    return committedBytes("data/" + match[1]);
+  };
+  const names = state.artifactNames();
+  result = await state.loadAll(names);
+  check("every committed artifact passes the guard", result.failures.map((f) => f.path + ": " + f.what), []);
+  check("the guard read every artifact the page names", Object.keys(result.data).sort(), [...names].sort());
+  check("artifacts are fetched through import.meta.resolve, relative to index.html", asked.every((url) => /\/data\/[\w-]+\.json$/.test(url)), true);
+  for (const name of names) state.forget(name);
+} finally {
+  globalThis.fetch = realFetch;
+}
+
 // ------------------------------------------------ cross check now.json ---
 const now = JSON.parse(readFileSync(path.join(ROOT, "data/now.json"), "utf8"));
 const decimals = now.conventions.decimals;

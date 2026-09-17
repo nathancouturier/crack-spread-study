@@ -189,13 +189,14 @@ export function loadingSentence(what) {
 }
 
 /** Two sentences for an artifact that did not load: what happened, then what
- *  to do. `failure` is the record state.js keeps, with its time. */
+ *  to do. `failure` is the record state.js keeps, with its time, and its own
+ *  `todo` when the cause calls for different advice, as a refused schema does. */
 export function loadFailureSentences(failure) {
   const when = formatInstant(failure.at);
   const happened =
     "The page could not load " + failure.path + ", which holds " + failure.holds +
     ": " + failure.what + (when ? ", at " + when : "") + ".";
-  const todo =
+  const todo = failure.todo ||
     "Reload the page to try again. If it fails again the file is missing or damaged in this copy of the site, " +
     "and nothing it holds is shown, rather than shown from a guess.";
   return [happened, todo];
