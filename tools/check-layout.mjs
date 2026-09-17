@@ -54,6 +54,16 @@
 //       doubled in the field moves the margin after gas down with the same bar
 //       node (in place) and the MBR unchanged, text in a field prints no NaN,
 //       and "Put back" restores the preset
+//   RV  Runs and crude demand, docs/design.md Part 8.3, at each of its four
+//       parts: no winner, wins, best, tie, dead heat or equivalent; no figure
+//       after headroom and the word unidentified; the sentence on the margin
+//       against the gasoil crack; no accent on the scatter or the residuals and
+//       no label outside them; one square per month of the stretch, both fits,
+//       the interval span reaching the rule at the edge of the search; the
+//       horses A, B, C in order with no bold, accent or sort, a size tick on
+//       every power strip, horse C a substitution; the lower bound sentence
+//       with the coefficients; 2026 untested with 2022 and the months after
+//       the break bracketed
 //   P   the page body never scrolls sideways, and the console logs no error
 //       and throws no exception (messages from browser extensions excepted)
 //   V   the deploy guard, docs: src/crack/versions.py. Every module, stylesheet
@@ -74,7 +84,9 @@ const ALL = "cracks,margin,runs,provenance";
 const HISTORY = ["#/history", "#/history?range=2022", "#/history?sub=season"];
 /* The Model states, Part 8.2. */
 const MODEL = ["#/model", "#/model?preset=july_2026", "#/model?preset=average_2019"];
-const VIEWS = (argValue(argv, "--views") || "now,history,model").split(",");
+/* The Runs and crude demand parts, Part 8.3. */
+const RUNS = ["#/runs", "#/runs?part=threshold", "#/runs?part=race", "#/runs?part=break"];
+const VIEWS = (argValue(argv, "--views") || "now,history,model,runs").split(",");
 
 /* Everything below PROBE runs inside the page. It returns
  * [{ check, width, theme, problem }]. */
@@ -339,7 +351,7 @@ const PROBE = String.raw`(async () => {
       const readout = panel.querySelector(".readout");
       if (readout && !text(readout)) add("H", "a readout is empty");
     }
-    if (/winner|dead heat|tie/i.test(text(document.getElementById("view")))) add("H", "a banned word about the horse race");
+    if (/winner|dead heat|\btie\b/i.test(text(document.getElementById("view")))) add("H", "a banned word about the horse race");
   }
 
   // MV: the Model view, docs/design.md Part 8.2.
@@ -395,6 +407,67 @@ const PROBE = String.raw`(async () => {
     if (parseFloat(figure("after-gas")) !== before) add("MV", "Put back did not restore the preset's margin after gas");
   }
 
+  // RV: the Runs and crude demand view, docs/design.md Part 8.3.
+  if (document.querySelector(".runs-body")) {
+    const view = document.getElementById("view");
+    const words = text(view);
+    if (/\b(winner|wins|best|tie|tied|dead heat|equivalent)\b/i.test(words)) add("RV", "a banned word about the horse race: " + /\b(winner|wins|best|tie|tied|dead heat|equivalent)\b/i.exec(words)[0]);
+    if (/headroom[^.]*?\d/i.test(words)) add("RV", "a figure follows the word headroom");
+    if (!/unidentified/.test(text(view.querySelector(".runs-headroom") || view))) add("RV", "the headroom paragraph does not say unidentified");
+    if (!/did not beat it and was not beaten by it/.test(words) || !/power, not equality/.test(words)) add("RV", "the sentence on the margin against the gasoil crack is missing");
+    for (const svg of view.querySelectorAll("svg.chart--scatter, svg.chart--residuals")) {
+      if (svg.querySelector('[class*="accent"]')) add("RV", "an accent mark on " + svg.getAttribute("class"));
+      const width = +svg.getAttribute("width");
+      for (const label of svg.querySelectorAll("text")) {
+        const b = label.getBBox();
+        if (b.x < -0.5 || b.x + b.width > width + 0.5) add("RV", "the label " + JSON.stringify(text(label)) + " runs outside its chart");
+      }
+    }
+    const part = document.querySelector(".runs-body").getAttribute("data-part");
+    if (part === "threshold") {
+      const runs = await (await fetch("data/runs.json", { cache: "no-cache" })).json();
+      const t = runs.threshold;
+      const svg = view.querySelector("svg.chart--scatter");
+      if (!svg) add("RV", "no scatter");
+      else {
+        const squares = svg.querySelectorAll(".scatter-square").length;
+        if (squares !== t.stretch.months_in_stretch) add("RV", squares + " squares for " + t.stretch.months_in_stretch + " months of the stretch");
+        if (svg.querySelectorAll("path.mark-fit").length !== 2) add("RV", "the scatter does not draw both fits");
+        const span = svg.querySelector("rect.mark-span");
+        if (!span) add("RV", "no interval span");
+        else if (t.interval.reaches_search_edge) {
+          const right = +span.getAttribute("x") + +span.getAttribute("width");
+          const rules = [...svg.querySelectorAll("line.mark-context")].map((l) => +l.getAttribute("x1"));
+          if (!rules.some((x) => Math.abs(x - right) < 0.6)) add("RV", "the interval span does not reach the rule at the edge of the search, so it was trimmed");
+        }
+        if (!/Edge of the range searched/.test(text(svg))) add("RV", "the edge of the search is not labelled");
+      }
+    }
+    if (part === "race") {
+      for (const table of view.querySelectorAll(".runs-race-table")) {
+        const keys = [...table.querySelectorAll("tr.runs-horse")].map((tr) => tr.getAttribute("data-horse")).join("");
+        if (keys !== "ABC") add("RV", "the horses are in the order " + keys);
+        const figureWeights = new Set([...table.querySelectorAll("tr.runs-horse td")].map((n) => getComputedStyle(n).fontWeight + " " + getComputedStyle(n).color));
+        if (figureWeights.size > 1) add("RV", "a horse's figures differ in weight or colour from another's: " + [...figureWeights].join(" | "));
+        if (table.querySelector(".text-accent, b, strong")) add("RV", "an accent or bold inside the horse race");
+        if (table.querySelector("th[aria-sort], button")) add("RV", "a sort control on the horse race");
+      }
+      const strips = view.querySelectorAll("svg.chart--power");
+      for (const svg of strips) {
+        if (!svg.getBoundingClientRect().width) continue;
+        if (!svg.querySelector("line.power-size")) add("RV", "a power strip without the size marked");
+      }
+      if (!/cannot tell the horses apart/.test(words)) add("RV", "the race does not say the sample cannot tell the horses apart");
+      if (!/substitution/i.test(words)) add("RV", "horse C is not labelled a substitution");
+    }
+    if (part === "response" && !/lower bound in absolute value/.test(words)) add("RV", "the lower bound sentence is not where the coefficients are");
+    if (part === "break") {
+      if (!/is not tested/.test(words)) add("RV", "2026 is not said to be untested");
+      const svg = view.querySelector("svg.chart--residuals");
+      if (!svg || svg.querySelectorAll(".rail-label").length !== 2) add("RV", "the residual plot does not bracket 2022 and the months after the break");
+    }
+  }
+
   // P: the body never scrolls sideways.
   if (document.documentElement.scrollWidth > document.documentElement.clientWidth) add("P", "the page scrolls sideways, " + document.documentElement.scrollWidth + " in " + document.documentElement.clientWidth);
   return problems;
@@ -442,7 +515,7 @@ try {
   for (const theme of THEMES) {
     for (const width of WIDTHS) {
       page.errors.length = 0;
-      const states = [...(VIEWS.includes("now") ? [null] : []), ...(VIEWS.includes("history") ? HISTORY : []), ...(VIEWS.includes("model") ? MODEL : [])];
+      const states = [...(VIEWS.includes("now") ? [null] : []), ...(VIEWS.includes("history") ? HISTORY : []), ...(VIEWS.includes("model") ? MODEL : []), ...(VIEWS.includes("runs") ? RUNS : [])];
       for (const hash of states) {
         page.errors.length = 0;
         if (hash === null) await openNow(page, BASE, { theme, open: ALL, width, height: width < 768 ? 812 : 900 });
@@ -471,7 +544,7 @@ for (const f of selected) {
   if (!byCheck.has(key)) byCheck.set(key, []);
   byCheck.get(key).push(f.theme + " " + f.width);
 }
-const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "H", "MV", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
+const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "H", "MV", "RV", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
 for (const check of checks) {
   const lines = [...byCheck.entries()].filter(([key]) => key.startsWith(check + "  "));
   if (!lines.length) {

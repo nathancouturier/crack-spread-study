@@ -17,6 +17,10 @@
  *   liveWaterfallBar the same bar built once and moved in place, for the Model
  *                    view's recompute
  *   intervalStrip    one or more response intervals with zero marked
+ * and, for the Runs view (docs/design.md Part 8.3):
+ *   scatterPanel     the run cut threshold scatter, two fits and the interval
+ *   powerCell        a horse race power strip in a table row, and powerFigure
+ *                    the same strips as one figure at narrow widths
  *
  * Missing is never zero. A null ends the current subpath and the next value
  * starts a new one, a finite value with a gap on both sides is a small dot so it
@@ -99,6 +103,12 @@ export const GEOMETRY = Object.freeze({
   YEAR_SPACING: 48,
   /* The monthly seasonal profile plot, Part 8.1 H8. */
   PROFILE_HEIGHT: 240,
+  /* The run cut scatter, Part 8.3 R2: room right for two line fit labels, room
+   * above for the unit title and the edge label on their own rows, and the
+   * 6px square of a month in the stretch. */
+  SCATTER_PAD_RIGHT: 24,
+  SCATTER_PAD_TOP: 48,
+  SCATTER_SQUARE: 6,
 });
 
 /* The mantissas of decimal notation. A fact about how numbers are written, not
@@ -909,13 +919,16 @@ function splitAtBreaks(points, breaks) {
  *  squares            [[ms, value]] printed figures, 5px squares, never joined
  *  events, breaks     [ms] for the event hairlines and the dashed break rules
  *  rails              { least: [[ms, ms]], newest: [[ms, ms]], leastLabel,
- *                       newestLabel }, the evidence rail under the axis, or null
+ *                       newestLabel, brackets: [{ start, end, label }] }, the
+ *                       evidence rail under the axis, or null; brackets are
+ *                       named spans on a rail of their own
  *  Returns { svg, xOf, yOf, left, right, top, bottom }. */
 export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, lines, squares, events, breaks, rails, className }) {
   const g = GEOMETRY;
   const least = rails ? rails.least.filter(([t0, t1]) => t1 >= xDomain[0] && t0 <= xDomain[1]) : [];
   const newest = rails ? rails.newest.filter(([t0, t1]) => t1 >= xDomain[0] && t0 <= xDomain[1]) : [];
-  const railCount = (least.length ? 1 : 0) + (newest.length ? 1 : 0);
+  const brackets = rails && rails.brackets ? rails.brackets.filter((b) => b.end >= xDomain[0] && b.start <= xDomain[1]) : [];
+  const railCount = (least.length ? 1 : 0) + (newest.length ? 1 : 0) + (brackets.length ? 1 : 0);
   const left = g.PAD_LEFT;
   const right = Math.max(width - g.TIME_PAD_RIGHT, left + g.TIME_PAD_RIGHT);
   const top = g.PAD_TOP;
@@ -1043,6 +1056,13 @@ export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, 
     for (const [t0, t1] of newest) {
       const [x0, x1] = clip(t0, t1);
       bracket(railGroup, x0, x1, railY, rails.newestLabel);
+    }
+    if (newest.length) railY += g.RAIL_HEIGHT;
+    // Named spans, each with its own words: the Runs view's 2022 episode and
+    // the months after the 2026 break, Part 8.3 R7.
+    for (const item of brackets) {
+      const [x0, x1] = clip(item.start, item.end);
+      bracket(railGroup, x0, x1, railY, item.label);
     }
   }
   return { svg, xOf, yOf, left, right, top, bottom };
@@ -1175,5 +1195,152 @@ export function profilePanel({ width, years, mean, months, season, style, yDomai
       railGroup.appendChild(svgEl("path", { class: "mark-context", d: "M" + px(x0) + " " + px(railY - tick) + " V" + px(railY + tick) + " M" + px(x0) + " " + px(railY) + " H" + px(x1) + " M" + px(x1) + " " + px(railY - tick) + " V" + px(railY + tick) }));
     }
   }
+  return svg;
+}
+
+/* ================================================================ runs === */
+
+/** The run cut threshold scatter, docs/design.md Part 3 section 5 and Part
+ *  8.3, R2.
+ *
+ *  width, height      the svg's width and the plot's height, in CSS px
+ *  xDomain, yDomain   [low, high] in the artifact's units
+ *  xUnit, yUnit       the axis titles
+ *  title, desc        the accessible name and description
+ *  points             [{ x, y, square }]: square for a month of the stretch the
+ *                     kink is estimated from, a hollow circle otherwise
+ *  fits               [{ line: [[x, y]], style: "dashed" | "dotted", name,
+ *                        lastText }], each end labelled, none in the accent
+ *  span               { low, high } or null: the interval, a flat span with no
+ *                     text on it, drawn to its true ends
+ *  edges              [{ x, label }]: an edge of the search, a rule the height
+ *                     of the plot with its label above the plot
+ *  Returns { svg, xOf, yOf }. No accent: the thing it would mark is not
+ *  identified. */
+export function scatterPanel({ width, height, xDomain, yDomain, xUnit, yUnit, title, desc, points, fits, span, edges }) {
+  const g = GEOMETRY;
+  const left = g.PAD_LEFT;
+  const right = Math.max(width - g.SCATTER_PAD_RIGHT, left + g.SCATTER_PAD_RIGHT);
+  const top = g.SCATTER_PAD_TOP;
+  const bottom = top + height;
+  const total = bottom + g.AXIS_GAP + g.LABEL_SPACING + g.AXIS_BELOW;
+  const xOf = linear(xDomain[0], xDomain[1], left, right);
+  const yOf = linear(yDomain[0], yDomain[1], bottom, top);
+
+  const svg = imageSvg({ width, height: total, title, desc, className: "chart--scatter" });
+  const frame = svgEl("g", { "aria-hidden": "true" });
+  const marks = svgEl("g", { "aria-hidden": "true" });
+  const labels = svgEl("g", { "aria-hidden": "true" });
+  svg.appendChild(frame);
+  svg.appendChild(marks);
+  svg.appendChild(labels);
+
+  // The span first, so every mark sits over it.
+  if (span && present(span.low) && present(span.high)) {
+    const x0 = Math.max(xOf(span.low), left);
+    const x1 = Math.min(xOf(span.high), right);
+    frame.appendChild(svgEl("rect", { class: "mark-span", x: px(x0), y: px(top), width: px(Math.max(x1 - x0, 0)), height: px(bottom - top) }));
+  }
+
+  const yStep = tickStep(yDomain[0], yDomain[1], g.Y_TICKS);
+  for (const value of tickValues(yDomain[0], yDomain[1], g.Y_TICKS)) {
+    const y = yOf(value);
+    frame.appendChild(svgEl("line", { class: "mark-grid", x1: left, x2: right, y1: px(y), y2: px(y) }));
+    frame.appendChild(svgEl("text", { class: "tick", x: left - g.LABEL_GAP, y: px(y), "text-anchor": "end", "dominant-baseline": "central" }, tickLabel(value, yStep)));
+  }
+  frame.appendChild(svgEl("text", { class: "chart-axis-title", x: 0, y: g.LABEL_SPACING }, yUnit));
+  const xStep = tickStep(xDomain[0], xDomain[1], g.X_TICKS);
+  const tickY = bottom + g.AXIS_GAP;
+  for (const value of tickValues(xDomain[0], xDomain[1], g.X_TICKS)) {
+    const x = xOf(value);
+    frame.appendChild(svgEl("line", { class: value === 0 ? "mark-context" : "mark-grid", x1: px(x), x2: px(x), y1: top, y2: bottom }));
+    frame.appendChild(svgEl("text", { class: "tick", x: px(x), y: px(tickY), "text-anchor": "middle", "dominant-baseline": "central" }, tickLabel(value, xStep)));
+  }
+  frame.appendChild(svgEl("line", { class: "mark-context", x1: left, x2: right, y1: bottom, y2: bottom }));
+  frame.appendChild(svgEl("text", { class: "chart-axis-title", x: right, y: px(tickY + g.LABEL_SPACING), "text-anchor": "end", "dominant-baseline": "central" }, xUnit));
+
+  // Edges of the search: a rule, and its words above the plot on --bg.
+  for (const edge of edges || []) {
+    if (!present(edge.x)) continue;
+    const x = xOf(edge.x);
+    frame.appendChild(svgEl("line", { class: "mark-context", x1: px(x), x2: px(x), y1: px(top - g.TICK_LENGTH), y2: px(bottom) }));
+    labels.appendChild(svgEl("text", { class: "chart-caption scatter-edge-label", x: px(x), y: px(top - g.LABEL_GAP - g.TICK_LENGTH), "text-anchor": "end" }, edge.label));
+  }
+
+  const half = g.SCATTER_SQUARE * g.HALF;
+  for (const point of points) {
+    if (!present(point.x) || !present(point.y)) continue;
+    const cx = xOf(point.x);
+    const cy = yOf(point.y);
+    if (point.square) marks.appendChild(svgEl("rect", { class: "mark-series-fill scatter-square", x: px(cx - half), y: px(cy - half), width: g.SCATTER_SQUARE, height: g.SCATTER_SQUARE }));
+    else marks.appendChild(svgEl("circle", { class: "mark-point", cx: px(cx), cy: px(cy), r: g.SMALL_RADIUS }));
+  }
+
+  const ends = [];
+  for (const fit of fits) {
+    const line = fit.line.filter(([x, y]) => present(x) && present(y));
+    if (line.length < 1 + 1) continue;
+    const d = line.map(([x, y], index) => (index === 0 ? "M" : "L") + px(xOf(x)) + " " + px(yOf(y))).join(" ");
+    marks.appendChild(svgEl("path", { class: "mark-fit mark-fit--" + fit.style, d, "data-fit": fit.id }));
+    const [lx, ly] = line[line.length - 1];
+    ends.push({ end: { x: xOf(lx), pointY: yOf(ly), fit }, y: yOf(ly) });
+  }
+  // Fit labels in the top right corner of the plot, one row each in the order
+  // the lines end from the top, right aligned on a --bg halo, each joined to
+  // its line's end by a context leader. The top of the scatter is where no
+  // month sits, so no word covers a point, and at 375 px the plot keeps its
+  // width.
+  const sorted = [...ends].sort((a, b) => a.y - b.y);
+  sorted.forEach((item, index) => {
+    const end = item.end;
+    const y = top + g.LABEL_SPACING * (index + g.HALF) + g.TICK_LENGTH;
+    labels.appendChild(svgEl("line", { class: "mark-context", x1: px(end.x), x2: px(end.x), y1: px(y + g.LABEL_SPACING * g.HALF), y2: px(end.pointY) }));
+    labels.appendChild(svgEl("text", { class: "chart-end-label halo scatter-fit-label", x: px(end.x), y: px(y), "text-anchor": "end", "dominant-baseline": "central" }, end.fit.name + ", " + end.fit.lastText));
+  });
+  return { svg, xOf, yOf };
+}
+
+/* The power row: a hairline across the domain, the accent tick at the test's
+ * size the height of the row, and the power as an ink dot with a --bg ring. */
+function powerRow(group, xOf, y, rowTop, rowBottom, item, size) {
+  const g = GEOMETRY;
+  const domain = xOf.domain;
+  group.appendChild(svgEl("line", { class: "mark-context", x1: px(xOf(domain[0])), x2: px(xOf(domain[1])), y1: px(y), y2: px(y) }));
+  if (present(size)) {
+    group.appendChild(svgEl("line", { class: "mark-accent-rule power-size", x1: px(xOf(size)), x2: px(xOf(size)), y1: px(rowTop), y2: px(rowBottom) }));
+  }
+  if (!present(item.power)) return;
+  const cx = xOf(item.power);
+  group.appendChild(svgEl("circle", { class: "mark-ring-fill", cx: px(cx), cy: px(y), r: g.DOT_RADIUS + g.RING_WIDTH }));
+  group.appendChild(svgEl("circle", { class: "mark-series-fill power-dot", cx: px(cx), cy: px(y), r: g.DOT_RADIUS }));
+}
+
+/** A power strip for one table row, hidden, Part 3 section 5: domain from the
+ *  artifact, the size as the accent tick, the power as a dot. */
+export function powerCell({ width, height, item, domain, size }) {
+  const g = GEOMETRY;
+  const svg = hiddenSvg({ width, height, className: "chart--strip chart--power" });
+  const inset = g.DOT_RADIUS + g.RING_WIDTH;
+  const xOf = linear(domain[0], domain[1], inset, Math.max(width - inset, inset));
+  powerRow(svg, xOf, height * g.HALF, 0, height, item, size);
+  return svg;
+}
+
+/** The power strips as one figure at narrow widths, each row labelled above,
+ *  the accent tick stopping at the label line so it crosses no words. */
+export function powerFigure({ width, items, domain, size, title, desc }) {
+  const g = GEOMETRY;
+  const rowHeight = g.STRIP_LABEL + g.STRIP_ROW;
+  const height = items.length * rowHeight + g.STRIP_PAD;
+  const svg = imageSvg({ width, height, title, desc, className: "chart--strip-figure chart--power" });
+  const inset = g.DOT_RADIUS + g.RING_WIDTH;
+  const xOf = linear(domain[0], domain[1], inset, Math.max(width - inset, inset));
+  const group = svgEl("g", { "aria-hidden": "true" });
+  items.forEach((item, index) => {
+    const rowTop = index * rowHeight + g.STRIP_LABEL;
+    group.appendChild(svgEl("text", { class: "chart-caption-strong", x: 0, y: px(index * rowHeight + g.STRIP_LABEL * g.HALF), "dominant-baseline": "central" }, item.label));
+    powerRow(group, xOf, rowTop + g.STRIP_ROW * g.HALF, rowTop, rowTop + g.STRIP_ROW, item, size);
+  });
+  svg.appendChild(group);
   return svg;
 }

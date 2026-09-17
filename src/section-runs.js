@@ -19,9 +19,12 @@
  * the one picture of the finding never sits behind a sideways scroll (S31).
  * The hidden one is display none, so neither is read twice.
  *
- * Not built here, and why: the link "Open Runs and crude demand". That view is
- * published at Gate 5, and a link to it today is an orphan UI state (Part 7,
- * C7).
+ * The link "Open Runs and crude demand" closes the section, to the view that
+ * holds the same table in full (docs/design.md Part 3 section 1, Part 8.3).
+ *
+ * THE BLOCKS ARE EXPORTED, so the Runs view builds the same headroom paragraph,
+ * strips, table and post break table from the same artifact with the same code,
+ * and the two pages cannot disagree (Part 8.3, R3 and R7).
  *
  * Numeric literals: none.
  */
@@ -29,26 +32,41 @@
 import { el, sentence, figureCell, scrollTable } from "./dom.js";
 import { formatNumber, formatCell, segmentsText, UNITS } from "./format.js";
 import * as charts from "./charts.js";
+import * as router from "./router.js";
 
 export const artifact = "runEconomics";
 export const loading = "the run cut threshold and the response of crude runs to the margin";
 
 export function render(inner, data) {
+  inner.appendChild(headroomBlock(data));
+  inner.appendChild(responseBlock(data));
+  const reason = disagreementBlock(data);
+  if (reason) inner.appendChild(reason);
+  inner.appendChild(utilisationBlock(data));
+  inner.appendChild(el("p", { class: "block" }, [
+    el("a", { class: "text-link", text: "Open Runs and crude demand", attrs: { href: router.href("runs") } }),
+  ]));
+}
+
+/** 1. Headroom, or the word unidentified where the number would sit. */
+export function headroomBlock(data) {
   const decimals = data.conventions.decimals;
   const threshold = data.threshold;
-  const response = data.response;
-  const utilisation = data.utilisation;
-
-  // 1. Headroom, or the word unidentified where the number would sit.
   const headroom = sentence("p", threshold.segments, decimals, "lead");
   for (const word of headroom.querySelectorAll('[data-field="verdict"]')) word.classList.add("verdict-word");
   const first = el("div", { class: "block" }, [headroom]);
   if (threshold.fallback_segments && threshold.fallback_segments.length) {
     first.appendChild(sentence("p", threshold.fallback_segments, decimals, "lead"));
   }
-  inner.appendChild(first);
+  return first;
+}
 
-  // 2. The response, strips then table.
+/** 2. The response, strips then table. `after`, when given, is set inside the
+ *  block under the table, so a caller can put a sentence where the
+ *  coefficients are. */
+export function responseBlock(data, after) {
+  const decimals = data.conventions.decimals;
+  const response = data.response;
   const models = response.order.map((id) => response.models.find((model) => model.id === id)).filter(Boolean);
   const items = models.map((model) => ({ label: model.label, estimate: model.kb_d, low: model.kb_d_low, high: model.kb_d_high }));
   const domain = charts.stripDomain(items);
@@ -122,14 +140,21 @@ export function render(inner, data) {
       }
     });
   }
-  inner.appendChild(block);
+  if (after) block.appendChild(after);
+  return block;
+}
 
-  // 3. Why the two disagree.
-  if (response.disagreement && response.disagreement.segments) {
-    inner.appendChild(sentence("p", response.disagreement.segments, decimals, "block"));
-  }
+/** 3. Why the two equations disagree, or null. */
+export function disagreementBlock(data) {
+  const response = data.response;
+  if (!response.disagreement || !response.disagreement.segments) return null;
+  return sentence("p", response.disagreement.segments, data.conventions.decimals, "block");
+}
 
-  // 4. Utilisation against what the margin implies.
+/** 4. Utilisation against what the margin implies: the post break months. */
+export function utilisationBlock(data) {
+  const decimals = data.conventions.decimals;
+  const utilisation = data.utilisation;
   const util = el("div", { class: "block" });
   util.appendChild(el("h3", { class: "block__heading", text: "Latest utilisation against what the margin implies" }));
   util.appendChild(sentence("p", utilisation.latest_segments, decimals, "lead"));
@@ -156,7 +181,7 @@ export function render(inner, data) {
     "The months after the break, each against " + utilisation.implied_by.equation + ".",
   ], el("table", { class: "table utilisation-table" }, [el("thead", {}, [uhead]), ubody])));
   util.appendChild(sentence("p", utilisation.segments, decimals));
-  inner.appendChild(util);
+  return util;
 }
 
 function perModelWords(count) {

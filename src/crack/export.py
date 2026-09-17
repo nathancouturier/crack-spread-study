@@ -3088,7 +3088,7 @@ def _runs_race(inputs: Inputs) -> Mapping[str, Any]:
             T("What the margin gives that the raw crack cannot, none of it a claim about forecasting. A level with a sign: a crack is one product against crude, while the margin is what the whole barrel earns after crude and the ministry's gas, so only the margin can be set against a cash cost and only its sign means a refinery loses on the barrel."),
         ],
         [
-            T("The gas wedge: the extra gas a refinery burning the average US refinery's share pays over the ministry's own allowance averaged "),
+            T("The gas wedge: the extra gas a refinery pays at the average US refinery's use, over the ministry's own allowance, averaged "),
             N("wedge_before_usd_bbl", before, "usd_bbl"),
             T(" $/bbl before "),
             N("wedge_year", 2022, "year"),

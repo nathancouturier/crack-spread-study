@@ -923,3 +923,65 @@ p.block,
   text-align: right;
   white-space: nowrap;
 }
+
+/* --------------------------------------------------------------- runs --- */
+
+/* docs/design.md Part 8.3. The lead is the answer: the response in the title,
+ * the horse race sentence and the unidentified paragraph in body type, the
+ * negative findings at the size of the positive ones. Four parts behind the
+ * History choice row. No accent on the scatter or the residuals: the classes
+ * below take ink and context roles only. */
+.runs-lead { margin-top: 16px; max-width: 48em; }
+.runs-headroom { margin-top: 12px; }
+.runs-parts { margin-top: 24px; }
+.runs-part { margin-top: 32px; }
+.runs-part + .runs-part { margin-top: 48px; }
+.runs-part__heading {
+  font-weight: 500;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  max-width: 48em;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.runs-part > .note,
+.runs-part > .prose,
+.runs-part > .lead { max-width: 64em; margin-top: 8px; font-variant-numeric: tabular-nums lining-nums; }
+.runs-plot { margin: 24px 0 0; min-width: 0; }
+.runs-plot__heading {
+  font-weight: 500;
+  font-size: var(--fs-body-s);
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+.runs-scatter,
+.runs-residuals { margin-top: 12px; }
+.runs-lower-bound { margin-top: 12px; max-width: 64em; }
+.runs-variant {
+  display: block;
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.runs-equation + .runs-equation { margin-top: 32px; }
+.runs-power { margin-top: 16px; }
+.runs-gives .prose + .prose { margin-top: 8px; }
+.runs-used-by { min-width: 12rem; font-size: var(--fs-meta); }
+.runs-explanations {
+  margin-top: 8px;
+  display: grid;
+  gap: 4px;
+  max-width: 64em;
+  font-size: var(--fs-body-s);
+}
+.runs-explanations__name { font-weight: 500; }
+
+.mark-point { fill: none; stroke: var(--role-series); stroke-width: 1.5px; }
+.mark-fit { fill: none; stroke: var(--role-series); stroke-width: 1.5px; }
+.mark-fit--dashed { stroke-dasharray: 6 4; }
+.mark-fit--dotted { stroke-dasharray: 1.5 3; stroke-linecap: round; }
+.runs-part > .block,
+.runs-part > .table-block,
+.runs-part > .disclosure { margin-top: 24px; }
+.runs-part > .runs-plot + .note { margin-top: 16px; }

@@ -5,6 +5,7 @@
 //     node scripts/screenshots.mjs
 //     node scripts/screenshots.mjs --base https://nathancouturier.github.io/crack-spread-study/
 //     node scripts/screenshots.mjs --out assets --browser "C:/Program Files/Google/Chrome/Application/chrome.exe"
+//     node scripts/screenshots.mjs --only runs,model   shots whose names start so
 //
 // SPEC.md section 10: Gate 4 asks for screenshots at desktop and mobile widths
 // in both themes, and Gate 5 for screenshots of every view taken from the live
@@ -63,7 +64,16 @@ const SHOTS = [
   { name: "model-desktop-light-2019", ...DESKTOP, theme: "light", hash: "#/model?preset=average_2019" },
   { name: "model-mobile-light", ...MOBILE, theme: "light", hash: "#/model" },
   { name: "model-mobile-dark-july-2026", ...MOBILE, theme: "dark", hash: "#/model?preset=july_2026" },
+  // Runs and crude demand, docs/design.md Part 8.3: each of the four parts at
+  // desktop, two of them at mobile, both themes.
+  { name: "runs-desktop-light", ...DESKTOP, theme: "light", hash: "#/runs" },
+  { name: "runs-desktop-light-threshold", ...DESKTOP, theme: "light", hash: "#/runs?part=threshold" },
+  { name: "runs-desktop-dark-race", ...DESKTOP, theme: "dark", hash: "#/runs?part=race" },
+  { name: "runs-desktop-light-break", ...DESKTOP, theme: "light", hash: "#/runs?part=break" },
+  { name: "runs-mobile-light-threshold", ...MOBILE, theme: "light", hash: "#/runs?part=threshold" },
+  { name: "runs-mobile-dark-race", ...MOBILE, theme: "dark", hash: "#/runs?part=race" },
 ];
+const ONLY = (argValue(argv, "--only") || "").split(",").filter(Boolean);
 
 /** Width and height from a PNG's IHDR chunk, to report what was written. */
 function pngSize(buffer) {
@@ -76,7 +86,7 @@ console.log("screenshots.mjs, " + BASE + " into " + path.relative(ROOT, OUT) + "
 let failed = false;
 try {
   const page = await browser.page();
-  for (const shot of SHOTS) {
+  for (const shot of SHOTS.filter((s) => !ONLY.length || ONLY.some((prefix) => s.name.startsWith(prefix)))) {
     page.errors.length = 0;
     try {
       if (shot.hash) await openView(page, BASE, shot);
