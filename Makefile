@@ -54,9 +54,9 @@ help:
 	@echo "                                 node tools/check-dashes.mjs"
 	@echo "  make serve         serve the site at its Pages subpath, http://localhost:8000/crack-spread-study/"
 	@echo "                     equivalent: python scripts/serve.py --port 8000"
-	@echo "  make layout        measure the Now view in headless Chromium, needs make serve running"
+	@echo "  make layout        measure the Now and History views in headless Chromium, needs make serve running"
 	@echo "                     equivalent: node tools/check-layout.mjs --base http://localhost:8000/crack-spread-study/"
-	@echo "  make screenshots   full page PNGs of the Now view into assets/, needs make serve running"
+	@echo "  make screenshots   full page PNGs of Now and History into assets/, needs make serve running"
 	@echo "                     equivalent: node scripts/screenshots.mjs --base http://localhost:8000/crack-spread-study/"
 
 # Fetches from the network. Keeps the previous cache on any failure, and exits

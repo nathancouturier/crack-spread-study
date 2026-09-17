@@ -216,8 +216,8 @@ const PROBE = String.raw`(async () => {
     }
   }
 
-  // S8: provisional flags in the manifest table.
-  try {
+  // S8: provisional flags in the manifest table, where the Provenance section is.
+  if (document.querySelector("#section-body-provenance")) try {
     const manifest = (await (await fetch("data/provenance.json", { cache: "no-cache" })).json()).manifest;
     for (const entry of manifest.series) {
       if (!entry.provisional_from) continue;
@@ -294,7 +294,7 @@ const PROBE = String.raw`(async () => {
   }
 
   // M4: signs and precision in the margin section.
-  for (const cell of document.querySelectorAll("tr.is-total td.num")) if (/^\+/.test(text(cell))) add("M4", "a waterfall total prints a plus sign: " + text(cell));
+  for (const cell of document.querySelectorAll("#section-body-margin tr.is-total td.num")) if (/^\+/.test(text(cell))) add("M4", "a waterfall total prints a plus sign: " + text(cell));
   const scale = document.querySelector("#section-body-margin .scale-note");
   if (scale && /\.00 to /.test(text(scale))) add("M4", "the scale is said to the cent: " + JSON.stringify(text(scale)));
 

@@ -766,7 +766,7 @@ function drawSeason(body) {
       const head = el("tr", {}, [el("th", { text: "Year", attrs: { scope: "col" } })]);
       layer.months.forEach((name) => head.appendChild(el("th", { class: "col-num", text: name, attrs: { scope: "col" } })));
       const tbody = el("tbody");
-      const meanRow = el("tr", { class: "is-total" }, [el("th", { text: meanLabel, attrs: { scope: "row" } })]);
+      const meanRow = el("tr", { class: "is-note" }, [el("th", { text: meanLabel, attrs: { scope: "row" } })]);
       chosen.mean_usd_bbl.forEach((v) => meanRow.appendChild(figureCell(formatCell(v, "usd_bbl", decimals, true), "mean_usd_bbl", "num--total")));
       tbody.appendChild(meanRow);
       for (const [year, values] of lines) {

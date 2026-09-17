@@ -2210,3 +2210,15 @@ readout line), no fill under any line, no hue for a product, no arrow on a range
 button or event marker, no pressed fill (underline and weight, S4), no text on a
 hatch or a plot area, no month name in JetBrains Mono (month and year labels
 that are words are Figtree; only numeric ticks are mono).
+
+**As built, and measured.** Three things moved during the build, each found by
+`tools/check-layout.mjs` check H or by looking at the page. Numbered lane markers
+that still touch (2022 has four events inside eight months) stack in a second or
+third row rather than overlapping, the lane growing to hold them. The "Mean of 25
+years" label sits inside the plot, right aligned above the line's end on a `--bg`
+halo, because at 375 px it ran 26 px past the chart. The least defended hatch is
+labelled in the rail beside it, as on the Now seasonal panels, not in the event
+lane. The view is in the nav and the router; `tools/check-layout.mjs` measures
+`#/history`, `#/history?range=2022` and `#/history?sub=season` at 375, 768, 1024,
+1280 and 1440 px in both themes, and `scripts/screenshots.mjs` photographs five
+History states.
