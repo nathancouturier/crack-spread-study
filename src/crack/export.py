@@ -98,6 +98,9 @@ DECIMALS: Mapping[str, int] = {
     "usd_t": 0,
     "usd_t_error": 2,
     "usd_mmbtu": 2,
+    "eur_mwh": 2,
+    "eurusd": 4,
+    "mmbtu_per_mwh": 6,
     "mmbtu_per_bbl": 3,
     "kb_d": 1,
     "t": 2,
@@ -2178,6 +2181,416 @@ def history(inputs: Inputs) -> Mapping[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# model.json, docs/design.md Part 8.2
+# ---------------------------------------------------------------------------
+#
+# The calculator's presets. The model margin is the ministry's slate yields
+# times the cracks, on engine.MARGIN_GROSS_OF_GAS with no residual, so gas is
+# subtracted from it; the ministry's MBR, already net of its own gas, travels
+# beside each preset for comparison and is never a step of the model. Every
+# input of every preset carries the sentence saying where it came from, and a
+# product a source does not quote for the month is null with its reason.
+#
+# The breakevens are computed against breakeven_target, a margin of zero,
+# because the run cut threshold is unidentified (Gate 3): no threshold, no
+# headroom figure, anywhere in this file.
+
+#: The presets SPEC.md section 7.2 names, in its order. `months` None means the
+#: latest margin month, resolved at build time.
+MODEL_PRESETS: tuple[tuple[str, str], ...] = (
+    ("latest", "note"),
+    ("average_2019", "opec"),
+    ("october_2022", "opec"),
+    ("july_2026", "reconstructed"),
+)
+MODEL_PRESET_MONTHS: Mapping[str, Sequence[str] | None] = {
+    "latest": None,
+    "average_2019": tuple("2019-%02d-01" % m for m in range(1, 13)),
+    "october_2022": ("2022-10-01",),
+    "july_2026": ("2026-07-01",),
+}
+MODEL_BREAKEVEN_TARGET_USD_BBL = 0.0
+MODEL_PANDEMIC_EVENT = "covid_pandemic_and_european_lockdowns_2020_03"
+MODEL_STRIKES_EVENT = "sp_ara_diesel_cracks_2022_10_13"
+MODEL_IRAN_EVENT = "strikes_on_iran_hormuz_2026_02_28"
+MODEL_GAS_BECOMES_TTF_EVENT = "worldbank_europe_gas_definition_2015_04"
+
+#: How a reconstructed week's evidence class is said in a preset note.
+MODEL_EVIDENCE_WORDS: Mapping[str, tuple[str, str]] = {
+    "cross_checked": ("Every one of them is checked against a second chart.", "checked against a second chart"),
+    "single_geometry_newest": ("No second chart has checked any of them yet.", "not yet checked by a second chart"),
+    "single_geometry_oldest": ("Every one of them is among the least defended weeks of the reconstruction.", "among the least defended weeks"),
+}
+
+
+def _and_list(words: Sequence[str]) -> str:
+    words = list(words)
+    if len(words) <= 1:
+        return "".join(words)
+    return ", ".join(words[:-1]) + " and " + words[-1]
+
+
+def _period_segments(field: str, months: Sequence[str]) -> list[Mapping[str, Any]]:
+    """A month said by name, or a calendar year said as its number."""
+    if len(months) == 1:
+        return [D(field, months[0])]
+    return [N(field, pd.Timestamp(months[0]).year, "year")]
+
+
+def _model_margin(cracks: Mapping[str, float | None], ttf: float, eurusd: float) -> engine.MarginResult:
+    products = [p for p in series.MODEL_PRODUCTS if cracks.get(p) is not None]
+    return engine.evaluate(engine.MarginInputs(
+        yields={p: _num(series.DGEC_NOTE_VOLUME_YIELDS[p]) for p in products},
+        cracks={p: cracks[p] for p in products},
+        gas=engine.gas_from_ttf(ttf, eurusd),
+        gas_intensity_mmbtu_per_bbl=config.GAS_INTENSITY_MMBTU_PER_BBL,
+        other_variable_cost_usd_bbl=config.OTHER_VARIABLE_COST_USD_BBL,
+        margin_basis=engine.MARGIN_GROSS_OF_GAS,
+    ))
+
+
+def _model_scale(cracks: Mapping[str, float | None], ttf: float, eurusd: float, mbr: float | None) -> Mapping[str, Any]:
+    """The preset's shared scale: every running total of both blocks, on the
+    1, 2, 5 ladder, zero inside. The page widens it only when an edit runs past."""
+    result = _model_margin(cracks, ttf, eurusd)
+    ends, running = [0.0], 0.0
+    for product in series.MODEL_PRODUCTS:
+        if product in result.contributions:
+            running += result.contributions[product]
+            ends.append(running)
+    ends += [result.gross_margin_usd_bbl, result.gross_margin_usd_bbl - result.gas_cost_usd_bbl, result.margin_after_gas_usd_bbl]
+    if mbr is not None:
+        ends.append(mbr)
+    low = min(0.0, _ladder_ceiling(min(ends)))
+    high = max(0.0, _ladder_ceiling(max(ends)))
+    return {"low_usd_bbl": _num(low), "high_usd_bbl": _num(high)}
+
+
+def _model_product_rows() -> list[Mapping[str, Any]]:
+    rows = []
+    for product in series.MODEL_PRODUCTS:
+        line = config.DGEC_NOTE_SLATE_LINE[product]
+        volume = series.DGEC_NOTE_VOLUME_YIELDS[product]
+        mass = 100 * config.DGEC_MASS_YIELDS[line]
+        segments = [
+            T("The ministry's slate: "),
+            N("mass_yield_percent", mass, "percent"),
+            T(" percent of the tonne, "),
+            N("volume_yield_percent", 100 * volume, "percent"),
+            T(" percent of the barrel at ICE's "),
+            N("bbl_per_t", config.DGEC_NOTE_PRODUCT_BBL_PER_T[product], "bbl_per_t"),
+            T(" bbl/t for the product and the method's "),
+            N("brent_bbl_per_t", config.DGEC_BBL_PER_T_BRENT_MARGIN, "bbl_per_t"),
+            T(" bbl/t for Brent."),
+        ]
+        if product == "gasoline":
+            segments.append(T(" The method's line is EuroBOB, a blendstock; every price here is a finished gasoline."))
+        rows.append({
+            "id": product,
+            "name": PRODUCT_NAMES[product],
+            "ministry_label": series.DGEC_NOTE_MONTHLY_COLUMNS[product][1],
+            "slate_line": line,
+            "volume_yield": _num(volume),
+            "mass_yield_percent": _num(mass),
+            "bbl_per_t": config.DGEC_NOTE_PRODUCT_BBL_PER_T[product],
+            "factor_citation": dict(FACTOR_CITATIONS[product]),
+            "yield_source_segments": segments,
+        })
+    return rows
+
+
+def _model_note_preset(inputs: Inputs, month: str) -> Mapping[str, Any]:
+    """The latest month, on the ministry's own final monthly prices."""
+    printed = series.load("dgec_note_printed_monthly")
+    printed["date"] = pd.to_datetime(printed["date"])
+    row = printed[printed["date"] == pd.Timestamp(month)]
+    vintage = None if row.empty else str(row["vintage"].iloc[0])
+    try:
+        cracks = series.note_cracks_for_month(month)
+        refusal = None
+    except KeyError as error:
+        cracks, refusal = {}, str(error).strip("'\"")
+    values: dict[str, float | None] = {}
+    sources: dict[str, Any] = {}
+    for product in series.MODEL_PRODUCTS:
+        column, label = series.DGEC_NOTE_MONTHLY_COLUMNS[product]
+        if product not in cracks:
+            values[product] = None
+            sources[product] = {"available": False, "segments": [T("No figure for "), D("month", month), T(": " + (refusal or "no note printed it") + ". Left out of the margin, not borrowed from another month.")]}
+            continue
+        crack = cracks[product]
+        values[product] = _num(crack.value)
+        sources[product] = {"available": True, "segments": [
+            T("The ministry's monthly average for "), D("month", month),
+            T(", final in its note of "), D("quotations_vintage", vintage, kind="day"),
+            T(": "), W("label", label), T(" at "), N("price_usd_t", row[column].iloc[0], "usd_t"),
+            T(" $/t, at ICE's "), N("bbl_per_t", config.DGEC_NOTE_PRODUCT_BBL_PER_T[product], "bbl_per_t"),
+            T(" bbl/t, less the ministry's Brent, "), N("brent_usd_bbl", crack.brent_usd_bbl, "usd_bbl"), T(" $/bbl."),
+        ]}
+    note = [
+        T("Cracks from the ministry's final monthly prices for "), D("month", month),
+        T(", printed in its note of "), D("quotations_vintage", vintage, kind="day"),
+        T(", against the ministry's own Brent; gas and the exchange rate for the same month."),
+    ] if vintage else [T("No note printed the ministry's monthly prices for "), D("month", month), T(".")]
+    return {
+        "crack_source": "dgec_note_printed_monthly",
+        "reconstructed": False,
+        "cracks": values,
+        "crack_sources": sources,
+        "note_segments": note,
+        "reason_segments": [T("The latest month with both the ministry's margin and its final monthly prices.")],
+        "reason_source_url": None,
+        "gap_holds": "the part of the barrel the five products do not price and the ministry's gas, freight and insurance costs; the prices are the ministry's own",
+    }
+
+
+def _model_opec_preset(months: Sequence[str], by_id: Mapping[str, Any]) -> Mapping[str, Any]:
+    opec = series.model_opec_cracks(months)
+    printed = series.load("dgec_note_printed_monthly")
+    first_printed = _iso(pd.to_datetime(printed["date"]).min())
+    period = _period_segments("period", months)
+    values: dict[str, float | None] = {}
+    sources: dict[str, Any] = {}
+    missing = []
+    for product in series.MODEL_PRODUCTS:
+        item = opec[product]
+        if item["value"] is None:
+            values[product] = None
+            missing.append(PRODUCT_NAMES[product])
+            if item["reason"] == "opec_has_no_column":
+                why = [T("No figure for "), *period, T(": OPEC's Rotterdam table quotes no " + PRODUCT_NAMES[product] + ", and no note this study holds prints the ministry's monthly prices before "), D("first_printed_month", first_printed), T(". Left out of the margin, not borrowed from gasoil.")]
+            else:
+                why = [T("No figure for "), *period, T(": OPEC's Rotterdam table has no " + PRODUCT_NAMES[product] + " quotation in " + _and_list([month_label(m) for m in item["missing_months"]]) + ". Left out of the margin rather than averaged over fewer months.")]
+            sources[product] = {"available": False, "segments": why}
+            continue
+        values[product] = _num(item["value"])
+        quoted = [T("OPEC's Rotterdam "), W("label", item["label"]), T(" quotation")]
+        spec = [T(", specified as "), W("specification", " then ".join(item["specifications"]))] if item["specifications"] else []
+        if len(months) == 1:
+            segments = quoted + [T(" for "), D("month", months[0])] + spec + [T(", less FRED's Brent monthly mean for the same month.")]
+        else:
+            segments = [T("The mean of "), N("months_used", item["months_used"], "count"), T(" monthly cracks of "), *period, T(": ")] + quoted + spec + [T(", less FRED's Brent monthly mean, month by month.")]
+        sources[product] = {"available": True, "segments": segments}
+    if len(months) == 1:
+        event = by_id[MODEL_STRIKES_EVENT]
+        figure = next(f for f in event["figures"] if f["key"] == "ara_diesel_crack_usd_bbl")
+        reason = [T("The month of the French refinery strikes, when S&P Global reported ARA diesel cracks near "), N("ara_diesel_crack_usd_bbl", figure["value"], "count"), T(" $/bbl on "), D("event_date", event["date"], kind="day"), T(".")]
+        note = [T("Cracks from OPEC's Rotterdam monthly quotations for "), D("month", months[0]), T(", each less FRED's Brent for the month; gas and the exchange rate for the same month. No note this study holds prints the ministry's monthly prices before "), D("first_printed_month", first_printed), T(".")]
+    else:
+        event = by_id[MODEL_PANDEMIC_EVENT]
+        reason = [T("The last full year before the pandemic lockdowns of "), D("event_month", _event_day(event)), T(".")]
+        note = [T("An average of "), N("months", len(months), "count"), T(" months, not one: OPEC's Rotterdam monthly quotations less FRED's Brent for each month of "), *period, T(", and the gas price and exchange rate averaged the same way. No note this study holds prints the ministry's monthly prices before "), D("first_printed_month", first_printed), T(".")]
+    holds = "the part of the barrel the products do not price, the ministry's gas, freight and insurance costs, and the difference between OPEC's quotations and the Reuters prices the ministry uses"
+    if missing:
+        holds += ", and " + _and_list(missing) + ", which has no price here"
+    return {
+        "crack_source": "opec_rotterdam_products_monthly",
+        "reconstructed": False,
+        "cracks": values,
+        "crack_sources": sources,
+        "note_segments": note,
+        "reason_segments": reason,
+        "reason_source_url": event["source_url"],
+        "gap_holds": holds,
+    }
+
+
+def _model_reconstructed_preset(month: str, by_id: Mapping[str, Any]) -> Mapping[str, Any]:
+    recon = series.model_reconstructed_cracks(month)
+    weeks = recon["weeks"]
+    values: dict[str, float | None] = {}
+    sources: dict[str, Any] = {}
+    missing = []
+    for product in series.MODEL_PRODUCTS:
+        item = recon["products"][product]
+        if item["value"] is None:
+            values[product] = None
+            missing.append(PRODUCT_NAMES[product])
+            sources[product] = {"available": False, "segments": [
+                T("No figure for "), D("month", month),
+                T(": the ministry's weekly chart plots Gazole, Eurosuper and Fioul domestique only, and its monthly prices for the month are not in this study's data. Left out of the margin, not borrowed from another month."),
+            ]}
+            continue
+        values[product] = _num(item["value"])
+        sources[product] = {"available": True, "segments": [
+            T("Reconstructed, read off the ministry's weekly chart and not printed: "), W("label", item["label"]),
+            T(" less the chart's Brent, the mean of "), N("weeks", len(item["weekly"]), "count"),
+            T(" weeks ending in "), D("month", month), T("."),
+        ]}
+    first, last = weeks[0], weeks[-1]
+    note = [
+        T("Reconstructed, not printed: each crack is the mean of "), N("weeks", len(weeks), "count"),
+        T(" weekly readings of the ministry's chart, for the weeks ending on the Fridays from "), D("first_week", first, kind="day"),
+        T(" to "), D("last_week", last, kind="day"),
+    ]
+    if recon["printed_weeks"] == 0:
+        note += [T(", and the ministry printed none of those weeks.")]
+    else:
+        note += [T(", "), N("printed_weeks", recon["printed_weeks"], "count"), T(" of them also printed by the ministry.")]
+    if pd.Timestamp(first).day < 7:
+        before = pd.Timestamp(first).replace(day=1) - pd.offsets.MonthBegin(1)
+        note += [T(" The first of those weeks starts in "), D("previous_month", _iso(before)), T(".")]
+    for evidence, count in recon["evidence_classes"].items():
+        if count == len(weeks):
+            note += [T(" " + MODEL_EVIDENCE_WORDS[evidence][0])]
+        else:
+            note += [T(" "), N("weeks_" + evidence, count, "count"), T(" of them " + ("is" if count == 1 else "are") + " " + MODEL_EVIDENCE_WORDS[evidence][1] + ".")]
+    note += [T(" The ministry printed its monthly prices for the month only in a note of the following month, which it deleted and nobody archived, so none is used here; and the chart plots " + _and_list(["no " + name for name in missing]) + ".")]
+    event = by_id[MODEL_IRAN_EVENT]
+    return {
+        "crack_source": "dgec_note_reconstructed_weekly",
+        "reconstructed": True,
+        "cracks": values,
+        "crack_sources": sources,
+        "note_segments": note,
+        "reason_segments": [T("The month before the latest, in the regime that followed the strikes on Iran of "), D("event_date", event["date"], kind="day"), T(".")],
+        "reason_source_url": event["source_url"],
+        "gap_holds": "the part of the barrel the products do not price, the ministry's gas, freight and insurance costs, the difference between this study's reading of the weekly chart and the prices the ministry used, and " + _and_list(missing) + ", which have no price here",
+        "weeks": {"fridays": weeks, "printed": recon["printed_weeks"], "evidence_classes": recon["evidence_classes"]},
+    }
+
+
+def model(inputs: Inputs) -> Mapping[str, Any]:
+    view = inputs.view
+    latest = view.margin_month
+    payload = _header("model", latest, "the margin model's presets, each input with the sentence saying where it came from, the ministry's slate yields, and the target the breakevens are computed against")
+    payload["conventions"] = _conventions()
+    events_file = events_anchors.load_events()
+    by_id = {e["id"]: e for e in events_file["events"]}
+    embedded = config.DGEC_EMBEDDED_GAS_INTENSITY_MMBTU_PER_BBL
+    run = run_verdict(inputs.threshold, inputs.threshold_without_stretch, view, _trailing_rank(inputs))
+
+    payload["title_segments"] = [T("The margin model: cracks times the ministry's yields, less gas")]
+    payload["lead_segments"] = [
+        T("This page builds a margin of its own: each crack times the ministry's yield for that product. That margin is gross of gas, so gas is subtracted from it here. It is not the ministry's MBR, which is already net of the ministry's own gas at "),
+        N("embedded_intensity_mmbtu_per_bbl", embedded, "mmbtu_per_bbl"),
+        T(" MMBtu/bbl; the MBR for each preset's month is set under the model with the gap between the two, and nothing is subtracted from it."),
+    ]
+    payload["basis"] = {
+        "margin_basis": engine.MARGIN_GROSS_OF_GAS,
+        "residual_usd_bbl": 0.0,
+        "official_margin_basis": engine.MARGIN_NET_OF_GAS,
+        "official_is_a_step": False,
+    }
+    products = _model_product_rows()
+    covered = sum(series.DGEC_NOTE_VOLUME_YIELDS.values())
+    payload["products"] = products
+    payload["slate"] = {
+        "covered_volume_yield": _num(covered),
+        "unattributed_slate_lines": [SLATE_LINE_NAMES[l] for l in series.DGEC_NOTE_UNATTRIBUTED_SLATE_LINES],
+        "segments": [
+            T("The five products cover "), N("covered_volume_yield_percent", 100 * covered, "percent"),
+            T(" percent of the barrel; " + _and_list([SLATE_LINE_NAMES[l] for l in series.DGEC_NOTE_UNATTRIBUTED_SLATE_LINES]) + " have no price here and are not in the model margin."),
+        ],
+    }
+    payload["intensity"] = {
+        "study_mmbtu_per_bbl": _num(config.GAS_INTENSITY_MMBTU_PER_BBL),
+        "embedded_mmbtu_per_bbl": _num(embedded),
+        "source_segments": [
+            T("Derived from the EIA's US refinery tables for "),
+            N("eia_year", pd.Timestamp(inputs.entry("eia_refinery_fuel_2023")["first_date"]).year, "year"),
+            T(", gas burned as fuel and used for hydrogen over crude inputs. A US figure, so an upper end for Europe, where refiners burn more of their own gas; the ministry's margin assumes "),
+            N("embedded_intensity_mmbtu_per_bbl", embedded, "mmbtu_per_bbl"), T(" MMBtu/bbl."),
+        ],
+    }
+    payload["other_cost"] = {
+        "value_usd_bbl": _num(config.OTHER_VARIABLE_COST_USD_BBL),
+        "source_segments": [T("Zero by default, and labelled so: carbon and every cost other than energy are out of scope for this version.")],
+    }
+    payload["breakeven_target"] = {
+        "value_usd_bbl": _num(MODEL_BREAKEVEN_TARGET_USD_BBL),
+        "words": "a margin of zero, not a level at which runs get cut",
+        "segments": [T("Each breakeven is the input at which the model's margin after gas is zero, every other input held: a margin of zero, not a level at which runs get cut.")],
+    }
+    payload["run"] = {
+        "threshold_identified": run["threshold_identified"],
+        "verdict": run["verdict"],
+        "run_cut_threshold_usd_bbl": None,
+        "headroom_usd_bbl": run["headroom_usd_bbl"],
+        "segments": run["segments"],
+    }
+    if run["threshold_identified"]:
+        # The model has no identified level to pass the engine, and inventing
+        # one is what this file must never do; a threshold identified later
+        # needs its own design pass before it reaches the calculator.
+        raise ValueError("model.json is written for an unidentified run cut threshold; revisit docs/design.md Part 8.2 M4 before exporting an identified one")
+
+    mbr_entry = inputs.entry("dgec_mbr_monthly")
+    ttf_event = by_id[MODEL_GAS_BECOMES_TTF_EVENT]
+    presets = []
+    for preset_id, source in MODEL_PRESETS:
+        months = MODEL_PRESET_MONTHS[preset_id] or (latest,)
+        months = tuple(months)
+        if source == "note":
+            body = _model_note_preset(inputs, months[0])
+        elif source == "opec":
+            body = _model_opec_preset(months, by_id)
+        else:
+            body = _model_reconstructed_preset(months[0], by_id)
+        gas = series.model_gas_and_fx(months)
+        official = series.model_official_margin(months)
+        period = _period_segments("period", months)
+        if gas["ttf_eur_mwh"] is None:
+            raise KeyError("no World Bank gas price or FRED EUR/USD for every month of preset %s" % preset_id)
+        single = len(months) == 1
+        ttf_segments = [
+            T("Derived, not quoted: the World Bank's European gas price for " if single else "Derived, not quoted: the mean of the World Bank's monthly European gas prices for "),
+            *period, T(", "), N("gas_usd_mmbtu", gas["gas_usd_mmbtu"], "usd_mmbtu"),
+            T(" $/MMBtu, TTF by the World Bank's own definition since "), D("ttf_definition_month", _event_day(ttf_event)),
+            T(", at FRED's exchange rate for the same period and "), N("mmbtu_per_mwh", config.MMBTU_PER_MWH, "mmbtu_per_mwh"),
+            T(" MMBtu per MWh. The daily TTF series is not used, because its terms keep it out of this repository."),
+        ]
+        fx_segments = (
+            [T("FRED's US dollars per euro, the mean of the daily rates in "), D("month", months[0]), T(".")]
+            if single else
+            [T("FRED's US dollars per euro, the mean of the "), N("months", len(months), "count"), T(" monthly means of "), *period, T(".")]
+        )
+        status_provisional = any(_status_word(mbr_entry, m)[0] for m in months)
+        if official["mbr_usd_bbl"] is None:
+            official_label = [T("No ministry MBR for "), *period, T(": the published series starts in "), D("mbr_first_month", mbr_entry["first_date"]), T(" and is not extended.")]
+        elif single:
+            official_label = [T("The ministry's MBR for "), *period, T(", "), W("status_word", "provisional" if status_provisional else "final"), T(", already net of its own gas")]
+        else:
+            official_label = [T("The ministry's MBR for "), *period, T(", the mean of the "), N("months_published", official["months_published"], "count"), T(" months it published, already net of its own gas")]
+        ttf = _num(gas["ttf_eur_mwh"])
+        eurusd = _num(gas["eurusd"])
+        mbr = _num(official["mbr_usd_bbl"])
+        preset = {
+            "id": preset_id,
+            "label": month_label(months[0]) if single else str(pd.Timestamp(months[0]).year) + " average",
+            "months": list(months),
+            "kind": "month" if single else "year_average",
+            **{k: v for k, v in body.items() if k not in ("cracks", "crack_sources", "gap_holds")},
+            "inputs": {
+                "cracks": body["cracks"],
+                "yields": {p["id"]: p["volume_yield"] for p in products},
+                "ttf_eur_mwh": ttf,
+                "eurusd": eurusd,
+                "gas_intensity_mmbtu_per_bbl": _num(config.GAS_INTENSITY_MMBTU_PER_BBL),
+                "other_variable_cost_usd_bbl": _num(config.OTHER_VARIABLE_COST_USD_BBL),
+            },
+            "sources": {
+                "cracks": body["crack_sources"],
+                "ttf_segments": ttf_segments,
+                "eurusd_segments": fx_segments,
+            },
+            "gas_usd_mmbtu": _num(gas["gas_usd_mmbtu"]),
+            "official": {
+                "mbr_usd_bbl": mbr,
+                "months": len(months),
+                "months_published": official["months_published"],
+                "provisional": status_provisional,
+                "label_segments": official_label,
+                "gap_segments": [T("It holds " + body["gap_holds"] + ".")],
+            },
+            "scale": _model_scale(body["cracks"], ttf, eurusd, mbr),
+        }
+        presets.append(preset)
+    payload["presets"] = presets
+    return payload
+
+
+# ---------------------------------------------------------------------------
 # Build, serialise, write, check
 # ---------------------------------------------------------------------------
 
@@ -2188,6 +2601,7 @@ ARTIFACTS: Mapping[str, Callable[[Inputs], Mapping[str, Any]]] = {
     "run-economics": run_economics,
     "provenance": provenance,
     "history": history,
+    "model": model,
 }
 
 

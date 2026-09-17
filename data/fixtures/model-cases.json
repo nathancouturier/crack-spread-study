@@ -1,0 +1,1867 @@
+{
+ "fixture": "model-cases",
+ "python": "src/crack/engine.py, through scripts/gen_model_cases.py compute",
+ "javascript": "src/model-calc.js compute, over src/engine.js",
+ "tolerance": 1e-09,
+ "model_artifact": "data/model.json",
+ "products": [
+  "gasoil",
+  "gasoline",
+  "jet",
+  "heating_oil",
+  "fuel_oil_1pct"
+ ],
+ "breakeven_target_usd_bbl": 0.0,
+ "cases": [
+  {
+   "name": "latest",
+   "preset": "latest",
+   "edit": null,
+   "inputs": {
+    "cracks": {
+     "gasoil": 80.467624,
+     "gasoline": 45.178502,
+     "jet": 71.868162,
+     "heating_oil": 73.35353,
+     "fuel_oil_1pct": -7.926394
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 62.129278,
+    "eurusd": 1.159362,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 38.050505
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "heating_oil",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 26.996646449128,
+     "gasoline": 5.981498129294,
+     "jet": 6.225795137735999,
+     "heating_oil": 5.935327526420001,
+     "fuel_oil_1pct": -0.586656199122
+    },
+    "attributed_usd_bbl": 44.552611043456004,
+    "gross_margin_usd_bbl": 44.552611043456004,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 21.11000186997962,
+    "gas_cost_usd_bbl": 4.478909096753576,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 40.07370194670243,
+    "breakeven_ttf_eur_mwh": 618.012443956739,
+    "breakeven_gas_usd_mmbtu": 209.98544112483387,
+    "breakeven_gasoil_usd_bbl": -38.97815926096038,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -6.502106043456003,
+    "covered_volume_yield": 0.709449
+   }
+  },
+  {
+   "name": "latest ttf_doubled",
+   "preset": "latest",
+   "edit": "ttf_doubled",
+   "inputs": {
+    "cracks": {
+     "gasoil": 80.467624,
+     "gasoline": 45.178502,
+     "jet": 71.868162,
+     "heating_oil": 73.35353,
+     "fuel_oil_1pct": -7.926394
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 124.258556,
+    "eurusd": 1.159362,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 38.050505
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "heating_oil",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 26.996646449128,
+     "gasoline": 5.981498129294,
+     "jet": 6.225795137735999,
+     "heating_oil": 5.935327526420001,
+     "fuel_oil_1pct": -0.586656199122
+    },
+    "attributed_usd_bbl": 44.552611043456004,
+    "gross_margin_usd_bbl": 44.552611043456004,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 42.22000373995924,
+    "gas_cost_usd_bbl": 8.957818193507151,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 35.59479284994885,
+    "breakeven_ttf_eur_mwh": 618.012443956739,
+    "breakeven_gas_usd_mmbtu": 209.98544112483387,
+    "breakeven_gasoil_usd_bbl": -25.628087287876937,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -6.502106043456003,
+    "covered_volume_yield": 0.709449
+   }
+  },
+  {
+   "name": "latest gasoline_crack_cleared",
+   "preset": "latest",
+   "edit": "gasoline_crack_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": 80.467624,
+     "gasoline": null,
+     "jet": 71.868162,
+     "heating_oil": 73.35353,
+     "fuel_oil_1pct": -7.926394
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 62.129278,
+    "eurusd": 1.159362,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 38.050505
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "jet",
+     "heating_oil",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "gasoline"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 26.996646449128,
+     "jet": 6.225795137735999,
+     "heating_oil": 5.935327526420001,
+     "fuel_oil_1pct": -0.586656199122
+    },
+    "attributed_usd_bbl": 38.571112914162,
+    "gross_margin_usd_bbl": 38.571112914162,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 21.11000186997962,
+    "gas_cost_usd_bbl": 4.478909096753576,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 34.092203817408425,
+    "breakeven_ttf_eur_mwh": 535.0399718427703,
+    "breakeven_gas_usd_mmbtu": 181.7934341054909,
+    "breakeven_gasoil_usd_bbl": -21.149391405229927,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -0.5206079141619995,
+    "covered_volume_yield": 0.577052
+   }
+  },
+  {
+   "name": "latest ttf_cleared",
+   "preset": "latest",
+   "edit": "ttf_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": 80.467624,
+     "gasoline": 45.178502,
+     "jet": 71.868162,
+     "heating_oil": 73.35353,
+     "fuel_oil_1pct": -7.926394
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": null,
+    "eurusd": 1.159362,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 38.050505
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "heating_oil",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [],
+    "blocked_by": [
+     "ttf_eur_mwh"
+    ],
+    "contributions": {
+     "gasoil": 26.996646449128,
+     "gasoline": 5.981498129294,
+     "jet": 6.225795137735999,
+     "heating_oil": 5.935327526420001,
+     "fuel_oil_1pct": -0.586656199122
+    },
+    "attributed_usd_bbl": 44.552611043456004,
+    "gross_margin_usd_bbl": 44.552611043456004,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": null,
+    "gas_cost_usd_bbl": null,
+    "other_variable_cost_usd_bbl": null,
+    "margin_after_gas_usd_bbl": null,
+    "breakeven_ttf_eur_mwh": null,
+    "breakeven_gas_usd_mmbtu": null,
+    "breakeven_gasoil_usd_bbl": null,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -6.502106043456003,
+    "covered_volume_yield": 0.709449
+   }
+  },
+  {
+   "name": "latest yields_above_one_barrel",
+   "preset": "latest",
+   "edit": "yields_above_one_barrel",
+   "inputs": {
+    "cracks": {
+     "gasoil": 80.467624,
+     "gasoline": 45.178502,
+     "jet": 71.868162,
+     "heating_oil": 73.35353,
+     "fuel_oil_1pct": -7.926394
+    },
+    "yields": {
+     "gasoil": 0.670994,
+     "gasoline": 0.264794,
+     "jet": 0.173256,
+     "heating_oil": 0.161828,
+     "fuel_oil_1pct": 0.148026
+    },
+    "ttf_eur_mwh": 62.129278,
+    "eurusd": 1.159362,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 38.050505
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "heating_oil",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 53.993292898256,
+     "gasoline": 11.962996258588,
+     "jet": 12.451590275471998,
+     "heating_oil": 11.870655052840002,
+     "fuel_oil_1pct": -1.173312398244
+    },
+    "attributed_usd_bbl": 89.10522208691201,
+    "gross_margin_usd_bbl": 89.10522208691201,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 21.11000186997962,
+    "gas_cost_usd_bbl": 4.478909096753576,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 84.62631299015843,
+    "breakeven_ttf_eur_mwh": 1236.024887913478,
+    "breakeven_gas_usd_mmbtu": 419.97088224966774,
+    "breakeven_gasoil_usd_bbl": -45.6531952475021,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -51.05471708691201,
+    "covered_volume_yield": 1.418898
+   }
+  },
+  {
+   "name": "latest negative_gas_intensity",
+   "preset": "latest",
+   "edit": "negative_gas_intensity",
+   "inputs": {
+    "cracks": {
+     "gasoil": 80.467624,
+     "gasoline": 45.178502,
+     "jet": 71.868162,
+     "heating_oil": 73.35353,
+     "fuel_oil_1pct": -7.926394
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 62.129278,
+    "eurusd": 1.159362,
+    "gas_intensity_mmbtu_per_bbl": -0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 38.050505
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "heating_oil",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 26.996646449128,
+     "gasoline": 5.981498129294,
+     "jet": 6.225795137735999,
+     "heating_oil": 5.935327526420001,
+     "fuel_oil_1pct": -0.586656199122
+    },
+    "attributed_usd_bbl": 44.552611043456004,
+    "gross_margin_usd_bbl": 44.552611043456004,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 21.11000186997962,
+    "gas_cost_usd_bbl": -4.478909096753576,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 49.03152014020958,
+    "breakeven_ttf_eur_mwh": -618.012443956739,
+    "breakeven_gas_usd_mmbtu": -209.98544112483387,
+    "breakeven_gasoil_usd_bbl": -65.67830320712727,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -6.502106043456003,
+    "covered_volume_yield": 0.709449
+   }
+  },
+  {
+   "name": "latest eurusd_zero",
+   "preset": "latest",
+   "edit": "eurusd_zero",
+   "inputs": {
+    "cracks": {
+     "gasoil": 80.467624,
+     "gasoline": 45.178502,
+     "jet": 71.868162,
+     "heating_oil": 73.35353,
+     "fuel_oil_1pct": -7.926394
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 62.129278,
+    "eurusd": 0.0,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 38.050505
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "heating_oil",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 26.996646449128,
+     "gasoline": 5.981498129294,
+     "jet": 6.225795137735999,
+     "heating_oil": 5.935327526420001,
+     "fuel_oil_1pct": -0.586656199122
+    },
+    "attributed_usd_bbl": 44.552611043456004,
+    "gross_margin_usd_bbl": 44.552611043456004,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 0.0,
+    "gas_cost_usd_bbl": 0.0,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 44.552611043456004,
+    "breakeven_ttf_eur_mwh": null,
+    "breakeven_gas_usd_mmbtu": 209.98544112483387,
+    "breakeven_gasoil_usd_bbl": -52.32823123404382,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -6.502106043456003,
+    "covered_volume_yield": 0.709449
+   }
+  },
+  {
+   "name": "latest gasoil_crack_cleared",
+   "preset": "latest",
+   "edit": "gasoil_crack_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": null,
+     "gasoline": 45.178502,
+     "jet": 71.868162,
+     "heating_oil": 73.35353,
+     "fuel_oil_1pct": -7.926394
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 62.129278,
+    "eurusd": 1.159362,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 38.050505
+   },
+   "expected": {
+    "included": [
+     "gasoline",
+     "jet",
+     "heating_oil",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "gasoil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoline": 5.981498129294,
+     "jet": 6.225795137735999,
+     "heating_oil": 5.935327526420001,
+     "fuel_oil_1pct": -0.586656199122
+    },
+    "attributed_usd_bbl": 17.555964594328,
+    "gross_margin_usd_bbl": 17.555964594328,
+    "carrier": "jet",
+    "gas_usd_mmbtu": 21.11000186997962,
+    "gas_cost_usd_bbl": 4.478909096753576,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 13.077055497574424,
+    "breakeven_ttf_eur_mwh": 243.52791746315108,
+    "breakeven_gas_usd_mmbtu": 82.74480178313617,
+    "breakeven_gasoil_usd_bbl": null,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 20.494540405672,
+    "covered_volume_yield": 0.37395199999999995
+   }
+  },
+  {
+   "name": "average_2019",
+   "preset": "average_2019",
+   "edit": null,
+   "inputs": {
+    "cracks": {
+     "gasoil": 15.14501,
+     "gasoline": 15.17251,
+     "jet": 15.87251,
+     "heating_oil": null,
+     "fuel_oil_1pct": -4.204157
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 14.638706,
+    "eurusd": 1.119611,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 4.215448
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 5.081105419969999,
+     "gasoline": 2.00879480647,
+     "jet": 1.37500379628,
+     "fuel_oil_1pct": -0.311162272041
+    },
+    "attributed_usd_bbl": 8.153741750679,
+    "gross_margin_usd_bbl": 8.153741750679,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 4.803333584407097,
+    "gas_cost_usd_bbl": 1.0191232866036537,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 7.134618464075347,
+    "breakeven_ttf_eur_mwh": 117.12049941072091,
+    "breakeven_gas_usd_mmbtu": 38.430229300461896,
+    "breakeven_gasoil_usd_bbl": -6.1208089613479295,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -3.9382937506789997,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "average_2019 ttf_doubled",
+   "preset": "average_2019",
+   "edit": "ttf_doubled",
+   "inputs": {
+    "cracks": {
+     "gasoil": 15.14501,
+     "gasoline": 15.17251,
+     "jet": 15.87251,
+     "heating_oil": null,
+     "fuel_oil_1pct": -4.204157
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 29.277412,
+    "eurusd": 1.119611,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 4.215448
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 5.081105419969999,
+     "gasoline": 2.00879480647,
+     "jet": 1.37500379628,
+     "fuel_oil_1pct": -0.311162272041
+    },
+    "attributed_usd_bbl": 8.153741750679,
+    "gross_margin_usd_bbl": 8.153741750679,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 9.606667168814194,
+    "gas_cost_usd_bbl": 2.0382465732073074,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 6.115495177471693,
+    "breakeven_ttf_eur_mwh": 117.12049941072091,
+    "breakeven_gas_usd_mmbtu": 38.430229300461896,
+    "breakeven_gasoil_usd_bbl": -3.0831565036399504,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -3.9382937506789997,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "average_2019 gasoline_crack_cleared",
+   "preset": "average_2019",
+   "edit": "gasoline_crack_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": 15.14501,
+     "gasoline": null,
+     "jet": 15.87251,
+     "heating_oil": null,
+     "fuel_oil_1pct": -4.204157
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 14.638706,
+    "eurusd": 1.119611,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 4.215448
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "gasoline",
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 5.081105419969999,
+     "jet": 1.37500379628,
+     "fuel_oil_1pct": -0.311162272041
+    },
+    "attributed_usd_bbl": 6.144946944208999,
+    "gross_margin_usd_bbl": 6.144946944208999,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 4.803333584407097,
+    "gas_cost_usd_bbl": 1.0191232866036537,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 5.125823657605345,
+    "breakeven_ttf_eur_mwh": 88.26613314043317,
+    "breakeven_gas_usd_mmbtu": 28.962374248051088,
+    "breakeven_gasoil_usd_bbl": -0.13328953056315287,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -1.9294989442089987,
+    "covered_volume_yield": 0.49613799999999997
+   }
+  },
+  {
+   "name": "average_2019 ttf_cleared",
+   "preset": "average_2019",
+   "edit": "ttf_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": 15.14501,
+     "gasoline": 15.17251,
+     "jet": 15.87251,
+     "heating_oil": null,
+     "fuel_oil_1pct": -4.204157
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": null,
+    "eurusd": 1.119611,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 4.215448
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [
+     "ttf_eur_mwh"
+    ],
+    "contributions": {
+     "gasoil": 5.081105419969999,
+     "gasoline": 2.00879480647,
+     "jet": 1.37500379628,
+     "fuel_oil_1pct": -0.311162272041
+    },
+    "attributed_usd_bbl": 8.153741750679,
+    "gross_margin_usd_bbl": 8.153741750679,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": null,
+    "gas_cost_usd_bbl": null,
+    "other_variable_cost_usd_bbl": null,
+    "margin_after_gas_usd_bbl": null,
+    "breakeven_ttf_eur_mwh": null,
+    "breakeven_gas_usd_mmbtu": null,
+    "breakeven_gasoil_usd_bbl": null,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -3.9382937506789997,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "average_2019 yields_above_one_barrel",
+   "preset": "average_2019",
+   "edit": "yields_above_one_barrel",
+   "inputs": {
+    "cracks": {
+     "gasoil": 15.14501,
+     "gasoline": 15.17251,
+     "jet": 15.87251,
+     "heating_oil": null,
+     "fuel_oil_1pct": -4.204157
+    },
+    "yields": {
+     "gasoil": 0.670994,
+     "gasoline": 0.264794,
+     "jet": 0.173256,
+     "heating_oil": 0.161828,
+     "fuel_oil_1pct": 0.148026
+    },
+    "ttf_eur_mwh": 14.638706,
+    "eurusd": 1.119611,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 4.215448
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 10.162210839939998,
+     "gasoline": 4.01758961294,
+     "jet": 2.75000759256,
+     "fuel_oil_1pct": -0.622324544082
+    },
+    "attributed_usd_bbl": 16.307483501358,
+    "gross_margin_usd_bbl": 16.307483501358,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 4.803333584407097,
+    "gas_cost_usd_bbl": 1.0191232866036537,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 15.288360214754347,
+    "breakeven_ttf_eur_mwh": 234.24099882144182,
+    "breakeven_gas_usd_mmbtu": 76.86045860092379,
+    "breakeven_gasoil_usd_bbl": -7.639635190201919,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -12.092035501358,
+    "covered_volume_yield": 1.25707
+   }
+  },
+  {
+   "name": "average_2019 negative_gas_intensity",
+   "preset": "average_2019",
+   "edit": "negative_gas_intensity",
+   "inputs": {
+    "cracks": {
+     "gasoil": 15.14501,
+     "gasoline": 15.17251,
+     "jet": 15.87251,
+     "heating_oil": null,
+     "fuel_oil_1pct": -4.204157
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 14.638706,
+    "eurusd": 1.119611,
+    "gas_intensity_mmbtu_per_bbl": -0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 4.215448
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 5.081105419969999,
+     "gasoline": 2.00879480647,
+     "jet": 1.37500379628,
+     "fuel_oil_1pct": -0.311162272041
+    },
+    "attributed_usd_bbl": 8.153741750679,
+    "gross_margin_usd_bbl": 8.153741750679,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 4.803333584407097,
+    "gas_cost_usd_bbl": -1.0191232866036537,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 9.172865037282653,
+    "breakeven_ttf_eur_mwh": -117.12049941072091,
+    "breakeven_gas_usd_mmbtu": -38.430229300461896,
+    "breakeven_gasoil_usd_bbl": -12.196113876763889,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -3.9382937506789997,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "average_2019 eurusd_zero",
+   "preset": "average_2019",
+   "edit": "eurusd_zero",
+   "inputs": {
+    "cracks": {
+     "gasoil": 15.14501,
+     "gasoline": 15.17251,
+     "jet": 15.87251,
+     "heating_oil": null,
+     "fuel_oil_1pct": -4.204157
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 14.638706,
+    "eurusd": 0.0,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 4.215448
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 5.081105419969999,
+     "gasoline": 2.00879480647,
+     "jet": 1.37500379628,
+     "fuel_oil_1pct": -0.311162272041
+    },
+    "attributed_usd_bbl": 8.153741750679,
+    "gross_margin_usd_bbl": 8.153741750679,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 0.0,
+    "gas_cost_usd_bbl": 0.0,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 8.153741750679,
+    "breakeven_ttf_eur_mwh": null,
+    "breakeven_gas_usd_mmbtu": 38.430229300461896,
+    "breakeven_gasoil_usd_bbl": -9.158461419055907,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -3.9382937506789997,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "average_2019 gasoil_crack_cleared",
+   "preset": "average_2019",
+   "edit": "gasoil_crack_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": null,
+     "gasoline": 15.17251,
+     "jet": 15.87251,
+     "heating_oil": null,
+     "fuel_oil_1pct": -4.204157
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 14.638706,
+    "eurusd": 1.119611,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 4.215448
+   },
+   "expected": {
+    "included": [
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "gasoil",
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoline": 2.00879480647,
+     "jet": 1.37500379628,
+     "fuel_oil_1pct": -0.311162272041
+    },
+    "attributed_usd_bbl": 3.072636330709,
+    "gross_margin_usd_bbl": 3.072636330709,
+    "carrier": "gasoline",
+    "gas_usd_mmbtu": 4.803333584407097,
+    "gas_cost_usd_bbl": 1.0191232866036537,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 2.053513044105346,
+    "breakeven_ttf_eur_mwh": 44.13540587426566,
+    "breakeven_gas_usd_mmbtu": 14.481954709473534,
+    "breakeven_gasoil_usd_bbl": null,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 1.1428116692910004,
+    "covered_volume_yield": 0.29303799999999997
+   }
+  },
+  {
+   "name": "october_2022",
+   "preset": "october_2022",
+   "edit": null,
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.568095,
+     "gasoline": 43.688095,
+     "jet": 46.018095,
+     "heating_oil": null,
+     "fuel_oil_1pct": -11.271905
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 135.128851,
+    "eurusd": 0.985295,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 24.782993
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.339887168215,
+     "gasoline": 5.784172713714999,
+     "jet": 3.98645553366,
+     "fuel_oil_1pct": -0.834267504765
+    },
+    "attributed_usd_bbl": 32.276247910825,
+    "gross_margin_usd_bbl": 32.276247910825,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 39.02000011900004,
+    "gas_cost_usd_bbl": 8.278873425248237,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 23.997374485576763,
+    "breakeven_ttf_eur_mwh": 526.817124837267,
+    "breakeven_gas_usd_mmbtu": 152.12446580961023,
+    "breakeven_gasoil_usd_bbl": -1.9597412714920297,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -7.493254910824998,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "october_2022 ttf_doubled",
+   "preset": "october_2022",
+   "edit": "ttf_doubled",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.568095,
+     "gasoline": 43.688095,
+     "jet": 46.018095,
+     "heating_oil": null,
+     "fuel_oil_1pct": -11.271905
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 270.257702,
+    "eurusd": 0.985295,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 24.782993
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.339887168215,
+     "gasoline": 5.784172713714999,
+     "jet": 3.98645553366,
+     "fuel_oil_1pct": -0.834267504765
+    },
+    "attributed_usd_bbl": 32.276247910825,
+    "gross_margin_usd_bbl": 32.276247910825,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 78.04000023800008,
+    "gas_cost_usd_bbl": 16.557746850496475,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 15.718501060328524,
+    "breakeven_ttf_eur_mwh": 526.817124837267,
+    "breakeven_gas_usd_mmbtu": 152.12446580961023,
+    "breakeven_gasoil_usd_bbl": 22.716704196718528,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -7.493254910824998,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "october_2022 gasoline_crack_cleared",
+   "preset": "october_2022",
+   "edit": "gasoline_crack_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.568095,
+     "gasoline": null,
+     "jet": 46.018095,
+     "heating_oil": null,
+     "fuel_oil_1pct": -11.271905
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 135.128851,
+    "eurusd": 0.985295,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 24.782993
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "gasoline",
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.339887168215,
+     "jet": 3.98645553366,
+     "fuel_oil_1pct": -0.834267504765
+    },
+    "attributed_usd_bbl": 26.49207519711,
+    "gross_margin_usd_bbl": 26.49207519711,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 39.02000011900004,
+    "gas_cost_usd_bbl": 8.278873425248237,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 18.213201771861762,
+    "breakeven_ttf_eur_mwh": 432.40710397547036,
+    "breakeven_gas_usd_mmbtu": 124.86249327006647,
+    "breakeven_gasoil_usd_bbl": 15.280868074388854,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -1.7090821971099999,
+    "covered_volume_yield": 0.49613799999999997
+   }
+  },
+  {
+   "name": "october_2022 ttf_cleared",
+   "preset": "october_2022",
+   "edit": "ttf_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.568095,
+     "gasoline": 43.688095,
+     "jet": 46.018095,
+     "heating_oil": null,
+     "fuel_oil_1pct": -11.271905
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": null,
+    "eurusd": 0.985295,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 24.782993
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [
+     "ttf_eur_mwh"
+    ],
+    "contributions": {
+     "gasoil": 23.339887168215,
+     "gasoline": 5.784172713714999,
+     "jet": 3.98645553366,
+     "fuel_oil_1pct": -0.834267504765
+    },
+    "attributed_usd_bbl": 32.276247910825,
+    "gross_margin_usd_bbl": 32.276247910825,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": null,
+    "gas_cost_usd_bbl": null,
+    "other_variable_cost_usd_bbl": null,
+    "margin_after_gas_usd_bbl": null,
+    "breakeven_ttf_eur_mwh": null,
+    "breakeven_gas_usd_mmbtu": null,
+    "breakeven_gasoil_usd_bbl": null,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -7.493254910824998,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "october_2022 yields_above_one_barrel",
+   "preset": "october_2022",
+   "edit": "yields_above_one_barrel",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.568095,
+     "gasoline": 43.688095,
+     "jet": 46.018095,
+     "heating_oil": null,
+     "fuel_oil_1pct": -11.271905
+    },
+    "yields": {
+     "gasoil": 0.670994,
+     "gasoline": 0.264794,
+     "jet": 0.173256,
+     "heating_oil": 0.161828,
+     "fuel_oil_1pct": 0.148026
+    },
+    "ttf_eur_mwh": 135.128851,
+    "eurusd": 0.985295,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 24.782993
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 46.67977433643,
+     "gasoline": 11.568345427429998,
+     "jet": 7.97291106732,
+     "fuel_oil_1pct": -1.66853500953
+    },
+    "attributed_usd_bbl": 64.55249582165,
+    "gross_margin_usd_bbl": 64.55249582165,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 39.02000011900004,
+    "gas_cost_usd_bbl": 8.278873425248237,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 56.27362239640176,
+    "breakeven_ttf_eur_mwh": 1053.634249674534,
+    "breakeven_gas_usd_mmbtu": 304.24893161922046,
+    "breakeven_gasoil_usd_bbl": -14.29796400559731,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -39.76950282164999,
+    "covered_volume_yield": 1.25707
+   }
+  },
+  {
+   "name": "october_2022 negative_gas_intensity",
+   "preset": "october_2022",
+   "edit": "negative_gas_intensity",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.568095,
+     "gasoline": 43.688095,
+     "jet": 46.018095,
+     "heating_oil": null,
+     "fuel_oil_1pct": -11.271905
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 135.128851,
+    "eurusd": 0.985295,
+    "gas_intensity_mmbtu_per_bbl": -0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 24.782993
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.339887168215,
+     "gasoline": 5.784172713714999,
+     "jet": 3.98645553366,
+     "fuel_oil_1pct": -0.834267504765
+    },
+    "attributed_usd_bbl": 32.276247910825,
+    "gross_margin_usd_bbl": 32.276247910825,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 39.02000011900004,
+    "gas_cost_usd_bbl": -8.278873425248237,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 40.555121336073235,
+    "breakeven_ttf_eur_mwh": -526.817124837267,
+    "breakeven_gas_usd_mmbtu": -152.12446580961023,
+    "breakeven_gasoil_usd_bbl": -51.31263220791314,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -7.493254910824998,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "october_2022 eurusd_zero",
+   "preset": "october_2022",
+   "edit": "eurusd_zero",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.568095,
+     "gasoline": 43.688095,
+     "jet": 46.018095,
+     "heating_oil": null,
+     "fuel_oil_1pct": -11.271905
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 135.128851,
+    "eurusd": 0.0,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 24.782993
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.339887168215,
+     "gasoline": 5.784172713714999,
+     "jet": 3.98645553366,
+     "fuel_oil_1pct": -0.834267504765
+    },
+    "attributed_usd_bbl": 32.276247910825,
+    "gross_margin_usd_bbl": 32.276247910825,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 0.0,
+    "gas_cost_usd_bbl": 0.0,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 32.276247910825,
+    "breakeven_ttf_eur_mwh": null,
+    "breakeven_gas_usd_mmbtu": 152.12446580961023,
+    "breakeven_gasoil_usd_bbl": -26.636186739702588,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -7.493254910824998,
+    "covered_volume_yield": 0.628535
+   }
+  },
+  {
+   "name": "october_2022 gasoil_crack_cleared",
+   "preset": "october_2022",
+   "edit": "gasoil_crack_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": null,
+     "gasoline": 43.688095,
+     "jet": 46.018095,
+     "heating_oil": null,
+     "fuel_oil_1pct": -11.271905
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 135.128851,
+    "eurusd": 0.985295,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 24.782993
+   },
+   "expected": {
+    "included": [
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "excluded": [
+     "gasoil",
+     "heating_oil"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoline": 5.784172713714999,
+     "jet": 3.98645553366,
+     "fuel_oil_1pct": -0.834267504765
+    },
+    "attributed_usd_bbl": 8.936360742609999,
+    "gross_margin_usd_bbl": 8.936360742609999,
+    "carrier": "gasoline",
+    "gas_usd_mmbtu": 39.02000011900004,
+    "gas_cost_usd_bbl": 8.278873425248237,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 0.6574873173617615,
+    "breakeven_ttf_eur_mwh": 145.86044468172165,
+    "breakeven_gas_usd_mmbtu": 42.11887044638733,
+    "breakeven_gasoil_usd_bbl": null,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 15.846632257390002,
+    "covered_volume_yield": 0.29303799999999997
+   }
+  },
+  {
+   "name": "july_2026",
+   "preset": "july_2026",
+   "edit": null,
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.011225,
+     "gasoline": 46.613791,
+     "jet": null,
+     "heating_oil": 65.003021,
+     "fuel_oil_1pct": null
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 53.947961,
+    "eurusd": 1.142273,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 36.685406
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "heating_oil"
+    ],
+    "excluded": [
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.153058953825,
+     "gasoline": 6.171526087026999,
+     "heating_oil": 5.259654441194001
+    },
+    "attributed_usd_bbl": 34.584239482046,
+    "gross_margin_usd_bbl": 34.584239482046,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 18.06000431850521,
+    "gas_cost_usd_bbl": 3.8317911162572504,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 30.75244836578875,
+    "breakeven_ttf_eur_mwh": 486.9130769879939,
+    "breakeven_gas_usd_mmbtu": 163.00249555566762,
+    "breakeven_gasoil_usd_bbl": -22.651139688175302,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 2.101166517953999,
+    "covered_volume_yield": 0.548808
+   }
+  },
+  {
+   "name": "july_2026 ttf_doubled",
+   "preset": "july_2026",
+   "edit": "ttf_doubled",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.011225,
+     "gasoline": 46.613791,
+     "jet": null,
+     "heating_oil": 65.003021,
+     "fuel_oil_1pct": null
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 107.895922,
+    "eurusd": 1.142273,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 36.685406
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "heating_oil"
+    ],
+    "excluded": [
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.153058953825,
+     "gasoline": 6.171526087026999,
+     "heating_oil": 5.259654441194001
+    },
+    "attributed_usd_bbl": 34.584239482046,
+    "gross_margin_usd_bbl": 34.584239482046,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 36.12000863701042,
+    "gas_cost_usd_bbl": 7.663582232514501,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 26.9206572495315,
+    "breakeven_ttf_eur_mwh": 486.9130769879939,
+    "breakeven_gas_usd_mmbtu": 163.00249555566762,
+    "breakeven_gasoil_usd_bbl": -11.229901595860762,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 2.101166517953999,
+    "covered_volume_yield": 0.548808
+   }
+  },
+  {
+   "name": "july_2026 gasoline_crack_cleared",
+   "preset": "july_2026",
+   "edit": "gasoline_crack_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.011225,
+     "gasoline": null,
+     "jet": null,
+     "heating_oil": 65.003021,
+     "fuel_oil_1pct": null
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 53.947961,
+    "eurusd": 1.142273,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 36.685406
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "heating_oil"
+    ],
+    "excluded": [
+     "gasoline",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.153058953825,
+     "heating_oil": 5.259654441194001
+    },
+    "attributed_usd_bbl": 28.412713395019,
+    "gross_margin_usd_bbl": 28.412713395019,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 18.06000431850521,
+    "gas_cost_usd_bbl": 3.8317911162572504,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 24.58092227876175,
+    "breakeven_ttf_eur_mwh": 400.0238811649659,
+    "breakeven_gas_usd_mmbtu": 133.9148484470896,
+    "breakeven_gasoil_usd_bbl": -4.255964509181156,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 8.272692604981,
+    "covered_volume_yield": 0.416411
+   }
+  },
+  {
+   "name": "july_2026 ttf_cleared",
+   "preset": "july_2026",
+   "edit": "ttf_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.011225,
+     "gasoline": 46.613791,
+     "jet": null,
+     "heating_oil": 65.003021,
+     "fuel_oil_1pct": null
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": null,
+    "eurusd": 1.142273,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 36.685406
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "heating_oil"
+    ],
+    "excluded": [
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "blocked_by": [
+     "ttf_eur_mwh"
+    ],
+    "contributions": {
+     "gasoil": 23.153058953825,
+     "gasoline": 6.171526087026999,
+     "heating_oil": 5.259654441194001
+    },
+    "attributed_usd_bbl": 34.584239482046,
+    "gross_margin_usd_bbl": 34.584239482046,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": null,
+    "gas_cost_usd_bbl": null,
+    "other_variable_cost_usd_bbl": null,
+    "margin_after_gas_usd_bbl": null,
+    "breakeven_ttf_eur_mwh": null,
+    "breakeven_gas_usd_mmbtu": null,
+    "breakeven_gasoil_usd_bbl": null,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 2.101166517953999,
+    "covered_volume_yield": 0.548808
+   }
+  },
+  {
+   "name": "july_2026 yields_above_one_barrel",
+   "preset": "july_2026",
+   "edit": "yields_above_one_barrel",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.011225,
+     "gasoline": 46.613791,
+     "jet": null,
+     "heating_oil": 65.003021,
+     "fuel_oil_1pct": null
+    },
+    "yields": {
+     "gasoil": 0.670994,
+     "gasoline": 0.264794,
+     "jet": 0.173256,
+     "heating_oil": 0.161828,
+     "fuel_oil_1pct": 0.148026
+    },
+    "ttf_eur_mwh": 53.947961,
+    "eurusd": 1.142273,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 36.685406
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "heating_oil"
+    ],
+    "excluded": [
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 46.30611790765,
+     "gasoline": 12.343052174053998,
+     "heating_oil": 10.519308882388001
+    },
+    "attributed_usd_bbl": 69.168478964092,
+    "gross_margin_usd_bbl": 69.168478964092,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 18.06000431850521,
+    "gas_cost_usd_bbl": 3.8317911162572504,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 65.33668784783475,
+    "breakeven_ttf_eur_mwh": 973.8261539759878,
+    "breakeven_gas_usd_mmbtu": 326.00499111133524,
+    "breakeven_gasoil_usd_bbl": -28.361758734332568,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": -32.483072964092,
+    "covered_volume_yield": 1.097616
+   }
+  },
+  {
+   "name": "july_2026 negative_gas_intensity",
+   "preset": "july_2026",
+   "edit": "negative_gas_intensity",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.011225,
+     "gasoline": 46.613791,
+     "jet": null,
+     "heating_oil": 65.003021,
+     "fuel_oil_1pct": null
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 53.947961,
+    "eurusd": 1.142273,
+    "gas_intensity_mmbtu_per_bbl": -0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 36.685406
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "heating_oil"
+    ],
+    "excluded": [
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.153058953825,
+     "gasoline": 6.171526087026999,
+     "heating_oil": 5.259654441194001
+    },
+    "attributed_usd_bbl": 34.584239482046,
+    "gross_margin_usd_bbl": 34.584239482046,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 18.06000431850521,
+    "gas_cost_usd_bbl": -3.8317911162572504,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 38.41603059830325,
+    "breakeven_ttf_eur_mwh": -486.9130769879939,
+    "breakeven_gas_usd_mmbtu": -163.00249555566762,
+    "breakeven_gasoil_usd_bbl": -45.49361587280438,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 2.101166517953999,
+    "covered_volume_yield": 0.548808
+   }
+  },
+  {
+   "name": "july_2026 eurusd_zero",
+   "preset": "july_2026",
+   "edit": "eurusd_zero",
+   "inputs": {
+    "cracks": {
+     "gasoil": 69.011225,
+     "gasoline": 46.613791,
+     "jet": null,
+     "heating_oil": 65.003021,
+     "fuel_oil_1pct": null
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 53.947961,
+    "eurusd": 0.0,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 36.685406
+   },
+   "expected": {
+    "included": [
+     "gasoil",
+     "gasoline",
+     "heating_oil"
+    ],
+    "excluded": [
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoil": 23.153058953825,
+     "gasoline": 6.171526087026999,
+     "heating_oil": 5.259654441194001
+    },
+    "attributed_usd_bbl": 34.584239482046,
+    "gross_margin_usd_bbl": 34.584239482046,
+    "carrier": "gasoil",
+    "gas_usd_mmbtu": 0.0,
+    "gas_cost_usd_bbl": 0.0,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 34.584239482046,
+    "breakeven_ttf_eur_mwh": null,
+    "breakeven_gas_usd_mmbtu": 163.00249555566762,
+    "breakeven_gasoil_usd_bbl": -34.07237778048984,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 2.101166517953999,
+    "covered_volume_yield": 0.548808
+   }
+  },
+  {
+   "name": "july_2026 gasoil_crack_cleared",
+   "preset": "july_2026",
+   "edit": "gasoil_crack_cleared",
+   "inputs": {
+    "cracks": {
+     "gasoil": null,
+     "gasoline": 46.613791,
+     "jet": null,
+     "heating_oil": 65.003021,
+     "fuel_oil_1pct": null
+    },
+    "yields": {
+     "gasoil": 0.335497,
+     "gasoline": 0.132397,
+     "jet": 0.086628,
+     "heating_oil": 0.080914,
+     "fuel_oil_1pct": 0.074013
+    },
+    "ttf_eur_mwh": 53.947961,
+    "eurusd": 1.142273,
+    "gas_intensity_mmbtu_per_bbl": 0.21217,
+    "other_variable_cost_usd_bbl": 0.0,
+    "mbr_usd_bbl": 36.685406
+   },
+   "expected": {
+    "included": [
+     "gasoline",
+     "heating_oil"
+    ],
+    "excluded": [
+     "gasoil",
+     "jet",
+     "fuel_oil_1pct"
+    ],
+    "blocked_by": [],
+    "contributions": {
+     "gasoline": 6.171526087026999,
+     "heating_oil": 5.259654441194001
+    },
+    "attributed_usd_bbl": 11.431180528220999,
+    "gross_margin_usd_bbl": 11.431180528220999,
+    "carrier": "gasoline",
+    "gas_usd_mmbtu": 18.06000431850521,
+    "gas_cost_usd_bbl": 3.8317911162572504,
+    "other_variable_cost_usd_bbl": 0.0,
+    "margin_after_gas_usd_bbl": 7.599389411963749,
+    "breakeven_ttf_eur_mwh": 160.9401093666046,
+    "breakeven_gas_usd_mmbtu": 53.87745924598671,
+    "breakeven_gasoil_usd_bbl": null,
+    "threshold_identified": false,
+    "headroom_usd_bbl": null,
+    "residual_usd_bbl": 25.254225471779,
+    "covered_volume_yield": 0.21331099999999997
+   }
+  }
+ ]
+}

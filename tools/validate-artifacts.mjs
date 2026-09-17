@@ -241,6 +241,50 @@ const REQUIRED = {
     "seasonal_monthly.panels.gasoline.lines",
     "seasonal_monthly.panels.gasoline.variants.all.sentence_segments",
   ],
+  // docs/design.md Part 8.2, the Model view.
+  model: [
+    "conventions.decimals",
+    "title_segments",
+    "lead_segments",
+    "basis.margin_basis",
+    "basis.official_margin_basis",
+    "products[].id",
+    "products[].name",
+    "products[].ministry_label",
+    "products[].volume_yield",
+    "products[].yield_source_segments",
+    "slate.covered_volume_yield",
+    "slate.segments",
+    "intensity.study_mmbtu_per_bbl",
+    "intensity.source_segments",
+    "other_cost.value_usd_bbl",
+    "other_cost.source_segments",
+    "breakeven_target.value_usd_bbl",
+    "breakeven_target.segments",
+    "run.threshold_identified",
+    "run.verdict",
+    "run.run_cut_threshold_usd_bbl?",
+    "run.headroom_usd_bbl?",
+    "run.segments",
+    "presets[].id",
+    "presets[].label",
+    "presets[].months",
+    "presets[].reconstructed",
+    "presets[].reason_segments",
+    "presets[].note_segments",
+    "presets[].inputs.yields",
+    "presets[].inputs.ttf_eur_mwh",
+    "presets[].inputs.eurusd",
+    "presets[].inputs.gas_intensity_mmbtu_per_bbl",
+    "presets[].inputs.other_variable_cost_usd_bbl",
+    "presets[].sources.ttf_segments",
+    "presets[].sources.eurusd_segments",
+    "presets[].official.mbr_usd_bbl?",
+    "presets[].official.label_segments",
+    "presets[].official.gap_segments",
+    "presets[].scale.low_usd_bbl",
+    "presets[].scale.high_usd_bbl",
+  ],
 };
 
 const failures = [];
@@ -517,6 +561,40 @@ if (loaded.history) {
     const g = h.seasonal_monthly.panels;
     for (const product of ["gasoil", "gasoline"]) {
       for (const [year, values] of g[product].lines) if (values.length !== h.seasonal_monthly.months.length) problems.push(product + " " + year + " does not have one value per month");
+    }
+    return problems;
+  });
+}
+
+if (loaded.model) {
+  // Part 8.2: the model margin is gross of gas and the MBR is never a step of
+  // it; no threshold, no headroom; every preset product either has a crack or
+  // says why it has none, and never both.
+  check("model.json keeps gross apart from net, invents no threshold and names every missing input", () => {
+    const problems = [];
+    const m = loaded.model;
+    if (m.basis.margin_basis !== "gross_of_gas") problems.push("the model margin basis is " + m.basis.margin_basis);
+    if (m.basis.official_is_a_step !== false) problems.push("the official margin is marked as a step of the model");
+    if (m.run.threshold_identified !== false || m.run.run_cut_threshold_usd_bbl !== null || m.run.headroom_usd_bbl !== null) problems.push("model.json carries a threshold or a headroom");
+    if (m.breakeven_target.value_usd_bbl !== 0) problems.push("the breakeven target is not a margin of zero");
+    for (const [where, list] of segmentLists(m)) {
+      list.forEach((segment, i) => {
+        if (segment && segment.field === "headroom_usd_bbl") problems.push(where + "[" + i + "] prints a headroom");
+      });
+    }
+    const ids = m.products.map((p) => p.id);
+    for (const preset of m.presets) {
+      for (const id of ids) {
+        const value = preset.inputs.cracks[id];
+        const source = preset.sources.cracks[id];
+        if (!source) { problems.push(preset.id + " " + id + " has no source sentence"); continue; }
+        if ((value === null) === source.available) problems.push(preset.id + " " + id + " crack and its availability disagree");
+        if (value === null && !/^No figure/.test(source.segments.map((s) => s.text || s.label || "").join(""))) problems.push(preset.id + " " + id + " is missing and does not say so");
+        if (typeof preset.inputs.yields[id] !== "number") problems.push(preset.id + " " + id + " has no yield");
+      }
+      const words = preset.note_segments.map((s) => s.text || s.label || "").join("");
+      if (preset.reconstructed && !/^Reconstructed/.test(words)) problems.push(preset.id + " is reconstructed and its note does not open with the word");
+      if (preset.scale.low_usd_bbl > 0 || preset.scale.high_usd_bbl < 0) problems.push(preset.id + " scale does not hold zero");
     }
     return problems;
   });

@@ -1,0 +1,848 @@
+{
+  "schema_version": 1,
+  "artifact": "model",
+  "generated_by": "src/crack/export.py",
+  "data_date": "2026-08-01",
+  "describes": "the margin model's presets, each input with the sentence saying where it came from, the ministry's slate yields, and the target the breakevens are computed against",
+  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "conventions": {
+    "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
+    "decimals": {
+      "usd_bbl": 2,
+      "usd_t": 0,
+      "usd_t_error": 2,
+      "usd_mmbtu": 2,
+      "eur_mwh": 2,
+      "eurusd": 4,
+      "mmbtu_per_mwh": 6,
+      "mmbtu_per_bbl": 3,
+      "kb_d": 1,
+      "t": 2,
+      "r2": 3,
+      "pp": 1,
+      "pp_per_usd_bbl": 3,
+      "percent": 1,
+      "ratio": 1,
+      "yield_percent": 1,
+      "bbl_per_t": 2,
+      "count": 0,
+      "year": 0
+    },
+    "rounding": "Floats are stored to 6 places. The page prints the decimals of the format a value names.",
+    "segments": "A sentence is a list of segments. A text segment holds words only. A value segment names its field and holds a value with a format, or an ISO date or a word with its label."
+  },
+  "title_segments": [
+    {"text": "The margin model: cracks times the ministry's yields, less gas"}
+  ],
+  "lead_segments": [
+    {"text": "This page builds a margin of its own: each crack times the ministry's yield for that product. That margin is gross of gas, so gas is subtracted from it here. It is not the ministry's MBR, which is already net of the ministry's own gas at "},
+    {"field": "embedded_intensity_mmbtu_per_bbl", "value": 0.065903, "format": "mmbtu_per_bbl"},
+    {"text": " MMBtu/bbl; the MBR for each preset's month is set under the model with the gap between the two, and nothing is subtracted from it."}
+  ],
+  "basis": {
+    "margin_basis": "gross_of_gas",
+    "residual_usd_bbl": 0.0,
+    "official_margin_basis": "net_of_gas",
+    "official_is_a_step": false
+  },
+  "products": [
+    {
+      "id": "gasoil",
+      "name": "gasoil",
+      "ministry_label": "Gazole",
+      "slate_line": "gazole",
+      "volume_yield": 0.335497,
+      "mass_yield_percent": 34.0,
+      "bbl_per_t": 7.45,
+      "factor_citation": {
+        "contract": "ICE Gasoil Crack, Low Sulphur Gasoil 1st Line vs Brent 1st Line Future",
+        "url": "https://www.ice.com/products/6753331"
+      },
+      "yield_source_segments": [
+        {"text": "The ministry's slate: "},
+        {"field": "mass_yield_percent", "value": 34.0, "format": "percent"},
+        {"text": " percent of the tonne, "},
+        {"field": "volume_yield_percent", "value": 33.549669, "format": "percent"},
+        {"text": " percent of the barrel at ICE's "},
+        {"field": "bbl_per_t", "value": 7.45, "format": "bbl_per_t"},
+        {"text": " bbl/t for the product and the method's "},
+        {"field": "brent_bbl_per_t", "value": 7.55, "format": "bbl_per_t"},
+        {"text": " bbl/t for Brent."}
+      ]
+    },
+    {
+      "id": "gasoline",
+      "name": "gasoline",
+      "ministry_label": "Eurosuper",
+      "slate_line": "eurobob",
+      "volume_yield": 0.132397,
+      "mass_yield_percent": 12.0,
+      "bbl_per_t": 8.33,
+      "factor_citation": {
+        "contract": "ICE Gasoline Crack, Argus Eurobob Oxy FOB Rotterdam Barges vs Brent 1st Line Future",
+        "url": "https://www.ice.com/products/6753285"
+      },
+      "yield_source_segments": [
+        {"text": "The ministry's slate: "},
+        {"field": "mass_yield_percent", "value": 12.0, "format": "percent"},
+        {"text": " percent of the tonne, "},
+        {"field": "volume_yield_percent", "value": 13.239735, "format": "percent"},
+        {"text": " percent of the barrel at ICE's "},
+        {"field": "bbl_per_t", "value": 8.33, "format": "bbl_per_t"},
+        {"text": " bbl/t for the product and the method's "},
+        {"field": "brent_bbl_per_t", "value": 7.55, "format": "bbl_per_t"},
+        {"text": " bbl/t for Brent."},
+        {"text": " The method's line is EuroBOB, a blendstock; every price here is a finished gasoline."}
+      ]
+    },
+    {
+      "id": "jet",
+      "name": "jet",
+      "ministry_label": "Jet",
+      "slate_line": "carbureacteur",
+      "volume_yield": 0.086628,
+      "mass_yield_percent": 8.3,
+      "bbl_per_t": 7.88,
+      "factor_citation": {
+        "contract": "ICE Jet Fuel Crack, Jet CIF NWE Cargoes vs Brent 1st Line Future",
+        "url": "https://www.ice.com/products/6753303"
+      },
+      "yield_source_segments": [
+        {"text": "The ministry's slate: "},
+        {"field": "mass_yield_percent", "value": 8.3, "format": "percent"},
+        {"text": " percent of the tonne, "},
+        {"field": "volume_yield_percent", "value": 8.662781, "format": "percent"},
+        {"text": " percent of the barrel at ICE's "},
+        {"field": "bbl_per_t", "value": 7.88, "format": "bbl_per_t"},
+        {"text": " bbl/t for the product and the method's "},
+        {"field": "brent_bbl_per_t", "value": 7.55, "format": "bbl_per_t"},
+        {"text": " bbl/t for Brent."}
+      ]
+    },
+    {
+      "id": "heating_oil",
+      "name": "heating oil",
+      "ministry_label": "Fioul domestique",
+      "slate_line": "fod",
+      "volume_yield": 0.080914,
+      "mass_yield_percent": 8.2,
+      "bbl_per_t": 7.45,
+      "factor_citation": {
+        "contract": "ICE Gasoil Crack, Gasoil 0.1% FOB ARA Barges (Platts) vs Brent 1st Line Future (in MTs)",
+        "url": "https://www.ice.com/products/6753295"
+      },
+      "yield_source_segments": [
+        {"text": "The ministry's slate: "},
+        {"field": "mass_yield_percent", "value": 8.2, "format": "percent"},
+        {"text": " percent of the tonne, "},
+        {"field": "volume_yield_percent", "value": 8.091391, "format": "percent"},
+        {"text": " percent of the barrel at ICE's "},
+        {"field": "bbl_per_t", "value": 7.45, "format": "bbl_per_t"},
+        {"text": " bbl/t for the product and the method's "},
+        {"field": "brent_bbl_per_t", "value": 7.55, "format": "bbl_per_t"},
+        {"text": " bbl/t for Brent."}
+      ]
+    },
+    {
+      "id": "fuel_oil_1pct",
+      "name": "fuel oil",
+      "ministry_label": "Fioul lourd TBTS (< 1%)",
+      "slate_line": "fioul_lourd_1pct",
+      "volume_yield": 0.074013,
+      "mass_yield_percent": 8.8,
+      "bbl_per_t": 6.35,
+      "factor_citation": {
+        "contract": "ICE Fuel Oil Crack, Fuel Oil 1% FOB NWE Cargoes vs Brent 1st Line Future",
+        "url": "https://www.ice.com/products/6753289"
+      },
+      "yield_source_segments": [
+        {"text": "The ministry's slate: "},
+        {"field": "mass_yield_percent", "value": 8.8, "format": "percent"},
+        {"text": " percent of the tonne, "},
+        {"field": "volume_yield_percent", "value": 7.401325, "format": "percent"},
+        {"text": " percent of the barrel at ICE's "},
+        {"field": "bbl_per_t", "value": 6.35, "format": "bbl_per_t"},
+        {"text": " bbl/t for the product and the method's "},
+        {"field": "brent_bbl_per_t", "value": 7.55, "format": "bbl_per_t"},
+        {"text": " bbl/t for Brent."}
+      ]
+    }
+  ],
+  "slate": {
+    "covered_volume_yield": 0.709449,
+    "unattributed_slate_lines": ["butane", "export gasoline", "naphtha", "propane", "sulphur"],
+    "segments": [
+      {"text": "The five products cover "},
+      {"field": "covered_volume_yield_percent", "value": 70.944901, "format": "percent"},
+      {"text": " percent of the barrel; butane, export gasoline, naphtha, propane and sulphur have no price here and are not in the model margin."}
+    ]
+  },
+  "intensity": {
+    "study_mmbtu_per_bbl": 0.21217,
+    "embedded_mmbtu_per_bbl": 0.065903,
+    "source_segments": [
+      {"text": "Derived from the EIA's US refinery tables for "},
+      {"field": "eia_year", "value": 2023, "format": "year"},
+      {"text": ", gas burned as fuel and used for hydrogen over crude inputs. A US figure, so an upper end for Europe, where refiners burn more of their own gas; the ministry's margin assumes "},
+      {"field": "embedded_intensity_mmbtu_per_bbl", "value": 0.065903, "format": "mmbtu_per_bbl"},
+      {"text": " MMBtu/bbl."}
+    ]
+  },
+  "other_cost": {
+    "value_usd_bbl": 0.0,
+    "source_segments": [
+      {"text": "Zero by default, and labelled so: carbon and every cost other than energy are out of scope for this version."}
+    ]
+  },
+  "breakeven_target": {
+    "value_usd_bbl": 0.0,
+    "words": "a margin of zero, not a level at which runs get cut",
+    "segments": [
+      {"text": "Each breakeven is the input at which the model's margin after gas is zero, every other input held: a margin of zero, not a level at which runs get cut."}
+    ]
+  },
+  "run": {
+    "threshold_identified": false,
+    "verdict": "unidentified",
+    "run_cut_threshold_usd_bbl": null,
+    "headroom_usd_bbl": null,
+    "segments": [
+      {"text": "Headroom to the level at which runs get cut is "},
+      {"field": "verdict", "value": "unidentified", "label": "unidentified"},
+      {"text": ". "},
+      {"text": "Take out "},
+      {"field": "episode_first_month", "value": "2020-07-01", "label": "July 2020"},
+      {"text": " to "},
+      {"field": "episode_last_month", "value": "2022-03-01", "label": "March 2022"},
+      {"text": " and the estimated kink moves from "},
+      {"field": "threshold_point_usd_bbl", "value": 2.278972, "format": "usd_bbl"},
+      {"text": " to "},
+      {"field": "threshold_without_episode_usd_bbl", "value": 9.870296, "format": "usd_bbl"},
+      {"text": " $/bbl while the slope below it changes sign, so the kink describes one episode rather than a level; its interval, "},
+      {"field": "threshold_ci_low_usd_bbl", "value": 2.028972, "format": "usd_bbl"},
+      {"text": " to "},
+      {"field": "threshold_ci_high_usd_bbl", "value": 11.278972, "format": "usd_bbl"},
+      {"text": " $/bbl"},
+      {"text": ", also runs to the edge of the range searched"},
+      {"text": "."}
+    ]
+  },
+  "presets": [
+    {
+      "id": "latest",
+      "label": "August 2026",
+      "months": ["2026-08-01"],
+      "kind": "month",
+      "crack_source": "dgec_note_printed_monthly",
+      "reconstructed": false,
+      "note_segments": [
+        {"text": "Cracks from the ministry's final monthly prices for "},
+        {"field": "month", "value": "2026-08-01", "label": "August 2026"},
+        {"text": ", printed in its note of "},
+        {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+        {"text": ", against the ministry's own Brent; gas and the exchange rate for the same month."}
+      ],
+      "reason_segments": [
+        {"text": "The latest month with both the ministry's margin and its final monthly prices."}
+      ],
+      "reason_source_url": null,
+      "inputs": {
+        "cracks": {
+          "gasoil": 80.467624,
+          "gasoline": 45.178502,
+          "jet": 71.868162,
+          "heating_oil": 73.35353,
+          "fuel_oil_1pct": -7.926394
+        },
+        "yields": {
+          "gasoil": 0.335497,
+          "gasoline": 0.132397,
+          "jet": 0.086628,
+          "heating_oil": 0.080914,
+          "fuel_oil_1pct": 0.074013
+        },
+        "ttf_eur_mwh": 62.129278,
+        "eurusd": 1.159362,
+        "gas_intensity_mmbtu_per_bbl": 0.21217,
+        "other_variable_cost_usd_bbl": 0.0
+      },
+      "sources": {
+        "cracks": {
+          "gasoil": {
+            "available": true,
+            "segments": [
+              {"text": "The ministry's monthly average for "},
+              {"field": "month", "value": "2026-08-01", "label": "August 2026"},
+              {"text": ", final in its note of "},
+              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"text": ": "},
+              {"field": "label", "value": "Gazole", "label": "Gazole"},
+              {"text": " at "},
+              {"field": "price_usd_t", "value": 1278.0, "format": "usd_t"},
+              {"text": " $/t, at ICE's "},
+              {"field": "bbl_per_t", "value": 7.45, "format": "bbl_per_t"},
+              {"text": " bbl/t, less the ministry's Brent, "},
+              {"field": "brent_usd_bbl", "value": 91.076, "format": "usd_bbl"},
+              {"text": " $/bbl."}
+            ]
+          },
+          "gasoline": {
+            "available": true,
+            "segments": [
+              {"text": "The ministry's monthly average for "},
+              {"field": "month", "value": "2026-08-01", "label": "August 2026"},
+              {"text": ", final in its note of "},
+              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"text": ": "},
+              {"field": "label", "value": "Eurosuper", "label": "Eurosuper"},
+              {"text": " at "},
+              {"field": "price_usd_t", "value": 1135.0, "format": "usd_t"},
+              {"text": " $/t, at ICE's "},
+              {"field": "bbl_per_t", "value": 8.33, "format": "bbl_per_t"},
+              {"text": " bbl/t, less the ministry's Brent, "},
+              {"field": "brent_usd_bbl", "value": 91.076, "format": "usd_bbl"},
+              {"text": " $/bbl."}
+            ]
+          },
+          "jet": {
+            "available": true,
+            "segments": [
+              {"text": "The ministry's monthly average for "},
+              {"field": "month", "value": "2026-08-01", "label": "August 2026"},
+              {"text": ", final in its note of "},
+              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"text": ": "},
+              {"field": "label", "value": "Jet", "label": "Jet"},
+              {"text": " at "},
+              {"field": "price_usd_t", "value": 1284.0, "format": "usd_t"},
+              {"text": " $/t, at ICE's "},
+              {"field": "bbl_per_t", "value": 7.88, "format": "bbl_per_t"},
+              {"text": " bbl/t, less the ministry's Brent, "},
+              {"field": "brent_usd_bbl", "value": 91.076, "format": "usd_bbl"},
+              {"text": " $/bbl."}
+            ]
+          },
+          "heating_oil": {
+            "available": true,
+            "segments": [
+              {"text": "The ministry's monthly average for "},
+              {"field": "month", "value": "2026-08-01", "label": "August 2026"},
+              {"text": ", final in its note of "},
+              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"text": ": "},
+              {"field": "label", "value": "Fioul domestique", "label": "Fioul domestique"},
+              {"text": " at "},
+              {"field": "price_usd_t", "value": 1225.0, "format": "usd_t"},
+              {"text": " $/t, at ICE's "},
+              {"field": "bbl_per_t", "value": 7.45, "format": "bbl_per_t"},
+              {"text": " bbl/t, less the ministry's Brent, "},
+              {"field": "brent_usd_bbl", "value": 91.076, "format": "usd_bbl"},
+              {"text": " $/bbl."}
+            ]
+          },
+          "fuel_oil_1pct": {
+            "available": true,
+            "segments": [
+              {"text": "The ministry's monthly average for "},
+              {"field": "month", "value": "2026-08-01", "label": "August 2026"},
+              {"text": ", final in its note of "},
+              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"text": ": "},
+              {"field": "label", "value": "Fioul lourd TBTS (< 1%)", "label": "Fioul lourd TBTS (< 1%)"},
+              {"text": " at "},
+              {"field": "price_usd_t", "value": 528.0, "format": "usd_t"},
+              {"text": " $/t, at ICE's "},
+              {"field": "bbl_per_t", "value": 6.35, "format": "bbl_per_t"},
+              {"text": " bbl/t, less the ministry's Brent, "},
+              {"field": "brent_usd_bbl", "value": 91.076, "format": "usd_bbl"},
+              {"text": " $/bbl."}
+            ]
+          }
+        },
+        "ttf_segments": [
+          {"text": "Derived, not quoted: the World Bank's European gas price for "},
+          {"field": "period", "value": "2026-08-01", "label": "August 2026"},
+          {"text": ", "},
+          {"field": "gas_usd_mmbtu", "value": 21.11, "format": "usd_mmbtu"},
+          {"text": " $/MMBtu, TTF by the World Bank's own definition since "},
+          {"field": "ttf_definition_month", "value": "2015-04-01", "label": "April 2015"},
+          {"text": ", at FRED's exchange rate for the same period and "},
+          {"field": "mmbtu_per_mwh", "value": 3.412142, "format": "mmbtu_per_mwh"},
+          {"text": " MMBtu per MWh. The daily TTF series is not used, because its terms keep it out of this repository."}
+        ],
+        "eurusd_segments": [
+          {"text": "FRED's US dollars per euro, the mean of the daily rates in "},
+          {"field": "month", "value": "2026-08-01", "label": "August 2026"},
+          {"text": "."}
+        ]
+      },
+      "gas_usd_mmbtu": 21.11,
+      "official": {
+        "mbr_usd_bbl": 38.050505,
+        "months": 1,
+        "months_published": 1,
+        "provisional": false,
+        "label_segments": [
+          {"text": "The ministry's MBR for "},
+          {"field": "period", "value": "2026-08-01", "label": "August 2026"},
+          {"text": ", "},
+          {"field": "status_word", "value": "final", "label": "final"},
+          {"text": ", already net of its own gas"}
+        ],
+        "gap_segments": [
+          {"text": "It holds the part of the barrel the five products do not price and the ministry's gas, freight and insurance costs; the prices are the ministry's own."}
+        ]
+      },
+      "scale": {
+        "low_usd_bbl": 0.0,
+        "high_usd_bbl": 50.0
+      }
+    },
+    {
+      "id": "average_2019",
+      "label": "2019 average",
+      "months": ["2019-01-01", "2019-02-01", "2019-03-01", "2019-04-01", "2019-05-01", "2019-06-01", "2019-07-01", "2019-08-01", "2019-09-01", "2019-10-01", "2019-11-01", "2019-12-01"],
+      "kind": "year_average",
+      "crack_source": "opec_rotterdam_products_monthly",
+      "reconstructed": false,
+      "note_segments": [
+        {"text": "An average of "},
+        {"field": "months", "value": 12, "format": "count"},
+        {"text": " months, not one: OPEC's Rotterdam monthly quotations less FRED's Brent for each month of "},
+        {"field": "period", "value": 2019, "format": "year"},
+        {"text": ", and the gas price and exchange rate averaged the same way. No note this study holds prints the ministry's monthly prices before "},
+        {"field": "first_printed_month", "value": "2025-11-01", "label": "November 2025"},
+        {"text": "."}
+      ],
+      "reason_segments": [
+        {"text": "The last full year before the pandemic lockdowns of "},
+        {"field": "event_month", "value": "2020-03-01", "label": "March 2020"},
+        {"text": "."}
+      ],
+      "reason_source_url": "https://www.who.int/news/item/27-04-2020-who-timeline---covid-19",
+      "inputs": {
+        "cracks": {
+          "gasoil": 15.14501,
+          "gasoline": 15.17251,
+          "jet": 15.87251,
+          "heating_oil": null,
+          "fuel_oil_1pct": -4.204157
+        },
+        "yields": {
+          "gasoil": 0.335497,
+          "gasoline": 0.132397,
+          "jet": 0.086628,
+          "heating_oil": 0.080914,
+          "fuel_oil_1pct": 0.074013
+        },
+        "ttf_eur_mwh": 14.638706,
+        "eurusd": 1.119611,
+        "gas_intensity_mmbtu_per_bbl": 0.21217,
+        "other_variable_cost_usd_bbl": 0.0
+      },
+      "sources": {
+        "cracks": {
+          "gasoil": {
+            "available": true,
+            "segments": [
+              {"text": "The mean of "},
+              {"field": "months_used", "value": 12, "format": "count"},
+              {"text": " monthly cracks of "},
+              {"field": "period", "value": 2019, "format": "year"},
+              {"text": ": "},
+              {"text": "OPEC's Rotterdam "},
+              {"field": "label", "value": "gasoil", "label": "gasoil"},
+              {"text": " quotation"},
+              {"text": ", specified as "},
+              {"field": "specification", "value": "10 ppm", "label": "10 ppm"},
+              {"text": ", less FRED's Brent monthly mean, month by month."}
+            ]
+          },
+          "gasoline": {
+            "available": true,
+            "segments": [
+              {"text": "The mean of "},
+              {"field": "months_used", "value": 12, "format": "count"},
+              {"text": " monthly cracks of "},
+              {"field": "period", "value": 2019, "format": "year"},
+              {"text": ": "},
+              {"text": "OPEC's Rotterdam "},
+              {"field": "label", "value": "premium gasoline", "label": "premium gasoline"},
+              {"text": " quotation"},
+              {"text": ", specified as "},
+              {"field": "specification", "value": "unleaded 98", "label": "unleaded 98"},
+              {"text": ", less FRED's Brent monthly mean, month by month."}
+            ]
+          },
+          "jet": {
+            "available": true,
+            "segments": [
+              {"text": "The mean of "},
+              {"field": "months_used", "value": 12, "format": "count"},
+              {"text": " monthly cracks of "},
+              {"field": "period", "value": 2019, "format": "year"},
+              {"text": ": "},
+              {"text": "OPEC's Rotterdam "},
+              {"field": "label", "value": "jet kerosene", "label": "jet kerosene"},
+              {"text": " quotation"},
+              {"text": ", less FRED's Brent monthly mean, month by month."}
+            ]
+          },
+          "heating_oil": {
+            "available": false,
+            "segments": [
+              {"text": "No figure for "},
+              {"field": "period", "value": 2019, "format": "year"},
+              {"text": ": OPEC's Rotterdam table quotes no heating oil, and no note this study holds prints the ministry's monthly prices before "},
+              {"field": "first_printed_month", "value": "2025-11-01", "label": "November 2025"},
+              {"text": ". Left out of the margin, not borrowed from gasoil."}
+            ]
+          },
+          "fuel_oil_1pct": {
+            "available": true,
+            "segments": [
+              {"text": "The mean of "},
+              {"field": "months_used", "value": 12, "format": "count"},
+              {"text": " monthly cracks of "},
+              {"field": "period", "value": 2019, "format": "year"},
+              {"text": ": "},
+              {"text": "OPEC's Rotterdam "},
+              {"field": "label", "value": "fuel oil, 1% sulphur", "label": "fuel oil, 1% sulphur"},
+              {"text": " quotation"},
+              {"text": ", less FRED's Brent monthly mean, month by month."}
+            ]
+          }
+        },
+        "ttf_segments": [
+          {"text": "Derived, not quoted: the mean of the World Bank's monthly European gas prices for "},
+          {"field": "period", "value": 2019, "format": "year"},
+          {"text": ", "},
+          {"field": "gas_usd_mmbtu", "value": 4.803333, "format": "usd_mmbtu"},
+          {"text": " $/MMBtu, TTF by the World Bank's own definition since "},
+          {"field": "ttf_definition_month", "value": "2015-04-01", "label": "April 2015"},
+          {"text": ", at FRED's exchange rate for the same period and "},
+          {"field": "mmbtu_per_mwh", "value": 3.412142, "format": "mmbtu_per_mwh"},
+          {"text": " MMBtu per MWh. The daily TTF series is not used, because its terms keep it out of this repository."}
+        ],
+        "eurusd_segments": [
+          {"text": "FRED's US dollars per euro, the mean of the "},
+          {"field": "months", "value": 12, "format": "count"},
+          {"text": " monthly means of "},
+          {"field": "period", "value": 2019, "format": "year"},
+          {"text": "."}
+        ]
+      },
+      "gas_usd_mmbtu": 4.803333,
+      "official": {
+        "mbr_usd_bbl": 4.215448,
+        "months": 12,
+        "months_published": 12,
+        "provisional": false,
+        "label_segments": [
+          {"text": "The ministry's MBR for "},
+          {"field": "period", "value": 2019, "format": "year"},
+          {"text": ", the mean of the "},
+          {"field": "months_published", "value": 12, "format": "count"},
+          {"text": " months it published, already net of its own gas"}
+        ],
+        "gap_segments": [
+          {"text": "It holds the part of the barrel the products do not price, the ministry's gas, freight and insurance costs, and the difference between OPEC's quotations and the Reuters prices the ministry uses, and heating oil, which has no price here."}
+        ]
+      },
+      "scale": {
+        "low_usd_bbl": 0.0,
+        "high_usd_bbl": 10.0
+      }
+    },
+    {
+      "id": "october_2022",
+      "label": "October 2022",
+      "months": ["2022-10-01"],
+      "kind": "month",
+      "crack_source": "opec_rotterdam_products_monthly",
+      "reconstructed": false,
+      "note_segments": [
+        {"text": "Cracks from OPEC's Rotterdam monthly quotations for "},
+        {"field": "month", "value": "2022-10-01", "label": "October 2022"},
+        {"text": ", each less FRED's Brent for the month; gas and the exchange rate for the same month. No note this study holds prints the ministry's monthly prices before "},
+        {"field": "first_printed_month", "value": "2025-11-01", "label": "November 2025"},
+        {"text": "."}
+      ],
+      "reason_segments": [
+        {"text": "The month of the French refinery strikes, when S&P Global reported ARA diesel cracks near "},
+        {"field": "ara_diesel_crack_usd_bbl", "value": 80, "format": "count"},
+        {"text": " $/bbl on "},
+        {"field": "event_date", "value": "2022-10-13", "label": "13 October 2022"},
+        {"text": "."}
+      ],
+      "reason_source_url": "https://www.spglobal.com/energy/en/news-research/latest-news/crude-oil/101722-refinery-margin-tracker-atlantic-basin-margins-soar-on-refinery-outages-tight-diesel-supply",
+      "inputs": {
+        "cracks": {
+          "gasoil": 69.568095,
+          "gasoline": 43.688095,
+          "jet": 46.018095,
+          "heating_oil": null,
+          "fuel_oil_1pct": -11.271905
+        },
+        "yields": {
+          "gasoil": 0.335497,
+          "gasoline": 0.132397,
+          "jet": 0.086628,
+          "heating_oil": 0.080914,
+          "fuel_oil_1pct": 0.074013
+        },
+        "ttf_eur_mwh": 135.128851,
+        "eurusd": 0.985295,
+        "gas_intensity_mmbtu_per_bbl": 0.21217,
+        "other_variable_cost_usd_bbl": 0.0
+      },
+      "sources": {
+        "cracks": {
+          "gasoil": {
+            "available": true,
+            "segments": [
+              {"text": "OPEC's Rotterdam "},
+              {"field": "label", "value": "gasoil", "label": "gasoil"},
+              {"text": " quotation"},
+              {"text": " for "},
+              {"field": "month", "value": "2022-10-01", "label": "October 2022"},
+              {"text": ", specified as "},
+              {"field": "specification", "value": "10 ppm", "label": "10 ppm"},
+              {"text": ", less FRED's Brent monthly mean for the same month."}
+            ]
+          },
+          "gasoline": {
+            "available": true,
+            "segments": [
+              {"text": "OPEC's Rotterdam "},
+              {"field": "label", "value": "premium gasoline", "label": "premium gasoline"},
+              {"text": " quotation"},
+              {"text": " for "},
+              {"field": "month", "value": "2022-10-01", "label": "October 2022"},
+              {"text": ", specified as "},
+              {"field": "specification", "value": "unleaded 98", "label": "unleaded 98"},
+              {"text": ", less FRED's Brent monthly mean for the same month."}
+            ]
+          },
+          "jet": {
+            "available": true,
+            "segments": [
+              {"text": "OPEC's Rotterdam "},
+              {"field": "label", "value": "jet kerosene", "label": "jet kerosene"},
+              {"text": " quotation"},
+              {"text": " for "},
+              {"field": "month", "value": "2022-10-01", "label": "October 2022"},
+              {"text": ", less FRED's Brent monthly mean for the same month."}
+            ]
+          },
+          "heating_oil": {
+            "available": false,
+            "segments": [
+              {"text": "No figure for "},
+              {"field": "period", "value": "2022-10-01", "label": "October 2022"},
+              {"text": ": OPEC's Rotterdam table quotes no heating oil, and no note this study holds prints the ministry's monthly prices before "},
+              {"field": "first_printed_month", "value": "2025-11-01", "label": "November 2025"},
+              {"text": ". Left out of the margin, not borrowed from gasoil."}
+            ]
+          },
+          "fuel_oil_1pct": {
+            "available": true,
+            "segments": [
+              {"text": "OPEC's Rotterdam "},
+              {"field": "label", "value": "fuel oil, 1% sulphur", "label": "fuel oil, 1% sulphur"},
+              {"text": " quotation"},
+              {"text": " for "},
+              {"field": "month", "value": "2022-10-01", "label": "October 2022"},
+              {"text": ", less FRED's Brent monthly mean for the same month."}
+            ]
+          }
+        },
+        "ttf_segments": [
+          {"text": "Derived, not quoted: the World Bank's European gas price for "},
+          {"field": "period", "value": "2022-10-01", "label": "October 2022"},
+          {"text": ", "},
+          {"field": "gas_usd_mmbtu", "value": 39.02, "format": "usd_mmbtu"},
+          {"text": " $/MMBtu, TTF by the World Bank's own definition since "},
+          {"field": "ttf_definition_month", "value": "2015-04-01", "label": "April 2015"},
+          {"text": ", at FRED's exchange rate for the same period and "},
+          {"field": "mmbtu_per_mwh", "value": 3.412142, "format": "mmbtu_per_mwh"},
+          {"text": " MMBtu per MWh. The daily TTF series is not used, because its terms keep it out of this repository."}
+        ],
+        "eurusd_segments": [
+          {"text": "FRED's US dollars per euro, the mean of the daily rates in "},
+          {"field": "month", "value": "2022-10-01", "label": "October 2022"},
+          {"text": "."}
+        ]
+      },
+      "gas_usd_mmbtu": 39.02,
+      "official": {
+        "mbr_usd_bbl": 24.782993,
+        "months": 1,
+        "months_published": 1,
+        "provisional": false,
+        "label_segments": [
+          {"text": "The ministry's MBR for "},
+          {"field": "period", "value": "2022-10-01", "label": "October 2022"},
+          {"text": ", "},
+          {"field": "status_word", "value": "final", "label": "final"},
+          {"text": ", already net of its own gas"}
+        ],
+        "gap_segments": [
+          {"text": "It holds the part of the barrel the products do not price, the ministry's gas, freight and insurance costs, and the difference between OPEC's quotations and the Reuters prices the ministry uses, and heating oil, which has no price here."}
+        ]
+      },
+      "scale": {
+        "low_usd_bbl": 0.0,
+        "high_usd_bbl": 50.0
+      }
+    },
+    {
+      "id": "july_2026",
+      "label": "July 2026",
+      "months": ["2026-07-01"],
+      "kind": "month",
+      "crack_source": "dgec_note_reconstructed_weekly",
+      "reconstructed": true,
+      "note_segments": [
+        {"text": "Reconstructed, not printed: each crack is the mean of "},
+        {"field": "weeks", "value": 5, "format": "count"},
+        {"text": " weekly readings of the ministry's chart, for the weeks ending on the Fridays from "},
+        {"field": "first_week", "value": "2026-07-03", "label": "3 July 2026"},
+        {"text": " to "},
+        {"field": "last_week", "value": "2026-07-31", "label": "31 July 2026"},
+        {"text": ", and the ministry printed none of those weeks."},
+        {"text": " The first of those weeks starts in "},
+        {"field": "previous_month", "value": "2026-06-01", "label": "June 2026"},
+        {"text": "."},
+        {"text": " No second chart has checked any of them yet."},
+        {"text": " The ministry printed its monthly prices for the month only in a note of the following month, which it deleted and nobody archived, so none is used here; and the chart plots no jet and no fuel oil."}
+      ],
+      "reason_segments": [
+        {"text": "The month before the latest, in the regime that followed the strikes on Iran of "},
+        {"field": "event_date", "value": "2026-02-28", "label": "28 February 2026"},
+        {"text": "."}
+      ],
+      "reason_source_url": "https://www.iea.org/reports/oil-market-report-march-2026",
+      "weeks": {
+        "fridays": ["2026-07-03", "2026-07-10", "2026-07-17", "2026-07-24", "2026-07-31"],
+        "printed": 0,
+        "evidence_classes": {
+          "single_geometry_newest": 5
+        }
+      },
+      "inputs": {
+        "cracks": {
+          "gasoil": 69.011225,
+          "gasoline": 46.613791,
+          "jet": null,
+          "heating_oil": 65.003021,
+          "fuel_oil_1pct": null
+        },
+        "yields": {
+          "gasoil": 0.335497,
+          "gasoline": 0.132397,
+          "jet": 0.086628,
+          "heating_oil": 0.080914,
+          "fuel_oil_1pct": 0.074013
+        },
+        "ttf_eur_mwh": 53.947961,
+        "eurusd": 1.142273,
+        "gas_intensity_mmbtu_per_bbl": 0.21217,
+        "other_variable_cost_usd_bbl": 0.0
+      },
+      "sources": {
+        "cracks": {
+          "gasoil": {
+            "available": true,
+            "segments": [
+              {"text": "Reconstructed, read off the ministry's weekly chart and not printed: "},
+              {"field": "label", "value": "Gazole", "label": "Gazole"},
+              {"text": " less the chart's Brent, the mean of "},
+              {"field": "weeks", "value": 5, "format": "count"},
+              {"text": " weeks ending in "},
+              {"field": "month", "value": "2026-07-01", "label": "July 2026"},
+              {"text": "."}
+            ]
+          },
+          "gasoline": {
+            "available": true,
+            "segments": [
+              {"text": "Reconstructed, read off the ministry's weekly chart and not printed: "},
+              {"field": "label", "value": "Eurosuper", "label": "Eurosuper"},
+              {"text": " less the chart's Brent, the mean of "},
+              {"field": "weeks", "value": 5, "format": "count"},
+              {"text": " weeks ending in "},
+              {"field": "month", "value": "2026-07-01", "label": "July 2026"},
+              {"text": "."}
+            ]
+          },
+          "jet": {
+            "available": false,
+            "segments": [
+              {"text": "No figure for "},
+              {"field": "month", "value": "2026-07-01", "label": "July 2026"},
+              {"text": ": the ministry's weekly chart plots Gazole, Eurosuper and Fioul domestique only, and its monthly prices for the month are not in this study's data. Left out of the margin, not borrowed from another month."}
+            ]
+          },
+          "heating_oil": {
+            "available": true,
+            "segments": [
+              {"text": "Reconstructed, read off the ministry's weekly chart and not printed: "},
+              {"field": "label", "value": "Fioul domestique", "label": "Fioul domestique"},
+              {"text": " less the chart's Brent, the mean of "},
+              {"field": "weeks", "value": 5, "format": "count"},
+              {"text": " weeks ending in "},
+              {"field": "month", "value": "2026-07-01", "label": "July 2026"},
+              {"text": "."}
+            ]
+          },
+          "fuel_oil_1pct": {
+            "available": false,
+            "segments": [
+              {"text": "No figure for "},
+              {"field": "month", "value": "2026-07-01", "label": "July 2026"},
+              {"text": ": the ministry's weekly chart plots Gazole, Eurosuper and Fioul domestique only, and its monthly prices for the month are not in this study's data. Left out of the margin, not borrowed from another month."}
+            ]
+          }
+        },
+        "ttf_segments": [
+          {"text": "Derived, not quoted: the World Bank's European gas price for "},
+          {"field": "period", "value": "2026-07-01", "label": "July 2026"},
+          {"text": ", "},
+          {"field": "gas_usd_mmbtu", "value": 18.06, "format": "usd_mmbtu"},
+          {"text": " $/MMBtu, TTF by the World Bank's own definition since "},
+          {"field": "ttf_definition_month", "value": "2015-04-01", "label": "April 2015"},
+          {"text": ", at FRED's exchange rate for the same period and "},
+          {"field": "mmbtu_per_mwh", "value": 3.412142, "format": "mmbtu_per_mwh"},
+          {"text": " MMBtu per MWh. The daily TTF series is not used, because its terms keep it out of this repository."}
+        ],
+        "eurusd_segments": [
+          {"text": "FRED's US dollars per euro, the mean of the daily rates in "},
+          {"field": "month", "value": "2026-07-01", "label": "July 2026"},
+          {"text": "."}
+        ]
+      },
+      "gas_usd_mmbtu": 18.06,
+      "official": {
+        "mbr_usd_bbl": 36.685406,
+        "months": 1,
+        "months_published": 1,
+        "provisional": false,
+        "label_segments": [
+          {"text": "The ministry's MBR for "},
+          {"field": "period", "value": "2026-07-01", "label": "July 2026"},
+          {"text": ", "},
+          {"field": "status_word", "value": "final", "label": "final"},
+          {"text": ", already net of its own gas"}
+        ],
+        "gap_segments": [
+          {"text": "It holds the part of the barrel the products do not price, the ministry's gas, freight and insurance costs, the difference between this study's reading of the weekly chart and the prices the ministry used, and jet and fuel oil, which have no price here."}
+        ]
+      },
+      "scale": {
+        "low_usd_bbl": 0.0,
+        "high_usd_bbl": 50.0
+      }
+    }
+  ]
+}

@@ -65,7 +65,7 @@ def _segment_lists(value, where=""):
 
 
 def test_the_artifact_set_is_the_five_the_now_view_reads_and_history(built):
-    assert list(built) == ["now", "cracks", "margin-stack", "run-economics", "provenance", "history"]
+    assert list(built) == ["now", "cracks", "margin-stack", "run-economics", "provenance", "history", "model"]
     for name, payload in built.items():
         assert payload["schema_version"] == export.SCHEMA_VERSION
         assert payload["artifact"] == name

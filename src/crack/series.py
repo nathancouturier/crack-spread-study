@@ -1335,3 +1335,223 @@ def latest_view(
         ),
         margin_decomposition_reason=margin_reason,
     )
+
+
+# ---------------------------------------------------------------------------
+# The Model view's presets, docs/design.md Part 8.2
+# ---------------------------------------------------------------------------
+#
+# SPEC.md section 7.2 names four presets: latest month, 2019 average, October
+# 2022, July 2026. The model prices the ministry's five product slate,
+# DGEC_NOTE_VOLUME_YIELDS, in every preset, and each preset takes its cracks
+# from whichever source actually quotes the month:
+#
+#   the ministry's final printed monthly prices   note_cracks_for_month
+#   OPEC's Rotterdam monthly table                model_opec_cracks, which has
+#                                                 no heating oil column
+#   the weekly reconstruction of the note chart   model_reconstructed_cracks,
+#                                                 which reads three products
+#
+# A product a source does not quote for the month comes back as None with the
+# reason, never borrowed from another month or another source. Every crack goes
+# through engine.crack with both legs dated and windowed, as everywhere else.
+
+#: The products the Model prices, in the ministry's slate order by yield, and
+#: nothing else. The same keys as DGEC_NOTE_VOLUME_YIELDS.
+MODEL_PRODUCTS: Sequence[str] = tuple(
+    sorted(DGEC_NOTE_VOLUME_YIELDS, key=lambda p: -DGEC_NOTE_VOLUME_YIELDS[p])
+)
+
+#: OPEC Rotterdam columns per model product, with a label naming OPEC as the
+#: quoting source. No heating_oil key: the table has no heating oil row, and the
+#: gasoil row is not borrowed for it.
+MODEL_OPEC_COLUMNS: Mapping[str, tuple] = {
+    "gasoil": ("gasoil_usd_bbl", "gasoil", "gasoil_spec"),
+    "gasoline": ("premium_gasoline_usd_bbl", "premium gasoline", "gasoline_spec"),
+    "jet": ("jet_usd_bbl", "jet kerosene", None),
+    "fuel_oil_1pct": ("fuel_oil_1pct_usd_bbl", "fuel oil, 1% sulphur", None),
+}
+
+#: Reconstructed weekly quotation columns per model product, with the
+#: ministry's own label. The chart plots three products and Brent, nothing else.
+MODEL_RECONSTRUCTED_COLUMNS: Mapping[str, tuple] = {
+    "gasoil": ("gazole_usd_t", "Gazole"),
+    "gasoline": ("eurosuper_usd_t", "Eurosuper"),
+    "heating_oil": ("fioul_domestique_usd_t", "Fioul domestique"),
+}
+
+
+def _months_of(months: Sequence[str]) -> list[pd.Timestamp]:
+    return [pd.Timestamp(m if len(m) > 7 else m + "-01") for m in months]
+
+
+def model_opec_cracks(months: Sequence[str]) -> Mapping[str, Mapping[str, object]]:
+    """OPEC Rotterdam cracks for each model product over a set of months.
+
+    Each month's crack goes through engine.crack against the FRED monthly
+    Brent, exactly as opec_monthly_cracks does for gasoil and gasoline. The
+    preset value is the mean of the monthly cracks, and only when every month
+    has one: a product missing in any month is None for the preset, with the
+    months it is missing in, rather than an average of fewer months.
+
+    Returns product to {value, monthly, months_used, missing_months, label,
+    specifications, reason}. `specifications` lists the source's own
+    specification labels met over the months, for the two columns the cache
+    carries them for. heating_oil is always None, with its reason.
+    """
+    wanted = _months_of(months)
+    products = load("opec_rotterdam_products_monthly")
+    products["date"] = _month_floor(products["date"])
+    brent = brent_monthly("fred").set_index("date")["brent_usd_bbl"]
+    out: dict[str, Mapping[str, object]] = {}
+    for product in MODEL_PRODUCTS:
+        if product not in MODEL_OPEC_COLUMNS:
+            out[product] = {
+                "value": None, "monthly": [], "months_used": 0,
+                "missing_months": [_iso(m) for m in wanted], "label": None,
+                "specifications": [], "reason": "opec_has_no_column",
+            }
+            continue
+        column, label, spec_column = MODEL_OPEC_COLUMNS[product]
+        monthly, missing, specifications = [], [], []
+        for month in wanted:
+            row = products[products["date"] == month]
+            price = float(row[column].iloc[0]) if not row.empty else math.nan
+            if spec_column and not row.empty and isinstance(row[spec_column].iloc[0], str):
+                if row[spec_column].iloc[0] not in specifications:
+                    specifications.append(row[spec_column].iloc[0])
+            crude = float(brent.get(month, math.nan))
+            if math.isnan(price) or math.isnan(crude):
+                missing.append(_iso(month))
+                continue
+            day = _iso(month)
+            monthly.append(
+                engine.crack(
+                    engine.Quote(price, engine.USD_PER_BBL, day, engine.MONTHLY, "OPEC MOMR Rotterdam " + label),
+                    engine.Quote(crude, engine.USD_PER_BBL, day, engine.MONTHLY, "Brent, FRED DCOILBRENTEU monthly mean"),
+                ).value
+            )
+        complete = not missing
+        out[product] = {
+            "value": float(np.mean(monthly)) if complete else None,
+            "monthly": monthly,
+            "months_used": len(monthly),
+            "missing_months": missing,
+            "label": label,
+            "specifications": specifications,
+            "reason": None if complete else "opec_months_missing",
+        }
+    return out
+
+
+def model_reconstructed_cracks(month: str) -> Mapping[str, object]:
+    """Cracks from the weekly chart reconstruction, averaged over one month.
+
+    A week belongs to the month its Friday, the "week to" date, falls in, so the
+    first week of a month can hold days of the month before; the export says so.
+    Every weekly crack goes through engine.crack with the product factor of
+    config.DGEC_NOTE_PRODUCT_BBL_PER_T and the note's own Brent factor,
+    config.DGEC_BBL_PER_T_BRENT_NOTE, the same path as dgec_weekly_cracks.
+
+    Returns {products: product to {value, weekly, label, reason}, weeks: the
+    Fridays, evidence_classes: class to count, printed_weeks: how many of those
+    Fridays the ministry also printed}. jet and fuel_oil_1pct are None, because
+    the chart does not plot them.
+    """
+    stamp = pd.Timestamp(month if len(month) > 7 else month + "-01").to_period("M")
+    quotes = load("dgec_note_reconstructed_weekly")
+    quotes["date"] = pd.to_datetime(quotes["date"])
+    weeks = quotes[quotes["date"].dt.to_period("M") == stamp].sort_values("date")
+    printed = load("dgec_note_printed_weekly")
+    printed_dates = set(pd.to_datetime(printed["date"]).dt.strftime("%Y-%m-%d"))
+    products: dict[str, Mapping[str, object]] = {}
+    for product in MODEL_PRODUCTS:
+        if product not in MODEL_RECONSTRUCTED_COLUMNS:
+            products[product] = {"value": None, "weekly": [], "label": None, "reason": "chart_does_not_plot"}
+            continue
+        column, label = MODEL_RECONSTRUCTED_COLUMNS[product]
+        weekly = []
+        for _, row in weeks.iterrows():
+            day = _iso(row["date"])
+            weekly.append(
+                engine.crack(
+                    engine.Quote(float(row[column]), engine.USD_PER_T, day, engine.WEEKLY, label),
+                    engine.Quote(float(row["brent_date_usd_t"]), engine.USD_PER_T, day, engine.WEEKLY, "Brent date, DGEC note chart"),
+                    product_bbl_per_t=config.DGEC_NOTE_PRODUCT_BBL_PER_T[product],
+                    brent_bbl_per_t=config.DGEC_BBL_PER_T_BRENT_NOTE,
+                ).value
+            )
+        products[product] = {
+            "value": float(np.mean(weekly)) if weekly else None,
+            "weekly": weekly,
+            "label": label,
+            "reason": None if weekly else "no_weeks",
+        }
+    fridays = [_iso(d) for d in weeks["date"]]
+    return {
+        "products": products,
+        "weeks": fridays,
+        "evidence_classes": {str(k): int(v) for k, v in weeks["evidence_class"].value_counts().sort_index().items()},
+        "printed_weeks": sum(1 for d in fridays if d in printed_dates),
+    }
+
+
+def ttf_eur_mwh_from_usd_mmbtu(gas_usd_mmbtu: float, eurusd: float) -> float:
+    """The TTF in EUR/MWh that engine.gas_from_ttf turns back into this $/MMBtu.
+
+    The inverse of SPEC.md section 4.4's chain, gas_usd_mmbtu = ttf_eur_mwh *
+    eurusd / MMBTU_PER_MWH, used only to state a committed World Bank price in
+    the unit a desk quotes gas in. tests/test_model.py asserts the round trip
+    through engine.gas_from_ttf. The Yahoo daily TTF is not used for a preset:
+    its terms keep it out of the repository, so a preset built on it could not
+    be rebuilt from a clone.
+    """
+    return gas_usd_mmbtu * config.MMBTU_PER_MWH / eurusd
+
+
+def model_gas_and_fx(months: Sequence[str]) -> Mapping[str, object]:
+    """The World Bank European gas price and FRED EUR/USD over a set of months.
+
+    Both are means of monthly values: the World Bank publishes monthly, and the
+    exchange rate is eurusd_monthly, config.monthly_mean. None when any month is
+    missing from either, with the months.
+    """
+    wanted = _months_of(months)
+    gas = gas_monthly().set_index("date")["gas_usd_mmbtu"]
+    fx = eurusd_monthly().set_index("date")["eurusd"]
+    gas_values = [float(gas.get(m, math.nan)) for m in wanted]
+    fx_values = [float(fx.get(m, math.nan)) for m in wanted]
+    missing_gas = [_iso(m) for m, v in zip(wanted, gas_values) if math.isnan(v)]
+    missing_fx = [_iso(m) for m, v in zip(wanted, fx_values) if math.isnan(v)]
+    gas_mean = None if missing_gas else float(np.mean(gas_values))
+    fx_mean = None if missing_fx else float(np.mean(fx_values))
+    ttf = None if gas_mean is None or fx_mean is None else ttf_eur_mwh_from_usd_mmbtu(gas_mean, fx_mean)
+    return {
+        "gas_usd_mmbtu": gas_mean,
+        "eurusd": fx_mean,
+        "ttf_eur_mwh": ttf,
+        "months": len(wanted),
+        "missing_gas_months": missing_gas,
+        "missing_eurusd_months": missing_fx,
+    }
+
+
+def model_official_margin(months: Sequence[str]) -> Mapping[str, object]:
+    """The ministry's published MBR over a set of months, and how many exist.
+
+    The mean of the published months, and only when every month is published:
+    the MBR starts in 2015-01 and is never extended, so a set that runs outside
+    it is None with the months it lacks.
+    """
+    wanted = _months_of(months)
+    mbr = load("dgec_mbr_monthly")
+    mbr["date"] = _month_floor(mbr["date"])
+    by_month = mbr.set_index("date")["mbr_usd_bbl"]
+    values = [float(by_month.get(m, math.nan)) for m in wanted]
+    missing = [_iso(m) for m, v in zip(wanted, values) if math.isnan(v)]
+    return {
+        "mbr_usd_bbl": None if missing else float(np.mean(values)),
+        "monthly": [None if math.isnan(v) else v for v in values],
+        "months_published": len(values) - len(missing),
+        "missing_months": missing,
+    }

@@ -41,6 +41,7 @@ const ARTIFACTS = Object.freeze({
   runEconomics: { path: "data/run-economics.json", artifact: "run-economics", schema: SCHEMA_ONE, holds: "the run cut threshold and the response of crude runs to the margin" },
   provenance: { path: "data/provenance.json", artifact: "provenance", schema: SCHEMA_ONE, holds: "the manifest of every series, its source and its last fetch" },
   history: { path: "data/history.json", artifact: "history", schema: SCHEMA_ONE, holds: "the monthly and weekly cracks, the ministry's margin, their events and breaks, and the monthly seasonality" },
+  model: { path: "data/model.json", artifact: "model", schema: SCHEMA_ONE, holds: "the margin model's presets, the source of every input, and the ministry's slate yields" },
 });
 
 /** The artifact names this build of the page reads, for a validator. */
