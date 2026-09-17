@@ -73,6 +73,7 @@ __all__ = [
     "margin_stack",
     "run_economics",
     "provenance",
+    "runs",
     "run_verdict",
     "main",
 ]
@@ -113,6 +114,12 @@ DECIMALS: Mapping[str, int] = {
     "bbl_per_t": 2,
     "count": 0,
     "year": 0,
+    "coef": 5,
+    "rmse": 3,
+    "power": 3,
+    "f_stat": 3,
+    "gap_percent": 2,
+    "slope": 2,
 }
 
 #: Formats whose values are whole numbers and are written as JSON integers.
@@ -374,6 +381,13 @@ class Inputs:
                 frame=analysis.horse_frame(), dependent=analysis.DEPENDENT_CAPACITY
             ),
         )
+
+    @property
+    def horse_frame(self) -> pd.DataFrame:
+        return self._get("horse_frame", analysis.horse_frame)
+
+    def horse_race(self, dependent: str) -> list[analysis.HorseResult]:
+        return self._get("horse_race_" + dependent, lambda: analysis.horse_race(dependent, frame=self.horse_frame))
 
     @property
     def weekly(self) -> pd.DataFrame:
@@ -2591,6 +2605,718 @@ def model(inputs: Inputs) -> Mapping[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# runs.json, docs/design.md Part 8.3
+# ---------------------------------------------------------------------------
+#
+# The Runs and crude demand view. Everything here is crack.analysis as audited
+# at Gate 3, written out: the page fits nothing. The response table, the
+# threshold verdict and the post break table the view shares with the Now
+# section stay in run-economics.json, so the two pages read one copy.
+
+#: The equations of the horse race and the instrument, in SPEC.md section 6.1's
+#: order: the planned model first (K24), then the fallback.
+RUNS_EQUATIONS: Sequence[tuple[str, str, str]] = (
+    ("capacity", analysis.DEPENDENT_CAPACITY, "Utilisation of capacity, the planned model"),
+    ("intake_trend", analysis.DEPENDENT_FALLBACK, "Crude intake with a trend"),
+)
+
+#: What a coefficient and a forecast error are measured in, per dependent.
+RUNS_UNITS: Mapping[str, Mapping[str, str]] = {
+    analysis.DEPENDENT_CAPACITY: {
+        "coefficient": "percentage points of capacity per $/bbl",
+        "rmse": "percentage points of capacity",
+    },
+    analysis.DEPENDENT_FALLBACK: {
+        "coefficient": "percent of runs per $/bbl",
+        "rmse": "percent of runs",
+    },
+}
+
+RUNS_PARTS: Sequence[Mapping[str, str]] = (
+    {"id": "response", "label": "Response"},
+    {"id": "threshold", "label": "Run cut threshold"},
+    {"id": "race", "label": "Horse race and instrument"},
+    {"id": "break", "label": "After the strikes on Iran"},
+)
+
+#: The competing explanations SPEC.md section 6.4 asks to be set out and not
+#: chosen between. Words, no figure.
+RUNS_EXPLANATIONS: Sequence[Mapping[str, str]] = (
+    {"id": "feedstock", "name": "Feedstock availability", "what": "with Hormuz traffic halted a refiner can face a good margin and still have no suitable crude; the IEA reported refiners outside the Gulf curtailing runs over feedstock availability"},
+    {"id": "outages", "name": "Unplanned outages", "what": "one large unit down for a month is worth on the order of the residuals in the table"},
+    {"id": "maintenance", "name": "Maintenance", "what": "spring turnarounds move from year to year, and the month terms carry the average season rather than this year's"},
+)
+
+
+def _stamp(value: Any) -> str:
+    return str(pd.Timestamp(value).date())
+
+
+def _runs_series(inputs: Inputs) -> Mapping[str, Any]:
+    frame = inputs.frame
+    sample = analysis.threshold_sample(frame)[["date", "margin_mean_lagged"]]
+    joined = frame.merge(sample, on="date", how="left")
+    entry = inputs.entry(analysis.INTAKE_SERIES)
+    rows = []
+    for _, r in joined.iterrows():
+        month = _stamp(r["date"])
+        rows.append([
+            month,
+            _num(r["utilisation_pct"]),
+            _num(r["margin_mean_lagged"]),
+            _num(r["intake_kb_d"]),
+            _num(r["imports_kb_d"]),
+            _num(r["capacity_kb_d"]),
+            _int(r["capacity_source_year"]),
+            bool(r["capacity_assumed"]),
+            _status_word(entry, month)[0],
+        ])
+    first, last = rows[0][0], rows[-1][0]
+    steps = [
+        "%d-01-01" % (y + analysis.CAPACITY_SOURCE_LAG_YEARS)
+        for y in analysis.capacity_step_years()
+        if first < "%d-01-01" % (y + analysis.CAPACITY_SOURCE_LAG_YEARS) <= last
+    ]
+    latest = joined.iloc[-1]
+    capacity_year = int(latest["capacity_source_year"])
+    assumed = int(joined["capacity_assumed"].sum())
+    provisional_from = entry.get("provisional_from")
+    stats = analysis.imports_beside_intake(frame)
+    cap, fall = inputs.capacity_model, inputs.fallback_model
+    ratio = stats["mean_imports_over_intake"]
+    opec = series.opec_monthly_cracks()
+
+    sample_segments = [
+        T("The sample starts in "),
+        N("sample_first_year", int(opec["date"].dt.year.value_counts().sort_index().loc[lambda c: c == 12].index.min()), "year"),
+        T(", the owner's choice of the full OPEC record, so the gasoil crack reaches back to "),
+        D("crack_first_month", _stamp(opec["date"].min())),
+        T(" and JODI's crude intake to "),
+        D("jodi_first_month", _stamp(entry["first_date"])),
+        T(", while the ministry's margin exists only from "),
+        D("margin_first_month", first),
+        T(". Every plot and equation on this page that uses the margin therefore starts there, and nothing extends the margin back. JODI runs to "),
+        D("jodi_last_month", _stamp(entry["last_date"])),
+    ]
+    if provisional_from:
+        sample_segments += [T(", and the months from "), D("provisional_from", _stamp(provisional_from)), T(" are provisional and may be revised.")]
+    else:
+        sample_segments += [T(".")]
+
+    capacity_segments = [
+        T("Utilisation divides each month's intake by the capacity published for the end of the year before, so every month of "),
+        N("latest_year", pd.Timestamp(last).year, "year"),
+        T(" uses the "),
+        N("capacity_source_year", capacity_year, "year"),
+        T(" figure of "),
+        N("capacity_kb_d", latest["capacity_kb_d"], "kb_d"),
+        T(" kb/d, a published figure and not an assumption: the number of months in this sample with an assumed capacity is "),
+        N("capacity_assumed_months", assumed, "count"),
+        T(". Capacity falls by a step in "),
+    ]
+    for i, step in enumerate(steps):
+        if i:
+            capacity_segments.append(T(" and " if i == len(steps) - 1 else ", "))
+        capacity_segments.append(D("capacity_step_month", step))
+    capacity_segments.append(T(", and the utilisation line is split there."))
+
+    imports_segments = [
+        T("Crude imports averaged "),
+        N("mean_imports_over_intake_percent", 100 * ratio, "percent"),
+        T(" percent of crude intake over "),
+        N("months", stats["months"], "count"),
+        T(" months, between "),
+        N("min_imports_over_intake_percent", 100 * stats["min_imports_over_intake"], "percent"),
+        T(" and "),
+        N("max_imports_over_intake_percent", 100 * stats["max_imports_over_intake"], "percent"),
+        T(", and the two move together, a correlation of "),
+        N("correlation_levels", stats["correlation_levels"], "r2"),
+        T(" in levels and "),
+        N("correlation_12m_differences", stats["correlation_12m_differences"], "r2"),
+        T(" in twelve month changes. So the planned model's "),
+        N("kb_d", cap.translation.kb_d, "kb_d", signed=True),
+        T(" kb/d of runs reads across to about "),
+        N("imports_kb_d", cap.translation.kb_d * ratio, "kb_d", signed=True),
+        T(" kb/d of imports, and the trend model's "),
+        N("fallback_kb_d", fall.translation.kb_d, "kb_d", signed=True),
+        T(" to about "),
+        N("fallback_imports_kb_d", fall.translation.kb_d * ratio, "kb_d", signed=True),
+        T(". That is arithmetic on the ratio, not a second model, and not evidence that imports respond."),
+    ]
+    return {
+        "first": first,
+        "last": last,
+        "columns": ["date", "utilisation_percent", "margin_lagged_usd_bbl", "intake_kb_d", "imports_kb_d", "capacity_kb_d", "capacity_source_year", "capacity_assumed", "provisional"],
+        "rows": rows,
+        "capacity_steps": steps,
+        "provisional_from": provisional_from,
+        "margin_regressor": "mean of the margin at the average US refinery's gas use over the three previous months",
+        "sample_segments": sample_segments,
+        "capacity_segments": capacity_segments,
+        "imports": {
+            "months": int(stats["months"]),
+            "mean_imports_over_intake": _num(ratio),
+            "min_imports_over_intake": _num(stats["min_imports_over_intake"]),
+            "max_imports_over_intake": _num(stats["max_imports_over_intake"]),
+            "correlation_levels": _num(stats["correlation_levels"]),
+            "correlation_12m_differences": _num(stats["correlation_12m_differences"]),
+            "is_a_model": False,
+            "segments": imports_segments,
+        },
+    }
+
+
+def _episode_rows(inputs: Inputs) -> Mapping[str, Any]:
+    """SPEC.md section 6.1: with and without the episodes. The variants are the
+    ones analysis.report() ran at Gate 3, nothing else."""
+    frame = inputs.frame
+    variants = [
+        ("capacity", "Utilisation of capacity, the planned model", "episodes", "A term for each episode, the headline", inputs.capacity_model),
+        ("capacity", "Utilisation of capacity, the planned model", "no_terms", "No episode terms", analysis.margin_response(frame=frame, label="no regime dummies, full sample", episode_dummies=False)),
+        ("capacity", "Utilisation of capacity, the planned model", "dropped", "Episode months left out", analysis.margin_response(frame=frame, label="episode months dropped from the sample", episode_dummies=False, drop_episode_months=True)),
+        ("intake_trend", "Crude intake with a trend", "episodes", "A term for each episode, the headline", inputs.fallback_model),
+        ("intake_trend", "Crude intake with a trend", "dropped", "Episode months left out", analysis.intake_trend_response(frame=frame, label="episode months dropped from the sample", episode_dummies=False, drop_episode_months=True)),
+    ]
+    rows = []
+    for model_id, model_label, variant, variant_label, model in variants:
+        t = model.translation
+        rows.append({
+            "model": model_id,
+            "model_label": model_label,
+            "variant": variant,
+            "variant_label": variant_label,
+            "headline": variant == "episodes",
+            "kb_d": _num(t.kb_d),
+            "kb_d_low": _num(t.kb_d_low),
+            "kb_d_high": _num(t.kb_d_high),
+            "t": _num(model.sum_b_t),
+            "months": int(model.regression.nobs),
+        })
+    return {
+        "rows": rows,
+        "episode_months": analysis.EPISODE_MONTHS,
+        "segments": [
+            T("Each episode is the "),
+            N("episode_months", analysis.EPISODE_MONTHS, "count"),
+            T(" months from the pandemic lockdowns of March "),
+            N("episode_2020_year", pd.Timestamp(analysis.EPISODES["episode_2020"]).year, "year"),
+            T(", Russia's invasion of Ukraine in February "),
+            N("episode_2022_year", pd.Timestamp(analysis.EPISODES["episode_2022"]).year, "year"),
+            T(" and the strikes on Iran in February "),
+            N("episode_2026_year", pd.Timestamp(analysis.EPISODES["episode_2026"]).year, "year"),
+            T(". The headline keeps every month and gives each episode its own term; the other rows are the same equations without those terms and without those months, as the analysis ran them. Nothing is chosen from among them."),
+        ],
+    }
+
+
+def _endogeneity_segments() -> list[Mapping[str, Any]]:
+    return [
+        T("Runs move cracks: more runs put more product on the water and weaken the crack, so the margin these equations treat as a cause is partly an effect of runs. That biases every response on this page toward zero, and lagging the margin by one to three months removes only the same month part of it. Read each coefficient as a lower bound in absolute value: an interval that includes zero says this sample cannot see the response, not that there is none."),
+    ]
+
+
+def _fit_line(fit: analysis.HockeyStick, low: float, high: float) -> list[list[float | None]]:
+    xs = sorted({float(low), float(min(max(fit.threshold, low), high)), float(high)})
+    ys = analysis._kink_design(np.asarray(xs), fit.threshold) @ np.array([fit.level, -fit.slope_below])
+    return [[_num(x), _num(y)] for x, y in zip(xs, ys)]
+
+
+def _runs_threshold(inputs: Inputs) -> Mapping[str, Any]:
+    th, wo = inputs.threshold, inputs.threshold_without_stretch
+    sample = analysis.threshold_sample(inputs.frame)
+    stretch = {m for m in th.months_below if th.longest_run_first <= m <= th.longest_run_last}
+    below = set(th.months_below)
+    rows = []
+    for _, r in sample.iterrows():
+        month = _stamp(r["date"])
+        rows.append([month, _num(r["margin_mean_lagged"]), _num(r["utilisation_pct"]), month[:7] in stretch, month[:7] in below])
+    first_stretch = th.longest_run_first + "-01"
+    last_stretch = th.longest_run_last + "-01"
+
+    def fit_row(fit_id: str, label: str, result: analysis.ThresholdResult) -> Mapping[str, Any]:
+        return {
+            "id": fit_id,
+            "label": label,
+            "style": "dashed" if fit_id == "every_month" else "dotted",
+            "kink_usd_bbl": _num(result.point.threshold),
+            "level_percent": _num(result.point.level),
+            "slope_below": _num(result.point.slope_below),
+            "months": int(result.nobs),
+            "months_below": len(result.months_below),
+            "kink_r2": _num(result.point.r2),
+            "line_r2": _num(result.linear_r2),
+            "regressor_low_usd_bbl": _num(result.regressor_min),
+            "regressor_high_usd_bbl": _num(result.regressor_max),
+            "ci_low_usd_bbl": _num(result.ci_low),
+            "ci_high_usd_bbl": _num(result.ci_high),
+            "identified": bool(result.identified),
+            "line": _fit_line(result.point, result.regressor_min, result.regressor_max),
+        }
+
+    grid = np.asarray(th.grid, dtype=float)
+    return {
+        "columns": ["date", "margin_lagged_usd_bbl", "utilisation_percent", "in_stretch", "below_kink"],
+        "rows": rows,
+        "fits": [
+            fit_row("every_month", "Every month", th),
+            fit_row("without_stretch", "Without that stretch", wo),
+        ],
+        "interval": {
+            "low_usd_bbl": _num(th.ci_low),
+            "high_usd_bbl": _num(th.ci_high),
+            "search_low_usd_bbl": _num(grid[0]),
+            "search_high_usd_bbl": _num(grid[-1]),
+            "reaches_search_edge": bool(th.ci_high >= grid[-1] - float(grid[1] - grid[0]) or th.ci_low <= grid[0] + float(grid[1] - grid[0])),
+            "trimmed": False,
+        },
+        "stretch": {
+            "first_month": first_stretch,
+            "last_month": last_stretch,
+            "months_in_stretch": int(th.longest_run_below),
+            "months_below": len(th.months_below),
+        },
+        "heading_segments": [T("No run cut level is marked, because none is identified.")],
+        "stretch_segments": [
+            N("months_below", len(th.months_below), "count"),
+            T(" of the "),
+            N("months", th.nobs, "count"),
+            T(" months sit below the kink fitted on every month, at "),
+            N("kink_usd_bbl", th.point.threshold, "usd_bbl"),
+            T(" $/bbl, and "),
+            N("months_in_stretch", th.longest_run_below, "count"),
+            T(" of those "),
+            N("months_below", len(th.months_below), "count"),
+            T(" are one unbroken stretch, "),
+            D("stretch_first_month", first_stretch),
+            T(" to "),
+            D("stretch_last_month", last_stretch),
+            T(", drawn as squares. So the kink is estimated from one episode. Fitted again without that stretch, the kink moves to "),
+            N("kink_without_usd_bbl", wo.point.threshold, "usd_bbl"),
+            T(" $/bbl and the slope below it goes from "),
+            N("slope_below", th.point.slope_below, "slope", signed=True),
+            T(" to "),
+            N("slope_below_without", wo.point.slope_below, "slope", signed=True),
+            T(" percentage points per $/bbl: below the kink, runs rise as the margin falls, the opposite of a run cut."),
+        ],
+        "interval_segments": [
+            T("The shaded span is the "),
+            N("interval_level_percent", 95, "count"),
+            T(" percent block bootstrap interval of the kink fitted on every month, "),
+            N("ci_low_usd_bbl", th.ci_low, "usd_bbl"),
+            T(" to "),
+            N("ci_high_usd_bbl", th.ci_high, "usd_bbl"),
+            T(" $/bbl, from "),
+            N("bootstrap_replications", th.replications, "count"),
+            T(" replications. The search ran from "),
+            N("search_low_usd_bbl", grid[0], "usd_bbl"),
+            T(" to "),
+            N("search_high_usd_bbl", grid[-1], "usd_bbl"),
+            T(" $/bbl, and the interval runs to that edge, so the span is drawn to the edge and not trimmed: the sample cannot see where the interval ends."),
+        ],
+        "desc_segments": [
+            T("Scatter of utilisation, in percent of capacity, against the margin at the average US refinery's gas use averaged over the three previous months, "),
+            N("months", th.nobs, "count"),
+            T(" months. Hollow circles are months outside "),
+            D("stretch_first_month", first_stretch),
+            T(" to "),
+            D("stretch_last_month", last_stretch),
+            T(", filled squares the "),
+            N("months_in_stretch", th.longest_run_below, "count"),
+            T(" months inside it. A dashed line is the kink fitted on every month, at "),
+            N("kink_usd_bbl", th.point.threshold, "usd_bbl"),
+            T(" $/bbl; a dotted line the kink fitted without the stretch, at "),
+            N("kink_without_usd_bbl", wo.point.threshold, "usd_bbl"),
+            T(" $/bbl, sloping the other way below it. A span marks the interval "),
+            N("ci_low_usd_bbl", th.ci_low, "usd_bbl"),
+            T(" to "),
+            N("ci_high_usd_bbl", th.ci_high, "usd_bbl"),
+            T(" $/bbl, reaching the edge of the range searched. Every point is in the table under the chart."),
+        ],
+    }
+
+
+def _runs_race(inputs: Inputs) -> Mapping[str, Any]:
+    hf = inputs.horse_frame
+    equations = []
+    all_pairs: list[analysis.LossDifferential] = []
+    gasoil_vs_margin: list[analysis.LossDifferential] = []
+    for eq_id, dependent, label in RUNS_EQUATIONS:
+        results = inputs.horse_race(dependent)
+        pairs = [analysis.loss_differential(results[i], results[j]) for i in range(len(results)) for j in range(i + 1, len(results))]
+        all_pairs += pairs
+        gasoil_vs_margin += [p for p in pairs if p.first == "horse A"]
+        long_run = analysis.gasoil_long_sample(dependent, frame=hf)
+        first = results[0]
+        episodes_out = analysis.episode_mask(pd.DatetimeIndex(first.oos.dates))
+        horses = []
+        for r in results:
+            horse = {
+                "key": r.horse.key,
+                "name": r.horse.name,
+                "substitution": bool(r.horse.substitution),
+                "coefficient": _num(r.model.sum_b),
+                "se": _num(r.model.sum_b_se),
+                "t": _num(r.model.sum_b_t),
+                "r2": _num(r.model.regression.r2),
+                "oos_rmse": _num(r.oos.rmse),
+            }
+            if r.horse.substitution:
+                horse["substitution_segments"] = [
+                    T("A substitution. The ministry's margin is already net of the ministry's gas, so a margin after that gas would be horse B again; this is that margin re-priced at the average US refinery's gas use of "),
+                    N("study_intensity_mmbtu_per_bbl", config.GAS_INTENSITY_MMBTU_PER_BBL, "mmbtu_per_bbl"),
+                    T(" MMBtu/bbl instead of the ministry's "),
+                    N("ministry_intensity_mmbtu_per_bbl", config.DGEC_EMBEDDED_GAS_INTENSITY_MMBTU_PER_BBL, "mmbtu_per_bbl"),
+                    T(" MMBtu/bbl."),
+                ]
+            horses.append(horse)
+        equations.append({
+            "id": eq_id,
+            "label": label,
+            "dependent": dependent,
+            "coefficient_unit": RUNS_UNITS[dependent]["coefficient"],
+            "rmse_unit": RUNS_UNITS[dependent]["rmse"],
+            "first_month": first.model.first_month,
+            "last_month": first.model.last_month,
+            "months": int(first.model.regression.nobs),
+            "newey_west_lag": int(first.model.regression.nw_lag),
+            "forecasts": int(first.oos.n_forecasts),
+            "first_forecast": first.oos.first_forecast,
+            "last_forecast": first.oos.last_forecast,
+            "mean_benchmark_rmse": _num(first.oos.mean_benchmark_rmse),
+            "horses": horses,
+            "long_sample": {
+                "first_month": long_run.model.first_month,
+                "last_month": long_run.model.last_month,
+                "months": int(long_run.model.regression.nobs),
+                "coefficient": _num(long_run.model.sum_b),
+                "se": _num(long_run.model.sum_b_se),
+                "t": _num(long_run.model.sum_b_t),
+                "r2": _num(long_run.model.regression.r2),
+                "oos_rmse": _num(long_run.oos.rmse),
+                "in_the_race": False,
+            },
+            "pairs": [
+                {
+                    "first": p.first[-1],
+                    "second": p.second[-1],
+                    "observed_gap_percent": _num(p.observed_gap_pct),
+                    "detectable_gap_percent": _num(p.detectable_gap_pct),
+                    "power": _num(p.power_at_observed),
+                    "forecasts_for_target_power": _num(p.forecasts_for_target_power),
+                    "t": _num(p.t),
+                    "distinguishable": bool(p.distinguishable),
+                }
+                for p in pairs
+            ],
+            "caption_segments": [
+                T("On "),
+                W("label", label.lower()),
+                T(", "),
+                D("first_month", first.model.first_month),
+                T(" to "),
+                D("last_month", first.model.last_month),
+                T(", the same "),
+                N("months", first.model.regression.nobs, "count"),
+                T(" months for every horse. Coefficients are the sum of the three lags in "),
+                W("coefficient_unit", RUNS_UNITS[dependent]["coefficient"]),
+                T("; errors in "),
+                W("rmse_unit", RUNS_UNITS[dependent]["rmse"]),
+                T(", over "),
+                N("forecasts", first.oos.n_forecasts, "count"),
+                T(" one month ahead forecasts from "),
+                D("first_forecast", first.oos.first_forecast),
+                T(" to "),
+                D("last_forecast", first.oos.last_forecast),
+                T(". The rows keep the order A, B, C and are not ranked by any column."),
+            ],
+            "oos_segments": [
+                T("Every one of those "),
+                N("forecasts", first.oos.n_forecasts, "count"),
+                T(" forecast months falls in or after the pandemic, and "),
+                N("forecasts_in_episodes", int(episodes_out["any_episode"].sum()), "count"),
+                T(" of them inside an episode: the out of sample period is the crisis period, not a quiet holdout."),
+            ],
+        })
+
+    size = 0.05
+    powers = [p.power_at_observed for p in all_pairs]
+    distinguishable = any(p.distinguishable for p in all_pairs)
+    needed = [p.forecasts_for_target_power for p in all_pairs if math.isfinite(p.forecasts_for_target_power)]
+    sentence = [
+        T("This sample cannot tell the horses apart. None of the "),
+        N("pairs", len(all_pairs), "count"),
+        T(" comparisons of forecast errors, three on each equation, is distinguishable from zero, and against the gaps they found those tests have power of "),
+        N("power_low", min(powers), "power"),
+        T(" to "),
+        N("power_high", max(powers), "power"),
+        T(", where a test's size of "),
+        N("size", size, "power"),
+        T(" is the rate at which it reports a difference that does not exist. Reaching "),
+        N("power_target_percent", 100 * analysis.POWER_TARGET, "count"),
+        T(" percent power would take "),
+        N("forecasts_needed_low", min(needed), "count"),
+        T(" to "),
+        N("forecasts_needed_high", max(needed), "count"),
+        T(" monthly forecasts, against the "),
+        N("forecasts", equations[0]["forecasts"], "count"),
+        T(" this sample has. That is not a finding that the three are equal."),
+    ] if not distinguishable else [
+        T("At least one of the "),
+        N("pairs", len(all_pairs), "count"),
+        T(" comparisons of forecast errors is distinguishable from zero; the power table says which."),
+    ]
+    a_pairs_distinguishable = any(p.distinguishable for p in gasoil_vs_margin)
+    a_powers = [p.power_at_observed for p in gasoil_vs_margin]
+    honest = [
+        T("Did the margin beat the raw gasoil crack? It did not beat it and was not beaten by it: on both equations neither margin's forecast errors differ distinguishably from the crack's, and those "),
+        N("gasoil_pairs", len(gasoil_vs_margin), "count"),
+        T(" tests had power of only "),
+        N("gasoil_power_low", min(a_powers), "power"),
+        T(" to "),
+        N("gasoil_power_high", max(a_powers), "power"),
+        T(". The reason is power, not equality."),
+    ] if not a_pairs_distinguishable else [
+        T("On at least one equation the margin and the raw gasoil crack forecast runs distinguishably differently; the power table says which pair."),
+    ]
+
+    margin = analysis.margin_frame()
+    before = margin.loc[margin["date"] < "2022-01-01", "gas_wedge_usd_bbl"].mean()
+    during = margin.loc[(margin["date"] >= "2022-01-01") & (margin["date"] < "2023-01-01"), "gas_wedge_usd_bbl"].mean()
+    th = inputs.threshold
+    gives = [
+        [
+            T("What the margin gives that the raw crack cannot, none of it a claim about forecasting. A level with a sign: a crack is one product against crude, while the margin is what the whole barrel earns after crude and the ministry's gas, so only the margin can be set against a cash cost and only its sign means a refinery loses on the barrel."),
+        ],
+        [
+            T("The gas wedge: the extra gas a refinery burning the average US refinery's share pays over the ministry's own allowance averaged "),
+            N("wedge_before_usd_bbl", before, "usd_bbl"),
+            T(" $/bbl before "),
+            N("wedge_year", 2022, "year"),
+            T(" and "),
+            N("wedge_during_usd_bbl", during, "usd_bbl"),
+            T(" $/bbl during "),
+            N("wedge_year", 2022, "year"),
+            T(". The same gasoil crack was worth that much less to a refinery that buys its gas, and no crack shows it."),
+        ],
+        [
+            T("A threshold in dollars: the question of how far today is from the level at which runs get cut can only be asked of a margin. On this sample that level is "),
+            W("verdict", "unidentified" if not th.identified else "identified"),
+            T(", so the page asks it and prints no answer."),
+        ],
+    ]
+    return {
+        "size": size,
+        "power_domain": [0, 1],
+        "power_target_percent": int(round(100 * analysis.POWER_TARGET)),
+        "any_distinguishable": bool(distinguishable),
+        "sentence_segments": sentence,
+        "margin_against_crack_segments": honest,
+        "equations": equations,
+        "gives": gives,
+        "wedge_before_2022_usd_bbl": _num(before),
+        "wedge_2022_usd_bbl": _num(during),
+    }
+
+
+def _runs_instrument(inputs: Inputs) -> Mapping[str, Any]:
+    hf = inputs.horse_frame
+    results = [(eq_id, label, analysis.gas_instrument(frame=hf, dependent=dependent)) for eq_id, dependent, label in RUNS_EQUATIONS]
+    ladder = []
+    for i, rung in enumerate(results[0][2].control_ladder):
+        for _, _, iv in results[1:]:
+            other = iv.control_ladder[i]
+            if abs(float(other["f"]) - float(rung["f"])) > 1e-9:
+                raise ValueError("the first stage differs between equations at %r, and it contains no dependent" % rung["controls"])
+        ladder.append({
+            "controls": str(rung["controls"]),
+            "coefficient": _num(rung["coefficient"]),
+            "se": _num(rung["se"]),
+            "f": _num(rung["f"]),
+            "partial_r2": _num(rung["partial_r2"]),
+            "used_by": [label for _, label, iv in results if iv.control_ladder[i]["is_the_spec_equation"]],
+        })
+    iv0 = results[0][2]
+    by_label = {r["controls"]: r for r in ladder}
+    spec_f = [iv.first_stage_f for _, _, iv in results]
+    equations = [
+        {
+            "id": eq_id,
+            "label": label,
+            "coefficient_unit": RUNS_UNITS[iv.dependent]["coefficient"],
+            "months": int(iv.nobs),
+            "first_stage_f": _num(iv.first_stage_f),
+            "weak": bool(iv.weak),
+            "ols_coefficient": _num(iv.ols_coefficient),
+            "ols_se": _num(iv.ols_se),
+            "iv_coefficient": _num(iv.iv_coefficient),
+            "iv_se": _num(iv.iv_se),
+            "iv_used": False,
+        }
+        for eq_id, label, iv in results
+    ]
+    constant = ladder[0]
+    months_rung = ladder[1]
+    episodes_rung = ladder[2]
+    trend_rung = ladder[3]
+    return {
+        "f_bar": _num(analysis.FIRST_STAGE_F_BAR),
+        "ladder": ladder,
+        "equations": equations,
+        "sentence_segments": [
+            T("The gas price was tried as an instrument for the margin, because gas moved on pipeline cuts in "),
+            N("year_2022", 2022, "year"),
+            T(" and LNG disruption in "),
+            N("year_2026", 2026, "year"),
+            T(" rather than on NWE runs. Its first stage F is a property of the control set, not of the instrument: "),
+            N("f_constant", constant["f"], "f_stat"),
+            T(" with a constant alone, "),
+            N("f_months", months_rung["f"], "f_stat"),
+            T(" with the month terms, "),
+            N("f_episodes", episodes_rung["f"], "f_stat"),
+            T(" once the episode terms go in, and "),
+            N("f_trend", trend_rung["f"], "f_stat"),
+            T(" with a trend as well."),
+        ],
+        "diagnosis_segments": [
+            T("The episode terms take the F down because the instrument's variation is the "),
+            N("year_2022", 2022, "year"),
+            T(" shock they remove: the gas price's standard deviation is "),
+            N("sd_in_episodes", iv0.instrument_sd_in_episodes, "usd_mmbtu"),
+            T(" $/MMBtu inside the "),
+            N("months_in_episodes", iv0.instrument_months_in_episodes, "count"),
+            T(" episode months against "),
+            N("sd_outside_episodes", iv0.instrument_sd_outside_episodes, "usd_mmbtu"),
+            T(" outside them, and its highest three month mean, "),
+            N("instrument_max", iv0.instrument_max, "usd_mmbtu"),
+            T(" $/MMBtu, is the one that ends before "),
+            D("instrument_max_month", iv0.instrument_max_month + "-01"),
+            T(". Under each equation's own controls the F is "),
+            N("f_spec_low", min(spec_f), "f_stat"),
+            T(" or "),
+            N("f_spec_high", max(spec_f), "f_stat"),
+            T(", below the bar of "),
+            N("f_bar", analysis.FIRST_STAGE_F_BAR, "count"),
+            T(", and it is below it on a constant and the month terms too. The instrument is weak, the two stage estimates are printed and not used, and the headline stays ordinary least squares with the bias toward zero unremoved."),
+        ],
+        "exclusion_segments": [
+            T("It would also need gas to reach runs only through the margin, which this study doubts: gas is a hydrogen feedstock as well as a fuel, and a gas shock arrives inside a wider energy shock that moves product demand at the same time."),
+        ],
+    }
+
+
+def _runs_break(inputs: Inputs) -> Mapping[str, Any]:
+    br = inputs.break_result
+    entry = inputs.entry(analysis.INTAKE_SERIES)
+    pre = [[r["date"], _num(r["residual"])] for _, r in br.pre_fit.iterrows()]
+    post = []
+    for _, r in br.residuals.iterrows():
+        provisional, word = _status_word(entry, str(r["date"]))
+        post.append([str(r["date"]), _num(r["residual"]), provisional])
+    start_2022 = pd.Timestamp(analysis.EPISODES["episode_2022"])
+    end_2022 = start_2022 + pd.DateOffset(months=analysis.EPISODE_MONTHS - 1)
+    below = int((br.residuals["residual"] < 0).sum())
+    return {
+        "columns_pre": ["date", "residual_pp"],
+        "columns_post": ["date", "residual_pp", "provisional"],
+        "pre_rows": pre,
+        "post_rows": post,
+        "pre_residual_sd_pp": _num(br.pre_residual_sd),
+        "n_pre": int(br.n_pre),
+        "n_post": int(br.n_post),
+        "min_post_months": int(br.min_post_months),
+        "tested": not br.too_short,
+        "brackets": [
+            {
+                "id": "episode_2022",
+                "start": _stamp(start_2022),
+                "end": _stamp(end_2022),
+                "label_segments": [T("The "), N("year_2022", 2022, "year"), T(" episode")],
+            },
+            {
+                "id": "after_break",
+                "start": str(br.residuals["date"].iloc[0]),
+                "end": str(br.residuals["date"].iloc[-1]),
+                "label_segments": [T("After the break, not a test")],
+            },
+        ],
+        "heading_segments": [
+            T("Runs against what the margin implies, fitted on the months before March "),
+            N("year_2026", 2026, "year"),
+            T(", with no episode terms"),
+        ],
+        "fit_segments": [
+            T("The equation is the planned model without its episode terms, fitted on the "),
+            N("n_pre", br.n_pre, "count"),
+            T(" months to February "),
+            N("year_2026", 2026, "year"),
+            T(" only; a term for the episode after the strikes would absorb exactly the gap this looks for. Its in sample residuals have a standard deviation of "),
+            N("pre_residual_sd_pp", br.pre_residual_sd, "pp"),
+            T(" percentage points. The "),
+            N("n_post", br.n_post, "count"),
+            T(" months after the break are predicted out of sample, and runs sat below the prediction in "),
+            N("months_below", below, "count"),
+            T(" of them."),
+        ],
+        "explanations_segments": [
+            T("Three explanations could put runs below what the margin implies after the strikes, and "),
+            N("n_post", br.n_post, "count"),
+            T(" months cannot separate them, so this study sets them out and does not choose."),
+        ],
+        "explanations": [dict(x) for x in RUNS_EXPLANATIONS],
+        "events": [dict(e) for e in br.explanations],
+        "reopens_segments": [
+            T("The question can be asked when "),
+            N("min_post_months", br.min_post_months, "count"),
+            T(" months after the break have runs data."),
+        ],
+        "desc_segments": [
+            T("Residuals of utilisation against the margin, in percentage points of capacity, monthly from "),
+            D("first_month", pre[0][0]),
+            T(". A solid line for the "),
+            N("n_pre", br.n_pre, "count"),
+            T(" months the equation was fitted on, a separate dashed line with squares for the "),
+            N("n_post", br.n_post, "count"),
+            T(" months after the break, never joined. Brackets under the axis mark the "),
+            N("year_2022", 2022, "year"),
+            T(" episode and the months after the break. No mark is highlighted, because no verdict exists. Every value is in the table under the chart."),
+        ],
+    }
+
+
+def runs(inputs: Inputs) -> Mapping[str, Any]:
+    view = inputs.view
+    payload = _header("runs", view.runs_data_date, "the Runs and crude demand view: runs and imports against the lagged margin, the run cut threshold scatter, the response with and without the episodes, the horse race with its power, the instrument, and the 2026 residuals")
+    payload["conventions"] = _conventions()
+    cap, fall = inputs.capacity_model, inputs.fallback_model
+    payload["parts"] = [dict(p) for p in RUNS_PARTS]
+    payload["title_segments"] = [
+        T("A "),
+        N("move_usd_bbl", cap.translation.move_usd_bbl, "count"),
+        T(" $/bbl rise in the margin after gas is worth "),
+        N("kb_d", cap.translation.kb_d, "kb_d", signed=True),
+        T(" kb/d of NWE crude runs on the planned model, interval "),
+        N("kb_d_low", cap.translation.kb_d_low, "kb_d", signed=True),
+        T(" to "),
+        N("kb_d_high", cap.translation.kb_d_high, "kb_d", signed=True),
+        T(", and "),
+        N("fallback_kb_d", fall.translation.kb_d, "kb_d", signed=True),
+        T(" kb/d on crude intake with a trend, interval "),
+        N("fallback_kb_d_low", fall.translation.kb_d_low, "kb_d", signed=True),
+        T(" to "),
+        N("fallback_kb_d_high", fall.translation.kb_d_high, "kb_d", signed=True),
+        T("."),
+    ]
+    payload["series"] = _runs_series(inputs)
+    payload["episodes"] = _episode_rows(inputs)
+    payload["endogeneity_segments"] = _endogeneity_segments()
+    payload["threshold"] = _runs_threshold(inputs)
+    payload["race"] = _runs_race(inputs)
+    payload["instrument"] = _runs_instrument(inputs)
+    payload["break"] = _runs_break(inputs)
+    return payload
+
+
+# ---------------------------------------------------------------------------
 # Build, serialise, write, check
 # ---------------------------------------------------------------------------
 
@@ -2602,6 +3328,7 @@ ARTIFACTS: Mapping[str, Callable[[Inputs], Mapping[str, Any]]] = {
     "provenance": provenance,
     "history": history,
     "model": model,
+    "runs": runs,
 }
 
 

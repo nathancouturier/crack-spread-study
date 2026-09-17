@@ -65,7 +65,7 @@ def _segment_lists(value, where=""):
 
 
 def test_the_artifact_set_is_the_five_the_now_view_reads_and_history(built):
-    assert list(built) == ["now", "cracks", "margin-stack", "run-economics", "provenance", "history", "model"]
+    assert list(built) == ["now", "cracks", "margin-stack", "run-economics", "provenance", "history", "model", "runs"]
     for name, payload in built.items():
         assert payload["schema_version"] == export.SCHEMA_VERSION
         assert payload["artifact"] == name
@@ -614,3 +614,115 @@ def test_history_ranges_follow_one_rule(built):
     assert ranges["weekly"]["start"] == "2022-07-01"
     for words in ("winner", "dead heat", " tie "):
         assert words not in export.serialise(built["history"]).lower()
+
+
+# ---------------------------------------------------------------------------
+# runs.json, docs/design.md Part 8.3
+# ---------------------------------------------------------------------------
+
+BANNED_RACE_WORDS = ("winner", " wins", "best", " tie", "dead heat", "equivalent")
+
+
+def test_runs_title_is_the_response_on_both_equations_planned_first(built, inputs):
+    r = built["runs"]
+    fields = [s.get("field") for s in r["title_segments"] if "field" in s]
+    assert fields.index("kb_d") < fields.index("fallback_kb_d")
+    values = {s["field"]: s["value"] for s in r["title_segments"] if "field" in s}
+    assert values["kb_d"] == pytest.approx(59.3, abs=0.05)
+    assert values["kb_d_low"] == pytest.approx(-290.1, abs=0.05) and values["kb_d_high"] == pytest.approx(408.8, abs=0.05)
+    assert values["fallback_kb_d"] == pytest.approx(230.4, abs=0.05)
+    assert values["fallback_kb_d_low"] == pytest.approx(5.1, abs=0.05) and values["fallback_kb_d_high"] == pytest.approx(455.6, abs=0.05)
+
+
+def test_runs_scatter_is_the_threshold_sample_and_both_fits(built, inputs):
+    t = built["runs"]["threshold"]
+    th, wo = inputs.threshold, inputs.threshold_without_stretch
+    assert len(t["rows"]) == th.nobs
+    assert sum(1 for row in t["rows"] if row[4]) == len(th.months_below) == 24
+    assert sum(1 for row in t["rows"] if row[3]) == th.longest_run_below == 21
+    stretch = [row[0] for row in t["rows"] if row[3]]
+    assert stretch[0] == "2020-07-01" and stretch[-1] == "2022-03-01"
+    every, without = t["fits"]
+    assert every["kink_usd_bbl"] == pytest.approx(2.28, abs=0.005)
+    assert every["slope_below"] == pytest.approx(3.88, abs=0.005)
+    assert without["kink_usd_bbl"] == pytest.approx(9.87, abs=0.005)
+    assert without["slope_below"] == pytest.approx(-0.50, abs=0.005)
+    assert without["months"] == wo.nobs == 114
+    # The line is the fitted kink evaluated at its own vertices.
+    for fit, result in ((every, th), (without, wo)):
+        for x, y in fit["line"]:
+            expected = result.point.level - result.point.slope_below * max(result.point.threshold - x, 0.0)
+            assert y == pytest.approx(expected, abs=1e-5)
+    interval = t["interval"]
+    assert interval["high_usd_bbl"] == interval["search_high_usd_bbl"], "the interval reaches the edge and is not trimmed"
+    assert interval["reaches_search_edge"] is True and interval["trimmed"] is False
+
+
+def test_threshold_sample_is_what_the_threshold_searched(inputs):
+    sample = analysis.threshold_sample(inputs.frame)
+    th = inputs.threshold
+    assert len(sample) == th.nobs
+    assert sample["margin_mean_lagged"].min() == pytest.approx(th.regressor_min)
+    assert sample["margin_mean_lagged"].max() == pytest.approx(th.regressor_max)
+
+
+def test_runs_race_cannot_tell_the_horses_apart_and_ranks_nothing(built):
+    race = built["runs"]["race"]
+    assert race["any_distinguishable"] is False
+    powers = [p["power"] for eq in race["equations"] for p in eq["pairs"]]
+    assert len(powers) == 6
+    assert min(powers) == pytest.approx(0.050, abs=5e-4) and max(powers) == pytest.approx(0.121, abs=5e-4)
+    assert race["size"] == 0.05
+    for eq in race["equations"]:
+        assert [h["key"] for h in eq["horses"]] == ["A", "B", "C"], "fixed order, never sorted"
+        assert [h["substitution"] for h in eq["horses"]] == [False, False, True]
+        assert eq["long_sample"]["in_the_race"] is False and eq["long_sample"]["months"] == 288
+        assert all(not p["distinguishable"] for p in eq["pairs"])
+    said = _words(race["sentence_segments"]).lower()
+    assert "cannot tell the horses apart" in said
+    honest = _words(race["margin_against_crack_segments"])
+    assert "did not beat it and was not beaten by it" in honest and "power, not equality" in honest
+    text = export.serialise(built["runs"]).lower()
+    for word in BANNED_RACE_WORDS:
+        assert word not in text, word
+
+
+def test_runs_instrument_ladder_is_a_property_of_the_control_set(built):
+    inst = built["runs"]["instrument"]
+    fs = [rung["f"] for rung in inst["ladder"]]
+    assert fs == pytest.approx([5.753, 5.802, 0.215, 0.070], abs=5e-4)
+    assert inst["ladder"][2]["used_by"] == ["Utilisation of capacity, the planned model"]
+    assert inst["ladder"][3]["used_by"] == ["Crude intake with a trend"]
+    assert all(eq["weak"] and eq["iv_used"] is False for eq in inst["equations"])
+    assert "shock they remove" in _words(inst["diagnosis_segments"])
+
+
+def test_runs_response_is_a_lower_bound_and_imports_are_arithmetic(built):
+    r = built["runs"]
+    assert "lower bound in absolute value" in _words(r["endogeneity_segments"])
+    imports = r["series"]["imports"]
+    assert imports["is_a_model"] is False
+    assert imports["mean_imports_over_intake"] == pytest.approx(0.954, abs=5e-4)
+    assert "not a second model" in _words(imports["segments"])
+    variants = [(row["model"], row["variant"]) for row in r["episodes"]["rows"]]
+    assert variants[0] == ("capacity", "episodes") and ("intake_trend", "dropped") in variants
+
+
+def test_runs_series_starts_with_the_margin_and_says_so(built):
+    s = built["runs"]["series"]
+    assert s["first"] == "2015-01-01" and s["last"] == "2026-06-01"
+    assert s["capacity_steps"] == ["2017-01-01", "2026-01-01"]
+    assert s["rows"][-1][-1] is True, "June 2026 is provisional"
+    last_year = [row for row in s["rows"] if row[0].startswith("2026")]
+    assert all(row[6] == 2025 and row[7] is False for row in last_year), "2026 uses the 2025 year end capacity, no assumption"
+    words = _words(s["sample_segments"])
+    assert "starts in" in words and "nothing extends the margin back" in words
+
+
+def test_runs_break_is_not_tested_and_never_joined(built, inputs):
+    b = built["runs"]["break"]
+    assert b["tested"] is False and b["n_post"] == 4 and b["min_post_months"] == 12
+    assert b["pre_rows"][-1][0] == "2026-02-01" and b["post_rows"][0][0] == "2026-03-01"
+    assert len(b["pre_rows"]) == inputs.break_result.n_pre
+    assert [x["id"] for x in b["brackets"]] == ["episode_2022", "after_break"]
+    assert b["brackets"][0]["start"] == "2022-02-01" and b["brackets"][0]["end"] == "2023-01-01"

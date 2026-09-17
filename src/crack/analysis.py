@@ -1690,6 +1690,39 @@ def _moving_block_indices(
     return np.concatenate([np.arange(s, s + block) for s in starts])[:nobs]
 
 
+def threshold_sample(
+    frame: pd.DataFrame,
+    regressor: str = MARGIN_STUDY_INTENSITY,
+    lags: Sequence[int] = THRESHOLD_LAGS,
+) -> pd.DataFrame:
+    """The months the run cut threshold is searched on, with their regressor.
+
+    The frame with margin_mean_lagged, the mean of the regressor over the lags,
+    and only the months that have utilisation and every lag. run_cut_threshold
+    searches exactly these rows (before any month is dropped), and the Runs view
+    draws exactly these points, so the scatter and the fit cannot describe two
+    samples. Factored out of run_cut_threshold unchanged at Gate 5.
+    """
+    work = frame.copy()
+    lag_columns = []
+    for k in lags:
+        name = "_lag%d" % k
+        work[name] = work[regressor].shift(k)
+        lag_columns.append(name)
+    # EVERY LAG OR NO ROW. pandas.mean skips missing values, so without the
+    # min_count the first two months of the sample would carry a one month and a
+    # two month mean under the same column name as the three month one, and the
+    # threshold would be estimated partly on a different variable. It also makes
+    # this sample identical to the one SPEC.md section 6.1's equation runs on,
+    # which is the point of using the same window.
+    work["margin_mean_lagged"] = work[lag_columns].mean(axis=1).where(
+        work[lag_columns].notna().all(axis=1)
+    )
+    return work.dropna(subset=["utilisation_pct", "margin_mean_lagged"]).reset_index(
+        drop=True
+    )
+
+
 def run_cut_threshold(
     frame: pd.DataFrame | None = None,
     regressor: str = MARGIN_STUDY_INTENSITY,
@@ -1743,24 +1776,7 @@ def run_cut_threshold(
     """
     if frame is None:
         frame = analysis_frame(basis_beyond, CAPACITY_STEP)
-    work = frame.copy()
-    lag_columns = []
-    for k in lags:
-        name = "_lag%d" % k
-        work[name] = work[regressor].shift(k)
-        lag_columns.append(name)
-    # EVERY LAG OR NO ROW. pandas.mean skips missing values, so without the
-    # min_count the first two months of the sample would carry a one month and a
-    # two month mean under the same column name as the three month one, and the
-    # threshold would be estimated partly on a different variable. It also makes
-    # this sample identical to the one SPEC.md section 6.1's equation runs on,
-    # which is the point of using the same window.
-    work["margin_mean_lagged"] = work[lag_columns].mean(axis=1).where(
-        work[lag_columns].notna().all(axis=1)
-    )
-    work = work.dropna(subset=["utilisation_pct", "margin_mean_lagged"]).reset_index(
-        drop=True
-    )
+    work = threshold_sample(frame, regressor, lags)
     # THE LAGS ARE BUILT BEFORE ANY MONTH IS REMOVED, for the same reason
     # _build_response builds them on the full frame: dropping a month first would
     # silently hand the month after it a lag from three months earlier than the
@@ -3120,6 +3136,11 @@ class BreakResult:
     margin_last_month: str
     capacity_assumed_post: int
     explanations: tuple[Mapping[str, str], ...]
+    #: The in sample residuals of the same fit, one row per month before the
+    #: break: date, actual, fitted, residual. Carried so the Runs view can draw
+    #: the four post break residuals beside the months the equation was fitted
+    #: on, including 2022, without fitting anything a second time. Gate 5.
+    pre_fit: pd.DataFrame = field(default_factory=pd.DataFrame)
 
 
 def _events(ids: Sequence[str]) -> tuple[Mapping[str, str], ...]:
@@ -3301,6 +3322,14 @@ def break_2026(
         margin_last_month=str(pd.Timestamp(margin_last).date()),
         capacity_assumed_post=int(
             post["capacity_assumed"].sum() if "capacity_assumed" in post else 0
+        ),
+        pre_fit=pd.DataFrame(
+            {
+                "date": [str(pd.Timestamp(d).date()) for d in fit.dates],
+                "actual": np.asarray(fit.y, dtype=float),
+                "fitted": np.asarray(fit.fitted, dtype=float),
+                "residual": np.asarray(fit.resid, dtype=float),
+            }
         ),
         explanations=_events(
             (

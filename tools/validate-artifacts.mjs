@@ -285,6 +285,90 @@ const REQUIRED = {
     "presets[].scale.low_usd_bbl",
     "presets[].scale.high_usd_bbl",
   ],
+  // docs/design.md Part 8.3, the Runs and crude demand view.
+  runs: [
+    "conventions.decimals",
+    "title_segments",
+    "parts[].id",
+    "parts[].label",
+    "series.first",
+    "series.last",
+    "series.columns",
+    "series.rows",
+    "series.capacity_steps",
+    "series.sample_segments",
+    "series.capacity_segments",
+    "series.imports.mean_imports_over_intake",
+    "series.imports.is_a_model",
+    "series.imports.segments",
+    "episodes.rows[].model",
+    "episodes.rows[].variant",
+    "episodes.rows[].kb_d",
+    "episodes.rows[].kb_d_low",
+    "episodes.rows[].kb_d_high",
+    "episodes.rows[].t",
+    "episodes.rows[].months",
+    "episodes.segments",
+    "endogeneity_segments",
+    "threshold.columns",
+    "threshold.rows",
+    "threshold.fits[].id",
+    "threshold.fits[].kink_usd_bbl",
+    "threshold.fits[].slope_below",
+    "threshold.fits[].line",
+    "threshold.interval.low_usd_bbl",
+    "threshold.interval.high_usd_bbl",
+    "threshold.interval.search_low_usd_bbl",
+    "threshold.interval.search_high_usd_bbl",
+    "threshold.interval.reaches_search_edge",
+    "threshold.stretch.months_in_stretch",
+    "threshold.stretch.months_below",
+    "threshold.heading_segments",
+    "threshold.stretch_segments",
+    "threshold.interval_segments",
+    "threshold.desc_segments",
+    "race.size",
+    "race.power_domain",
+    "race.any_distinguishable",
+    "race.sentence_segments",
+    "race.margin_against_crack_segments",
+    "race.equations[].id",
+    "race.equations[].label",
+    "race.equations[].horses[].key",
+    "race.equations[].horses[].coefficient",
+    "race.equations[].horses[].se",
+    "race.equations[].horses[].t",
+    "race.equations[].horses[].r2",
+    "race.equations[].horses[].oos_rmse",
+    "race.equations[].long_sample.coefficient",
+    "race.equations[].long_sample.in_the_race",
+    "race.equations[].pairs[].first",
+    "race.equations[].pairs[].second",
+    "race.equations[].pairs[].observed_gap_percent",
+    "race.equations[].pairs[].detectable_gap_percent",
+    "race.equations[].pairs[].power",
+    "race.equations[].pairs[].forecasts_for_target_power",
+    "race.equations[].caption_segments",
+    "race.gives",
+    "instrument.f_bar",
+    "instrument.ladder[].controls",
+    "instrument.ladder[].f",
+    "instrument.ladder[].used_by",
+    "instrument.equations[].first_stage_f",
+    "instrument.equations[].iv_used",
+    "instrument.sentence_segments",
+    "instrument.diagnosis_segments",
+    "break.pre_rows",
+    "break.post_rows",
+    "break.tested",
+    "break.brackets[].start",
+    "break.brackets[].end",
+    "break.brackets[].label_segments",
+    "break.fit_segments",
+    "break.explanations[].name",
+    "break.events[].source_url",
+    "break.desc_segments",
+  ],
 };
 
 const failures = [];
@@ -596,6 +680,40 @@ if (loaded.model) {
       if (preset.reconstructed && !/^Reconstructed/.test(words)) problems.push(preset.id + " is reconstructed and its note does not open with the word");
       if (preset.scale.low_usd_bbl > 0 || preset.scale.high_usd_bbl < 0) problems.push(preset.id + " scale does not hold zero");
     }
+    return problems;
+  });
+}
+
+if (loaded.runs && loaded["run-economics"]) {
+  // Part 8.3: nothing ranked, nothing identified, nothing trimmed, nothing
+  // joined, and the view agrees with the Now section it shares a table with.
+  check("runs.json ranks no horse, marks no threshold, trims no interval and joins no break", () => {
+    const problems = [];
+    const r = loaded.runs;
+    const re = loaded["run-economics"];
+    const text = JSON.stringify(r).toLowerCase();
+    for (const word of ["winner", " wins", "best", " tie", "dead heat", "equivalent"]) if (text.includes(word)) problems.push("the banned word " + JSON.stringify(word.trim()));
+    for (const eq of r.race.equations) {
+      if (eq.horses.map((h) => h.key).join("") !== "ABC") problems.push(eq.id + " horses are not in the order A, B, C");
+      if (eq.long_sample.in_the_race !== false) problems.push(eq.id + " puts horse A's long sample in the race");
+      const c = eq.horses.find((h) => h.key === "C");
+      if (!c || c.substitution !== true || !c.substitution_segments) problems.push(eq.id + " horse C is not labelled a substitution");
+      for (const pair of eq.pairs) if (pair.distinguishable !== r.race.any_distinguishable && pair.distinguishable) problems.push(eq.id + " pair " + pair.first + pair.second + " is distinguishable and the race says none is");
+    }
+    if (re.threshold.threshold_identified === false) {
+      const iv = r.threshold.interval;
+      if (iv.reaches_search_edge && iv.high_usd_bbl !== iv.search_high_usd_bbl && iv.low_usd_bbl !== iv.search_low_usd_bbl) problems.push("the interval is said to reach the edge and stops short of both");
+      if (iv.trimmed !== false) problems.push("the interval is trimmed");
+      for (const [where, list] of segmentLists(r)) list.forEach((segment, i) => { if (segment && segment.field === "headroom_usd_bbl") problems.push(where + "[" + i + "] prints a headroom"); });
+    }
+    const cap = re.response.models.find((m) => m.id === "capacity");
+    const title = Object.fromEntries(r.title_segments.filter((s) => "field" in s).map((s) => [s.field, s.value]));
+    if (!cap || Math.abs(title.kb_d - cap.kb_d) > SUM_TOLERANCE) problems.push("the view's title and the Now section disagree on the planned model's kb/d");
+    const pre = r.break.pre_rows;
+    const post = r.break.post_rows;
+    if (!pre.length || !post.length || !(post[0][0] > pre[pre.length - 1][0])) problems.push("the post break residuals do not start after the fitted months");
+    if (r.break.tested !== re.utilisation.tested) problems.push("the view and the Now section disagree on whether 2026 is tested");
+    for (const row of r.series.rows) if (row[1] === 0 && row[3] === null) problems.push("a missing month drawn as zero at " + row[0]);
     return problems;
   });
 }
