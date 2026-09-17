@@ -750,3 +750,172 @@ p.block,
 .lane[data-rows] { height: calc(var(--rows) * 28px + 4px); }
 .lane__marker[data-row],
 .lane__break[data-row] { bottom: calc(var(--row) * 28px); }
+
+/* -------------------------------------------------------------- model --- */
+
+/* docs/design.md Part 8.2. The form and the results side by side from 1024px,
+ * so the TTF field and the top of the waterfall share a screen; stacked below.
+ * No card, no fieldset frame, no tinted group: groups are space and a sentence
+ * heading (S9). The field background is the one use of --bg-elev, Part 3
+ * section 7. Figures in a field are the body face with tabular figures, never
+ * JetBrains Mono, because a field is not a table figure. */
+.calc-lead { margin-top: 12px; }
+.calc-presets { margin-top: 20px; }
+.calc-preset { display: inline-flex; flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; }
+.calc-preset__status {
+  font-weight: 400;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.calc-preset[aria-pressed="true"] .calc-preset__status { text-decoration: none; }
+.calc-preset-notes {
+  margin-top: 8px;
+  max-width: 64em;
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.calc-preset-notes p + p { margin-top: 6px; }
+.calc-note { color: var(--text-muted); }
+
+.calc-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 40px;
+  margin-top: 28px;
+}
+@media (min-width: 1024px) {
+  .calc-layout { grid-template-columns: minmax(16rem, 24rem) minmax(0, 1fr); align-items: start; }
+}
+
+.calc-form { min-width: 0; }
+.calc-group {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.calc-group + .calc-group { margin-top: 32px; }
+.calc-group__heading {
+  padding: 0;
+  font-weight: 500;
+  font-size: var(--fs-body);
+}
+.calc-group__intro {
+  margin-top: 4px;
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.calc-field { margin-top: 16px; }
+.calc-field__label {
+  display: block;
+  font-weight: 500;
+  font-size: var(--fs-body-s);
+}
+.calc-field__input {
+  display: block;
+  width: 100%;
+  max-width: 12rem;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 8px 10px;
+  font-family: var(--ff-body);
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums lining-nums;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+}
+.calc-field__input.is-edited { border-color: var(--text); }
+.calc-field__input[aria-invalid="true"] { border-width: 2px; border-color: var(--text); }
+.calc-field__source,
+.calc-field__note {
+  margin-top: 4px;
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+  max-width: 40em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.calc-field__source { color: var(--text-muted); }
+.calc-field__note { font-weight: 500; }
+.calc-field__note:empty { display: none; }
+.calc-put-back-row { margin-top: 24px; }
+
+.calc-results { min-width: 0; }
+.calc-summary {
+  font-size: var(--fs-body-l);
+  line-height: 1.45;
+  max-width: 40em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.calc-summary__figure { font-weight: 600; }
+.calc-conditions { margin-top: 12px; }
+.calc-condition {
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+  max-width: 48em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.calc-condition + .calc-condition { margin-top: 6px; }
+.calc-scale { margin-top: 16px; }
+.calc-block { margin-top: 8px; }
+.calc-heading {
+  margin-top: 36px;
+  font-weight: 500;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+}
+.calc-intro {
+  margin-top: 6px;
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+  max-width: 48em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.calc-run { margin-top: 12px; }
+
+/* The word in a bar cell with nothing to draw: "Not priced", "Not computed".
+ * The cell holds no mark then, so the word is never over a plot. */
+.calc-bar-word {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  padding-left: 8px;
+  font-size: var(--fs-meta);
+  color: var(--text);
+  white-space: nowrap;
+}
+.waterfall__bar.has-word > .calc-bar-word { display: flex; }
+
+/* M9: the recompute moves bars in place at --t-fast, position by transform and
+ * length by width. The reduced motion block in layout.css takes it to nothing;
+ * a change of cell size moves them without the tween. */
+.chart--live .live-mark {
+  transition: transform var(--t-fast) var(--ease-out), width var(--t-fast) var(--ease-out);
+}
+.chart--live.is-still .live-mark { transition: none; }
+
+.calc-breakevens { width: 100%; max-width: 40rem; }
+.calc-breakevens th,
+.calc-breakevens td { vertical-align: top; }
+.table th.calc-breakeven__name { font-weight: 400; }
+.calc-breakeven__line { display: block; font-size: var(--fs-body-s); }
+.calc-breakeven__detail {
+  display: block;
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.calc-breakeven__detail:empty { display: none; }
+.calc-breakeven__unit { font-size: var(--fs-meta); white-space: nowrap; }
+.table td.calc-verdict {
+  font-weight: 500;
+  font-size: var(--fs-meta);
+  text-align: right;
+  white-space: nowrap;
+}

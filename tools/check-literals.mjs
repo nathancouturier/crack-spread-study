@@ -137,12 +137,17 @@ const DECLARED = {
     // The mantissas of decimal notation, a fact about how numbers are written
     // and not about the market. Three literals: 2, 5 and 10.
     { snippet: "Object.freeze([1, 2, 5, 10])", count: 3, why: "the 1, 2, 5, 10 tick ladder" },
-    { snippet: "Math.pow(10, Math.floor(Math.log10(rough)))", count: 1, why: "the power of ten under a tick step" },
+    { snippet: "Math.pow(10, Math.floor(Math.log10(value)))", count: 1, why: "the power of ten under a tick step" },
   ],
   "src/dom.js": [
     // How many cut off columns a table caption names one by one before it says
     // "the columns from X on". A wording decision about a list, not a value.
     { snippet: "const MOST_NAMED = 4;", count: 1, why: "columns named one by one in a caption, Part 7 C13" },
+  ],
+  "src/model.js": [
+    // A share of one written as a percent, for the sentence saying how much of
+    // the barrel the model margin covers. A unit conversion, docs/design.md Part 8.2.
+    { snippet: "const PERCENT_PER_ONE = 100;", count: 1, why: "fraction to percent" },
   ],
   "src/engine.js": [
     // An ISO calendar date, YYYY-MM-DD, is ten characters. A format fact used

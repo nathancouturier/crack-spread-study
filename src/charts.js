@@ -183,11 +183,16 @@ export function linear(domainLow, domainHigh, rangeLow, rangeHigh) {
   return map;
 }
 
+/** The power of ten at or below a positive value. */
+function powerOfTenBelow(value) {
+  return Math.pow(10, Math.floor(Math.log10(value)));
+}
+
 /** The round step for about `count` intervals across a span. */
 export function tickStep(low, high, count) {
   if (!(high > low) || !(count > 0)) return 0;
   const rough = (high - low) / count;
-  const magnitude = Math.pow(10, Math.floor(Math.log10(rough)));
+  const magnitude = powerOfTenBelow(rough);
   for (const rung of TICK_LADDER) {
     if (magnitude * rung >= rough) return magnitude * rung;
   }
@@ -665,6 +670,103 @@ export function waterfallBar({ width, height, row, previous, isLast, scale }) {
     svg.appendChild(svgEl("rect", { class: "mark-series-fill", x: px(from), y: px(barTop), width: px(to - from), height: g.BAR_THICKNESS }));
   }
   return svg;
+}
+
+/** The smallest value on the 1, 2, 5, 10 ladder at or above a positive value,
+ *  for a scale that widens when an edit runs past it (docs/design.md Part 8.2,
+ *  M10). Zero or less gives zero. */
+export function ladderCeil(value) {
+  if (!(value > 0)) return 0;
+  const magnitude = powerOfTenBelow(value);
+  for (const rung of TICK_LADDER) {
+    if (magnitude * rung >= value) return magnitude * rung;
+  }
+  return magnitude * TICK_LADDER[TICK_LADDER.length - 1];
+}
+
+/** A waterfall bar that is built once and moved in place, for the Model view's
+ *  live recompute (docs/design.md Part 8.2, M9). The same marks as waterfallBar,
+ *  the same geometry, but every mark exists from the start and set() moves it:
+ *  horizontal position through a CSS transform and width through the CSS width
+ *  property, both of which styles/components.css tweens at --t-fast and the
+ *  reduced motion block takes to nothing. A step narrower than SMALL_STEP
+ *  swaps to its circle at once, because a rectangle cannot tween into a circle.
+ *
+ *  set({ width, height, row, previous, isLast, scale, still })
+ *    row       { kind: "step" | "total", start_usd_bbl, end_usd_bbl, accent }
+ *              or null for a row with nothing to draw, which hides every mark
+ *    previous  the row above, for the connector, or null
+ *    still     true to move without the tween, for a change of cell size */
+export function liveWaterfallBar() {
+  const g = GEOMETRY;
+  const svg = hiddenSvg({ width: 0, height: 0, className: "chart--bar chart--live" });
+  const zero = svg.appendChild(svgEl("line", { class: "mark-context live-mark", x1: 0, x2: 0, y1: 0 }));
+  const above = svg.appendChild(svgEl("line", { class: "mark-connector live-mark", x1: 0, x2: 0, y1: 0 }));
+  const below = svg.appendChild(svgEl("line", { class: "mark-connector live-mark", x1: 0, x2: 0 }));
+  const fill = svg.appendChild(svgEl("rect", { class: "mark-series-fill live-mark", x: 0 }));
+  const outline = svg.appendChild(svgEl("rect", { class: "mark-negative live-mark", x: 0 }));
+  const dot = svg.appendChild(svgEl("circle", { class: "mark-series-fill live-mark", cx: 0, r: g.SMALL_RADIUS }));
+  const show = (node, on) => node.setAttribute("display", on ? "inline" : "none");
+  const at = (node, x) => { node.style.transform = "translate(" + px(x) + "px, 0px)"; };
+  const wide = (node, w) => {
+    node.setAttribute("width", px(w));
+    node.style.width = px(w) + "px";
+  };
+
+  function set({ width, height, row, previous, isLast, scale, still }) {
+    svg.classList.toggle("is-still", still === true);
+    svg.setAttribute("width", width);
+    svg.setAttribute("height", height);
+    svg.setAttribute("viewBox", [0, 0, width, height].join(" "));
+    const inset = g.SMALL_RADIUS + g.RING_WIDTH;
+    const xOf = linear(scale[0], scale[1], inset, Math.max(width - inset, inset));
+    const barTop = (height - g.BAR_THICKNESS) * g.HALF;
+    const barBottom = barTop + g.BAR_THICKNESS;
+    const drawable = row && present(row.start_usd_bbl) && present(row.end_usd_bbl);
+
+    show(zero, drawable);
+    zero.setAttribute("y2", height);
+    at(zero, xOf(0));
+
+    const hasAbove = drawable && previous && present(previous.end_usd_bbl);
+    show(above, hasAbove);
+    above.setAttribute("y2", px(barTop));
+    if (hasAbove) at(above, xOf(previous.end_usd_bbl));
+
+    show(below, drawable && !isLast);
+    below.setAttribute("y1", px(barBottom));
+    below.setAttribute("y2", height);
+    if (drawable) at(below, xOf(row.end_usd_bbl));
+
+    if (!drawable) {
+      [fill, outline, dot].forEach((node) => show(node, false));
+      return;
+    }
+    const from = xOf(Math.min(row.start_usd_bbl, row.end_usd_bbl));
+    const to = xOf(Math.max(row.start_usd_bbl, row.end_usd_bbl));
+    const negative = row.end_usd_bbl < row.start_usd_bbl;
+    const isTotal = row.kind === "total";
+    const small = !isTotal && to - from < g.SMALL_STEP;
+
+    fill.setAttribute("class", (isTotal && row.accent ? "mark-accent-bar" : "mark-series-fill") + " live-mark");
+    show(fill, !small && (isTotal || !negative));
+    fill.setAttribute("y", px(barTop));
+    fill.setAttribute("height", g.BAR_THICKNESS);
+    at(fill, from);
+    wide(fill, Math.max(to - from, 0));
+
+    show(outline, !small && !isTotal && negative);
+    outline.setAttribute("y", px(barTop + g.OUTLINE_INSET));
+    outline.setAttribute("height", px(g.BAR_THICKNESS - g.OUTLINE_INSET - g.OUTLINE_INSET));
+    at(outline, from + g.OUTLINE_INSET);
+    wide(outline, Math.max(to - from - g.OUTLINE_INSET - g.OUTLINE_INSET, 0));
+
+    show(dot, small);
+    dot.setAttribute("class", (negative ? "mark-negative" : "mark-series-fill") + " live-mark");
+    dot.setAttribute("cy", px((barTop + barBottom) * g.HALF));
+    at(dot, xOf(row.end_usd_bbl));
+  }
+  return { svg, set };
 }
 
 /* ============================================================== strips === */
