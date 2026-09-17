@@ -365,7 +365,8 @@ byte identical to the preserved copy, sha256
 `a364a4fae11c95e9173f3314f2932077f67949cd9d8c3d05b8f8d29c042c13b9`, 2,406,779
 bytes, which is the size recon 02 section 2.2 recorded.
 
-`python -m crack.sources.dgec_note --collect` fetches the one note that is online
+`make note` (`python scripts/note.py`, which puts `src` on the path and runs
+`crack.sources.dgec_note --collect`) fetches the one note that is online
 and adds it to the corpus if it is not already there, reading the href off the
 landing page and never constructing it from a date. It never overwrites a file
 already held. **Run it weekly.** Every week it is not run is a week that is gone:

@@ -670,7 +670,7 @@ rows covering nine distinct filenames, recon 02 section 2.5, and none of them is
 recent. So the corpus grows only when someone runs
 
 ```
-python -m crack.sources.dgec_note --collect
+python scripts/note.py
 ```
 
 which is two polite requests and adds the current note if it is not already held.
@@ -1037,7 +1037,7 @@ from provisional to final, and the only monthly home of Jet and Fioul lourd TBTS
 as DGEC $/t quotations. Seven months is not a series.
 
 **To close it:** nothing closes the history. Running
-`python -m crack.sources.dgec_note --collect` every week is what stops it from
+`make note` every week is what stops it from
 staying at seven.
 
 ---

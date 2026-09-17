@@ -1699,7 +1699,7 @@ _CORPUS_NOTE = (
     "The PDFs are not committed. The ministry publishes one note at a time and "
     "deletes the previous one, so this corpus cannot be rebuilt from the web and "
     "the only way the series grows is prospective collection: run "
-    "'python -m crack.sources.dgec_note --collect' weekly. READ fetched_at "
+    "'python scripts/note.py' (make note) weekly. READ fetched_at "
     "CAREFULLY: it is when this run read the preserved documents, not when the "
     "documents were downloaded, and last_date is the honest end of the data."
 )

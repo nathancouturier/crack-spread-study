@@ -317,8 +317,8 @@ guess.
 * **The ministry deletes each weekly note when the next appears.** There is no
   archive on the site and no URL pattern to walk backwards: before mid 2024 the
   note lived at one constant URL that was overwritten weekly. Ten survive, one
-  live and nine from the Internet Archive. `python -m crack.sources.dgec_note
-  --collect` must run **every week**. A week missed is gone.
+  live and nine from the Internet Archive. `make note`, which is
+  `python scripts/note.py`, must run **every week**. A week missed is gone.
 * The SPEC.md section 5.6 URL
   `https://www.ecologie.gouv.fr/sites/default/files/documents/NPG-2026.08.28_0.pdf`
   **404s today**, for exactly that reason. It is not rot, it is the deletion.

@@ -21,7 +21,7 @@ help:
 	@echo "  make data-jobs     list the refresh jobs and the series each one owns, run nothing"
 	@echo "                     equivalent: python scripts/refresh.py --list"
 	@echo "  make note          collect this week's DGEC note before the ministry deletes it"
-	@echo "                     equivalent: python -m crack.sources.dgec_note --collect"
+	@echo "                     equivalent: python scripts/note.py"
 	@echo "  make fixtures      re-export the engine parity fixture from src/crack/engine.py"
 	@echo "                     equivalent: python scripts/gen_fixtures.py"
 	@echo "  make build         write the site facing artifacts data/*.json from the committed caches"
@@ -91,8 +91,14 @@ data-jobs:
 # weekly note at a time and deletes the previous one when the next appears.
 # There is no archive. A week that is missed is gone for good, and with it two
 # calibration anchors for the chart reconstruction. Two requests. Run it weekly.
+#
+# scripts/note.py puts src on the path and runs crack.sources.dgec_note with
+# --collect. The target used to call `python -m crack.sources.dgec_note
+# --collect` directly, which fails on a fresh clone with "No module named
+# crack": only pytest puts src on the path, and nothing is installed. After it,
+# run make data-offline and make build, then read the diff.
 note:
-	python -m crack.sources.dgec_note --collect
+	python scripts/note.py
 
 # Re-export data/fixtures/engine-cases.json from src/crack/engine.py. The
 # fixture is COMMITTED, not built at gate time, so that an engine change shows

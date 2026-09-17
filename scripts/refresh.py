@@ -178,7 +178,7 @@ MANUAL_STEPS: tuple[dict[str, Any], ...] = (
             "fitted on the printed figures of the same note."
         ),
         "how": (
-            "python -m crack.sources.dgec_note --collect , two requests, which saves the note "
+            "make note, or python scripts/note.py, two requests, which saves the note "
             "that is online now into data/private/dgec_notes and then rebuilds the three "
             "weekly series. Put it on a weekly schedule and check it ran."
         ),
