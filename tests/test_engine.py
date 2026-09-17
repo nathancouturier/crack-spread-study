@@ -965,7 +965,7 @@ def test_the_engine_reproduces_the_gate_1_weekly_crack_cache_exactly():
 
     data/cache/dgec_note_reconstructed_cracks_weekly.csv was computed by the
     Gate 1 adapter. crack.series.dgec_weekly_cracks recomputes it from the
-    quotation cache through crack.engine. Agreement to 1e-9 over all 219 weeks
+    quotation cache through crack.engine. Agreement to 1e-9 over every week
     says the engine implements the same definition the committed data was built
     on, including the 7.5 Brent factor, and disagreement would mean one of the
     two has drifted.
@@ -974,12 +974,14 @@ def test_the_engine_reproduces_the_gate_1_weekly_crack_cache_exactly():
 
     recomputed = series.dgec_weekly_cracks(recompute=True)
     committed = series.dgec_weekly_cracks(recompute=False)
-    assert len(recomputed) == len(committed) == 219
+    # Every week, however many the committed cache holds: it grows by one with
+    # each weekly note collected, so the count is read, not pinned.
+    assert len(recomputed) == len(committed) > 0
 
     merged = recomputed.merge(
         committed, on="date", suffixes=("_engine", "_cache")
     )
-    assert len(merged) == 219
+    assert len(merged) == len(committed)
     for column in ("crack_gasoil_usd_bbl", "crack_gasoline_usd_bbl", "brent_usd_bbl"):
         difference = (
             merged["%s_engine" % column] - merged["%s_cache" % column]

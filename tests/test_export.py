@@ -27,6 +27,7 @@ from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from crack import analysis, config, export, series
@@ -256,8 +257,14 @@ def test_the_three_data_dates_stay_apart_each_with_its_own_flag(built):
     by = {d["id"]: d for d in dates}
     assert by["margins"]["date"] == "2026-08-01" and by["margins"]["status_word"] == "final"
     assert by["margins"]["provisional"] is False
-    assert by["margins"]["quotations_vintage"] == "2026-09-04"
-    assert by["weekly_cracks"]["date"] == "2026-09-04"
+    # The note that last printed the margin month's prices, and the last week of
+    # the reconstruction, both move with every weekly note collected, so both
+    # are read from the committed caches rather than pinned.
+    printed = series.load("dgec_note_printed_monthly")
+    row = printed[pd.to_datetime(printed["date"]) == pd.Timestamp(by["margins"]["date"])]
+    assert by["margins"]["quotations_vintage"] == str(row["vintage"].iloc[0])
+    weekly = series.load("dgec_note_reconstructed_weekly")
+    assert by["weekly_cracks"]["date"] == str(pd.to_datetime(weekly["date"]).max().date())
     assert by["weekly_cracks"]["status_word"] == "reconstructed"
     assert by["runs"]["date"] == "2026-06-01"
     assert by["runs"]["provisional"] is True and by["runs"]["status_word"] == "provisional"

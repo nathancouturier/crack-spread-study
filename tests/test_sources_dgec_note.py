@@ -91,6 +91,60 @@ def corpus():
 
 NOTE_FILES = sorted(p.name for p in _paths())
 
+#: The ten notes recon 05 measured. The corpus GROWS by one note a week, and
+#: every note collected after these ten changes the stitched series: one more
+#: Friday, one more printed week, one more single geometry week at the newest
+#: end. So the tests split in two, on purpose:
+#:   * a test that reproduces a recon 05 MEASUREMENT (168 note pair comparisons,
+#:     the 219 row demonstration output, the 25, 7 and 187 coverage table) runs
+#:     on these ten notes only, because that measurement was made on them and a
+#:     later note cannot make it truer or falser;
+#:   * a test about the LIVE series (its length, its last Friday, how many of
+#:     its newest weeks lack a second chart) reads its expectation from the
+#:     corpus that is present, the latest vintage and the calendar, and never
+#:     from a literal that the next note would make wrong.
+RECON_05_NOTES = frozenset({
+    "wb_NPG-2024.06.21.pdf",
+    "wb_NPG-2024.07.12.pdf",
+    "wb_NPG-2024.08.30.pdf",
+    "wb_NPG-2025.01.17.pdf",
+    "wb_NPG-2025.12.19.pdf",
+    "wb_NPG-2026.03.20.pdf",
+    "wb_NPG-2026.03.27.pdf",
+    "wb_NPG-2026.04.03.pdf",
+    "wb_NPG-2026.04.17.pdf",
+    "NPG-2026.09.04.pdf",
+})
+
+#: The first Friday the chart reaches, and the first week of the newest run of
+#: single geometry weeks. Both are facts of the notes recon 05 read: the oldest
+#: chart starts on 2022-07-01, and wb_NPG-2026.04.03 is the last note with a
+#: second geometry, ending 2026-04-24. A later note with a new geometry would
+#: move the second, and test_the_newest_single_geometry_run_starts_where_the_last_second_chart_ends
+#: says so by failing.
+FIRST_FRIDAY = pd.Timestamp("2022-07-01")
+NEWEST_RUN_START = pd.Timestamp("2026-05-01")
+
+
+def _fridays(first: pd.Timestamp, last: pd.Timestamp) -> int:
+    """How many Fridays from first to last inclusive, both Fridays."""
+    return int((last - first).days // 7) + 1
+
+
+@pytest.fixture(scope="module")
+def recon_corpus(corpus):
+    """The ten notes recon 05 measured, and nothing collected since."""
+    missing = sorted(RECON_05_NOTES - set(corpus))
+    if missing:
+        pytest.skip("recon 05's notes are not all present: %s" % ", ".join(missing))
+    return {name: note for name, note in corpus.items() if name in RECON_05_NOTES}
+
+
+@pytest.fixture(scope="module")
+def latest_vintage(corpus):
+    """The newest note's printed date, the last Friday the series can reach."""
+    return pd.Timestamp(max(note.vintage for note in corpus.values()))
+
 #: Ten notes when the corpus is present, so the per note parametrisations below
 #: produce ten cases each. Empty on a fresh checkout, where a parametrised test
 #: with an empty argument list is collected as a single skip.
@@ -167,9 +221,22 @@ def test_the_vintage_is_the_printed_date_not_the_file_name(corpus):
         "wb_NPG-2026.04.03.pdf": date(2026, 4, 3),
         "wb_NPG-2026.04.17.pdf": date(2026, 4, 24),
         "NPG-2026.09.04.pdf": date(2026, 9, 4),
+        "NPG-2026.09.11.pdf": date(2026, 9, 11),
     }
     for name, note in corpus.items():
-        assert note.vintage == expected[name], name
+        # A note collected after this table was written is checked by its file
+        # name, which for a note collected in its own week is its printed date;
+        # the table holds the ones where the two were measured to differ.
+        if name not in expected:
+            stamp = name.replace("wb_", "").replace("NPG-", "").replace(".pdf", "")
+            want = date(*(int(part) for part in stamp.split(".")))
+            assert note.vintage == want, (
+                "%s prints %s, not the date in its name. Add it to the table above "
+                "with the printed date, as recon 02 section 2.4 did for four notes"
+                % (name, note.vintage)
+            )
+        else:
+            assert note.vintage == expected[name], name
         assert note.vintage.weekday() == 4, "%s is not dated a Friday" % name
 
 
@@ -323,13 +390,15 @@ def test_printed_weekly_reproduces_every_value_recon_02_read_by_hand(corpus):
             )
 
 
-def test_the_printed_series_is_eighteen_weeks_and_says_so(corpus):
+def test_the_printed_series_is_eighteen_weeks_and_says_so(recon_corpus):
     """Twenty printed columns, three of them reprints, so eighteen weeks.
 
-    That is the entire published weekly record, and it is the honest number. The
-    reconstruction exists because eighteen observations is not a series.
+    That was the entire published weekly record in the ten notes recon 05 read,
+    and it is the honest number. The reconstruction exists because eighteen
+    observations is not a series. Pinned to those ten notes: each note collected
+    since prints two more weeks, one of them a reprint.
     """
-    frame = build_printed_weekly(list(corpus.values()))
+    frame = build_printed_weekly(list(recon_corpus.values()))
     assert len(frame) == 18
     assert frame["date"].min() == pd.Timestamp("2024-06-21")
     assert frame["date"].max() == pd.Timestamp("2026-09-04")
@@ -341,25 +410,40 @@ def test_the_printed_series_is_eighteen_weeks_and_says_so(corpus):
     }
 
 
+def test_the_printed_series_grows_by_the_notes_collected_since(corpus, recon_corpus, latest_vintage):
+    """Every note prints its own week and the week before. A note collected in
+    the week after the last one reprints one week and adds one, so the printed
+    record ends on the latest note's date and never skips a note's own week."""
+    frame = build_printed_weekly(list(corpus.values()))
+    assert frame["date"].max() == latest_vintage
+    assert frame["date"].is_monotonic_increasing
+    assert not frame["date"].duplicated().any()
+    printed = set(frame["date"])
+    for note in corpus.values():
+        assert pd.Timestamp(note.vintage) in printed, note.file
+    assert len(frame) >= len(build_printed_weekly(list(recon_corpus.values())))
+
+
 def test_where_two_notes_print_the_same_week_they_agree(corpus):
     """A free revision check, and it passes: no reprint moved by a dollar.
 
-    Two pairs of adjacent notes overlap on one printed week each. A disagreement
-    would be a fact about the source worth reporting, not noise to average away,
-    which is why max_disagreement_usd_t is a column rather than a silent mean.
+    Adjacent notes overlap on one printed week each. A disagreement would be a
+    fact about the source worth reporting, not noise to average away, which is
+    why max_disagreement_usd_t is a column rather than a silent mean.
 
-    ONLY THE WEEKS THAT WERE ACTUALLY PRINTED TWICE CARRY A NUMBER. The other 16
+    ONLY THE WEEKS THAT WERE ACTUALLY PRINTED TWICE CARRY A NUMBER. The others
     carry NaN, because a disagreement between one reading and nothing is
     undefined and a 0 there would have said the notes agreed. Gate 1 self audit,
-    finding e.1.
+    finding e.1. The counts are read from the corpus present, because each note
+    collected turns one single print into a reprint.
     """
     frame = build_printed_weekly(list(corpus.values()))
     compared = frame[frame["n_notes"] > 1]
-    assert len(compared) == 2
+    assert len(compared) >= 2
     assert compared["max_disagreement_usd_t"].notna().all()
     assert compared["max_disagreement_usd_t"].max() == 0.0
     alone = frame[frame["n_notes"] == 1]
-    assert len(alone) == 16
+    assert len(alone) + len(compared) == len(frame)
     assert alone["max_disagreement_usd_t"].isna().all(), (
         "a week printed by one note carries a disagreement of %r. A spread over "
         "one reading is undefined, not zero"
@@ -544,8 +628,10 @@ def test_a_month_printed_once_has_no_revision_rather_than_a_zero(printed_monthly
     A revision measured against no earlier print is not a revision of zero, and
     writing 0 would say the ministry printed it twice and did not change it.
     """
+    # How many months were printed once falls as notes are collected, since each
+    # note reprints the months the one before it printed, so it is not pinned.
     once = printed_monthly[printed_monthly["n_prints"] == 1]
-    assert len(once) == 4
+    assert len(once) >= 1
     assert once["max_revision_usd_t"].isna().all()
     assert (~once["revised"].astype(bool)).all()
     more = printed_monthly[printed_monthly["n_prints"] > 1]
@@ -690,12 +776,27 @@ def reconstructed(corpus):
     return build_reconstructed_weekly(list(corpus.values()))
 
 
-def test_the_stitched_series_is_219_consecutive_fridays_with_no_holes(reconstructed):
+@pytest.fixture(scope="module")
+def recon_reconstructed(recon_corpus):
+    """The stitched series from recon 05's ten notes alone."""
+    return build_reconstructed_weekly(list(recon_corpus.values()))
+
+
+def test_the_stitched_series_is_219_consecutive_fridays_with_no_holes(recon_reconstructed):
     """Recon 05 section 12: union 2022-07-01 to 2026-09-04, 219 weeks, zero holes."""
-    frame = reconstructed
+    frame = recon_reconstructed
     assert len(frame) == 219
-    assert frame["date"].min() == pd.Timestamp("2022-07-01")
+    assert frame["date"].min() == FIRST_FRIDAY
     assert frame["date"].max() == pd.Timestamp("2026-09-04")
+
+
+def test_the_live_series_runs_every_friday_to_the_latest_note(reconstructed, latest_vintage):
+    """The same shape on every note collected: consecutive Fridays from the
+    oldest chart's first week to the newest note's own date, no holes."""
+    frame = reconstructed
+    assert frame["date"].min() == FIRST_FRIDAY
+    assert frame["date"].max() == latest_vintage
+    assert len(frame) == _fridays(FIRST_FRIDAY, latest_vintage)
     assert (frame["date"].dt.dayofweek == 4).all(), "every week ends on a Friday"
     gaps = frame["date"].diff().dropna().unique()
     assert list(gaps) == [pd.Timedelta(days=7)]
@@ -703,7 +804,7 @@ def test_the_stitched_series_is_219_consecutive_fridays_with_no_holes(reconstruc
         assert frame[column].notna().all(), "%s carries a hole" % column
 
 
-def test_twenty_five_weeks_have_no_cross_check_and_they_are_the_ends(reconstructed):
+def test_twenty_five_weeks_have_no_cross_check_and_they_are_the_ends(recon_reconstructed):
     """Recon 05 section 14 condition 5, carried in the data and not in prose.
 
     Twenty five of the 219 weeks are covered by one chart geometry only, and on
@@ -724,8 +825,11 @@ def test_twenty_five_weeks_have_no_cross_check_and_they_are_the_ends(reconstruct
     six weeks have one covering note and the seventh has two. The corrected split
     matters because it moves nineteen of the twenty five uncorroborated weeks
     into the RECENT end of the sample, which is the end a reader looks at.
+
+    On recon 05's ten notes. Every note collected since with the same geometry as
+    NPG-2026.09.04 adds one week to the newest run; see the live test below.
     """
-    frame = reconstructed
+    frame = recon_reconstructed
     single = frame[~frame["cross_checked"]]
     assert len(single) == 25
     assert list(single["date"].head(6)) == list(frame["date"].head(6))
@@ -753,7 +857,22 @@ def test_twenty_five_weeks_have_no_cross_check_and_they_are_the_ends(reconstruct
     assert int(frame["n_notes"].max()) == 9
 
 
-def test_the_six_oldest_weeks_are_flagged_as_weak_twice_over(reconstructed):
+def test_the_newest_single_geometry_run_starts_where_the_last_second_chart_ends(reconstructed, latest_vintage):
+    """On the live corpus: the six oldest weeks, and every week from 2026-05-01 to
+    the latest note, have one geometry. The newest run grows by a week with each
+    note that shares NPG-2026.09.04's geometry, and it shrinks only when a note
+    with a different geometry is collected, which this test would then report."""
+    frame = reconstructed
+    single = frame[~frame["cross_checked"]]
+    newest = _fridays(NEWEST_RUN_START, latest_vintage)
+    assert len(single) == 6 + newest
+    assert list(single["date"].head(6)) == list(frame["date"].head(6))
+    assert list(single["date"].tail(newest)) == list(frame["date"].tail(newest))
+    assert single["date"].tail(newest).min() == NEWEST_RUN_START
+    assert len(frame[frame["cross_checked"]]) == len(frame) - 6 - newest
+
+
+def test_the_six_oldest_weeks_are_flagged_as_weak_twice_over(reconstructed, latest_vintage):
     """Gate 1 self audit, point 10 item 6, answered in the data.
 
     The audit's point was not that the six oldest weeks were undocumented. It
@@ -767,9 +886,10 @@ def test_the_six_oldest_weeks_are_flagged_as_weak_twice_over(reconstructed):
     frame = reconstructed
     assert set(frame["evidence_class"]) <= set(EVIDENCE_CLASSES)
     counts = frame["evidence_class"].value_counts().to_dict()
+    newest = _fridays(NEWEST_RUN_START, latest_vintage)
     assert counts == {
-        "cross_checked": 194,
-        "single_geometry_newest": 19,
+        "cross_checked": len(frame) - 6 - newest,
+        "single_geometry_newest": newest,
         "single_geometry_oldest": 6,
     }
     oldest = frame[frame["evidence_class"] == "single_geometry_oldest"]
@@ -847,14 +967,17 @@ def test_the_degenerate_pair_counts_once(corpus, reconstructed):
     ).any()
 
 
-def test_overlapping_notes_agree_to_what_recon_05_measured(corpus):
+def test_overlapping_notes_agree_to_what_recon_05_measured(recon_corpus):
     """Recon 05 section 12: mean absolute 0.30 $/t, worst single week 1.68.
 
     This is the genuinely out of sample evidence, because the left hand end of a
     recent note is the right hand end of an older one and no anchor sits there.
-    Pairs are compared only where they share at least five weeks.
+    Pairs are compared only where they share at least five weeks. On the ten
+    notes recon 05 measured: a later note adds pairs, and a later note with the
+    degenerate geometry adds pairs that cannot disagree, which would flatter the
+    mean rather than test it.
     """
-    notes = list(corpus.values())
+    notes = list(recon_corpus.values())
     per_pair = []
     worst = 0.0
     worst_where = None
@@ -898,19 +1021,20 @@ def test_brent_is_the_least_accurate_of_the_four(reconstructed):
     assert "dgec_brent_monthly" in dgec_note.BRENT_IS_WORST
 
 
-def test_the_reconstruction_reproduces_the_recon_05_demonstration(reconstructed):
+def test_the_reconstruction_reproduces_the_recon_05_demonstration(recon_reconstructed):
     """Against recon 05's own 219 row output, which was built independently.
 
     The demonstration csv is rounded to one decimal, so the tolerance is the
     rounding and nothing else. This is the test that says the production adapter
     and the measurement harness are the same arithmetic rather than two
-    plausible ones.
+    plausible ones. It runs on recon 05's ten notes, because the stitched value
+    of a week is a mean over the notes that draw it and a later note moves it.
     """
     demo = base.PRIVATE / "probe" / "cracks" / "reconstructed_weekly_DEMO.csv"
     if not demo.exists():
         pytest.skip("recon 05's demonstration output is not present at %s" % demo)
     expected = pd.read_csv(demo, parse_dates=["week_ending"])
-    joined = reconstructed.merge(expected, left_on="date", right_on="week_ending")
+    joined = recon_reconstructed.merge(expected, left_on="date", right_on="week_ending")
     assert len(joined) == 219
     for mine, theirs in (
         ("eurosuper_usd_t", "Eurosuper_usd_t"),
@@ -1222,7 +1346,7 @@ def test_the_two_series_are_separate_and_declare_different_methods():
 
 
 def test_the_reconstructed_series_carries_its_method_and_its_error_in_the_manifest(
-    sandbox, corpus
+    sandbox, corpus, latest_vintage
 ):
     """Recon 05 section 14 conditions 2 and 3, checked where they have to be true.
 
@@ -1235,7 +1359,7 @@ def test_the_reconstructed_series_carries_its_method_and_its_error_in_the_manife
     entry = adapter.run()
     assert entry["status"] == "ok"
     assert entry["method"] == "reconstructed"
-    assert entry["rows"] == 219
+    assert entry["rows"] == _fridays(FIRST_FRIDAY, latest_vintage)
     assert entry["gaps"] == []
     required = (
         "reconstructed from the vector polyline on page 3 of the DGEC weekly "
@@ -1248,7 +1372,7 @@ def test_the_reconstructed_series_carries_its_method_and_its_error_in_the_manife
     assert "wb_NPG-2026.04.03" in entry["reconstruction"]["degeneracy"]
     assert "Jet" in entry["reconstruction"]["not_reconstructed"]
     assert entry["reconstruction"]["gates"]["max_anchor_residual_usd_t"] == 1.5
-    assert "2026-09-04" in str(entry["vintage"])
+    assert latest_vintage.strftime("%Y-%m-%d") in str(entry["vintage"])
 
     stored = base.manifest_read()["series"]
     names = [e["series"] for e in stored]
@@ -1270,17 +1394,30 @@ def test_the_printed_adapter_declares_an_honest_floor_per_column():
 
 
 def test_the_committed_caches_are_what_the_adapters_built():
-    """The three files in data/cache, checked as committed artefacts."""
-    expected = {
-        "dgec_note_printed_weekly.csv": 18,
-        "dgec_note_reconstructed_weekly.csv": 219,
-        "dgec_note_reconstructed_cracks_weekly.csv": 219,
-    }
-    for name, rows in expected.items():
+    """The three files in data/cache, checked as committed artefacts.
+
+    Runs on a fresh checkout, with no note PDF, so the expected lengths come from
+    the committed files themselves: the reconstruction is every Friday from the
+    oldest chart's first week to its own last date, the cracks file has one row
+    per reconstructed week, and the printed series ends on that same Friday,
+    because the note that drew the newest week also printed it.
+    """
+    frames = {}
+    for name in (
+        "dgec_note_printed_weekly.csv",
+        "dgec_note_reconstructed_weekly.csv",
+        "dgec_note_reconstructed_cracks_weekly.csv",
+    ):
         path = CACHE / name
         if not path.exists():
             pytest.skip("%s is not built yet" % name)
-        frame = pd.read_csv(path, parse_dates=["date"])
-        assert len(frame) == rows, name
+        frames[name] = pd.read_csv(path, parse_dates=["date"])
         raw = path.read_bytes()
         assert b"\r\n" not in raw, "%s must be LF, not CRLF" % name
+    quotes = frames["dgec_note_reconstructed_weekly.csv"]
+    last = quotes["date"].max()
+    assert quotes["date"].min() == FIRST_FRIDAY
+    assert len(quotes) == _fridays(FIRST_FRIDAY, last)
+    assert list(frames["dgec_note_reconstructed_cracks_weekly.csv"]["date"]) == list(quotes["date"])
+    assert frames["dgec_note_printed_weekly.csv"]["date"].max() == last
+    assert len(frames["dgec_note_printed_weekly.csv"]) >= 18

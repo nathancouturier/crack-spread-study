@@ -364,10 +364,15 @@ def test_the_weekly_crack_call_sites_use_three_different_factors_correctly():
     assert got["crack_gasoil_usd_bbl"] == pytest.approx(gasoil, abs=1e-12)
     assert got["crack_gasoline_usd_bbl"] == pytest.approx(gasoline, abs=1e-12)
 
-    # The gasoil factor on the gasoline leg is worth 19 $/bbl on this week, and
-    # it would still be inside the SPEC.md section 5.4 bounds. Size stated.
+    # The gasoil factor on the gasoline leg is worth Eurosuper times
+    # (1/7.45 - 1/8.33), about 0.014 $/bbl per 1 $/t, so over 18 $/bbl on a week
+    # near 1,300 $/t, and it would still be inside the SPEC.md section 5.4
+    # bounds. The size is computed for the week at hand, because the latest week
+    # changes with every note collected.
     on_the_wrong_factor = float(row["eurosuper_usd_t"]) / 7.45 - brent_usd_bbl
-    assert abs(gasoline - on_the_wrong_factor) > 19.0
+    size = float(row["eurosuper_usd_t"]) * (1 / 7.45 - 1 / 8.33)
+    assert abs(gasoline - on_the_wrong_factor) == pytest.approx(size, abs=1e-9)
+    assert size > 5.0, "the wrong factor must move the crack by far more than rounding"
 
 
 def test_the_opec_call_site_converts_nothing_at_all():
