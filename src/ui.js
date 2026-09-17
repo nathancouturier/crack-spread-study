@@ -6,10 +6,10 @@
  *
  * THE ROUTE TABLE IS THE ONLY LIST OF VIEWS. The nav is built from it, the
  * router is told its names, and nothing else in the site names a view. At Gate
- * 4 it holds Now alone: History, Model, Runs and crude demand, Events and
- * Method are not linked, because a link to a view with no data behind it is an
- * orphan UI state, SPEC.md section 11 point 8. Gate 5 adds a view by adding one
- * entry below and one module; router.js does not change.
+ * 5 it holds Now and History. A view that is not built is not linked, because a
+ * link to a view with no data behind it is an orphan UI state, SPEC.md section
+ * 11 point 8. A view is added by adding one entry below and one module;
+ * router.js does not change.
  *
  * Numeric literals: none. tools/check-literals.mjs.
  */
@@ -19,6 +19,7 @@ import * as state from "./state.js";
 import { initTheme } from "./theme.js";
 import { el, clear, loadingMessage, failureMessages } from "./dom.js";
 import * as now from "./now.js";
+import * as historyView from "./history.js";
 
 const SITE_NAME = "NWE crack spread study";
 const DEFAULT_VIEW = "now";
@@ -28,7 +29,13 @@ const DEFAULT_VIEW = "now";
  * render(root, data, route), which returns the element that takes focus. */
 const ROUTES = [
   { name: "now", label: "Now", loading: "the landing sentence and its data dates", module: now },
+  { name: "history", label: "History", loading: "the monthly and weekly cracks and the ministry's margin since the start of the data", module: historyView },
 ];
+
+/* The views SPEC.md section 7.2 names, in nav order, for the unknown address
+ * sentence: the ones not in ROUTES are said to be unpublished, by name, and
+ * never linked. */
+const PLANNED = Object.freeze(["Now", "History", "Model", "Runs and crude demand", "Events", "Method"]);
 
 const byName = new Map(ROUTES.map((route) => [route.name, route]));
 const viewRoot = document.querySelector("#view");
@@ -63,6 +70,13 @@ function focusTitle(target, isFirstLoad) {
   target.focus({ preventScroll: false });
 }
 
+function unpublishedSentence() {
+  const missing = PLANNED.filter((label) => !ROUTES.some((route) => route.label === label));
+  if (!missing.length) return "";
+  const list = missing.length === 1 ? missing[0] : missing.slice(0, -1).join(", ") + " and " + missing[missing.length - 1];
+  return list + (missing.length === 1 ? " is" : " are") + " not published yet, so a link to " + (missing.length === 1 ? "it" : "one of them") + " leads here.";
+}
+
 /* An address that names no view. It says what happened, which address, and
  * what to do, and links only to views that exist. */
 function renderUnknown(route, isFirstLoad) {
@@ -75,7 +89,7 @@ function renderUnknown(route, isFirstLoad) {
   const said = el("p", { class: "state-message" }, [
     "The address ends in " + route.hash + ", and this study has no view called \u201C" + typed + "\u201D. ",
     "The views published so far are: " + names + ". ",
-    "History, the Model, Runs and crude demand, Events and Method are not published yet, so a link to one of them leads here.",
+    unpublishedSentence(),
   ]);
   const todo = el("p", { class: "state-message" }, [
     "Check the address for a typing mistake, or ",

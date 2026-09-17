@@ -64,8 +64,8 @@ def _segment_lists(value, where=""):
 # ---------------------------------------------------------------------------
 
 
-def test_the_artifact_set_is_the_five_the_now_view_reads(built):
-    assert list(built) == ["now", "cracks", "margin-stack", "run-economics", "provenance"]
+def test_the_artifact_set_is_the_five_the_now_view_reads_and_history(built):
+    assert list(built) == ["now", "cracks", "margin-stack", "run-economics", "provenance", "history"]
     for name, payload in built.items():
         assert payload["schema_version"] == export.SCHEMA_VERSION
         assert payload["artifact"] == name
@@ -548,3 +548,69 @@ def test_the_unidentified_paragraph_names_both_kinks(built):
     """M5. The sentence says where the kink is with and without the episode."""
     fields = [s.get("field") for s in built["run-economics"]["threshold"]["segments"]]
     assert "threshold_point_usd_bbl" in fields and "threshold_without_episode_usd_bbl" in fields
+
+
+# ---------------------------------------------------------------------------
+# history.json, docs/design.md Part 8.1
+# ---------------------------------------------------------------------------
+
+
+def test_history_panels_are_three_and_never_spliced(built):
+    h = built["history"]
+    monthly, margin, weekly = h["monthly"], h["margin"], h["weekly"]
+    assert monthly["first"] == str(series.opec_monthly_cracks()["date"].min().date())
+    assert margin["first"] == "2015-01-01", "the official margin starts in 2015-01 and is never extended back"
+    assert weekly["first"] == "2022-07-01"
+    weekly_cache = series.load("dgec_note_reconstructed_weekly")
+    assert weekly["last"] == str(pd.to_datetime(weekly_cache["date"]).max().date())
+    assert len(weekly["rows"]) == len(weekly_cache)
+    # The wedge sits beside the margin: no column with gas taken off it.
+    assert margin["columns"] == ["date", "mbr_usd_bbl", "gas_usd_mmbtu", "gas_wedge_usd_bbl"]
+    stack = series.margin_after_gas_monthly()
+    for row, (_, ref) in zip(margin["rows"], stack.iterrows()):
+        assert row[1] == pytest.approx(ref["mbr_usd_bbl"], abs=1e-6)
+        assert row[3] == pytest.approx(ref["gas_wedge_usd_bbl"], abs=1e-6)
+
+
+def test_history_breaks_are_drawn_only_where_they_exist(built):
+    breaks = built["history"]["breaks"]
+    drawn = {(b["date"], b["line"]) for b in breaks if b["drawn"]}
+    assert ("2015-04-01", "gas_wedge") in drawn
+    assert ("2013-07-01", "gasoline") in drawn and ("2008-06-01", "gasoil") in drawn
+    assert not any(b["line"] in ("mbr", "margin") for b in breaks)
+    method = next(b for b in breaks if b["kind"] == "method_change")
+    assert method["drawn"] is False and method["reason"]
+    capacity = [b["date"] for b in breaks if b["kind"] == "capacity_step"]
+    assert capacity == ["2017-01-01", "2026-01-01"]
+    assert all(not b["drawn"] and "utilisation" in b["reason"] for b in breaks if b["kind"] == "capacity_step")
+    assert "No break is drawn on the margin" in _words(built["history"]["margin"]["no_break_segments"])
+
+
+def test_history_says_the_measured_findings(built):
+    h = built["history"]
+    join = h["weekly"]["join"]
+    assert join["gasoil_mean_gap_usd_bbl"] == pytest.approx(0.92, abs=0.005)
+    assert join["gasoline_mean_gap_usd_bbl"] == pytest.approx(-9.01, abs=0.005)
+    assert h["monthly"]["r2"]["gasoil"] == pytest.approx(0.855, abs=5e-4)
+    assert h["monthly"]["r2"]["gasoline"] == pytest.approx(0.551, abs=5e-4)
+    panels = h["seasonal_monthly"]["panels"]
+    gasoline = panels["gasoline"]["variants"]["all"]
+    gasoil = panels["gasoil"]["variants"]["all"]
+    assert gasoline["holds"] is True and gasoline["t"] == pytest.approx(4.64, abs=0.005)
+    assert gasoil["holds"] is False and gasoil["t"] == pytest.approx(-0.59, abs=0.005)
+    assert (gasoil["seasons_positive"], gasoil["seasons"]) == (10, 24)
+    said = _words(gasoil["sentence_segments"])
+    assert "does not firm into winter" in said and "October" in said and "November" in said
+    assert panels["gasoil"]["episode_years_in_range"] == [2020, 2022]
+    evidence = _words(h["weekly"]["evidence_segments"])
+    assert "does not bound the oldest weeks" in evidence and "least defended" in evidence
+    assert "starts in" in _words(h["sample_segments"])
+
+
+def test_history_ranges_follow_one_rule(built):
+    ranges = {r["id"]: r for r in built["history"]["ranges"]}
+    assert list(ranges) == ["all", "weekly", "2020", "2022", "embargo_2023", "2026"]
+    assert ranges["2022"]["start"] == "2021-08-01" and ranges["2022"]["end"] == "2023-01-31"
+    assert ranges["weekly"]["start"] == "2022-07-01"
+    for words in ("winner", "dead heat", " tie "):
+        assert words not in export.serialise(built["history"]).lower()

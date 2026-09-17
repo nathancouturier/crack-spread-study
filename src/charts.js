@@ -85,6 +85,18 @@ export const GEOMETRY = Object.freeze({
   STRIP_PAD: 8,
   /* The narrow strip figure's model labels sit above each row. */
   STRIP_LABEL: 16,
+  /* A History time plot: 360px tall, 240px below 768px, Part 3 section 2. */
+  TIME_HEIGHT: 360,
+  TIME_HEIGHT_NARROW: 240,
+  NARROW_WIDTH: 768,
+  /* The gas wedge plot under the margin, Part 8.1 H2. */
+  WEDGE_HEIGHT: 120,
+  /* Room right of a time plot for a two line end label. */
+  TIME_PAD_RIGHT: 64,
+  /* Year labels closer than this take every second, fifth or tenth year. */
+  YEAR_SPACING: 48,
+  /* The monthly seasonal profile plot, Part 8.1 H8. */
+  PROFILE_HEIGHT: 240,
 });
 
 /* The mantissas of decimal notation. A fact about how numbers are written, not
@@ -734,5 +746,328 @@ export function intervalFigure({ width, items, domain, title, desc }) {
     zeroRule(group, zero, rowTop, rowTop + g.STRIP_ROW, rowY, item);
   });
   svg.appendChild(group);
+  return svg;
+}
+
+/* ============================================================= history === */
+
+/** Milliseconds for an ISO date, at UTC midnight, or NaN. */
+export function timeOf(iso) {
+  const [year, month, day] = String(iso).split("-").map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+/* Year boundaries across a time domain, every `step` years, as [ms, year]. */
+function yearTicks(t0, t1, step) {
+  const first = new Date(t0).getUTCFullYear();
+  const last = new Date(t1).getUTCFullYear();
+  const out = [];
+  for (let year = first; year <= last; year += 1) {
+    if (year % step !== 0) continue;
+    const t = Date.UTC(year, 0, 1);
+    if (t >= t0 && t <= t1) out.push([t, year]);
+  }
+  return out;
+}
+
+/* Split a line's points at its breaks: a break at time b ends the path before
+ * the first point at or after b. Nothing marks the baseline, because a break is
+ * not missing data; a gap inside a piece is still marked by splitRuns. */
+function splitAtBreaks(points, breaks) {
+  const pieces = [];
+  let current = [];
+  const sorted = [...breaks].sort((a, b) => a - b);
+  let next = 0;
+  for (const point of points) {
+    let crossed = false;
+    while (next < sorted.length && point[0] >= sorted[next]) {
+      crossed = true;
+      next += 1;
+    }
+    if (crossed && current.length) {
+      pieces.push(current);
+      current = [];
+    }
+    current.push(point);
+  }
+  if (current.length) pieces.push(current);
+  return pieces;
+}
+
+/** A History time plot, docs/design.md Part 3 section 2 and Part 8.1.
+ *
+ *  width, height      the svg's width and the plot's height, in CSS px
+ *  xDomain, yDomain   [low, high]: ms for x, the unit for y
+ *  unit               the axis title, for example "$/bbl"
+ *  title, desc        the chart's accessible name and description
+ *  lines              [{ points: [[ms, value]], style: "solid" | "dashed",
+ *                        name, lastText, breaks: [ms], accent }]
+ *  squares            [[ms, value]] printed figures, 5px squares, never joined
+ *  events, breaks     [ms] for the event hairlines and the dashed break rules
+ *  rails              { least: [[ms, ms]], newest: [[ms, ms]], leastLabel,
+ *                       newestLabel }, the evidence rail under the axis, or null
+ *  Returns { svg, xOf, yOf, left, right, top, bottom }. */
+export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, lines, squares, events, breaks, rails, className }) {
+  const g = GEOMETRY;
+  const least = rails ? rails.least.filter(([t0, t1]) => t1 >= xDomain[0] && t0 <= xDomain[1]) : [];
+  const newest = rails ? rails.newest.filter(([t0, t1]) => t1 >= xDomain[0] && t0 <= xDomain[1]) : [];
+  const railCount = (least.length ? 1 : 0) + (newest.length ? 1 : 0);
+  const left = g.PAD_LEFT;
+  const right = Math.max(width - g.TIME_PAD_RIGHT, left + g.TIME_PAD_RIGHT);
+  const top = g.PAD_TOP;
+  const bottom = top + height;
+  const railTop = bottom + g.AXIS_GAP + g.AXIS_BELOW;
+  const total = railTop + railCount * g.RAIL_HEIGHT;
+  const xOf = linear(xDomain[0], xDomain[1], left, right);
+  const yOf = linear(yDomain[0], yDomain[1], bottom, top);
+
+  const svg = imageSvg({ width, height: total, title, desc, className: className ? "chart--time " + className : "chart--time" });
+  const defs = svgEl("defs");
+  svg.appendChild(defs);
+  const frame = svgEl("g", { "aria-hidden": "true" });
+  const rules = svgEl("g", { "aria-hidden": "true" });
+  const marks = svgEl("g", { "aria-hidden": "true" });
+  const labels = svgEl("g", { "aria-hidden": "true" });
+  svg.appendChild(frame);
+  svg.appendChild(rules);
+  svg.appendChild(marks);
+  svg.appendChild(labels);
+
+  // y: gridlines at ticks, zero in the context role, the unit said once.
+  const yStep = tickStep(yDomain[0], yDomain[1], g.Y_TICKS);
+  for (const value of tickValues(yDomain[0], yDomain[1], g.Y_TICKS)) {
+    const y = yOf(value);
+    frame.appendChild(svgEl("line", { class: value === 0 ? "mark-context" : "mark-grid", x1: left, x2: right, y1: px(y), y2: px(y) }));
+    frame.appendChild(svgEl("text", { class: "tick", x: left - g.LABEL_GAP, y: px(y), "text-anchor": "end", "dominant-baseline": "central" }, tickLabel(value, yStep)));
+  }
+  frame.appendChild(svgEl("text", { class: "chart-axis-title", x: left - g.LABEL_GAP, y: top - g.LABEL_GAP - g.TICK_LENGTH, "text-anchor": "end" }, unit));
+
+  // x: a label at each January, on the smallest 1, 2, 5 or 10 year step that
+  // keeps two labels YEAR_SPACING apart.
+  const januaries = yearTicks(xDomain[0], xDomain[1], TICK_LADDER[0]).length;
+  let step = TICK_LADDER[TICK_LADDER.length - 1];
+  for (const rung of TICK_LADDER) {
+    if ((right - left) / Math.max(januaries / rung, TICK_LADDER[0]) >= g.YEAR_SPACING) {
+      step = rung;
+      break;
+    }
+  }
+  const tickY = bottom + g.AXIS_GAP;
+  for (const [t, year] of yearTicks(xDomain[0], xDomain[1], step)) {
+    const x = xOf(t);
+    frame.appendChild(svgEl("line", { class: "mark-context", x1: px(x), x2: px(x), y1: bottom, y2: bottom + g.TICK_LENGTH }));
+    frame.appendChild(svgEl("text", { class: "tick", x: px(x), y: px(tickY), "text-anchor": "middle", "dominant-baseline": "central" }, String(year)));
+  }
+  frame.appendChild(svgEl("line", { class: "mark-context", x1: left, x2: right, y1: bottom, y2: bottom }));
+
+  // Events: a quiet full height hairline and a findable tick at the top edge.
+  for (const t of events || []) {
+    if (t < xDomain[0] || t > xDomain[1]) continue;
+    const x = px(xOf(t));
+    rules.appendChild(svgEl("line", { class: "mark-decor", x1: x, x2: x, y1: top, y2: bottom }));
+    rules.appendChild(svgEl("line", { class: "mark-context", x1: x, x2: x, y1: top - g.TICK_LENGTH, y2: top }));
+  }
+  // Breaks: a dashed rule in the context role; the line itself is split below.
+  for (const t of breaks || []) {
+    if (t < xDomain[0] || t > xDomain[1]) continue;
+    const x = px(xOf(t));
+    rules.appendChild(svgEl("line", { class: "mark-break", x1: x, x2: x, y1: top - g.TICK_LENGTH, y2: bottom }));
+  }
+
+  // Lines, each split at its own breaks and at every gap, never joined.
+  const ends = [];
+  for (const line of lines) {
+    const inRange = line.points.filter(([t]) => t >= xDomain[0] && t <= xDomain[1]);
+    if (!inRange.length) continue;
+    const group = svgEl("g", { class: "series-current series-" + line.style });
+    for (const piece of splitAtBreaks(inRange, line.breaks || [])) {
+      const split = splitRuns(piece);
+      drawRuns(group, split.runs, xOf, yOf, "mark-series", "mark-series-fill");
+      for (const [x0, x1] of split.holes) {
+        group.appendChild(svgEl("line", { class: "mark-gap", x1: px(xOf(x0)), x2: px(xOf(x1)), y1: bottom, y2: bottom }));
+      }
+    }
+    marks.appendChild(group);
+    const last = [...inRange].reverse().find(([, v]) => present(v));
+    if (last) ends.push({ x: xOf(last[0]), pointY: yOf(last[1]), want: yOf(last[1]), line, accent: line.accent === true });
+  }
+
+  const half = g.SQUARE * g.HALF;
+  for (const [t, value] of squares || []) {
+    if (t < xDomain[0] || t > xDomain[1] || !present(value)) continue;
+    marks.appendChild(svgEl("rect", { class: "mark-printed", x: px(xOf(t) - half), y: px(yOf(value) - half), width: g.SQUARE, height: g.SQUARE }));
+  }
+  for (const end of ends) if (end.accent) accentDot(marks, end.x, end.pointY);
+
+  // End labels: the product name, and its last value on a second line, spread
+  // apart with a leader where they crowd, on a --bg halo.
+  const lineHeight = g.LABEL_SPACING;
+  const wanted = spreadPairs(ends.map((end) => ({ end, y: end.pointY })), lineHeight, top + lineHeight * g.HALF, bottom);
+  for (const label of wanted) {
+    const end = label.end;
+    const tx = right + g.LABEL_GAP;
+    if (Math.abs(label.y - end.pointY) >= 1 || Math.abs(end.x - right) >= 1) {
+      labels.appendChild(svgEl("line", { class: "mark-context", x1: px(end.x), y1: px(end.pointY), x2: px(tx - g.TICK_LENGTH), y2: px(label.y) }));
+    }
+    const text = svgEl("text", { class: "chart-end-label halo", x: px(tx), y: px(label.y - lineHeight * g.HALF), "dominant-baseline": "central" });
+    text.appendChild(svgEl("tspan", { x: px(tx) }, end.line.name));
+    text.appendChild(svgEl("tspan", { x: px(tx), dy: lineHeight, class: "chart-end-value" }, end.line.lastText));
+    labels.appendChild(text);
+  }
+
+  // The evidence rail, from the classes the artifact carries, never from dates.
+  if (railCount) {
+    const railGroup = svgEl("g", { "aria-hidden": "true" });
+    svg.appendChild(railGroup);
+    let railY = railTop + g.RAIL_HEIGHT * g.HALF;
+    const clip = (t0, t1) => [Math.max(xOf(Math.max(t0, xDomain[0])), left), Math.min(xOf(Math.min(t1, xDomain[1])), right)];
+    if (least.length) {
+      const patternId = hatchPattern(defs);
+      for (const [t0, t1] of least) {
+        let [x0, x1] = clip(t0, t1);
+        if (x1 - x0 < g.HATCH_MIN_WIDTH) {
+          const mid = (x0 + x1) * g.HALF;
+          x0 = mid - g.HATCH_MIN_WIDTH * g.HALF;
+          x1 = mid + g.HATCH_MIN_WIDTH * g.HALF;
+        }
+        const railHalf = (g.RAIL_HEIGHT - g.TICK_LENGTH) * g.HALF;
+        railGroup.appendChild(svgEl("rect", { class: "mark-hatch-area", x: px(x0), y: px(railY - railHalf), width: px(x1 - x0), height: px(railHalf + railHalf), fill: "url(#" + patternId + ")" }));
+        railGroup.appendChild(svgEl("text", { class: "chart-caption", x: px(x1 + g.LABEL_GAP), y: px(railY), "dominant-baseline": "central" }, rails.leastLabel));
+      }
+      railY += g.RAIL_HEIGHT;
+    }
+    for (const [t0, t1] of newest) {
+      const [x0, x1] = clip(t0, t1);
+      bracket(railGroup, x0, x1, railY, rails.newestLabel);
+    }
+  }
+  return { svg, xOf, yOf, left, right, top, bottom };
+}
+
+/* Two line end labels, each two lines tall, need two line heights between
+ * their centres. Pushed apart symmetrically, then kept inside [low, high]. */
+function spreadPairs(items, lineHeight, low, high) {
+  const sorted = [...items].sort((a, b) => a.y - b.y);
+  const need = lineHeight + lineHeight;
+  for (let pass = 0; pass < sorted.length; pass += 1) {
+    for (let index = 1; index < sorted.length; index += 1) {
+      const gap = sorted[index].y - sorted[index - 1].y;
+      if (gap < need) {
+        const push = (need - gap) * GEOMETRY.HALF;
+        sorted[index - 1].y -= push;
+        sorted[index].y += push;
+      }
+    }
+  }
+  if (sorted.length) {
+    const over = low - sorted[0].y;
+    if (over > 0) for (const item of sorted) item.y += over;
+    const under = sorted[sorted.length - 1].y - high;
+    if (under > 0) for (const item of sorted) item.y -= under;
+  }
+  return sorted;
+}
+
+/** A vertical cursor for a readout, drawn into a time panel's svg and moved by
+ *  the caller. Returns the line element. */
+export function cursorLine(panel) {
+  const line = svgEl("line", { class: "mark-cursor", x1: 0, x2: 0, y1: panel.top, y2: panel.bottom, visibility: "hidden", "aria-hidden": "true" });
+  panel.svg.appendChild(line);
+  return line;
+}
+
+export function moveCursor(line, x) {
+  line.setAttribute("x1", px(x));
+  line.setAttribute("x2", px(x));
+  line.setAttribute("visibility", "visible");
+}
+
+/** The monthly seasonal profile, Part 8.1 H8: every complete year demeaned as
+ *  a decorative hairline, the mean of those years in ink, and the season the
+ *  sentence tests as a bracket under the axis.
+ *
+ *  years       [[year, [twelve values]]]
+ *  mean        [twelve values]
+ *  months      the short month names, from the artifact
+ *  season      the month numbers of the tested season, in order
+ *  words       { title, desc, unit, meanLabel, seasonLabel } */
+export function profilePanel({ width, years, mean, months, season, style, yDomain, words }) {
+  const g = GEOMETRY;
+  const left = g.PAD_LEFT;
+  const right = Math.max(width - g.PAD_RIGHT, left + g.PAD_RIGHT);
+  const top = g.PAD_TOP;
+  const bottom = top + g.PROFILE_HEIGHT;
+  const railTop = bottom + g.AXIS_GAP + g.AXIS_BELOW;
+  const height = railTop + g.RAIL_HEIGHT;
+  const first = TICK_LADDER[0];
+  const last = months.length;
+  const xOf = linear(first, last, left, right);
+  const yOf = linear(yDomain[0], yDomain[1], bottom, top);
+  const halfMonth = (right - left) / Math.max(last - first, first) * g.HALF;
+
+  const svg = imageSvg({ width, height, title: words.title, desc: words.desc, className: "chart--profile" });
+  const frame = svgEl("g", { "aria-hidden": "true" });
+  const marks = svgEl("g", { "aria-hidden": "true" });
+  svg.appendChild(frame);
+  svg.appendChild(marks);
+
+  const yStep = tickStep(yDomain[0], yDomain[1], g.Y_TICKS);
+  for (const value of tickValues(yDomain[0], yDomain[1], g.Y_TICKS)) {
+    const y = yOf(value);
+    frame.appendChild(svgEl("line", { class: value === 0 ? "mark-context" : "mark-grid", x1: left, x2: right, y1: px(y), y2: px(y) }));
+    frame.appendChild(svgEl("text", { class: "tick", x: left - g.LABEL_GAP, y: px(y), "text-anchor": "end", "dominant-baseline": "central" }, tickLabel(value, yStep)));
+  }
+  frame.appendChild(svgEl("text", { class: "chart-axis-title", x: left - g.LABEL_GAP, y: top - g.LABEL_GAP - g.TICK_LENGTH, "text-anchor": "end" }, words.unit));
+  // Month names are words, so they are Figtree captions, not mono ticks. Every
+  // second month is named when the months are closer than half YEAR_SPACING.
+  const tickY = bottom + g.AXIS_GAP;
+  const every = (right - left) / Math.max(last - first, first) < g.YEAR_SPACING * g.HALF ? TICK_LADDER[1] : TICK_LADDER[0];
+  months.forEach((name, index) => {
+    const x = xOf(index + first);
+    frame.appendChild(svgEl("line", { class: "mark-context", x1: px(x), x2: px(x), y1: bottom, y2: bottom + g.TICK_LENGTH }));
+    if (index % every === 0) frame.appendChild(svgEl("text", { class: "chart-caption", x: px(x), y: px(tickY), "text-anchor": "middle", "dominant-baseline": "central" }, name));
+  });
+  frame.appendChild(svgEl("line", { class: "mark-context", x1: left, x2: right, y1: bottom, y2: bottom }));
+
+  for (const [, values] of years) {
+    const { runs } = splitRuns(values.map((v, index) => [index + first, v]));
+    drawRuns(marks, runs, xOf, yOf, "mark-hairline", "mark-hairline-fill");
+  }
+  const group = svgEl("g", { class: "series-mean series-" + style });
+  const meanRuns = splitRuns(mean.map((v, index) => [index + first, v])).runs;
+  drawRuns(group, meanRuns, xOf, yOf, "mark-series", "mark-series-fill");
+  marks.appendChild(group);
+  const lastIndex = mean.map((v) => present(v)).lastIndexOf(true);
+  if (lastIndex >= 0) {
+    const x = xOf(lastIndex + first) + g.LABEL_GAP;
+    marks.appendChild(svgEl("text", { class: "chart-end-label halo", x: px(x), y: px(yOf(mean[lastIndex])), "dominant-baseline": "central" }, words.meanLabel));
+  }
+
+  // The season bracket. A season that wraps the year end is two brackets, the
+  // label on the longer piece and a bare bracket on the other.
+  const railY = railTop + g.RAIL_HEIGHT * g.HALF;
+  const pieces = [];
+  let piece = [];
+  for (const month of season) {
+    if (piece.length && month !== piece[piece.length - 1] + first) {
+      pieces.push(piece);
+      piece = [];
+    }
+    piece.push(month);
+  }
+  if (piece.length) pieces.push(piece);
+  const longest = pieces.reduce((best, p) => (p.length > best.length ? p : best), pieces[0] || []);
+  const railGroup = svgEl("g", { "aria-hidden": "true" });
+  svg.appendChild(railGroup);
+  const tick = g.BRACKET_TICK * g.HALF;
+  for (const p of pieces) {
+    const x0 = Math.max(xOf(p[0]) - halfMonth, left);
+    const x1 = Math.min(xOf(p[p.length - 1]) + halfMonth, right);
+    if (p === longest) {
+      bracket(railGroup, x0, x1, railY, words.seasonLabel);
+    } else {
+      railGroup.appendChild(svgEl("path", { class: "mark-context", d: "M" + px(x0) + " " + px(railY - tick) + " V" + px(railY + tick) + " M" + px(x0) + " " + px(railY) + " H" + px(x1) + " M" + px(x1) + " " + px(railY - tick) + " V" + px(railY + tick) }));
+    }
+  }
   return svg;
 }

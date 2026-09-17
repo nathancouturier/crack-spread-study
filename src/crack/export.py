@@ -56,6 +56,7 @@ import numpy as np
 import pandas as pd
 
 from crack import analysis, config, engine, series, versions
+from crack.sources import dgec_note, events_anchors
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -95,6 +96,7 @@ ROUND_DP = 6
 DECIMALS: Mapping[str, int] = {
     "usd_bbl": 2,
     "usd_t": 0,
+    "usd_t_error": 2,
     "usd_mmbtu": 2,
     "mmbtu_per_bbl": 3,
     "kb_d": 1,
@@ -1809,6 +1811,373 @@ def provenance(inputs: Inputs) -> Mapping[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# history.json, docs/design.md Part 8.1
+# ---------------------------------------------------------------------------
+
+#: The words a lane button uses for an event, Part 3 section 2. Words only, and
+#: one for every event the History view marks; an event of a marked kind with no
+#: short name raises in the build instead of reaching the page as an id.
+EVENT_SHORT_NAMES: Mapping[str, str] = {
+    "imo_2020_sulphur_cap": "Ship fuel sulphur cap",
+    "covid_pandemic_and_european_lockdowns_2020_03": "Lockdowns",
+    "russia_invades_ukraine_2022_02_24": "Invasion",
+    "sp_record_diesel_cracks_week_to_2022_03_25": "Diesel record",
+    "sp_ara_diesel_cracks_2022_10_13": "Refinery strikes",
+    "eu_embargo_russian_seaborne_crude_2022_12_05": "Crude embargo",
+    "eu_embargo_russian_refined_products_2023_02_05": "Product embargo",
+    "strikes_on_iran_hormuz_2026_02_28": "Strikes on Iran",
+    "iea_collective_action_400_mb_2026_03_11": "Stock release",
+    "us_iran_ceasefire_2026_04_07": "Ceasefire",
+}
+
+#: The kinds of events.json entry the History view marks as events. The other
+#: kinds are breaks and are placed by HISTORY_BREAK_LINES, never as events.
+HISTORY_EVENT_KINDS = ("market", "policy", "reference")
+HISTORY_BREAK_KINDS = ("specification_break", "definition_change", "method_change")
+
+#: Which line a break splits, from the event's own series_column. A break whose
+#: column is not here has no line on this view and is listed, not drawn.
+HISTORY_BREAK_LINES: Mapping[str, tuple[str, str]] = {
+    "gasoil_usd_bbl": ("monthly", "gasoil"),
+    "premium_gasoline_usd_bbl": ("monthly", "gasoline"),
+}
+#: The gas definition changes carry no series_column; they split the wedge line.
+HISTORY_GAS_SERIES = "worldbank_gas_europe_monthly"
+
+BREAK_SHORT_NAMES: Mapping[str, str] = {
+    "specification_break": "respecified",
+    "definition_change": "Gas series redefined",
+    "method_change": "Method in force",
+}
+
+#: The named ranges of Part 8.1 H4, each opened by one event of events.json. ONE
+#: RULE for all four: from RANGE_LEAD_MONTHS before the event's month to
+#: analysis.EPISODE_MONTHS after it, the episode length the regressions use, and
+#: the six months before are SPEC.md section 6.5's minus six. Clipped to the data.
+RANGE_LEAD_MONTHS = 6
+HISTORY_RANGES: tuple[tuple[str, str, str], ...] = (
+    ("2020", "2020", "covid_pandemic_and_european_lockdowns_2020_03"),
+    ("2022", "2022", "russia_invades_ukraine_2022_02_24"),
+    ("embargo_2023", "2023 embargo", "eu_embargo_russian_refined_products_2023_02_05"),
+    ("2026", "2026", "strikes_on_iran_hormuz_2026_02_28"),
+)
+
+MONTH_SHORT = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def _event_day(event: Mapping[str, Any]) -> str:
+    """An event's date as an ISO day: a month precision entry is its first day."""
+    text = str(event["date"])
+    return text if len(text.split("-")) == 3 else text + "-01"
+
+
+def _month_span_label(first: str, last: str) -> str:
+    return "%s to %s" % (month_label(first), month_label(last))
+
+
+def _history_ranges(first: str, last: str, weekly_first: str, by_id: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    out = [
+        {"id": "all", "label": "All", "start": first, "end": last, "event": None},
+        {"id": "weekly", "label": "Weekly series from %s" % MONTH_NAMES[pd.Timestamp(weekly_first).month - 1] + " " + str(pd.Timestamp(weekly_first).year), "start": weekly_first, "end": last, "event": None},
+    ]
+    for range_id, label, event_id in HISTORY_RANGES:
+        month = pd.Timestamp(_event_day(by_id[event_id])).to_period("M").to_timestamp()
+        start = max(month - pd.DateOffset(months=RANGE_LEAD_MONTHS), pd.Timestamp(first))
+        end = min(month + pd.DateOffset(months=analysis.EPISODE_MONTHS) - pd.DateOffset(days=1), pd.Timestamp(last))
+        out.append({"id": range_id, "label": label, "start": _iso(start), "end": _iso(end), "event": event_id})
+    return out
+
+
+def _season_sentence(row: Mapping[str, Any], product: str, shape: pd.DataFrame, column: str) -> list[Mapping[str, Any]]:
+    """The textbook check said as measured, Part 8.1 H8: the season, the
+    difference, its t, the count of seasons, and whether it holds."""
+    diff = float(row["difference_usd_bbl"])
+    unit = "winters" if int(row["season_spans_years"]) > 1 else "years"
+    if product == "gasoline":
+        out = [T("May to September sits "), N("gasoline_season_difference_usd_bbl", diff, "usd_bbl", signed=True), T(" $/bbl against the rest of the year, t "), N("gasoline_season_t", row["t"], "t", signed=True)]
+    else:
+        out = [T("November to March, the winter window desks quote, sits "), N("gasoil_season_difference_usd_bbl", diff, "usd_bbl", signed=True), T(" $/bbl against the rest of the two years each winter spans, t "), N("gasoil_season_t", row["t"], "t", signed=True)]
+    out += [T(", higher in "), N("%s_seasons_positive" % product, row["seasons_positive"], "count"), T(" of "), N("%s_seasons" % product, row["seasons"], "count"), T(" %s: " % unit)]
+    if bool(row["holds"]):
+        out.append(T("%s firms into %s in this sample." % (product, "the driving season" if product == "gasoline" else "winter")))
+    else:
+        out.append(T("%s does not firm into %s in this sample." % (product, "the driving season" if product == "gasoline" else "winter")))
+        ranked = shape.sort_values("%s_mean" % column, ascending=False).head(2)
+        months = [int(m) for m in ranked["month"]]
+        values = [float(v) for v in ranked["%s_mean" % column]]
+        out += [
+            T(" Its strongest months are "),
+            W("%s_strongest_month" % product, MONTH_NAMES[months[0] - 1]),
+            T(", "),
+            N("%s_strongest_usd_bbl" % product, values[0], "usd_bbl", signed=True),
+            T(", and "),
+            W("%s_second_month" % product, MONTH_NAMES[months[1] - 1]),
+            T(", "),
+            N("%s_second_usd_bbl" % product, values[1], "usd_bbl", signed=True),
+            T("."),
+        ]
+    return out
+
+
+def _seasonal_monthly_layer(frame: pd.DataFrame) -> Mapping[str, Any]:
+    """The long monthly seasonality, OPEC, each complete year demeaned."""
+    out: dict[str, Any] = {"panels": {}}
+    complete_years: list[int] = []
+    for product, column in WEEKLY_COLUMNS.items():
+        work = frame.dropna(subset=[column])[["date", column]].copy()
+        work["year"] = work["date"].dt.year
+        work["month"] = work["date"].dt.month
+        counts = work.groupby("year")["month"].count()
+        years = [int(y) for y in counts[counts == 12].index]
+        partial = [int(y) for y in counts[counts < 12].index]
+        complete_years = years
+        full = work[work["year"].isin(years)].copy()
+        full["demeaned"] = full[column] - full.groupby("year")[column].transform("mean")
+        lines = []
+        for year in years:
+            block = full[full["year"] == year].set_index("month")["demeaned"]
+            lines.append([year, [_num(block.get(m)) for m in range(1, 13)]])
+        episode_years = [y for y in analysis.SEASONAL_REMOVABLE_YEARS if y in years]
+        variants = {}
+        for variant, excluded in (("all", ()), ("without_episodes", tuple(episode_years))):
+            shape = analysis.seasonal_shape(exclude_years=excluded, frame=frame)
+            check = analysis.seasonal_textbook_check(exclude_years=excluded, frame=frame)
+            row = check[check["crack"] == column].iloc[0]
+            kept = [y for y in years if y not in excluded]
+            variants[variant] = {
+                "excluded_years": list(excluded),
+                "years": len(kept),
+                "mean_usd_bbl": [_num(v) for v in shape["%s_mean" % column]],
+                "difference_usd_bbl": _num(row["difference_usd_bbl"]),
+                "t": _num(row["t"]),
+                "seasons_positive": int(row["seasons_positive"]),
+                "seasons": int(row["seasons"]),
+                "holds": bool(row["holds"]),
+                "sentence_segments": _season_sentence(row, product, shape, column),
+                "mean_label_segments": [T("Mean of "), N("years", len(kept), "count"), T(" years")],
+            }
+        season = analysis.DRIVING_SEASON_MONTHS if product == "gasoline" else analysis.HEATING_SEASON_MONTHS
+        out["panels"][product] = {
+            "name": PRODUCT_NAMES[product],
+            "line_style": "solid" if product == "gasoil" else "dashed",
+            "years": years,
+            "partial_years": partial,
+            "columns": ["year", "demeaned_usd_bbl_by_month"],
+            "lines": lines,
+            "episode_years_in_range": episode_years,
+            "season_months": list(season),
+            "season_label": "May to September, the driving season" if product == "gasoline" else "November to March, the window desks quote",
+            "variants": variants,
+        }
+    last_partial = [y for y in out["panels"]["gasoil"]["partial_years"] if y > max(complete_years)]
+    out["months"] = list(MONTH_SHORT)
+    out["first_year"] = min(complete_years)
+    out["last_year"] = max(complete_years)
+    note = [T("Each line is one calendar year of OPEC's Rotterdam quotations less that year's own mean, "), N("first_year", min(complete_years), "year"), T(" to "), N("last_year", max(complete_years), "year"), T(".")]
+    if last_partial:
+        last_month = frame["date"].max()
+        note += [T(" "), N("partial_year", last_partial[0], "year"), T(" is not drawn: OPEC's quotations for it stop at "), D("monthly_last", _iso(last_month)), T(", and a year's shape needs its own twelve month mean.")]
+    out["note_segments"] = note
+    return out
+
+
+def history(inputs: Inputs) -> Mapping[str, Any]:
+    """The History view: three time panels, their events and breaks, the named
+    ranges, and the seasonal sub view's monthly layer. The weekly seasonal layer
+    is data/cracks.json, which the view also reads."""
+    events_file = events_anchors.load_events()
+    by_id = {e["id"]: e for e in events_file["events"]}
+
+    monthly = series.opec_monthly_cracks().sort_values("date").reset_index(drop=True)
+    monthly["date"] = pd.to_datetime(monthly["date"])
+    margin = series.margin_after_gas_monthly().sort_values("date").reset_index(drop=True)
+    margin["date"] = pd.to_datetime(margin["date"])
+    weekly = inputs.weekly.sort_values("date").reset_index(drop=True)
+
+    m_first, m_last = _iso(monthly["date"].min()), _iso(monthly["date"].max())
+    g_first, g_last = _iso(margin["date"].min()), _iso(margin["date"].max())
+    w_first, w_last = _iso(weekly["date"].min()), _iso(weekly["date"].max())
+    data_end = max(m_last, g_last, w_last)
+
+    payload = _header("history", w_last, "the monthly OPEC cracks, the ministry's margin with the gas wedge beside it, the weekly reconstruction, their events and breaks, the named ranges, and the monthly seasonality")
+    payload["conventions"] = _conventions()
+
+    first_complete = int(monthly["date"].dt.year.value_counts().sort_index().loc[lambda s: s == 12].index.min())
+    payload["title_segments"] = [
+        T("Rotterdam cracks month by month since "), D("monthly_first", m_first),
+        T(", the ministry's margin since "), D("margin_first", g_first),
+        T(", and this study's weekly reading since "), D("weekly_first", w_first, kind="day"),
+        T(", each on its own panel."),
+    ]
+    payload["sample_segments"] = [
+        T("The sample starts in "), N("sample_first_year", first_complete, "year"),
+        T(", the owner's choice of the full OPEC record, so the cracks reach back to "), D("monthly_first", m_first),
+        T(" while the official margin exists only from "), D("margin_first", g_first),
+        T("; nothing here extends the margin back before its first published month."),
+    ]
+
+    # The monthly cracks panel.
+    joined = monthly.merge(margin[["date", "mbr_usd_bbl"]], on="date", how="inner").dropna(subset=[analysis.CRACK_GASOIL, analysis.CRACK_GASOLINE, "mbr_usd_bbl"])
+    r2 = {p: float(np.corrcoef(joined[c], joined["mbr_usd_bbl"])[0, 1] ** 2) for p, c in WEEKLY_COLUMNS.items()}
+    payload["monthly"] = {
+        "heading_segments": [T("Monthly gasoil and gasoline cracks on OPEC's Rotterdam barge quotations, "), D("first", m_first), T(" to "), D("last", m_last), T(".")],
+        "source": "OPEC Monthly Oil Market Report, Rotterdam barges FOB, assessments credited to Argus, less FRED Brent",
+        "first": m_first,
+        "last": m_last,
+        "columns": ["date", "gasoil_usd_bbl", "gasoline_usd_bbl", "gasoil_spec", "gasoline_spec"],
+        "rows": [
+            [_iso(r["date"]), _num(r[analysis.CRACK_GASOIL]), _num(r[analysis.CRACK_GASOLINE]), None if _is_missing(r.get("gasoil_spec")) else str(r["gasoil_spec"]), None if _is_missing(r.get("gasoline_spec")) else str(r["gasoline_spec"])]
+            for _, r in monthly.iterrows()
+        ],
+        "r2_months": int(len(joined)),
+        "r2": {p: _num(v) for p, v in r2.items()},
+        "r2_segments": [
+            T("Month to month the gasoil crack tracks the official margin far more closely than gasoline does: R squared "),
+            N("gasoil_r2", r2["gasoil"], "r2"), T(" against "), N("gasoline_r2", r2["gasoline"], "r2"),
+            T(" over the "), N("r2_months", len(joined), "count"), T(" months both exist. Gasoline is the weaker leg."),
+        ],
+        "end_segments": [T("OPEC's product quotations stop at "), D("last", m_last), T(": the archive holds no later issue, so the line ends there rather than being carried forward.")],
+    }
+
+    # The margin panel and the wedge beside it.
+    ministry = float(config.DGEC_EMBEDDED_GAS_INTENSITY_MMBTU_PER_BBL)
+    study = float(config.GAS_INTENSITY_MMBTU_PER_BBL)
+    payload["margin"] = {
+        "heading_segments": [T("The ministry's gross refining margin on Brent, "), D("first", g_first), T(" to "), D("last", g_last), T(", already net of the ministry's own gas allowance.")],
+        "wedge_heading_segments": [T("Beside it, not subtracted from it: the extra gas at the average US refinery's use, "), N("study_intensity", study, "mmbtu_per_bbl"), T(" MMBtu/bbl against the ministry's "), N("ministry_intensity", ministry, "mmbtu_per_bbl"), T(", at each month's European gas price.")],
+        "first": g_first,
+        "last": g_last,
+        "columns": ["date", "mbr_usd_bbl", "gas_usd_mmbtu", "gas_wedge_usd_bbl"],
+        "rows": [[_iso(r["date"]), _num(r["mbr_usd_bbl"]), _num(r["gas_usd_mmbtu"]), _num(r["gas_wedge_usd_bbl"])] for _, r in margin.iterrows()],
+        "study_intensity_mmbtu_per_bbl": study,
+        "ministry_intensity_mmbtu_per_bbl": ministry,
+        "no_break_segments": [
+            T("No break is drawn on the margin because none exists in it: the method in force from "),
+            D("method_in_force", _event_day(by_id["dgec_mbr_method_in_force_2016_01_01"]), kind="day"),
+            T(" was recomputed back over the two years before it, and the published series starts in "),
+            D("first", g_first), T("."),
+        ],
+        "no_break_source_url": by_id["dgec_mbr_method_in_force_2016_01_01"]["source_url"],
+    }
+
+    # The weekly panel.
+    join = analysis.seasonal_join()
+    error = dgec_note.RECONSTRUCTION_ERROR
+    oldest = weekly[weekly["evidence_class"] == "single_geometry_oldest"]
+    newest = weekly[weekly["evidence_class"] == "single_geometry_newest"]
+    payload["weekly"] = {
+        "heading_segments": [T("Weekly gasoil and gasoline cracks read off the ministry's weekly chart, from the week to "), D("first", w_first, kind="day"), T(" to the week to "), D("last", w_last, kind="day"), T(".")],
+        "first": w_first,
+        "last": w_last,
+        "columns": ["date", "gasoil_usd_bbl", "gasoline_usd_bbl", "brent_usd_bbl", "printed_gasoil_usd_bbl", "printed_gasoline_usd_bbl", "evidence_class", "n_independent_geometries"],
+        "rows": [
+            [_iso(r["date"]), _num(r[analysis.CRACK_GASOIL]), _num(r[analysis.CRACK_GASOLINE]), _num(r["brent_usd_bbl"]), _num(r["printed_gasoil_usd_bbl"]), _num(r["printed_gasoline_usd_bbl"]), None if _is_missing(r["evidence_class"]) else str(r["evidence_class"]), _int(r["n_independent_geometries"])]
+            for _, r in weekly.iterrows()
+        ],
+        "least_defended_class": "single_geometry_oldest",
+        "newest_class": "single_geometry_newest",
+        "evidence_segments": [
+            T("Lines are this study's reading of the ministry's chart; squares are the "),
+            N("printed_weeks", int(weekly["printed_gasoil_usd_bbl"].notna().sum()), "count"),
+            T(" weeks the ministry printed. Refitted on three products and tested on the fourth, a note's reading misses its printed figures by "),
+            N("error_low_usd_t", error["out_of_sample_mae_usd_t"][0], "usd_t_error"), T(" to "), N("error_high_usd_t", error["out_of_sample_mae_usd_t"][1], "usd_t_error"),
+            T(" $/t on average, but that test sits where the notes print figures and does not bound the oldest weeks: the "),
+            N("oldest_weeks", len(oldest), "count"), T(" weeks from "), D("oldest_first", _iso(oldest["date"].min()), kind="day"),
+            T(", hatched under the axis, are the least defended data in the study, and the "),
+            N("newest_weeks", len(newest), "count"), T(" weeks from "), D("newest_first", _iso(newest["date"].min()), kind="day"),
+            T(" have no second chart yet."),
+        ],
+        "join": {
+            "overlap_months": int(join["overlap_months"]),
+            "gasoil_mean_gap_usd_bbl": _num(join["%s_mean_gap" % analysis.CRACK_GASOIL]),
+            "gasoline_mean_gap_usd_bbl": _num(join["%s_mean_gap" % analysis.CRACK_GASOLINE]),
+        },
+        "join_segments": [
+            T("This panel is never joined to the monthly one. Over the "), N("overlap_months", join["overlap_months"], "count"),
+            T(" months both cover, the weekly crack less OPEC's monthly one averages "), N("gasoil_mean_gap_usd_bbl", join["%s_mean_gap" % analysis.CRACK_GASOIL], "usd_bbl", signed=True),
+            T(" $/bbl for gasoil and "), N("gasoline_mean_gap_usd_bbl", join["%s_mean_gap" % analysis.CRACK_GASOLINE], "usd_bbl", signed=True),
+            T(" $/bbl for gasoline: the ministry's gasoline is Eurosuper, a finished premium grade, and OPEC's is a different product, so a spliced line would jump by a product and not by a market."),
+        ],
+    }
+
+    # Events, from the seed, by kind, only those this view can place.
+    events = []
+    for event in events_file["events"]:
+        if event["kind"] not in HISTORY_EVENT_KINDS or event.get("layer") == "daily":
+            continue
+        if event["id"] not in EVENT_SHORT_NAMES:
+            raise KeyError("events.json entry %s has no short name for the History lane" % event["id"])
+        day = _event_day(event)
+        events.append({
+            "id": event["id"],
+            "date": day,
+            "precision": event.get("date_precision"),
+            "label": D("date", day, kind="day" if event.get("date_precision") == "day" else "month")["label"],
+            "short": EVENT_SHORT_NAMES[event["id"]],
+            "name": event["label"],
+            "kind": event["kind"],
+            "source_url": event["source_url"],
+            "source_title": event.get("source_title"),
+            "source_publisher": event.get("source_publisher"),
+        })
+    events.sort(key=lambda e: e["date"])
+    payload["events"] = events
+
+    # Breaks: drawn where a line of this view carries them, listed otherwise.
+    breaks = []
+    for event in events_file["events"]:
+        if event["kind"] not in HISTORY_BREAK_KINDS:
+            continue
+        day = _event_day(event)
+        panel, line, reason = None, None, None
+        column = event.get("series_column")
+        if event["kind"] == "method_change":
+            reason = "not a break in the data this view draws: the ministry recomputed the margin before this date on the new method, and its published series starts after the recomputed window begins"
+        elif event.get("layer") == "daily":
+            reason = "a break in the ICE daily futures layer, which this study does not publish"
+        elif column in HISTORY_BREAK_LINES:
+            panel, line = HISTORY_BREAK_LINES[column]
+        elif HISTORY_GAS_SERIES in event.get("applies_to", ()):
+            if day >= g_first:
+                panel, line = "margin", "gas_wedge"
+            else:
+                reason = "before the first month of the margin, so before anything this view prices gas for"
+        else:
+            reason = "no line on this view carries the series it applies to"
+        short = BREAK_SHORT_NAMES[event["kind"]]
+        if event["kind"] == "specification_break" and line:
+            short = PRODUCT_NAMES[line][:1].upper() + PRODUCT_NAMES[line][1:] + " " + short
+        elif event["kind"] == "specification_break":
+            short = "Specification changed"
+        breaks.append({
+            "id": event["id"], "date": day, "label": D("date", day, kind="day" if event.get("date_precision") == "day" else "month")["label"],
+            "name": event["label"], "short": short, "kind": event["kind"],
+            "panel": panel, "line": line, "drawn": panel is not None, "reason": reason,
+            "source_url": event["source_url"], "source_title": event.get("source_title"),
+        })
+    # The capacity steps inside the months the run regressions use, the same
+    # list run-economics.json names, so the two views never disagree on them.
+    capacity = inputs.entry("ei_refinery_capacity_annual")
+    cap_first, cap_last = pd.Timestamp(inputs.capacity_model.first_month), pd.Timestamp(inputs.capacity_model.last_month)
+    for year in sorted(y + analysis.CAPACITY_SOURCE_LAG_YEARS for y in analysis.capacity_step_years()):
+        day = "%d-01-01" % year
+        if not (cap_first <= pd.Timestamp(day) <= cap_last):
+            continue
+        breaks.append({
+            "id": "capacity_step_%d" % year, "date": day, "label": month_label(day),
+            "name": "Refinery capacity figure steps down", "short": "Capacity figure steps", "kind": "capacity_step",
+            "panel": None, "line": None, "drawn": False,
+            "reason": "a step in the capacity that divides refinery intake, so a break in utilisation, which this view does not draw",
+            "source_url": capacity.get("page_url") or capacity.get("url"), "source_title": "Energy Institute, Statistical Review of World Energy, refinery capacity by country",
+        })
+    breaks.sort(key=lambda b: (b["date"], b["id"]))
+    payload["breaks"] = breaks
+    payload["ranges"] = _history_ranges(m_first, data_end, w_first, by_id)
+    payload["seasonal_monthly"] = _seasonal_monthly_layer(analysis.crack_frame())
+    return payload
+
+
+# ---------------------------------------------------------------------------
 # Build, serialise, write, check
 # ---------------------------------------------------------------------------
 
@@ -1818,6 +2187,7 @@ ARTIFACTS: Mapping[str, Callable[[Inputs], Mapping[str, Any]]] = {
     "margin-stack": margin_stack,
     "run-economics": run_economics,
     "provenance": provenance,
+    "history": history,
 }
 
 

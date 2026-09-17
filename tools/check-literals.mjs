@@ -120,6 +120,13 @@ const LAYOUT_CONSTANTS = {
     { name: "STRIP_END_TICK", value: "6", why: "interval end ticks, Part 3 section 5" },
     { name: "STRIP_PAD", value: "8", why: "space under the strip figure" },
     { name: "STRIP_LABEL", value: "16", why: "the model label above a narrow strip" },
+    { name: "TIME_HEIGHT", value: "360", why: "a History time plot, Part 3 section 2" },
+    { name: "TIME_HEIGHT_NARROW", value: "240", why: "a History time plot below 768px, Part 3 section 2" },
+    { name: "NARROW_WIDTH", value: "768", why: "the width below which a time plot is shorter" },
+    { name: "WEDGE_HEIGHT", value: "120", why: "the extra gas plot under the margin, Part 8.1 H2" },
+    { name: "TIME_PAD_RIGHT", value: "64", why: "room for a two line end label" },
+    { name: "YEAR_SPACING", value: "48", why: "year labels at least this far apart, Part 3 section 2" },
+    { name: "PROFILE_HEIGHT", value: "240", why: "the monthly seasonal profile plot, Part 8.1 H8" },
   ],
 };
 

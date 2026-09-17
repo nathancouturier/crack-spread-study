@@ -10,6 +10,7 @@
     "decimals": {
       "usd_bbl": 2,
       "usd_t": 0,
+      "usd_t_error": 2,
       "usd_mmbtu": 2,
       "mmbtu_per_bbl": 3,
       "kb_d": 1,

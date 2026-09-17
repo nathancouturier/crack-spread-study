@@ -40,6 +40,7 @@ const ARTIFACTS = Object.freeze({
   marginStack: { path: "data/margin-stack.json", artifact: "margin-stack", schema: SCHEMA_ONE, holds: "the waterfall from the cracks to the refining margin" },
   runEconomics: { path: "data/run-economics.json", artifact: "run-economics", schema: SCHEMA_ONE, holds: "the run cut threshold and the response of crude runs to the margin" },
   provenance: { path: "data/provenance.json", artifact: "provenance", schema: SCHEMA_ONE, holds: "the manifest of every series, its source and its last fetch" },
+  history: { path: "data/history.json", artifact: "history", schema: SCHEMA_ONE, holds: "the monthly and weekly cracks, the ministry's margin, their events and breaks, and the monthly seasonality" },
 });
 
 /** The artifact names this build of the page reads, for a validator. */

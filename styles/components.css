@@ -590,3 +590,163 @@ p.block,
 .manual-step .prose + .prose { margin-top: 4px; }
 .manual-step__what { font-weight: 500; }
 .credit-list { display: grid; gap: 8px; }
+
+/* ------------------------------------------------------------ history --- */
+
+/* docs/design.md Part 8.1. Named ranges, the sub view switch and the seasonal
+ * toggle are text buttons: pressed is a 2px --text underline and weight 600,
+ * never a fill (S4). 44px tall for touch. */
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+  margin-top: 16px;
+}
+.choice {
+  min-height: 44px;
+  font-weight: 500;
+  font-size: var(--fs-body-s);
+  color: var(--text);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.choice[aria-pressed="true"] {
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+.history-lead { margin-top: 12px; }
+.history-controls {
+  margin-top: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+.history-controls .choice-row { margin-top: 0; }
+
+/* Two native checkboxes with visible labels, S4: the state is the box's shape. */
+.product-toggle {
+  border: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 20px;
+}
+.product-toggle__legend {
+  float: left;
+  margin-right: 16px;
+  font-weight: 500;
+  font-size: var(--fs-meta);
+  color: var(--text-muted);
+}
+.product-toggle__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: var(--fs-body-s);
+  cursor: pointer;
+}
+.product-toggle__item input { width: 18px; height: 18px; accent-color: var(--text); }
+
+.history-panel { margin-top: 36px; }
+.history-panel__heading {
+  font-weight: 500;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  max-width: 48em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.history-panel__subheading {
+  margin-top: 16px;
+  font-weight: 500;
+  font-size: var(--fs-body-s);
+  line-height: 1.4;
+  max-width: 56em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.history-panel .note { margin-top: 8px; max-width: 64em; font-variant-numeric: tabular-nums lining-nums; }
+
+/* The readout: one plain line above the plot, never a floating card. */
+.readout {
+  margin-top: 8px;
+  min-height: 2.9em;
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+  color: var(--text);
+  max-width: 64em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* The lane of event buttons and break labels above a plot, Part 3 section 2. */
+.lane {
+  position: relative;
+  height: 32px;
+  max-width: 100%;
+  margin-top: 4px;
+}
+.lane__marker,
+.lane__break {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-weight: 500;
+  font-size: var(--fs-caption);
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.lane__marker {
+  min-height: 28px;
+  min-width: 24px;
+  padding-inline: 2px;
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.lane__break {
+  padding-bottom: 8px;
+  color: var(--text-muted);
+}
+.event-detail-region { min-height: 0; }
+.event-detail {
+  margin-top: 8px;
+  font-size: var(--fs-meta);
+  max-width: 64em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.marker-list {
+  margin-top: 8px;
+  display: grid;
+  gap: 2px;
+  font-size: var(--fs-meta);
+  line-height: 1.45;
+  max-width: 64em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.marker-list__number { font-weight: 500; }
+
+.history-chart { margin-top: 0; }
+.history-chart:focus-visible { outline-offset: 4px; }
+.history-chart--wedge { margin-top: 8px; }
+
+.mark-break { stroke: var(--role-context); stroke-width: 1px; stroke-dasharray: 4 3; fill: none; }
+.mark-cursor { stroke: var(--role-context); stroke-width: 1px; }
+.mark-hairline { stroke: var(--role-decor); stroke-width: 1px; fill: none; }
+.mark-hairline-fill { fill: var(--role-decor); stroke: none; }
+.series-mean .mark-series { stroke-width: 1.5px; stroke-linejoin: round; }
+.chart-end-value { font-weight: 400; }
+
+.history-breaks__table td,
+.history-breaks__table th { vertical-align: top; }
+.table th.history-breaks__date { font-weight: 400; white-space: nowrap; }
+.history-breaks__name { min-width: 14rem; max-width: 24rem; }
+.history-breaks__where { min-width: 14rem; max-width: 28rem; font-size: var(--fs-meta); }
+.history-breaks__source { min-width: 10rem; font-size: var(--fs-meta); }
+.history-table th,
+.history-table td { white-space: nowrap; }
+/* Numbered markers that still collide stack in rows, each 28px, the lane
+ * growing to hold them. src/history.js sets --rows and --row. */
+.lane[data-rows] { height: calc(var(--rows) * 28px + 4px); }
+.lane__marker[data-row],
+.lane__break[data-row] { bottom: calc(var(--row) * 28px); }

@@ -197,6 +197,50 @@ const REQUIRED = {
     "reader.manual_steps[].cost",
     "reader.manual_steps[].how",
   ],
+  // docs/design.md Part 8.1, the History view.
+  history: [
+    "conventions.decimals",
+    "title_segments",
+    "sample_segments",
+    "monthly.first",
+    "monthly.last",
+    "monthly.columns",
+    "monthly.rows",
+    "monthly.r2_segments",
+    "margin.first",
+    "margin.last",
+    "margin.columns",
+    "margin.rows",
+    "margin.wedge_heading_segments",
+    "margin.no_break_segments",
+    "weekly.first",
+    "weekly.last",
+    "weekly.columns",
+    "weekly.rows",
+    "weekly.evidence_segments",
+    "weekly.join_segments",
+    "events[].id",
+    "events[].date",
+    "events[].short",
+    "events[].source_url",
+    "breaks[].id",
+    "breaks[].date",
+    "breaks[].drawn",
+    "breaks[].panel?",
+    "breaks[].line?",
+    "breaks[].reason?",
+    "breaks[].source_url",
+    "ranges[].id",
+    "ranges[].start",
+    "ranges[].end",
+    "seasonal_monthly.months",
+    "seasonal_monthly.note_segments",
+    "seasonal_monthly.panels.gasoil.lines",
+    "seasonal_monthly.panels.gasoil.variants.all.sentence_segments",
+    "seasonal_monthly.panels.gasoil.variants.without_episodes.sentence_segments",
+    "seasonal_monthly.panels.gasoline.lines",
+    "seasonal_monthly.panels.gasoline.variants.all.sentence_segments",
+  ],
 };
 
 const failures = [];
@@ -437,6 +481,42 @@ if (loaded["margin-stack"] && loaded.now) {
       for (const v of [row.start_usd_bbl, row.end_usd_bbl]) {
         if (v < lo - SUM_TOLERANCE || v > hi + SUM_TOLERANCE) problems.push(row.id + " runs outside the declared scale");
       }
+    }
+    return problems;
+  });
+}
+
+if (loaded.history) {
+  // Part 8.1: three panels never spliced, breaks only where a line carries
+  // them, never one on the margin, the wedge never subtracted, every range
+  // inside the data, no gap bridged by a zero.
+  check("history.json panels, breaks and ranges keep the findings", () => {
+    const problems = [];
+    const h = loaded.history;
+    for (const key of ["monthly", "margin", "weekly"]) {
+      const panel = h[key];
+      const dates = panel.rows.map((row) => row[0]);
+      for (let i = 1; i < dates.length; i += 1) if (!(dates[i] > dates[i - 1])) problems.push(key + " dates are not strictly increasing at " + dates[i]);
+      if (dates[0] !== panel.first || dates[dates.length - 1] !== panel.last) problems.push(key + " first and last do not match its rows");
+    }
+    if (h.margin.columns.some((c) => /after_gas|net_margin/.test(c))) problems.push("the margin panel carries a margin with gas subtracted: " + h.margin.columns.join(", "));
+    if (h.weekly.first <= h.monthly.first) problems.push("the weekly panel starts before the monthly one, so something was spliced");
+    for (const brk of h.breaks) {
+      if (brk.drawn) {
+        const ok = (brk.panel === "monthly" && ["gasoil", "gasoline"].includes(brk.line)) || (brk.panel === "margin" && brk.line === "gas_wedge");
+        if (!ok) problems.push(brk.id + " is drawn on " + brk.panel + " " + brk.line + ", which is not a line that carries a break");
+      } else if (typeof brk.reason !== "string" || !brk.reason) {
+        problems.push(brk.id + " is not drawn and says no reason");
+      }
+      if (brk.line === "mbr" || brk.line === "margin") problems.push(brk.id + " is drawn on the official margin, which has no break inside its published window");
+    }
+    const end = [h.monthly.last, h.margin.last, h.weekly.last].sort().pop();
+    for (const range of h.ranges) {
+      if (range.start < h.monthly.first || range.end > end || range.start > range.end) problems.push("range " + range.id + " runs outside the data, " + range.start + " to " + range.end);
+    }
+    const g = h.seasonal_monthly.panels;
+    for (const product of ["gasoil", "gasoline"]) {
+      for (const [year, values] of g[product].lines) if (values.length !== h.seasonal_monthly.months.length) problems.push(product + " " + year + " does not have one value per month");
     }
     return problems;
   });
