@@ -2386,3 +2386,119 @@ the margin after gas on the same bar node with the MBR unchanged, text in a fiel
 prints no NaN, and "Put back" restores the preset. It was checked to fail when a
 figure was planted after "Headroom". `scripts/screenshots.mjs` photographs five
 Model states.
+
+### 8.3 Runs and crude demand
+
+**What the view has to show** (SPEC.md section 7.2 and section 12).
+Utilisation and crude imports against the lagged margin after gas, the scatter
+with the hockey stick fit and its interval, the response table, the horse race,
+the instrument result, and residuals with 2022 and 2026 highlighted. SPEC.md
+section 12: "read, with an interval, how many kb/d of crude demand a 10 $/bbl
+margin move is worth, and an honest sentence on whether the margin beat the raw
+gasoil crack." Everything is `crack.analysis` as audited at Gate 3; the export
+writes it and the page fits nothing. Measured on 2026-09-17:
+
+```
+response, 135 months 2015-04 to 2026-06   planned model +0.09512 se 0.28582 t 0.33, +59.3 kb/d, -290.1 to +408.8
+                                          intake with a trend +0.44391 se 0.22147 t 2.00, +230.4 kb/d, +5.1 to +455.6
+                                          capacity steps 2017-01 and 2026-01, 88.9 percent of the gap
+threshold, 135 months                     kink 2.28, interval 2.03 to 11.28, search -0.22 to 11.28, slope below +3.88
+                                          24 months below the kink, 21 of them one stretch, 2020-07 to 2022-03
+without that stretch, 114 months          kink 9.87, slope below -0.50, 101 months below
+horse race, 132 common months             72 forecasts 2020-04 to 2026-03, all in or after the pandemic
+                                          power 0.050 to 0.121 against a size of 0.050, 6 pairs on two equations
+                                          forecasts for 95 percent power 1,570 to 670,408
+horse A alone, 288 months from 2002-04    reported beside the race, never in it
+instrument, first stage F by control set  5.75 constant, 5.80 month dummies, 0.215 episode dummies, 0.070 trend
+                                          sd in episode months 18.61 $/MMBtu, outside 5.31, peak 60.16 in 2022-10
+2026                                      4 post break months against a bar of 12, not tested
+imports over intake, 138 months           95.4 percent on average, 86.4 to 103.9
+JODI                                      2002-01 to 2026-06, June 2026 provisional; the margin from 2015-01
+```
+
+**The first plan.** One long page: the Now section's four blocks at the top,
+then a dual axis chart of utilisation and the lagged margin, the scatter with
+the fitted kink as an accent line and its interval as a shaded band, a
+regression table per equation with stars, the horse race table sorted by out of
+sample RMSE, a first stage F badge coloured by the bar of 10, and a residual
+bar chart with 2022 and 2026 bars in the accent.
+
+**The critique.**
+
+- **R1. A dual axis chart of utilisation and the margin.** The stock move of
+  every macro dashboard, and wrong here: two y scales make any two series look
+  related by choosing the ranges, which is the claim this view exists to test.
+  *Revision:* separate plots on their own scales, as History does (H3):
+  utilisation with the capacity steps it carries drawn as breaks, the lagged
+  margin, and crude intake with crude imports on one kb/d scale, solid and
+  dashed, end labelled. The plots start in January 2015, where the margin
+  starts; the lead says JODI reaches back to 2002 and that nothing extends the
+  margin.
+- **R2. The kink as an accent line with a shaded interval band.** A fitted line
+  in the accent says "here is the level", which is the one thing Gate 3 did not
+  find, and a single fit hides why. *Revision:* Part 3 section 5's scatter as
+  written: two fits in ink, every month dashed and the months without the
+  stretch dotted, end labelled with their kinks; the 21 months of the stretch as
+  filled squares and the rest as hollow circles; the interval as a flat span
+  with no text on it that runs to the right edge of the search because the
+  interval does, with that edge a rule labelled above the plot. No accent,
+  because the thing it would mark does not exist, and the heading says so. The
+  counts 24 and 21 are printed, because the export now carries them (S29).
+- **R3. A regression table per equation, with stars.** K20: stars make t 2.00 a
+  finding and t 1.98 not. *Revision:* the Now view's strip and table, reused
+  from `src/section-runs.js` so the two pages cannot disagree, the planned model
+  first (K24), then the reason they differ. Added here: SPEC.md section 6.1's
+  "with and without the episodes" as one table, and under the coefficients the
+  sentence that endogeneity biases toward zero, so each is a lower bound in
+  absolute value. It sits where the coefficients are, not in a limitations list
+  at the end.
+- **R4. The horse race sorted by RMSE.** K21, and worse here: the lowest RMSE is
+  a different horse on each equation. *Revision:* rows A, B, C in SPEC.md's
+  order under each equation, no bold, no accent, no sort; the lowest RMSE is not
+  marked. The sentence above the tables is "this sample cannot tell the horses
+  apart" with the power range and the size beside it; the power table puts the
+  observed gap beside the smallest detectable gap, a strip per pair with the
+  size as the accent tick, and the forecasts that 95 percent power would need.
+  Horse C's second line says it is a substitution and why. Horse A on its own
+  longer sample is a row under a note row, outside the race.
+- **R5. "Did the margin beat the crack" as a verdict word.** A badge, a tick or
+  the word "no" in display type turns an underpowered test into a result.
+  *Revision:* SPEC.md section 12's honest sentence assembled from fields: the
+  margin did not beat the raw gasoil crack and was not beaten by it, and the
+  reason is power, not equality. Then SPEC.md section 6.3's paragraph, in body
+  type: what the margin gives that the crack cannot, a level with a sign, the gas
+  wedge (measured before and during 2022) and a threshold in dollars if one is
+  ever identified, which on this sample it is not.
+- **R6. An F badge coloured against the bar.** A traffic light, and it states
+  the F as a property of the instrument. Gate 3 measured it as a property of the
+  control set. *Revision:* the control ladder as a table, four rows in the order
+  the controls go in, each row saying which equation uses it; then the sentence
+  that the episode dummies remove the 2022 shock that is the instrument's
+  variation, with the standard deviations in and out of the episode months. The
+  two stage estimates are printed as not used, beside the ordinary least
+  squares ones.
+- **R7. Residual bars with 2022 and 2026 in the accent.** Colour as the only
+  highlight, and the accent on 2026 says something happened there when the
+  study returns no verdict. *Revision:* the residuals of the equation fitted on
+  months before March 2026 with no episode terms, the in sample months a solid
+  line and the four months after the break a separate dashed line with squares,
+  never joined; 2022 and 2026 as labelled brackets in the rail under the axis,
+  the bracket the seasonal panels use. No accent. The table of the four months,
+  reused from the Now section with the provisional word, and the sentence "not
+  tested, 4 months against a bar of 12".
+- **R8. Everything open on one page.** Nothing on screen the visitor did not ask
+  for (SPEC.md section 12). *Revision:* the lead answers the question the view
+  is named for (the response on both equations with intervals, the honest horse
+  race sentence, the unidentified paragraph), then four parts behind a choice
+  row, each linkable: Response, Run cut threshold, Horse race and instrument,
+  2026. The Now section's link "Open Runs and crude demand" opens the first.
+
+**What survived.** The Now section's strips, table and post break table, reused
+and not copied; the scatter treatment of Part 3 section 5; the horse race and
+power tables of Part 3 section 5; the choice row and sub view pattern of History.
+
+**The banned list, for this view.** No dual axis, no significance stars, no
+sort control, no bold or accent on a horse, no badge, no traffic light, no
+shaded band with text on it, no accent on the scatter or the residuals, no
+legend (end labels), and none of the words winner, wins, best, tie, dead heat or
+equivalent on the page.
