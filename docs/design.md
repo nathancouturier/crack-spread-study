@@ -2361,3 +2361,28 @@ one function the view calls, `scripts/gen_model_cases.py` records what Python
 computes for each preset in `data/model.json` into
 `data/fixtures/model-cases.json`, and `tools/validate-engine.mjs` runs
 `src/model-calc.js` over it.
+
+**As built, and measured.** `src/model.js` on `data/model.json`, computing only
+through `src/model-calc.js`, which `tools/validate-engine.mjs` holds to the 32
+cases of `data/fixtures/model-cases.json` (four presets, seven named edits each)
+at a largest parity difference of zero. Five things moved during the build.
+The bars are `charts.liveWaterfallBar`, built once per row and moved by a CSS
+transform and the CSS width property, because `x1` and `x2` on a line are not
+properties a transition can tween; a change of cell size moves them with the
+tween off. A field still showing the text the preset put there computes with the
+stored value, not the rounded text, so an untouched preset is exactly its case.
+The July 2026 button says "reconstructed, 5 weeks, none printed" under the month,
+counted from the artifact. Below 1024 px the waterfall sits under the whole form,
+so the margin after gas sentence is repeated under the gas fields (hidden from
+assistive technology, which hears the live one); that is SPEC.md section 12's
+"watch it fall in place" at phone width, where the bars themselves are a scroll
+away. The run cut row's "unidentified" is a right aligned word at the figures'
+size, never mono. `tools/check-layout.mjs` check MV measures `#/model`, July 2026
+and 2019 at 375, 768, 1024, 1280 and 1440 px in both themes: one accent figure
+and one accent bar, no MBR row in the model chain, "unidentified" and no figure
+after the word headroom, no slider and no min or max, no mono field, "Not priced"
+for July's jet and fuel oil, every bar inside its cell, then TTF doubled lowers
+the margin after gas on the same bar node with the MBR unchanged, text in a field
+prints no NaN, and "Put back" restores the preset. It was checked to fail when a
+figure was planted after "Headroom". `scripts/screenshots.mjs` photographs five
+Model states.

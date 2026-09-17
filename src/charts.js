@@ -14,6 +14,8 @@
  * What lives here: the helpers, and the three marks the Now sections draw.
  *   seasonalPanel    one crack by week of the year, each year its own line
  *   waterfallBar     one row's bar in the margin table
+ *   liveWaterfallBar the same bar built once and moved in place, for the Model
+ *                    view's recompute
  *   intervalStrip    one or more response intervals with zero marked
  *
  * Missing is never zero. A null ends the current subpath and the next value

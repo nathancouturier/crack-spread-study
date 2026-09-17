@@ -56,6 +56,13 @@ const SHOTS = [
   { name: "history-desktop-light-season", ...DESKTOP, theme: "light", hash: "#/history?sub=season" },
   { name: "history-mobile-light", ...MOBILE, theme: "light", hash: "#/history" },
   { name: "history-mobile-dark-season", ...MOBILE, theme: "dark", hash: "#/history?sub=season" },
+  // Model, docs/design.md Part 8.2: the latest month, the reconstructed July
+  // 2026 and the 2019 average, at both widths in both themes.
+  { name: "model-desktop-light", ...DESKTOP, theme: "light", hash: "#/model" },
+  { name: "model-desktop-dark-july-2026", ...DESKTOP, theme: "dark", hash: "#/model?preset=july_2026" },
+  { name: "model-desktop-light-2019", ...DESKTOP, theme: "light", hash: "#/model?preset=average_2019" },
+  { name: "model-mobile-light", ...MOBILE, theme: "light", hash: "#/model" },
+  { name: "model-mobile-dark-july-2026", ...MOBILE, theme: "dark", hash: "#/model?preset=july_2026" },
 ];
 
 /** Width and height from a PNG's IHDR chunk, to report what was written. */

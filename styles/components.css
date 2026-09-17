@@ -853,6 +853,10 @@ p.block,
   font-variant-numeric: tabular-nums lining-nums;
 }
 .calc-summary__figure { font-weight: 600; }
+.calc-summary--near { margin-top: 20px; font-size: var(--fs-body); }
+@media (min-width: 1024px) {
+  .calc-summary--near { display: none; }
+}
 .calc-conditions { margin-top: 12px; }
 .calc-condition {
   font-size: var(--fs-body-s);

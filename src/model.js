@@ -116,7 +116,7 @@ export function render(root, data, route) {
   for (const preset of model.presets) {
     const button = el("button", { class: "choice calc-preset", attrs: { type: "button", "data-preset": preset.id, "aria-pressed": "false" } }, [
       el("span", { class: "calc-preset__label", text: preset.label }),
-      preset.reconstructed ? el("span", { class: "calc-preset__status", text: "reconstructed, " + String(preset.weeks.fridays.length) + " weeks" }) : null,
+      preset.reconstructed ? el("span", { class: "calc-preset__status", text: "reconstructed, " + String(preset.weeks.fridays.length) + " weeks, " + (preset.weeks.printed ? String(preset.weeks.printed) : "none") + " printed" }) : null,
     ]);
     button.addEventListener("click", () => {
       router.replaceState(VIEW, { preset: preset.id === model.presets[0].id ? "" : preset.id });
@@ -151,6 +151,10 @@ function buildForm() {
 
   const gas = group("Gas and other costs", "The gas cost is this study's intensity times the gas price in dollars; TTF is converted at the exchange rate.");
   for (const scalar of SCALARS) gas.appendChild(field({ id: scalar.key, label: scalar.label, words: scalar.words, format: scalar.format }));
+  // Below 1024px the waterfall is under the whole form, so the result the gas
+  // fields move is repeated under them; hidden from assistive technology,
+  // which hears the live sentence above the waterfall.
+  gas.appendChild(el("p", { class: "calc-summary calc-summary--near", id: "calc-summary-near", attrs: { "aria-hidden": "true" } }));
   form.appendChild(gas);
 
   const cracks = group("Cracks, $/bbl", "Each crack is the product's price less Brent, in dollars a barrel.");
@@ -405,7 +409,7 @@ function conditions(reads, values, result) {
   if (result.excluded.length) {
     const names = result.excluded.map((id) => model.products.find((p) => p.id === id).name);
     const covered = present(result.coveredVolumeYield)
-      ? ["; the margin prices ", figure(result.coveredVolumeYield * PERCENT_PER_ONE, "percent", "covered_volume_yield_percent"), " percent of the barrel, against ", figure(model.slate.covered_volume_yield * PERCENT_PER_ONE, "percent", "slate_covered_volume_yield_percent"), " for all five products"]
+      ? ["; the margin prices ", figure(result.coveredVolumeYield * PERCENT_PER_ONE, "percent", "covered_volume_yield_percent"), " percent of the barrel, against ", figure(model.slate.covered_volume_yield * PERCENT_PER_ONE, "percent", "slate_covered_volume_yield_percent"), " percent for all five products"]
       : [];
     lines.push([sentenceCase(listWords(names)) + (names.length === 1 ? " has" : " have") + " no crack or no yield, so " + (names.length === 1 ? "it is" : "they are") + " left out of the margin rather than priced at zero", ...covered, "."]);
   }
@@ -602,7 +606,12 @@ function breakevens(values, result) {
 }
 
 function summary(result) {
-  const box = held.root.querySelector("#calc-summary");
+  const near = held.root.querySelector("#calc-summary-near");
+  summaryInto(held.root.querySelector("#calc-summary"), result);
+  if (near) summaryInto(near, result);
+}
+
+function summaryInto(box, result) {
   clear(box);
   if (!present(result.marginAfterGasUsdBbl)) {
     box.appendChild(document.createTextNode("Margin after gas of this model: not computed, because an input it needs is missing. Headroom to a run cut level: unidentified."));

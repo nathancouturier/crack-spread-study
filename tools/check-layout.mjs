@@ -46,6 +46,14 @@
 //       seasonal sub view: no two lane markers overlap or leave the page, no
 //       end label runs past its chart or over another, at most one accent dot
 //       per product line, every readout says something, no horse race word
+//   MV  Model, docs/design.md Part 8.2, at #/model, the July 2026 and the 2019
+//       presets: the accent on one figure and one bar, the MBR never a row of
+//       the model's chain, "unidentified" where a run cut level would sit and
+//       no headroom figure, no slider and no min or max, no field in JetBrains
+//       Mono, missing products "Not priced", every bar inside its cell; then TTF
+//       doubled in the field moves the margin after gas down with the same bar
+//       node (in place) and the MBR unchanged, text in a field prints no NaN,
+//       and "Put back" restores the preset
 //   P   the page body never scrolls sideways, and the console logs no error
 //       and throws no exception (messages from browser extensions excepted)
 //   V   the deploy guard, docs: src/crack/versions.py. Every module, stylesheet
@@ -64,7 +72,9 @@ const THEMES = (argValue(argv, "--themes") || "light,dark").split(",");
 const ALL = "cracks,margin,runs,provenance";
 /* The History states measured at every width and theme, Part 8.1. */
 const HISTORY = ["#/history", "#/history?range=2022", "#/history?sub=season"];
-const VIEWS = (argValue(argv, "--views") || "now,history").split(",");
+/* The Model states, Part 8.2. */
+const MODEL = ["#/model", "#/model?preset=july_2026", "#/model?preset=average_2019"];
+const VIEWS = (argValue(argv, "--views") || "now,history,model").split(",");
 
 /* Everything below PROBE runs inside the page. It returns
  * [{ check, width, theme, problem }]. */
@@ -332,6 +342,59 @@ const PROBE = String.raw`(async () => {
     if (/winner|dead heat|tie/i.test(text(document.getElementById("view")))) add("H", "a banned word about the horse race");
   }
 
+  // MV: the Model view, docs/design.md Part 8.2.
+  if (document.querySelector(".calc-layout")) {
+    const view = document.getElementById("view");
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const accents = [...view.querySelectorAll(".text-accent")];
+    if (accents.length !== 1) add("MV", accents.length + " accent figures, not one");
+    if (view.querySelectorAll('rect.mark-accent-bar:not([display="none"])').length !== 1) add("MV", "not exactly one accent bar");
+    if (view.querySelector(".calc-model tr[data-row=official-mbr]")) add("MV", "the ministry's MBR is a row of the model's chain");
+    const run = view.querySelector('tr[data-breakeven="run-cut"]');
+    if (!run || !/unidentified/.test(text(run))) add("MV", "the run cut row does not say unidentified");
+    if (/headroom[^.]*?\d/i.test(text(view))) add("MV", "a figure follows the word headroom");
+    if (view.querySelector('input[type=range], input[min], input[max]')) add("MV", "a slider or a min or max attribute");
+    for (const input of view.querySelectorAll(".calc-field__input")) {
+      if (/JetBrains/.test(getComputedStyle(input).fontFamily)) { add("MV", "a field is set in JetBrains Mono"); break; }
+    }
+    for (const svg of view.querySelectorAll("svg.chart--live")) {
+      const box = svg.getBoundingClientRect();
+      for (const mark of svg.querySelectorAll('rect.live-mark:not([display="none"]), circle.live-mark:not([display="none"])')) {
+        const b = mark.getBoundingClientRect();
+        if (b.left < box.left - 1 || b.right > box.right + 1) add("MV", "a bar runs outside its cell in the row " + svg.closest("tr").getAttribute("data-row"));
+      }
+    }
+    if (/preset=july_2026/.test(location.hash)) {
+      for (const id of ["jet", "fuel_oil_1pct"]) {
+        const row = view.querySelector('tr[data-row="product:' + id + '"]');
+        if (!row || !/Not priced/.test(text(row))) add("MV", "July 2026: " + id + " is not said to be Not priced");
+      }
+      if (!/reconstructed/.test(text(view.querySelector('.calc-preset[data-preset="july_2026"]')))) add("MV", "the July 2026 preset is not labelled reconstructed");
+    }
+    const set = (id, value) => {
+      const input = document.getElementById(id);
+      input.value = value;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    const figure = (row) => text(view.querySelector('tr[data-row="' + row + '"] td.num'));
+    const ttf = document.getElementById("calc-ttf_eur_mwh");
+    const before = parseFloat(figure("after-gas"));
+    const mbr = figure("official-mbr");
+    const bar = view.querySelector('tr[data-row="after-gas"] rect.mark-accent-bar');
+    set("calc-ttf_eur_mwh", String(parseFloat(ttf.value) * 2));
+    await sleep(350);
+    const after = parseFloat(figure("after-gas"));
+    if (!(after < before)) add("MV", "doubling TTF did not lower the margin after gas: " + before + " then " + after);
+    if (view.querySelector('tr[data-row="after-gas"] rect.mark-accent-bar') !== bar) add("MV", "the accent bar was redrawn, not moved in place");
+    if (figure("official-mbr") !== mbr) add("MV", "the ministry's MBR moved with TTF");
+    set("calc-crack-gasoil", "abc");
+    await sleep(50);
+    if (/NaN|Infinity|undefined/.test(text(view))) add("MV", "a field holding text printed NaN, Infinity or undefined");
+    view.querySelector(".calc-put-back").click();
+    await sleep(350);
+    if (parseFloat(figure("after-gas")) !== before) add("MV", "Put back did not restore the preset's margin after gas");
+  }
+
   // P: the body never scrolls sideways.
   if (document.documentElement.scrollWidth > document.documentElement.clientWidth) add("P", "the page scrolls sideways, " + document.documentElement.scrollWidth + " in " + document.documentElement.clientWidth);
   return problems;
@@ -379,7 +442,7 @@ try {
   for (const theme of THEMES) {
     for (const width of WIDTHS) {
       page.errors.length = 0;
-      const states = [...(VIEWS.includes("now") ? [null] : []), ...(VIEWS.includes("history") ? HISTORY : [])];
+      const states = [...(VIEWS.includes("now") ? [null] : []), ...(VIEWS.includes("history") ? HISTORY : []), ...(VIEWS.includes("model") ? MODEL : [])];
       for (const hash of states) {
         page.errors.length = 0;
         if (hash === null) await openNow(page, BASE, { theme, open: ALL, width, height: width < 768 ? 812 : 900 });
@@ -408,7 +471,7 @@ for (const f of selected) {
   if (!byCheck.has(key)) byCheck.set(key, []);
   byCheck.get(key).push(f.theme + " " + f.width);
 }
-const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "H", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
+const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "H", "MV", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
 for (const check of checks) {
   const lines = [...byCheck.entries()].filter(([key]) => key.startsWith(check + "  "));
   if (!lines.length) {
