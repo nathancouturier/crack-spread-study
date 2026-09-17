@@ -2222,3 +2222,142 @@ lane. The view is in the nav and the router; `tools/check-layout.mjs` measures
 `#/history`, `#/history?range=2022` and `#/history?sub=season` at 375, 768, 1024,
 1280 and 1440 px in both themes, and `scripts/screenshots.mjs` photographs five
 History states.
+
+### 8.2 Model
+
+**What the view has to show** (SPEC.md section 7.2 and section 12). The
+calculator: four presets, latest month, 2019 average, October 2022 and July
+2026; every input editable, cracks, yields, TTF, EUR/USD, gas intensity and
+other variable cost; a live recompute with the waterfall updating in place; the
+breakevens in the units a desk quotes, $/bbl for cracks and margins, EUR/MWh for
+gas. SPEC.md section 12: "I open the Model, raise TTF, and watch the margin after
+gas and the headroom fall in place." The arithmetic is `src/engine.js`, the
+mirror proven to 1e-9; the view calls it and implements no formula of its own.
+
+What the committed data allow, measured on 2026-09-17 from the caches:
+
+```
+ministry's final printed monthly prices   2025-11, 2026-02, 2026-03, 2026-08, five products
+                                          (2025-12, 2026-04, 2026-09 provisional; no July 2026)
+OPEC Rotterdam monthly, $/bbl             to 2026-02; gasoil, premium gasoline, jet, fuel oil 1%,
+                                          no heating oil column
+weekly reconstruction, July 2026          five weeks to 3, 10, 17, 24 and 31 July, none printed,
+                                          every one "no second chart yet"; Gazole, Eurosuper and
+                                          Fioul domestique only
+World Bank European gas, $/MMBtu          to 2026-08, TTF by the publisher's definition from 2015-04
+FRED EUR/USD daily                        to 2026-09-04
+the ministry's MBR                        2015-01 to 2026-08, net of its own gas at 0.066 MMBtu/bbl
+```
+
+**The first plan.** The Now waterfall with inputs beside it. The product rows,
+the residual, the official margin with the accent, the gas wedge, the total at
+the study's intensity, every row recomputed live. A TTF slider and a gasoil
+slider over a range from the sample. Four preset buttons. A breakeven table:
+breakeven TTF and breakeven gasoil against the run cut threshold, and the
+headroom. Inputs as number fields with min and max.
+
+**The critique.**
+
+- **M1. The Now waterfall is the wrong chain for a calculator, and dangerous.**
+  Its total is the ministry's MBR, which is already net of the ministry's gas,
+  and its residual is the MBR less the products. Feed a TTF into that chain and
+  the page subtracts gas from a margin that contains gas, the double count Gate
+  2 removed from the engine (`GasDoubleCountError`). *Revision:* the model
+  builds its own margin, the ministry's slate yields times the cracks, and
+  nothing else, on `MARGIN_GROSS_OF_GAS` with no residual. That margin is gross
+  of gas, so subtracting gas from it is correct. The chain is: the product
+  steps, "Gross margin of this model, before gas", the gas step, the other
+  variable cost step, "Margin after gas of this model". The view says in its
+  lead, before any input, that this is a model margin and not the ministry's
+  MBR.
+- **M2. The official margin in the chain.** Drawn as a total inside the model
+  chain, the MBR reads as the model's answer. *Revision:* a second block under
+  the first, on the same scale, labelled as a comparison and never a step of the
+  model: the model's gross margin, then "The ministry's MBR less this gross
+  margin", then the MBR for the preset month, "already net of the ministry's own
+  gas". The gap is `decomposeOfficial(mbr, yields, cracks).residualUsdBbl` from
+  the engine, the same residual the Now view prints, so it moves when a crack is
+  edited, and its second line says what it holds: the unpriced part of the
+  barrel, the ministry's gas, freight and insurance, and, where the preset's
+  prices are not the ministry's, the difference between sources.
+- **M3. The accent.** Part 3 section 4 put the accent on the preset month's
+  official margin. Wrong once M2 moves the MBR out of the chain: the one thing
+  this view exists for is the number that falls when TTF rises. *Revision:* the
+  accent is on "Margin after gas of this model" and nowhere else; the MBR total
+  is ink.
+- **M4. Headroom against a run cut threshold.** The threshold is unidentified
+  (Gate 3), so a breakeven against it, a headroom figure, or a slider "to the
+  run cut level" would print a number the study does not have. *Revision:* the
+  breakevens are computed against a margin of zero, which the artifact carries
+  as `breakeven_target` with the words "a margin of zero, not a level at which
+  runs get cut"; the engine is called with that target and never with an
+  invented one. In the breakeven table the row where the run cut level would sit
+  says "unidentified", in the same size as the figures beside it, followed by
+  the Now view's unidentified paragraph, from the same export function. What
+  falls in place when TTF rises is the margin after gas and its distance to
+  zero; the page says so rather than promising headroom.
+- **M5. Sliders.** A slider over the sample's range is the what if widget of
+  every dashboard, needs a min and max the page would have to type, and moves a
+  figure through values nobody chose. *Revision:* labelled text fields with
+  `inputmode="decimal"`, the unit in the label, one per input, the preset value
+  in each. No slider, no spinner, no min or max attribute.
+- **M6. Presets whose data do not exist as SPEC.md names them.** A preset button
+  that loads "July 2026" and quietly fills jet from another month is exactly the
+  neighbour substitution SPEC.md section 2 forbids. *Revision:* every preset
+  records, per input, where the value came from, and the page prints that
+  source line under its field. Missing products are empty fields that say why
+  ("No figure for July 2026: the weekly reconstruction reads Gazole, Eurosuper
+  and Fioul domestique only"), their waterfall row says "Not priced" in the bar
+  cell, and they are left out of the margin, which then covers less of the
+  barrel and says how much less. July 2026 is labelled reconstructed on the
+  preset itself, with its weeks counted and the printed ones among them
+  counted. 2019 is an average of twelve OPEC months and says so; its TTF is
+  derived from the World Bank's $/MMBtu and FRED's EUR/USD, never the Yahoo
+  daily series, and says so; its MBR is the mean of the twelve published months
+  and says that too.
+- **M7. Nonsense inputs.** min and max attributes would clamp or block quietly,
+  and would need figures typed into the page. *Revision:* the engine computes
+  whatever it is given, and the page says what the engine did with it, under
+  the form, in a sentence per condition: yields above one barrel, a negative
+  yield, a negative gas intensity, TTF or EUR/USD below zero, a field that is
+  not a number. An empty or unreadable field is a missing input, never a zero: a
+  missing crack or yield leaves that product out and says so; a missing TTF,
+  EUR/USD, intensity or other cost leaves the margin after gas uncomputed and
+  says which input stopped it.
+- **M8. Preset buttons named by a date alone.** "Oct 2022" is a date picker.
+  *Revision:* each button is the month, and the reason it is on the list sits
+  under the row for the pressed preset, from the artifact: October 2022 with the
+  French refinery strikes, the S&P Global reference in `events.json`; 2019 as
+  the last full year before the pandemic lockdowns; July 2026 after the strikes
+  on Iran; the latest month as the latest month with the ministry's margin and
+  its final monthly prices. Pressed state as Part 6 S4: underline and weight,
+  `aria-pressed`, never a fill.
+- **M9. Motion.** The recompute is the second item of the motion table: bar
+  geometry tweens at `--t-fast`, figures swap at once. The bars are updated in
+  place, not redrawn, so the tween has something to move, and the portfolio's
+  reduced motion block already takes the duration to 0.01ms. A bar that becomes
+  narrower than 4px changes to the small step circle at once, because a
+  rectangle cannot tween into a circle.
+- **M10. The scale.** A live recompute on a fixed scale runs off the table; a
+  scale refitted on every keystroke moves every bar at once, which reads as a
+  change in every line. *Revision:* the preset's scale, widened on the 1, 2, 5
+  ladder only when an edit runs past it, and never narrowed during edits. The
+  scale sentence says the current scale.
+
+**What survived.** The waterfall as a table with bars in a cell, its marks,
+small steps and 600px layout from Part 3 section 4; four presets; a short
+breakeven table.
+
+**The banned list, for this view.** No slider, no card around the form, no
+fieldset frame (groups are separated by space and a sentence heading, S9), no
+tinted input group (the one allowed use of `--bg-elev` is the field background,
+Part 3 section 7), no pressed fill, no arrow on "Put back" or a preset, no
+figure animated through values, no JetBrains Mono in a field (a field is not a
+table figure; Figtree with tabular figures).
+
+**The parity.** The numbers the page prints for each preset are the numbers
+crack.engine computes for the same inputs, to 1e-9: `src/model-calc.js` is the
+one function the view calls, `scripts/gen_model_cases.py` records what Python
+computes for each preset in `data/model.json` into
+`data/fixtures/model-cases.json`, and `tools/validate-engine.mjs` runs
+`src/model-calc.js` over it.
