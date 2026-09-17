@@ -2068,3 +2068,145 @@ headless Chromium at 375, 768, 1024, 1280 and 1440 px in both themes, with every
 section and text alternative open, and fails naming the finding. It is not in
 `make gate`, because the gate runs without a browser or a server; `make layout`
 runs it.
+
+---
+
+## Part 8. Gate 5 views
+
+Part 3 section 2 settled the time series treatment and section 3 the seasonal
+one, both written before any view but Now existed. Each Gate 5 view gets a
+section here before it is built: what it draws, the first plan, the SPEC.md
+section 0.2 test ("is this what I would produce for any dashboard rather than
+this one?") applied item by item, and what changed. Parts 3, 6 and 7 still hold
+wherever this part does not say otherwise.
+
+### 8.1 History
+
+**What the view has to show** (SPEC.md section 7.2, the Gate 5 brief). Weekly
+cracks and the monthly margin from the start of the data, event markers, a range
+control, a product toggle, a seasonal sub-view, structural breaks. Measured on
+2026-09-17 through `crack.series` and `crack.analysis`:
+
+```
+OPEC monthly cracks, gasoil and gasoline   2000-10 to 2026-02   305 months, no gap
+official MBR                               2015-01 to 2026-08   140 months
+gas wedge at this study's intensity        2015-01 to 2026-08   pink sheet gas, TTF from 2015-04
+weekly reconstruction                      2022-07-01 to 2026-09-11   220 weeks, 19 printed
+weekly minus monthly, 44 common months     gasoil +0.92 $/bbl, gasoline -9.01 $/bbl
+crack against the MBR, 134 common months   R2 gasoil 0.855, gasoline 0.551
+textbook seasons, contiguous windows       gasoline May to September +4.78, t 4.64, 22 of 25
+                                           gasoil November to March -0.44, t -0.59, 10 of 24
+strongest gasoil months, demeaned          October +3.00, November +2.09
+```
+
+Breaks that really exist in what this view draws: OPEC's gasoline column
+respecified 2004-05, 2005-03, 2008-06 and 2013-07; its gasoil column 2005-03 and
+2008-06; the pink sheet gas series becoming TTF in 2015-04, which splits the gas
+wedge. None on the MBR: the method in force from 2016-01-01 was recomputed back
+over 2014 and 2015, and the published file starts in 2015-01. The capacity steps
+of 2017-01 and 2026-01 are breaks in utilisation, which this view does not draw;
+the ICE 10 ppm and Russian free changes belong to the daily layer, which is not
+published. All of them come from `data/seed/events.json`, by kind.
+
+**The first plan.** One tall chart with three stacked panels sharing a time
+axis: monthly cracks, the MBR, the weekly cracks. Range buttons All, 2020, 2022,
+2023 embargo, 2026, Weekly series. Event markers as numbered flags. A crosshair
+readout per panel. The gas wedge as a shaded band under the MBR. Breaks as dashed
+vertical rules through all three panels. The seasonal sub-view as Now's two
+weekly panels plus two monthly climatology panels with the median of 25 years and
+a p25 to p75 band. Events listed under the chart with their sources.
+
+**The critique.**
+
+- **H1. Breaks through all three panels.** Wrong for this content, the K12
+  mistake in another place: a gasoline respecification in 2013 is not a break in
+  the MBR, and a rule through the margin panel says it is. *Revision:* a break is
+  drawn only on the panel and the line it applies to, from the event's
+  `series_column`: a gasoline respecification splits the dashed gasoline line and
+  its rule crosses the monthly panel only, the gas definition change splits the
+  wedge line only. Breaks this view has no line for are listed under the charts
+  with the reason, never drawn on a neighbour.
+- **H2. The wedge as a shaded band under the MBR.** Wrong, and the most
+  dangerous item in the plan: a band hanging below the margin line reads as the
+  margin minus gas, which is the double count Gate 2 removed from the engine, and
+  a filled area is the gradient wash's near relative. *Revision:* the wedge is its
+  own small plot directly under the MBR, on the same time axis and the same $/bbl
+  scale, drawn as a line of the extra gas cost, labelled "Extra gas at the
+  average US refinery's use", with the sentence that the MBR is already net of
+  the ministry's own 0.066 MMBtu/bbl and nothing is subtracted from it here. The
+  two share x and y units so a reader can hold one against the other, and no mark
+  connects them.
+- **H3. Three panels on one shared time axis.** Half generic, half wrong.
+  Stacked panels with a shared axis are the stock dashboard layout, and here
+  they invite reading the weekly panel as the continuation of the monthly one,
+  which open question 41 forbids: gasoline differs by 9.01 $/bbl because it is a
+  different product. *Revision:* kept stacked, because the eye has to go from 2022
+  on one to 2022 on the other; each panel has its own x domain clipped to its own
+  data under the selected range, its own heading naming source and span, and the
+  weekly panel carries the measured gap sentence. The panels are never drawn
+  touching, and there is no shared crosshair.
+- **H4. Range buttons.** Kept from K9 as named ranges, never a 1Y, 3Y, All row.
+  Each window is one rule applied once, written in the export: from six months
+  before the event that names the regime to twelve months after it
+  (`analysis.EPISODE_MONTHS`, the episode length the regressions use), clipped to
+  the data. "Weekly series from July 2022" runs from the first weekly Friday.
+  **No continuous brush.** The coverage strip of S1 was designed to answer why a
+  line stops; here each panel heading says its own span and an empty panel says
+  why it is empty, so the strip would repeat those sentences as marks. A brush
+  would let a reader cut windows no finding refers to; the named ranges are the
+  windows the analysis actually uses. SPEC.md section 7.2 names "a range brush";
+  this is a declared departure for the owner.
+- **H5. A panel with nothing in the range.** The first plan drew an empty frame.
+  *Revision:* the panel keeps its heading and says, from the artifact, what it
+  does not hold: "The official margin starts in January 2015, so nothing of it
+  falls in 2001 to 2002." Never a neighbour's data, never an empty axis.
+- **H6. Numbered event flags always.** Generic, and a flag is decoration.
+  *Revision:* Part 3 section 2's lane: the short name as a button when the names
+  fit, numbers only when they collide, with a numbered list under the panel. A
+  marker opens a sentence under its panel with the date, what happened and the
+  source link. Until the Events view exists it says nothing about a panel there,
+  and the list names no view that is not published.
+- **H7. Accent.** The first plan put the accent on each panel's latest point and
+  on the selected event. Two accents on the weekly panel. *Revision:* one mark
+  per panel, the latest observation of the ink series the panel exists for: on
+  the monthly and weekly panels a dot per product line at its last value, which
+  Part 3 section 2 counts as the one latest mark; on the MBR its last month; the
+  wedge plot and the event rules take none.
+- **H8. The monthly seasonal band from p25 to p75 and a median.** Generic
+  climatology. The textbook check is on the mean of demeaned seasons, so a
+  median line would draw a statistic the sentence under it does not test.
+  *Revision:* 25 complete years as `--border-strong` hairlines (decorative,
+  exempt from 3.0 and said so in the chart's description), the mean of those
+  years at 1.5px `--text`, end labelled "Mean of 25 years", and the season the
+  sentence tests as a bracket under the axis: "May to September" under gasoline,
+  "November to March, the window desks quote" under gasoil. The results are said
+  as measured, the failed one in the same type as the one that holds. 2026 is not
+  drawn: two months cannot be demeaned by a year's mean, and the panel says so.
+  This replaces Part 3 section 3's median line.
+- **H9. The seasonal toggle.** The episode years among the 25 complete years
+  are 2020 and 2022; 2026 is not complete and 2023 is not an episode year in
+  `analysis.SEASONAL_REMOVABLE_YEARS`. *Revision:* one toggle, "Leave out 2020
+  and 2022", its text flipping to "Put 2020 and 2022 back", and the export
+  carries the mean line and both test results for both states, so the page
+  composes no figure. The weekly seasonal panels keep Now's treatment and the
+  artifact Now reads, with Now's own restriction: no toggle until the export
+  carries the sentences without 2022.
+- **H10. The crosshair readout.** Kept from Part 3 section 2 because its
+  evidence clause is specific to this series; on the monthly panels the clause
+  is the source's own specification label for that month ("gasoil 10 ppm,
+  gasoline unleaded 98"), which only this data can say.
+- **H11. What the view opens on.** The first plan opened on All. Kept: the
+  whole sample is the claim ("from the start of the data"), and the sample
+  start is said in the lead sentence: the owner chose 2001, so the cracks run
+  from October 2000 while the margin runs from January 2015, and nothing extends
+  the margin back.
+
+**What survived.** Stacked panels (with H3's limits), end labels, the readout,
+the printed squares and evidence rail on the weekly panel, named ranges,
+checkboxes for products, the list of events with sources.
+
+**The banned list, for this view.** No legend (end labels), no tooltip card (a
+readout line), no fill under any line, no hue for a product, no arrow on a range
+button or event marker, no pressed fill (underline and weight, S4), no text on a
+hatch or a plot area, no month name in JetBrains Mono (month and year labels
+that are words are Figtree; only numeric ticks are mono).
