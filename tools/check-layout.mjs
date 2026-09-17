@@ -22,7 +22,8 @@
 // measured.
 //
 // THE CHECKS, named by the audit finding each one holds down
-//   B1  a sticky first column takes at most half its scroll box
+//   B1  a sticky first column takes at most half its scroll box, and none of
+//       its cells is taller than about seven lines
 //   B2  a table's caption is never clipped by the table's own scroll box
 //   S1  every column cut off by a scroll box is named in the caption, and the
 //       caption names none that is fully in view; focus on a control inside a
@@ -35,8 +36,8 @@
 //   S7  no focus ring anywhere in an open section is clipped by an ancestor
 //   S8  every series the manifest flags provisional says so in its row
 //   M1  JetBrains Mono holds no letters
-//   M2  a rail label either sits inside its bracket with the end ticks showing
-//       or outside it, never over an end tick
+//   M2  a rail label either sits inside its bracket with 8px of line showing
+//       at each end, or outside it, never over an end tick
 //   M3  where the accent zero rule crosses an interval line, a --bg ring
 //       separates them
 //   M4  waterfall totals carry no plus sign; the scale sentence is not said to
@@ -92,6 +93,12 @@ const PROBE = String.raw`(async () => {
       ? Math.max(...firstCells.map((cell) => cell.getBoundingClientRect().width)) : 0;
     if (overflows && sticky > scroller.clientWidth / 2) {
       add("B1", name + ": sticky first column " + Math.round(sticky) + " px of a " + scroller.clientWidth + " px box");
+    }
+    // A narrow sticky column must not turn a row into a column of words: no
+    // sticky cell taller than 160px, about seven lines.
+    if (overflows && sticky) {
+      const tallest = Math.max(...firstCells.map((cell) => cell.getBoundingClientRect().height));
+      if (tallest > 160) add("B1", name + ": a sticky first column cell is " + Math.round(tallest) + " px tall");
     }
 
     // S1: which header cells are cut on the right at scrollLeft 0, and does the caption name them.
@@ -261,7 +268,9 @@ const PROBE = String.raw`(async () => {
     const tickBottom = +m[3];
     const plate = label.previousElementSibling && label.previousElementSibling.classList.contains("rail-plate") ? label.previousElementSibling.getBBox() : null;
     const b = plate || label.getBBox();
-    const inside = b.x > x0 + 1 && b.x + b.width < x1 - 1;
+    // Inside means at least 8px of bracket line shows between the plate and each
+    // end tick: less, and the stubs read as arrow heads (audit point d).
+    const inside = b.x > x0 + 8 && b.x + b.width < x1 - 8;
     const outside = b.x + b.width < x0 || b.x > x1 || b.y >= tickBottom || b.y + b.height <= tickTop;
     const clipped = b.x < 0 || b.x + b.width > +label.ownerSVGElement.getAttribute("width") + 0.5 || b.y + b.height > +label.ownerSVGElement.getAttribute("height") + 0.5;
     if (clipped) add("M2", "the rail label " + JSON.stringify(text(label)) + " runs outside its chart");

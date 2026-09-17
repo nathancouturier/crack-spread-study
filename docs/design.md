@@ -2012,7 +2012,9 @@ whole ring shows. No shadow, no fade, no arrow: the affordance is still words.
 
 At 600px and below the manifest's series label and the response table's model
 name wrap inside a 9.5rem sticky column, under half of the 335px box, and the
-two model equations leave that column for a list under the table. Above 600px
+two model equations leave that column for a list under the table, where they had
+made each model row about twelve lines tall. The week by week text alternative of
+a seasonal panel keeps each row on one line and scrolls. Above 600px
 the manifest columns are narrowed so that at 1280px and wider the whole table
 fits (1192px in a 1192px box, measured). The manifest gains a Provisional column
 after Last value, from `reader.series[].provisional_segments`: "provisional:
@@ -2054,7 +2056,8 @@ Audit S6, S7, M1, M2, M3.
   words are Figtree with tabular figures. Dates in Last value stay in mono, as
   figures.
 - **Rail labels.** A label sits centred on its bracket over a plate only when
-  the plate leaves both end ticks showing; otherwise it moves just right of the
+  the plate leaves 8px of line inside each end tick, so the bracket still reads
+  as a span; otherwise it moves just right of the
   bracket, else just left, else onto its own line under the chart. "none" now
   sits beside week 53 instead of over the end tick of "4 prior years", and at
   375 px "2026, no second chart yet" takes a line under the rails instead of

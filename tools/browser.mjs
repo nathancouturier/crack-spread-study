@@ -227,6 +227,11 @@ export async function launch(argv = process.argv) {
 export async function openNow(page, base, { theme = "light", open = "", width = 1440, height = 900 } = {}) {
   await page.viewport(width, height);
   await page.goto(base);
+  // goto resolves on the first load event it sees, and on a fresh target that
+  // can be the initial about:blank rather than the site, where localStorage is
+  // denied. So wait until the document really is the site before touching
+  // storage, rather than trusting the load event.
+  await page.waitFor("location.href.startsWith(" + JSON.stringify(base) + ") && document.readyState !== 'loading'");
   await page.evaluate("localStorage.setItem('nc-theme', " + JSON.stringify(theme) + "), true");
   await page.goto(base + (open ? "#/now?open=" + open : "#/now"));
   await page.reload();

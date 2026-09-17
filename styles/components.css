@@ -520,7 +520,7 @@ p.block,
  * half of the box is left for the columns that scroll. */
 @media (max-width: 600px) {
   .model-name { min-width: 9.5rem; width: 9.5rem; max-width: 9.5rem; }
-  .model-name__equation { display: none; }
+  .table .model-name__equation { display: none; }
 }
 /* The equations under the response table, shown only at 600px and below, where
  * they leave the sticky column. */
@@ -555,6 +555,12 @@ p.block,
   .strip-figure { display: block; }
   .table .strip-col { display: none; }
 }
+
+/* The text alternative of a seasonal panel: one line per week, so a narrow
+ * screen scrolls it sideways instead of wrapping each "how read" cell into a
+ * column of words (B1 of the Gate 4 audit's measure, Part 7 C13). */
+.weeks-table th,
+.weeks-table td { white-space: nowrap; }
 
 /* --------------------------------------------------------- provenance --- */
 

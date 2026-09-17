@@ -350,7 +350,8 @@ function bracket(group, x0, x1, y, label) {
  *
  *  In order of preference (Part 7, C15, M2 of the Gate 4 audit):
  *    1  inside the bracket, centred on a --bg plate the width of its words, when
- *       the plate leaves both end ticks showing
+ *       the plate leaves at least LABEL_GAP of line showing inside each end
+ *       tick, so the bracket still reads as a span and not as two arrow heads
  *    2  just right of the bracket, when that stays inside the chart
  *    3  just left of it, likewise
  *    4  on a line of its own under the chart, starting under the bracket
@@ -378,7 +379,7 @@ export function plateRailLabels(svg) {
     }
     if (!box || box.width === 0) continue;
     const pad = g.TICK_LENGTH;
-    if (box.x - pad > x0 + 1 && box.x + box.width + pad < x1 - 1) {
+    if (box.x - pad > x0 + g.LABEL_GAP && box.x + box.width + pad < x1 - g.LABEL_GAP) {
       label.parentNode.insertBefore(svgEl("rect", {
         class: "mark-ring-fill rail-plate",
         x: px(box.x - pad),
