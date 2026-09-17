@@ -948,7 +948,7 @@ export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, 
  * their centres. Pushed apart symmetrically, then kept inside [low, high]. */
 function spreadPairs(items, lineHeight, low, high) {
   const sorted = [...items].sort((a, b) => a.y - b.y);
-  const need = lineHeight + lineHeight;
+  const need = lineHeight + lineHeight + GEOMETRY.TICK_LENGTH;
   for (let pass = 0; pass < sorted.length; pass += 1) {
     for (let index = 1; index < sorted.length; index += 1) {
       const gap = sorted[index].y - sorted[index - 1].y;
@@ -1039,8 +1039,10 @@ export function profilePanel({ width, years, mean, months, season, style, yDomai
   marks.appendChild(group);
   const lastIndex = mean.map((v) => present(v)).lastIndexOf(true);
   if (lastIndex >= 0) {
-    const x = xOf(lastIndex + first) + g.LABEL_GAP;
-    marks.appendChild(svgEl("text", { class: "chart-end-label halo", x: px(x), y: px(yOf(mean[lastIndex])), "dominant-baseline": "central" }, words.meanLabel));
+    // Inside the plot, right aligned just above the line's end on a --bg halo,
+    // because the words are wider than the room right of a narrow plot.
+    const x = xOf(lastIndex + first);
+    marks.appendChild(svgEl("text", { class: "chart-end-label halo", x: px(x), y: px(yOf(mean[lastIndex]) - g.LABEL_SPACING), "text-anchor": "end", "dominant-baseline": "central" }, words.meanLabel));
   }
 
   // The season bracket. A season that wraps the year end is two brackets, the

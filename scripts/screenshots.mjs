@@ -25,12 +25,13 @@
 // photographed a broken page does not look like a good one.
 //
 // TO ADD A VIEW at Gate 5, add an entry to SHOTS: a file name, the hash route,
-// the viewport, the theme. `open` is the Now view's open sections.
+// the viewport, the theme. `open` is the Now view's open sections; `hash`
+// opens any other view by its address.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { argValue, launch, openNow } from "../tools/browser.mjs";
+import { argValue, launch, openNow, openView } from "../tools/browser.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const argv = process.argv;
@@ -48,6 +49,13 @@ const SHOTS = [
   { name: "now-mobile-light", ...MOBILE, theme: "light", open: "" },
   { name: "now-mobile-light-open", ...MOBILE, theme: "light", open: ALL },
   { name: "now-mobile-dark-open", ...MOBILE, theme: "dark", open: ALL },
+  // History, docs/design.md Part 8.1: the whole sample, the 2022 range, and the
+  // seasonal sub view, at both widths in both themes.
+  { name: "history-desktop-light", ...DESKTOP, theme: "light", hash: "#/history" },
+  { name: "history-desktop-dark-2022", ...DESKTOP, theme: "dark", hash: "#/history?range=2022" },
+  { name: "history-desktop-light-season", ...DESKTOP, theme: "light", hash: "#/history?sub=season" },
+  { name: "history-mobile-light", ...MOBILE, theme: "light", hash: "#/history" },
+  { name: "history-mobile-dark-season", ...MOBILE, theme: "dark", hash: "#/history?sub=season" },
 ];
 
 /** Width and height from a PNG's IHDR chunk, to report what was written. */
@@ -64,7 +72,8 @@ try {
   for (const shot of SHOTS) {
     page.errors.length = 0;
     try {
-      await openNow(page, BASE, shot);
+      if (shot.hash) await openView(page, BASE, shot);
+      else await openNow(page, BASE, shot);
       const theme = await page.evaluate("document.documentElement.dataset.theme");
       if (theme !== shot.theme) throw new Error("the page is in " + theme + ", not " + shot.theme);
       const { png, height } = await page.screenshotFullPage(shot.width);

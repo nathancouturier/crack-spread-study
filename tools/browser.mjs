@@ -243,3 +243,19 @@ export async function openNow(page, base, { theme = "light", open = "", width = 
   // Width observers and the rail plates run after layout; give them two frames.
   await page.evaluate("new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 400))))");
 }
+
+/** Open any view by its hash at `base` in `theme`, and wait until the view's
+ *  title is drawn, the fonts are in and the width observers have run. */
+export async function openView(page, base, { theme = "light", hash = "#/now", width = 1440, height = 900 } = {}) {
+  await page.viewport(width, height);
+  await page.goto(base);
+  await page.waitFor("location.href.startsWith(" + JSON.stringify(base) + ") && document.readyState !== 'loading'");
+  await page.evaluate("localStorage.setItem('nc-theme', " + JSON.stringify(theme) + "), true");
+  // Set the hash in the page rather than through navigation: a same document
+  // navigation fires no load event to wait for.
+  await page.evaluate("location.hash = " + JSON.stringify(hash) + ", true");
+  await page.reload();
+  await page.waitFor("document.querySelector('#view-title') && !document.querySelector('#view .state-message[role=\"status\"]')");
+  await page.waitFor("document.fonts.status === 'loaded'");
+  await page.evaluate("new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(r, 400))))");
+}

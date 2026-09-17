@@ -42,6 +42,10 @@
 //       separates them
 //   M4  waterfall totals carry no plus sign; the scale sentence is not said to
 //       the cent
+//   H   History, docs/design.md Part 8.1, at #/history, the 2022 range and the
+//       seasonal sub view: no two lane markers overlap or leave the page, no
+//       end label runs past its chart or over another, at most one accent dot
+//       per product line, every readout says something, no horse race word
 //   P   the page body never scrolls sideways, and the console logs no error
 //       and throws no exception (messages from browser extensions excepted)
 //   V   the deploy guard, docs: src/crack/versions.py. Every module, stylesheet
@@ -50,7 +54,7 @@
 //       planted through the DevTools protocol, the view draws no verdict and says
 //       which file it refused and to reload. Once, at 1280 px in light.
 
-import { argValue, launch, openNow } from "./browser.mjs";
+import { argValue, launch, openNow, openView } from "./browser.mjs";
 
 const argv = process.argv;
 const BASE = argValue(argv, "--base") || "http://localhost:8126/crack-spread-study/";
@@ -58,6 +62,9 @@ const ONLY = (argValue(argv, "--only") || "").split(",").filter(Boolean);
 const WIDTHS = (argValue(argv, "--widths") || "375,768,1024,1280,1440").split(",").map(Number);
 const THEMES = (argValue(argv, "--themes") || "light,dark").split(",");
 const ALL = "cracks,margin,runs,provenance";
+/* The History states measured at every width and theme, Part 8.1. */
+const HISTORY = ["#/history", "#/history?range=2022", "#/history?sub=season"];
+const VIEWS = (argValue(argv, "--views") || "now,history").split(",");
 
 /* Everything below PROBE runs inside the page. It returns
  * [{ check, width, theme, problem }]. */
@@ -149,7 +156,11 @@ const PROBE = String.raw`(async () => {
   }
 
   // S7: focus rings clipped by any ancestor, everywhere in the open sections.
-  for (const control of document.querySelectorAll('.section__body[data-open="true"] a[href], .section__body[data-open="true"] button, .section__body[data-open="true"] [tabindex="0"], .section__button')) {
+  const focusables = document.querySelector(".sections")
+    ? '.section__body[data-open="true"] a[href], .section__body[data-open="true"] button, .section__body[data-open="true"] [tabindex="0"], .section__button'
+    : '#view a[href], #view button, #view input, #view [tabindex="0"]';
+  for (const control of document.querySelectorAll(focusables)) {
+    if (control.disabled) continue;
     if (control.closest(".table-scroll") && control !== control.closest(".table-scroll")) continue; // measured above, after scrolling
     control.scrollIntoView({ block: "center" });
     control.focus();
@@ -287,6 +298,40 @@ const PROBE = String.raw`(async () => {
   const scale = document.querySelector("#section-body-margin .scale-note");
   if (scale && /\.00 to /.test(text(scale))) add("M4", "the scale is said to the cent: " + JSON.stringify(text(scale)));
 
+  // H: the History view, docs/design.md Part 8.1.
+  if (document.querySelector(".history-body")) {
+    for (const lane of document.querySelectorAll(".lane")) {
+      const boxes = [...lane.children].map((node) => ({ text: text(node), box: node.getBoundingClientRect(), row: node.getAttribute("data-row") || "0" }));
+      for (let i = 0; i < boxes.length; i += 1) {
+        for (let j = i + 1; j < boxes.length; j += 1) {
+          const a = boxes[i].box;
+          const b = boxes[j].box;
+          if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) add("H", "two lane markers overlap: " + JSON.stringify(boxes[i].text) + " and " + JSON.stringify(boxes[j].text));
+        }
+        if (boxes[i].box.right > document.documentElement.clientWidth + 1 || boxes[i].box.left < -1) add("H", "a lane marker runs off the page: " + JSON.stringify(boxes[i].text));
+      }
+    }
+    for (const svg of document.querySelectorAll("svg.chart--time, svg.chart--profile")) {
+      const width = +svg.getAttribute("width");
+      for (const label of svg.querySelectorAll(".chart-end-label")) {
+        const b = label.getBBox();
+        if (b.x + b.width > width + 0.5) add("H", "the end label " + JSON.stringify(text(label)) + " runs past its chart by " + (b.x + b.width - width).toFixed(1) + " px");
+      }
+      const ends = [...svg.querySelectorAll(".chart-end-label")].map((l) => l.getBBox());
+      for (let i = 1; i < ends.length; i += 1) {
+        const a = ends[i - 1];
+        const b = ends[i];
+        if (a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height) add("H", "two end labels overlap");
+      }
+      if (svg.querySelectorAll(".mark-accent-dot").length > 2) add("H", "more than one accent mark per product on a chart");
+    }
+    for (const panel of document.querySelectorAll(".history-panel")) {
+      const readout = panel.querySelector(".readout");
+      if (readout && !text(readout)) add("H", "a readout is empty");
+    }
+    if (/winner|dead heat|tie/i.test(text(document.getElementById("view")))) add("H", "a banned word about the horse race");
+  }
+
   // P: the body never scrolls sideways.
   if (document.documentElement.scrollWidth > document.documentElement.clientWidth) add("P", "the page scrolls sideways, " + document.documentElement.scrollWidth + " in " + document.documentElement.clientWidth);
   return problems;
@@ -334,12 +379,18 @@ try {
   for (const theme of THEMES) {
     for (const width of WIDTHS) {
       page.errors.length = 0;
-      await openNow(page, BASE, { theme, open: ALL, width, height: width < 768 ? 812 : 900 });
-      const problems = await page.evaluate(PROBE);
-      for (const problem of problems) found.push({ ...problem, width, theme });
-      for (const message of page.errors) {
-        if (/chrome-extension:\/\//.test(message) || !/^(exception|console error|log error)/.test(message)) continue;
-        found.push({ check: "P", problem: message, width, theme });
+      const states = [...(VIEWS.includes("now") ? [null] : []), ...(VIEWS.includes("history") ? HISTORY : [])];
+      for (const hash of states) {
+        page.errors.length = 0;
+        if (hash === null) await openNow(page, BASE, { theme, open: ALL, width, height: width < 768 ? 812 : 900 });
+        else await openView(page, BASE, { theme, hash, width, height: width < 768 ? 812 : 900 });
+        const problems = await page.evaluate(PROBE);
+        const where = hash === null ? "" : hash + ": ";
+        for (const problem of problems) found.push({ ...problem, problem: where + problem.problem, width, theme });
+        for (const message of page.errors) {
+          if (/chrome-extension:\/\//.test(message) || !/^(exception|console error|log error)/.test(message)) continue;
+          found.push({ check: "P", problem: where + message, width, theme });
+        }
       }
     }
   }
@@ -357,7 +408,7 @@ for (const f of selected) {
   if (!byCheck.has(key)) byCheck.set(key, []);
   byCheck.get(key).push(f.theme + " " + f.width);
 }
-const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
+const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "H", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
 for (const check of checks) {
   const lines = [...byCheck.entries()].filter(([key]) => key.startsWith(check + "  "));
   if (!lines.length) {
