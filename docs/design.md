@@ -2502,3 +2502,224 @@ sort control, no bold or accent on a horse, no badge, no traffic light, no
 shaded band with text on it, no accent on the scatter or the residuals, no
 legend (end labels), and none of the words winner, wins, best, tie, dead heat or
 equivalent on the page.
+
+### 8.4 Events
+
+**What the view has to show** (SPEC.md sections 6.5 and 7.2). "The minus 6 to
+plus 6 month panels, one per event, opened by clicking a marker in History or
+picking from a list." Around each event, the cracks, the margin after gas and
+utilisation, from six months before to six months after. Every panel links its
+source. Measured on 2026-09-18 from `data/seed/events.json` through
+`crack.sources.events_anchors`, and from the caches the other views read:
+
+```
+events with a panel         10: kinds market, policy and reference, in date order,
+                            2020-01-01 to 2026-04-07; nine dated to the day, the
+                            lockdowns to the month (the seed's date_note says why)
+entries without a panel     the specification breaks, the gas definition changes, the
+                            MBR method date and the two ICE daily layer changes;
+                            they are breaks, listed in Method with where each is drawn
+the stock release           11 March 2026, precision day, pinned from two IEA pages
+                            (SPEC.md wrote 2026-03 and asked for the day)
+OPEC monthly cracks         2000-10 to 2026-02: the three 2026 windows lose their
+                            last months
+official MBR                2015-01 to 2026-08: every window here is inside its start
+utilisation, JODI over EI   2015-01 to 2026-06, June provisional; the analysis frame
+                            the Runs view reads, capacity steps 2017-01 and 2026-01
+weekly reconstruction       2022-07-01 to 2026-09-11: the 2020 and three 2022 windows
+                            hold none or part of it, the six oldest weeks hatched
+```
+
+**The first plan.** A grid of ten small multiples, one card per event, each with
+the three series on one chart and a left and a right axis, the event at zero,
+every series indexed to 100 in the event month, a "change from minus one to plus
+one" figure under each card, and a dropdown to pick an event.
+
+**The critique.**
+
+- **E1. Ten cards in a grid.** The rounded card for every block, the first item
+  of the banned list, and ten charts on screen that nobody asked for (SPEC.md
+  section 12). *Revision:* one event open at a time. The view opens on the list
+  alone; a list item or a History marker opens that event's panel under it, and
+  the address says which, `#/events?event={id}`, so a panel is linkable. No
+  frame, no tint: a panel is a heading, a sentence, its plots and a table.
+- **E2. Three series on one chart with two axes.** The dual axis that R1 threw
+  out of the Runs view, for the same reason: two scales make any two lines look
+  related by the choice of ranges. *Revision:* the plots are stacked, each on its
+  own scale and unit, on one shared x axis of the thirteen months, the way
+  History stacks its panels (H3): cracks in $/bbl, the margin after gas in
+  $/bbl, utilisation in percent.
+- **E3. Indexed to 100 at the event.** The event study chart of every research
+  deck, and wrong here twice: it hides the level, which is what a desk reads (a
+  crack at 44 is a different market from a crack at 14 even when both rose by
+  half), and an index is a number the data does not contain. *Revision:*
+  levels, in the source's units. The x axis is labelled in months from the
+  event, numeric ticks in JetBrains Mono (minus six to plus six, thinned on the
+  1, 2, 5 ladder so zero is always labelled), and the calendar month of every
+  point is in the table and in the plot's description.
+- **E4. "Change from minus one to plus one" under each panel.** It reads as the
+  event's effect, which the window cannot identify: other things happened in the
+  same months (2022 has four events in eight months) and SPEC.md section 6.6
+  forbids anything that looks like a signal. *Revision:* no computed change, no
+  before and after mean. One sentence under the heading: the panel shows what
+  moved around the date, not what the event caused.
+- **E5. The event at zero as an ordinary gridline.** A day precision event and a
+  month precision one would be drawn the same, which claims a precision the
+  lockdowns do not have. *Revision:* the event is the one thing each plot is
+  for, so it takes the accent: a 1px accent rule at the day for an event the
+  source dates to the day; for one dated to the month, no rule, a bracket in the
+  rail under the axis spanning that month and labelled with the month. The
+  seed's own date note is printed under the heading, so the IEA release says it
+  is pinned to 11 March from two IEA pages.
+- **E6. A window shortened to the data.** The easy failure: the 2026 windows lose
+  their monthly cracks after February 2026 and a chart that starts and stops
+  where the data do would look complete. *Revision:* the x axis always runs the
+  full thirteen months. Missing months are null in the artifact and drawn as the
+  site draws every gap (no line, a dotted segment on the baseline, Part 3
+  section 2), and a sentence under the plot names the series and why: "OPEC's
+  monthly cracks stop at February 2026, so the 6 months from March 2026 to
+  August 2026 in this window have none; nothing fills them." A series with
+  nothing in the window keeps its heading and says so instead of an empty
+  frame (H5). Months after the latest data the study holds are "not in the data
+  yet", said once, not a series failure.
+- **E7. The weekly cracks spliced onto the monthly line where both exist.**
+  Forbidden by open question 41 and by H3. *Revision:* the cracks plot draws
+  OPEC's monthly cracks only, gasoil solid and gasoline dashed as everywhere;
+  the weekly reconstruction is its own plot under it, on the same x axis, drawn
+  only in windows that reach July 2022, with the evidence rail (the six oldest
+  weeks hatched, the newest bracketed) and the printed weeks as squares. The
+  2020 windows say, by name, that the weekly series starts on 1 July 2022.
+- **E8. The margin after gas as one line.** Two figures are "after gas" on this
+  site and one line would have to pick: the ministry's MBR, already net of its
+  own 0.066 MMBtu/bbl, and the same margin at the average US refinery's 0.212.
+  Subtracting gas from the MBR is the double count Gate 2 removed. *Revision:*
+  both, end labelled, the ministry's solid and the US gas use dotted (the dash
+  is gasoline's, so it is not reused for a margin), and the sentence under the
+  plot says both are after gas and nothing is subtracted twice.
+- **E9. Utilisation as one continuous line.** Two capacity steps sit inside the
+  sample, one in January 2026, inside the three 2026 windows. *Revision:* the
+  line splits at the step with the dashed break rule, as on the Runs view, and
+  provisional months carry the word in the table.
+- **E10. A dropdown to pick the event.** A select hides nine of ten choices and
+  says nothing about each. *Revision:* the list is the picker: ten links in date
+  order, each with its date at the precision the source gives, its short name,
+  and a coverage clause from the artifact that names every series missing from
+  its window, so a reader sees before opening that the lockdown window has no
+  weekly series. The open event is `aria-current`, underline and weight, never
+  a fill (S4).
+- **E11. History's markers.** Until now a marker opened a sentence under its
+  panel (H6). *Revision:* a marker now opens its event's panel here, and the
+  numbered list under each History panel links it too.
+
+**The banned list, for this view.** No card, no dual axis, no index to 100, no
+change figure, no fill under a line, no legend (end labels), no dropdown, no
+arrow on a list link, no text on the plot area, no month name in JetBrains Mono,
+and nothing reading as cause: the words "impact" and "caused" do not appear on
+the page, and "effect" only in the sentence that denies it.
+
+### 8.5 Method
+
+**What the view has to show** (SPEC.md section 7.2, the Gate 5 brief).
+"Formulas, the assumptions table with a source per row, product definitions,
+structural breaks, limitations, reuse terms." It is also where the study shows
+its work: the departures from SPEC.md with their evidence, the measured cross
+checks, the weekly reconstruction and its error, the two manual steps, and the
+fields the Gate 4 audit found exported and never rendered (section 8 of the
+Gate 4 self audit: the ICE factor citations, the printed $/t prices, R2 and the
+Newey-West lag). Measured on 2026-09-18 through `crack.config`, `crack.series`,
+`crack.analysis` and the manifest:
+
+```
+factors            gasoil 7.45, gasoline 8.33, jet 7.88, heating oil 7.45, fuel oil 6.35,
+                   each an ICE contract conversion factor read on 2026-09-16
+DGEC Brent         7.5 in the weekly note's $/t table (measured), 7.55 in the MBR (stated)
+gas                3.412142 MMBtu/MWh; 0.21217 MMBtu/bbl from four EIA 2023 figures;
+                   the ministry's embedded 0.06590; ratio 3.22
+Brent check        140 of 140 months within 1.5 $/bbl, worst 0.26
+MBR anchors        9 of 9 reproduce (SPEC.md's eight and August 2026 final)
+triangulation      October 2022, 6.23 $/bbl on the 3.5 percent fuel oil row, 5.51 on
+                   the 1 percent row, against S&P's about 7
+implied bbl/t      44 months 2022-07 to 2026-02: gasoil mean 7.5283 (7.3080 to 7.8191),
+                   gasoline mean 7.7184 (6.9370 to 8.3334) against 8.33
+replication        7 months of printed prices, 8 inputs unpublished, never within 0.50
+Brent bound        25 FRED prints below 10 $/bbl, 1998, 1999 and 2020, so 5 and not 10
+reconstruction     leave one series out 0.17 to 0.44 $/t; note pairs 0.30 mean, 1.68 worst;
+                   a 10 point tilt moves the oldest week 73.49 $/t
+Newey-West         lag 4 on 135 months, at least 3 by SPEC.md section 6.1
+```
+
+The implied factors recomputed here from the committed caches, by the calendar
+month mean of the weekly reconstruction over OPEC's monthly $/bbl, give 7.5283
+and 7.7184; `config.py` quotes 7.5285 and 7.7185 from the Gate 1 computation.
+The page prints what the export computes, never the comment.
+
+**The first plan.** One long page of headed sections with every formula in a
+code block in JetBrains Mono, a sticky table of contents in a left sidebar, a
+big assumptions table, "Tip" and "Warning" callout boxes for the departures, and
+each source's licence as a badge.
+
+**The critique.**
+
+- **D1. Formulas in a code block in the mono face.** The mono face is for
+  figures in tables and on axis ticks only (SPEC.md section 0.2), and a code
+  block turns a definition into something to copy into a terminal. *Revision:*
+  each formula is a line in Figtree with tabular figures and plain operators,
+  "gasoil crack = gasoil price in $/t / 7.45 minus Brent in $/bbl", every
+  constant a value from the artifact, and under it one sentence on what it is
+  and is not.
+- **D2. A sticky sidebar table of contents.** The documentation site layout;
+  at 375 px it either disappears or eats the column. *Revision:* an ordered list
+  of links at the top of the view, in the text column, each one an address,
+  `#/method?section=assumptions`, so a section is linkable the way every other
+  view's state is and the router is not fooled by a bare fragment. Opening one
+  scrolls to its heading and moves focus there.
+- **D3. Callout boxes for the departures.** Tinted boxes with an icon are the
+  "same rounded card" and a coloured alarm. The departures are the most
+  important part of the page and must not look like asides. *Revision:* a
+  section of their own, second after the formulas, each departure a sentence
+  heading and a paragraph in body type: what SPEC.md says, what this study did,
+  and the evidence, with the primary source quoted where one exists (the MBR's
+  own method note, in French, with its URL).
+- **D4. One assumptions table with everything.** Mixing contract factors, unit
+  definitions, derived intensities and rules in one table puts "3.412142" next
+  to "the monthly averaging rule" and makes the source column a mix of links and
+  essays. *Revision:* one table of constants, each row the name in words, the
+  value, where it is used and the source as a link; then the two derivations
+  that need their working, the gas intensity and the ministry's embedded gas, as
+  small tables of inputs with their sources; then the rules (monthly averaging,
+  the percentile window, the Newey-West lag, the validation bounds) as a list of
+  sentences. The August 2026 decomposition prices, per product the printed $/t,
+  the factor, its ICE citation and the crack it gives, are read from
+  `data/margin-stack.json` itself, and R2 and the Newey-West lag of each
+  response equation from `data/run-economics.json`, so the fields the audit
+  found orphaned are rendered from the artifacts that own them rather than
+  copied.
+- **D5. Licences as badges.** A badge per source is decoration and cannot hold a
+  third party caveat. *Revision:* a table, source, credit line, terms, and the
+  third party note in words, read from `data/provenance.json`, plus the font
+  disclosure as a sentence: Figtree stands in for Satoshi because Satoshi's
+  licence does not allow a copy in a public repository.
+- **D6. Cross checks as green ticks.** A tick says "passed" and invites no
+  reading of the size. *Revision:* a table, check, what was compared, the result
+  in figures and what it means, with the one that is not comfortable (gasoline's
+  implied 7.72 against 8.33) in the same weight as the ones that are, and why
+  8.33 was kept said beside it.
+- **D7. Limitations as a bullet list at the end.** Kept as a list, because each
+  is a separate statement, but written as sentences with their figures, and the
+  weakest results lead: the unidentified threshold, the race this sample cannot
+  decide, endogeneity, the weaker gasoline leg, the heating season that does not
+  hold, the 2026 months too few to test, then scope (carbon costs, the US gas
+  intensity as an upper end, the unpublished inputs) and the two manual steps.
+- **D8. Structural breaks restated in prose.** *Revision:* the same break list
+  History draws, read from `data/history.json`, with where each is drawn or why
+  it is not, plus the capacity steps, so the two views cannot disagree.
+- **D9. Nothing makes an unread field fail.** The audit found orphans by hand.
+  *Revision:* `tools/validate-artifacts.mjs` walks every key of every artifact
+  and fails when a key is read by no module in `src/`, unless it is on a short
+  declared list of supporting fields with the reason each is not printed; the
+  four the audit named are not allowed on that list, and a listed key that a
+  module starts reading fails too, so the list cannot go stale.
+
+**The banned list, for this view.** No callout box, no icon, no badge, no code
+block, no sidebar, no mono outside table figures, no "note:" or "warning:" label
+above a paragraph, no all caps.
