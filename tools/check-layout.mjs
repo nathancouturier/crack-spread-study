@@ -460,7 +460,7 @@ const PROBE = String.raw`(async () => {
       if (!/cannot tell the horses apart/.test(words)) add("RV", "the race does not say the sample cannot tell the horses apart");
       if (!/substitution/i.test(words)) add("RV", "horse C is not labelled a substitution");
     }
-    if (part === "response" && !/lower bound in absolute value/.test(words)) add("RV", "the lower bound sentence is not where the coefficients are");
+    if ((part === "response" || part === "race") && !/lower bound in absolute value/.test(words)) add("RV", "the lower bound sentence is not where the coefficients are");
     if (part === "break") {
       if (!/is not tested/.test(words)) add("RV", "2026 is not said to be untested");
       const svg = view.querySelector("svg.chart--residuals");

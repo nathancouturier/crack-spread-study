@@ -368,6 +368,8 @@ function drawRace(body) {
   const section = part("The horse race");
   section.appendChild(sentence("p", race.sentence_segments, decimals, "lead"));
   for (const eq of race.equations) section.appendChild(equationBlock(eq, decimals));
+  // The bias sits with the coefficients here too, not only in the response part.
+  section.appendChild(sentence("p", runs.endogeneity_segments, decimals, "note runs-lower-bound"));
   const gives = el("div", { class: "block runs-gives" });
   gives.appendChild(el("h3", { class: "block__heading", text: "What the margin gives that the raw crack cannot" }));
   for (const paragraph of race.gives) gives.appendChild(sentence("p", paragraph, decimals, "prose"));
@@ -420,7 +422,7 @@ function equationBlock(eq, decimals) {
   ])));
   const substituted = eq.horses.find((horse) => horse.substitution_segments);
   if (substituted) {
-    const note = el("p", { class: "note runs-substitution" }, [substituted.key + ", the substitution. "]);
+    const note = el("p", { class: "note runs-substitution" }, [substituted.key + " is a substitution. "]);
     for (const node of sentence("span", substituted.substitution_segments, decimals).childNodes) note.appendChild(node.cloneNode(true));
     block.appendChild(note);
   }

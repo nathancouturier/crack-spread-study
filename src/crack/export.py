@@ -2962,7 +2962,7 @@ def _runs_race(inputs: Inputs) -> Mapping[str, Any]:
             }
             if r.horse.substitution:
                 horse["substitution_segments"] = [
-                    T("A substitution. The ministry's margin is already net of the ministry's gas, so a margin after that gas would be horse B again; this is that margin re-priced at the average US refinery's gas use of "),
+                    T("The ministry's margin is already net of the ministry's gas, so a margin after that gas would be horse B again; this is that margin re-priced at the average US refinery's gas use of "),
                     N("study_intensity_mmbtu_per_bbl", config.GAS_INTENSITY_MMBTU_PER_BBL, "mmbtu_per_bbl"),
                     T(" MMBtu/bbl instead of the ministry's "),
                     N("ministry_intensity_mmbtu_per_bbl", config.DGEC_EMBEDDED_GAS_INTENSITY_MMBTU_PER_BBL, "mmbtu_per_bbl"),

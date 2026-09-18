@@ -632,7 +632,7 @@
             "r2": 0.464253,
             "oos_rmse": 6.779336,
             "substitution_segments": [
-              {"text": "A substitution. The ministry's margin is already net of the ministry's gas, so a margin after that gas would be horse B again; this is that margin re-priced at the average US refinery's gas use of "},
+              {"text": "The ministry's margin is already net of the ministry's gas, so a margin after that gas would be horse B again; this is that margin re-priced at the average US refinery's gas use of "},
               {"field": "study_intensity_mmbtu_per_bbl", "value": 0.21217, "format": "mmbtu_per_bbl"},
               {"text": " MMBtu/bbl instead of the ministry's "},
               {"field": "ministry_intensity_mmbtu_per_bbl", "value": 0.065903, "format": "mmbtu_per_bbl"},
@@ -730,7 +730,7 @@
             "r2": 0.834052,
             "oos_rmse": 4.746212,
             "substitution_segments": [
-              {"text": "A substitution. The ministry's margin is already net of the ministry's gas, so a margin after that gas would be horse B again; this is that margin re-priced at the average US refinery's gas use of "},
+              {"text": "The ministry's margin is already net of the ministry's gas, so a margin after that gas would be horse B again; this is that margin re-priced at the average US refinery's gas use of "},
               {"field": "study_intensity_mmbtu_per_bbl", "value": 0.21217, "format": "mmbtu_per_bbl"},
               {"text": " MMBtu/bbl instead of the ministry's "},
               {"field": "ministry_intensity_mmbtu_per_bbl", "value": 0.065903, "format": "mmbtu_per_bbl"},
