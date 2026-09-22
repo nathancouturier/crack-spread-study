@@ -36,6 +36,20 @@ rather than drawing it.
 BYTE IDEMPOTENT. The map is sorted, written with LF and no timestamp; a second
 build over an unchanged tree rewrites nothing. `make build-check` recomputes it
 and fails naming each entry that is stale.
+
+THE HASH IS OF THE BYTES ON DISK, AND THAT IS A TRAP ON WINDOWS. .gitattributes
+declares "* text=auto eol=lf", so every tracked text file is stored and checked
+out with LF, and the bytes a Linux runner or a fresh clone holds are LF bytes. A
+tool that writes src/engine.js through a Python or Node text stream on Windows
+writes CRLF instead. git status stays clean, because the clean filter normalises
+CRLF back to LF before comparing, so nothing anywhere says a word; but the hash
+`make build` writes into index.html is then the hash of bytes that exist only on
+that one machine, and `make build-check` fails in CI on a tree the author was
+told was green. It happened here: src/engine.js was committed at Gate 5 with a
+CRLF working copy and index.html carried d4dd59c29a28 where a clean checkout
+hashes deb06799ec27. crlf_entries below is the guard, and export.py --check
+calls it, so the condition is caught by the same command that checks the hashes
+rather than by a runner three commits later.
 """
 
 from __future__ import annotations
@@ -87,6 +101,22 @@ def hashes(root: Path = REPO_ROOT) -> dict[str, str]:
         for relative in _files(root, directory, suffix):
             out[relative] = content_hash((root / relative).read_bytes())
     return out
+
+
+def crlf_entries(root: Path = REPO_ROOT) -> list[str]:
+    """Each versioned file whose bytes on disk carry a CRLF. Empty when clean.
+
+    A versioned file is one whose sha256 goes into index.html, so a CRLF in it is
+    not a style question: it is a hash that a checkout of the same commit cannot
+    reproduce. See the module docstring for the incident this exists to stop
+    happening twice. The fix is always to rewrite the file with LF and re-run
+    `make build`, never to relax the check.
+    """
+    return [
+        relative
+        for relative in sorted(hashes(root))
+        if b"\r\n" in (root / relative).read_bytes()
+    ]
 
 
 def versioned(relative: str, digest: str) -> str:

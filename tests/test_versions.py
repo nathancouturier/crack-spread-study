@@ -113,7 +113,46 @@ def test_build_check_fails_on_a_stale_map(monkeypatch, capsys):
     """make build-check is export.check on data/: a stale map alone fails it."""
     monkeypatch.setattr(export, "build", lambda inputs=None: {})
     monkeypatch.setattr(versions, "stale_entries", lambda root: ["src/format.js"])
+    monkeypatch.setattr(versions, "crlf_entries", lambda root: [])
     assert export.check(export.DATA) == 1
     out = capsys.readouterr().out
     assert "index.html version of src/format.js" in out
+    assert "make build" in out
+
+
+# ---------------------------------------------------------------------------
+# Line endings, because a CRLF here is a hash a clean checkout cannot reproduce
+# ---------------------------------------------------------------------------
+#
+# .gitattributes declares "* text=auto eol=lf", so every tracked text file is
+# stored and checked out with LF. A tool that writes one of these files through a
+# text stream on Windows writes CRLF, git status stays clean because the clean
+# filter normalises it away, and the hash `make build` puts in index.html is then
+# the hash of bytes that exist on one machine only. That is exactly what happened
+# to src/engine.js before this commit: index.html carried d4dd59c29a28 and a
+# fresh clone of the same commit hashes deb06799ec27, so build-check would have
+# failed on the first CI run of a tree the author had been told was green.
+
+
+def test_no_versioned_file_carries_crlf():
+    assert versions.crlf_entries(REPO_ROOT) == [], (
+        "a versioned file is stored with LF by .gitattributes, so a CRLF copy on "
+        "disk hashes to bytes no checkout reproduces. Rewrite it with LF and run: "
+        "make build"
+    )
+
+
+def test_a_planted_crlf_is_named_and_build_check_fails_on_it(tmp_path, monkeypatch, capsys):
+    root = _site_copy(tmp_path)
+    assert versions.crlf_entries(root) == []
+    module = root / "src" / "format.js"
+    module.write_bytes(module.read_bytes().replace(b"\n", b"\r\n"))
+    assert versions.crlf_entries(root) == ["src/format.js"]
+
+    monkeypatch.setattr(export, "build", lambda inputs=None: {})
+    monkeypatch.setattr(versions, "stale_entries", lambda root: [])
+    monkeypatch.setattr(versions, "crlf_entries", lambda root: ["src/engine.js"])
+    assert export.check(export.DATA) == 1
+    out = capsys.readouterr().out
+    assert "CRLF     src/engine.js" in out
     assert "make build" in out

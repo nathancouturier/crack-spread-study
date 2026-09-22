@@ -4281,20 +4281,35 @@ def check(directory: Path = DATA, inputs: Inputs | None = None) -> int:
     for name in stale:
         print("  STALE    data/%s.json" % name)
     stale_versions: list[str] = []
+    crlf: list[str] = []
     if Path(directory).resolve() == DATA.resolve():
         stale_versions = versions.stale_entries(REPO_ROOT)
         print("checked the content hashes in index.html")
         for entry in stale_versions:
             print("  STALE    index.html version of %s" % entry)
+        # A versioned file with CRLF on disk hashes to something a checkout of
+        # the same commit cannot reproduce, because .gitattributes stores it with
+        # LF. See crack.versions.crlf_entries.
+        crlf = versions.crlf_entries(REPO_ROOT)
+        print("checked the line endings of the versioned files")
+        for entry in crlf:
+            print("  CRLF     %s" % entry)
     if stale:
         print("The committed artifacts do not match the caches and the analysis. Run: make build")
     if stale_versions:
         print("index.html names a hash that is not the file's. Run: make build")
-    if stale or stale_versions:
+    if crlf:
+        print(
+            "A versioned file carries CRLF. .gitattributes stores it with LF, so the "
+            "hash in index.html is of bytes only this machine has and CI will fail. "
+            "Rewrite the file with LF, then run: make build"
+        )
+    if stale or stale_versions or crlf:
         return 1
     print("every artifact matches a rebuild from the committed caches, byte for byte")
     if Path(directory).resolve() == DATA.resolve():
         print("every module, stylesheet and artifact URL in index.html carries its current hash")
+        print("every versioned file on disk is LF, so a clean checkout hashes the same bytes")
     return 0
 
 
