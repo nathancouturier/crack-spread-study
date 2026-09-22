@@ -67,6 +67,7 @@ import numpy as np
 import pandas as pd
 import requests
 
+from .. import manual_steps
 from ..config import (
     BOUNDS_BRENT_USD_BBL,
     BOUNDS_CRACK_USD_BBL,
@@ -919,6 +920,13 @@ def manifest_upsert(entry: Mapping[str, Any]) -> None:
     payload["series"] = kept
     payload["schema_version"] = MANIFEST_SCHEMA_VERSION
     payload["generated_at"] = utc_now_iso()
+    # THE MANUAL STEPS ARE REATTACHED ON EVERY WRITE, not only by
+    # scripts/refresh.py. The entry built above is a fresh dict and carries no
+    # manual_step, so an adapter run that wrote one directly used to strip the
+    # field and leave a tree that tools/validate-data.mjs rejects. `make note` is
+    # such a run and the scheduled workflow runs it unattended. apply is pure and
+    # idempotent, so this costs a refresh nothing. See crack.manual_steps.
+    manual_steps.apply(payload)
 
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     tmp = MANIFEST.with_name(MANIFEST.name + ".tmp.%d" % os.getpid())

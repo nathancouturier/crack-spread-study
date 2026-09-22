@@ -20,16 +20,21 @@ Each note carries, on the same page:
     a CHART, drawn as vector polylines, of four of those six series over the
     preceding 105 weeks.
 
-So the printed tables across ten notes amount to 18 distinct weekly observations
-and 7 distinct monthly ones, and the charts in the same ten documents are the
-ministry's own record of 219 weeks.
+So the printed tables across the ten notes recon 05 read amounted to 18 distinct
+weekly observations and 7 distinct monthly ones, and the charts in the same ten
+documents were the ministry's own record of 219 weeks. Every note collected since
+adds two printed weeks, one of them usually a reprint, and about 105 charted ones
+of which one is new. The counts in the manifest are the counts of the committed
+cache and this paragraph is the shape of the source, not a row count.
 
 THREE SERIES, AND THEY ARE NOT THE SAME KIND OF OBJECT
 -------------------------------------------------------
     dgec_note_printed_weekly        method "parsed". The numbers DGEC printed,
                                     read by label. Ground truth, and the
                                     calibration anchor set for the other series.
-                                    18 weeks. It is small and that is honest.
+                                    A couple of dozen weeks, two more with every
+                                    note collected. It is small and that is
+                                    honest.
 
     dgec_note_printed_monthly       method "parsed". The MONTHLY columns of the
                                     same table, which the six column layout has
@@ -44,12 +49,14 @@ THREE SERIES, AND THEY ARE NOT THE SAME KIND OF OBJECT
                                     also the only monthly home of Jet and Fioul
                                     lourd TBTS as DGEC $/t quotations: neither is
                                     plotted on the chart, so outside this series
-                                    they exist only in the 18 printed weeks.
+                                    they exist only in the printed weeks.
 
     dgec_note_reconstructed_weekly  method "reconstructed". The page 3 curves,
                                     decoded and calibrated against the printed
-                                    figures on the same page. 219 weeks, no
-                                    holes, four products only.
+                                    figures on the same page. Four years of
+                                    weeks, no holes, four products only, and a
+                                    collection restitches the whole of it:
+                                    COLLECTION_RESTITCHES_HISTORY.
 
 They are never merged. Recon 05 section 14 sets six conditions on the second
 series and every one of them is implemented here:
@@ -64,7 +71,7 @@ series and every one of them is implemented here:
   4. It is validated against something it did not see: the overlap between notes,
      and the OPEC monthly table.
   5. The weak spots are in the data, not only in prose. cross_checked is False on
-     the 25 weeks only one note covers, and evidence_class goes further and says
+     every week only one note covers, and evidence_class goes further and says
      WHICH kind of uncorroborated week each one is, because the six oldest are
      weak twice over. n_independent_geometries counts distinct chart geometries
      rather than notes, so the degenerate pair recon 05 section 12 found,
@@ -80,14 +87,14 @@ THE LINE THIS MODULE DOES NOT CROSS
 Jet and Fioul lourd are NOT on the chart. They therefore do not exist as a weekly
 series and this module does not produce one for them. Regressing them on the
 three products that are plotted would be exactly the synthetic series SPEC.md
-section 2 rule 1 forbids. They appear in dgec_note_printed_weekly, 18
-observations, and nowhere else.
+section 2 rule 1 forbids. They appear in dgec_note_printed_weekly, a
+couple of dozen observations, and nowhere else.
 
 WHY NOT JUST USE THE PRINTED NUMBERS
 -------------------------------------
 Because the ministry prints two weeks and deletes last week's note, so the
-printed numbers amount to 18 observations, while the chart in the same document
-is its own record of 105 more. Decoding it is a documented extraction from a
+printed numbers amount to two dozen observations, while the chart in the same
+document is its own record of 105 more. Decoding it is a documented extraction from a
 published source, the same category of act as parsing a table out of a PDF, only
 harder. It is labelled as a reconstruction everywhere it appears.
 """
@@ -137,6 +144,8 @@ __all__ = [
     "ERROR_BAR_AXIS",
     "SMOOTH_TILT_IS_INVISIBLE",
     "PIXEL_QUANTISATION",
+    "CHART_WEEKS",
+    "COLLECTION_RESTITCHES_HISTORY",
     "NoteDecodeError",
     "NoteDecode",
     "parse_fr_date",
@@ -336,9 +345,11 @@ UNDEFINED_SPREAD = (
     "A spread, a disagreement or a revision computed over a single reading is "
     "NaN in these files and never 0. Zero is a measurement meaning two or more "
     "readings agreed; an empty cell means there was only ever one reading and "
-    "the quantity is undefined. 25 of the 219 reconstructed weeks and 16 of the "
-    "18 printed weeks are in the second case. Anything rendering these columns "
-    "must print the empty cell as 'no cross check', never as '0.00'."
+    "the quantity is undefined. Which weeks are in the second case is what "
+    "n_notes and n_independent_geometries say, and how many there are is counted "
+    "in each series' own note above, because a collection changes it. Anything "
+    "rendering these columns must print the empty cell as 'no cross check', "
+    "never as '0.00'."
 )
 
 #: The values of the evidence_class column, in decreasing order of how well
@@ -362,11 +373,63 @@ OLDEST_WEEKS_ARE_WEAK_TWICE = (
     "no second note can contradict them, AND they sit at the far left of that "
     "one note's chart, 105 weeks from its nearest calibration anchor, where the "
     "only evidence about the fit is the tick residual. Every other "
-    "uncorroborated week has at most one of the two problems: the 19 newest "
-    "single geometry weeks are uncorroborated but sit ON the anchored end. "
-    "evidence_class marks these six 'single_geometry_oldest' so the compounding "
-    "is a value in the data and not a sentence in a document."
+    "uncorroborated week has at most one of the two problems: a newest single "
+    "geometry week is uncorroborated but sits ON the anchored end, and a "
+    "collection usually gives it a second geometry. evidence_class marks these "
+    "six 'single_geometry_oldest' so the compounding is a value in the data and "
+    "not a sentence in a document."
 )
+
+#: WHAT A COLLECTION DOES TO THE WEEKS ALREADY IN THE SERIES, measured.
+#:
+#: Each note plots about 105 weeks and the stitch takes a median across every
+#: note that covers a week, so collecting one note does not only add a week at
+#: the right hand end: it revises about half the series behind it, by a little.
+#: That is the method working, more evidence giving a better estimate, and it is
+#: also a reproducibility fact a reader is entitled to before he quotes a weekly
+#: figure. Nothing in a single vintage of the cache can show it, because it is a
+#: difference between two vintages, so it is recorded here with the collection it
+#: was measured on.
+#: How many weeks a note's page 3 chart plots. Recon 05 measured it on every
+#: note of the corpus and it is the same in all of them. It is named here because
+#: three sentences quote it and the site prints it.
+CHART_WEEKS = 105
+
+COLLECTION_RESTITCHES_HISTORY: Mapping[str, object] = {
+    "what": (
+        "COLLECTING A NOTE RESTITCHES THE WHOLE RECONSTRUCTION, NOT ONLY ITS "
+        "NEWEST WEEK. Each note plots about 105 weeks, so most weeks are covered "
+        "by several notes, and the value written here is the median across the "
+        "geometries that cover the week. One more note therefore moves weeks that "
+        "were already published. A figure read off this site today can differ "
+        "from the same figure next month, and the reason is more evidence rather "
+        "than a correction."
+    ),
+    "measured_on": "NPG-2026.09.18",
+    "measured_note": (
+        "Measured on the collection of the note of 18 September 2026, by "
+        "comparing the committed cache before and after it. That comparison lives "
+        "in the repository's history, not in the data, so it is recorded here "
+        "rather than recomputed."
+    ),
+    "weeks_before": 220,
+    "weeks_after": 221,
+    "weeks_moved": 104,
+    "worst_price_move_usd_t": 0.39,
+    "worst_price_column": "gazole_usd_t",
+    "worst_spread_move_usd_t": 0.62,
+    "worst_spread_column": "spread_fioul_domestique_usd_t",
+    "worst_crack_move_usd_bbl": 0.06,
+    "worst_crack_column": "crack_gasoil_usd_bbl",
+    "cross_checked_before": 194,
+    "cross_checked_after": 214,
+    "direction": (
+        "The moves are inside the reconstruction's own measured error, 0.17 to "
+        "0.44 $/t, and the collection took the weeks read from two or more "
+        "independent chart geometries from 194 to 214, so the series after the "
+        "collection is better defended than the series before it."
+    ),
+}
 
 #: Gate 1 self audit, point 10 item 1. The words matter: "out of sample" will be
 #: read as "out of sample in time" and it is not.
@@ -392,10 +455,9 @@ SMOOTH_TILT_IS_INVISIBLE = (
     "passed. A 1 point tilt moved it 7.35 $/t at a gate reading of 0.391. What "
     "defends the series against this is not the gates, it is the overlap between "
     "notes, because a given week sits at a different horizontal position in each "
-    "note that plots it: 194 of 219 weeks have two or more independent "
-    "geometries. The 25 that do not have no defence against it, and the six "
-    "marked single_geometry_oldest have none and sit where the distortion is "
-    "largest."
+    "note that plots it. The weeks with only one geometry, counted above, have no "
+    "defence against it, and those marked single_geometry_oldest have none and "
+    "sit where the distortion is largest."
 )
 
 #: Gate 1 self audit, point 10 item 2. Recorded because nothing in the file can
@@ -407,7 +469,8 @@ PIXEL_QUANTISATION = (
     "reads exactly 719.1192666134755 on 2024-09-20, 2024-09-27 and 2024-11-01, "
     "and nothing in this file distinguishes a genuinely flat week from two "
     "different prices quantised onto one height. The printed table is the only "
-    "cure and it covers 18 weeks. Treat an exact repeat of a reconstructed value "
+    "cure and it covers the weeks dgec_note_printed_weekly holds, which is a "
+    "small fraction of these. Treat an exact repeat of a reconstructed value "
     "at adjacent weeks as 'indistinguishable at the resolution of the chart', "
     "never as 'the price did not move'."
 )
@@ -1300,16 +1363,16 @@ def load_corpus(directory: Path | None = None, *, strict: bool = True) -> list[N
 def build_printed_weekly(notes: Sequence[NoteDecode]) -> pd.DataFrame:
     """The values DGEC printed, one row per distinct printed week.
 
-    Ten notes print two weekly columns each, and three of those twenty columns
-    are reprints of a week an adjacent note already printed, so the series is 18
-    weeks long. That is the whole published weekly record and it is not padded.
+    Every note prints two weekly columns and some of them reprint a week an
+    adjacent note already printed, so the series is shorter than twice the number
+    of notes. That is the whole published weekly record and it is not padded.
 
     Where two notes print the same week, the values are checked against each
     other and any disagreement is carried in max_disagreement_usd_t rather than
     averaged away. A revision is a fact about the source, not noise.
 
     WHERE ONLY ONE NOTE PRINTS THE WEEK, max_disagreement_usd_t IS NaN. It used
-    to be 0, which read as "the notes agreed" on the 16 of 18 weeks where there
+    to be 0, which read as "the notes agreed" on most of the weeks, where there
     was never a second note to agree with. See UNDEFINED_SPREAD.
     """
     per_week: dict[date, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
@@ -1533,12 +1596,15 @@ def build_reconstructed_weekly(notes: Sequence[NoteDecode]) -> pd.DataFrame:
                                     pitch cannot disagree, so they are one piece
                                     of evidence, not two. See DEGENERATE_PAIR.
         cross_checked               False where n_independent_geometries is 1.
-                                    25 of the 219 weeks, six oldest and nineteen
-                                    newest, have NO cross check at all.
+                                    Those weeks have NO cross check at all, and
+                                    how many there are is counted into the
+                                    manifest note rather than written here: a
+                                    collection moves it, usually downward.
+                                    COLLECTION_RESTITCHES_HISTORY.
         evidence_class              WHICH kind of week this is, one of
                                     EVIDENCE_CLASSES. cross_checked is a boolean
-                                    and the 25 weeks it marks False are not
-                                    equally weak, so this column separates them.
+                                    and the weeks it marks False are not equally
+                                    weak, so this column separates them.
                                     single_geometry_oldest is the six weeks of
                                     July and early August 2022 that are BOTH
                                     uncorroborated AND at the extreme unanchored
@@ -1705,6 +1771,32 @@ _CORPUS_NOTE = (
 )
 
 
+#: The last words of _CORPUS_NOTE. Everything after it in a manifest note is
+#: derived from the committed cache alone, so offline can restate it; everything
+#: before it counts PDFs a clean checkout does not have. See _restate_note.
+_CORPUS_NOTE_END = "last_date is the honest end of the data."
+
+
+def _restate_note(previous: str, body: str) -> str:
+    """The committed note's corpus sentence, then a freshly measured body.
+
+    scripts/refresh.py --offline keeps the note the last real fetch wrote,
+    because offline knows nothing a fetch knew. That is right for the corpus
+    sentence, which counts PDFs that are not in the repository, and wrong for
+    every count after it, which comes from the committed cache: those went stale
+    the moment a collection restitched the series, and the provenance panel
+    printed the stale ones. This rebuilds the second half and leaves the first
+    alone.
+
+    A previous note that does not carry the marker is returned untouched. Guessing
+    where a sentence ends is not worth a wrong manifest.
+    """
+    head, marker, _tail = str(previous).partition(_CORPUS_NOTE_END)
+    if not marker:
+        return str(previous)
+    return head + marker + " " + body
+
+
 class _NoteAdapter(Adapter):
     """Shared plumbing: decode the corpus once, then build one frame from it."""
 
@@ -1769,21 +1861,30 @@ class DgecNotePrintedWeekly(_NoteAdapter):
     }
     min_rows = 18
 
+    @staticmethod
+    def _body(frame: pd.DataFrame) -> str:
+        """Everything in the note that the committed cache alone decides."""
+        single = int((pd.to_numeric(frame["n_notes"], errors="coerce") < 2).sum())
+        return (
+            "These are the figures printed in the tables, parsed by row and "
+            "column label. Two weekly columns per note, some of them reprints of "
+            "a week an adjacent note already printed, so %d distinct weeks, of "
+            "which %d were printed by one note only and therefore have no "
+            "max_disagreement_usd_t. Jet and Fioul lourd appear HERE and in "
+            "dgec_note_printed_monthly and nowhere else: they are not on the "
+            "page 3 chart and therefore have no weekly reconstruction. %s"
+            % (len(frame), single, UNDEFINED_SPREAD)
+        )
+
     def fetch(self) -> pd.DataFrame:
         notes = self.corpus()
         self.vintage = self._vintage(notes)
         frame = build_printed_weekly(notes)
-        self.note = (
-            _CORPUS_NOTE % len(notes)
-            + " These are the figures printed in the tables, parsed by row and "
-            "column label. Two weekly columns per note, three of them reprints "
-            "of a week an adjacent note already printed, so %d distinct weeks. "
-            "Jet and Fioul lourd appear HERE and in dgec_note_printed_monthly "
-            "and nowhere else: they are not on the page 3 chart and therefore "
-            "have no weekly reconstruction. %s"
-            % (len(frame), UNDEFINED_SPREAD)
-        )
+        self.note = _CORPUS_NOTE % len(notes) + " " + self._body(frame)
         return frame
+
+    def offline_note(self, note: str, frame: pd.DataFrame) -> str:
+        return _restate_note(note, self._body(frame))
 
 
 class DgecNotePrintedMonthly(_NoteAdapter):
@@ -1917,11 +2018,19 @@ class DgecNoteReconstructedWeekly(_NoteAdapter):
     min_observations = {c: 200 for c in CHART_COLUMNS}
     min_rows = 200
 
-    def fetch(self) -> pd.DataFrame:
-        notes = self.corpus()
-        self.vintage = self._vintage(notes)
-        frame = build_reconstructed_weekly(notes)
-        single = int((~frame["cross_checked"]).sum())
+    @staticmethod
+    def _body(frame: pd.DataFrame) -> str:
+        """Everything in the note that the committed cache alone decides.
+
+        EVERY COUNT IN HERE IS COUNTED, none is typed, because a collection moves
+        all of them at once: see COLLECTION_RESTITCHES_HISTORY. Before this was
+        so, the provenance panel published "19 newest single geometry weeks" and
+        "194 of 219 weeks" for a fortnight after the collection that made them 1
+        and 214.
+        """
+        single = int((~frame["cross_checked"].astype(bool)).sum())
+        checked = len(frame) - single
+        newest = frame[frame["evidence_class"] == "single_geometry_newest"]
         oldest = frame[frame["evidence_class"] == "single_geometry_oldest"]
         if len(oldest):
             oldest_range = "%s to %s" % (
@@ -1930,20 +2039,21 @@ class DgecNoteReconstructedWeekly(_NoteAdapter):
             )
         else:
             oldest_range = "none"
-        self.note = (
-            _CORPUS_NOTE % len(notes)
-            + " RECONSTRUCTED FROM THE VECTOR POLYLINE ON PAGE 3 OF THE DGEC "
+        return (
+            "RECONSTRUCTED FROM THE VECTOR POLYLINE ON PAGE 3 OF THE DGEC "
             "WEEKLY NOTE, CALIBRATED AGAINST THE PRINTED WEEKLY AVERAGES ON THE "
             "SAME PAGE. Measured error, recon 05 sections 11 and 12: %.2f to "
             "%.2f $/t mean absolute out of sample by leave one series out, worst "
             "single anchor %.2f $/t, mean absolute agreement between overlapping "
             "notes %.2f $/t, worst single week %.2f $/t. %s %d of the %d weeks "
-            "are covered by a single chart geometry and therefore have NO cross "
+            "are read from two or more independent chart geometries; the other "
+            "%d are covered by a single geometry and therefore have NO cross "
             "check, flagged as cross_checked false, and evidence_class splits "
-            "them by kind: %d of them, %s, are marked single_geometry_oldest. %s "
-            "%s %s %s %s %s Jet and Fioul lourd are NOT plotted on this chart and "
-            "are deliberately absent: reconstructing them would be a synthetic "
-            "series."
+            "them by kind: %d of them, %s, are marked single_geometry_oldest and "
+            "%d are the newest weeks, which the next collection will usually "
+            "cross check. %s %s %s %s %s %s %s %s Jet and Fioul lourd are NOT "
+            "plotted on this chart and are deliberately absent: reconstructing "
+            "them would be a synthetic series."
             % (
                 RECONSTRUCTION_ERROR["out_of_sample_mae_usd_t"][0],
                 RECONSTRUCTION_ERROR["out_of_sample_mae_usd_t"][1],
@@ -1951,11 +2061,15 @@ class DgecNoteReconstructedWeekly(_NoteAdapter):
                 RECONSTRUCTION_ERROR["note_pair_mean_absolute_usd_t"],
                 RECONSTRUCTION_ERROR["note_pair_worst_week_usd_t"],
                 ERROR_BAR_AXIS,
-                single,
+                checked,
                 len(frame),
+                single,
                 len(oldest),
                 oldest_range,
+                len(newest),
                 OLDEST_WEEKS_ARE_WEAK_TWICE,
+                COLLECTION_RESTITCHES_HISTORY["what"],
+                COLLECTION_RESTITCHES_HISTORY["direction"],
                 SMOOTH_TILT_IS_INVISIBLE,
                 PIXEL_QUANTISATION,
                 UNDEFINED_SPREAD,
@@ -1963,7 +2077,16 @@ class DgecNoteReconstructedWeekly(_NoteAdapter):
                 DEGENERATE_PAIR,
             )
         )
+
+    def fetch(self) -> pd.DataFrame:
+        notes = self.corpus()
+        self.vintage = self._vintage(notes)
+        frame = build_reconstructed_weekly(notes)
+        self.note = _CORPUS_NOTE % len(notes) + " " + self._body(frame)
         return frame
+
+    def offline_note(self, note: str, frame: pd.DataFrame) -> str:
+        return _restate_note(note, self._body(frame))
 
     def _entry(self, **kwargs) -> dict:
         entry = super()._entry(**kwargs)
@@ -1997,8 +2120,11 @@ class DgecNoteReconstructedWeekly(_NoteAdapter):
             "not_reconstructed": (
                 "Jet and Fioul lourd TBTS are not plotted on the chart and are "
                 "therefore absent from this series. They exist only in "
-                "dgec_note_printed_weekly, 18 observations"
+                "dgec_note_printed_weekly, whose row count that entry carries"
             ),
+            # What a collection does to the weeks already published. Measured
+            # across two vintages of this cache, which one vintage cannot show.
+            "restitching": dict(COLLECTION_RESTITCHES_HISTORY),
             "gates": {k: v for k, v in GATES.items()},
         }
         return entry

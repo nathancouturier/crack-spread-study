@@ -862,6 +862,166 @@
       ]
     },
     {
+      "id": "gasoline_rows",
+      "title": "The two gasoline rows OPEC printed, and the months they swap",
+      "blocks": [
+        {
+          "type": "ref",
+          "artifact": "history",
+          "path": ["monthly", "dispute", "what_segments"]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "Which months those are is found by a rule and not by a list of dates: they are the months of the overlap where the octane graded row prints above the sulphur graded one, reversing the ordering that holds in every other month of it. A later issue that moved a value would move the window with it."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "The same month, printed by two consecutive issues"
+        },
+        {
+          "type": "ref",
+          "artifact": "history",
+          "path": ["monthly", "dispute", "evidence_segments"]
+        },
+        {
+          "type": "table",
+          "caption": "Two months of the Rotterdam block as the issue before and the issue after printed them, both gasoline rows, in $/bbl. Read from the archived reports, which their licence does not allow this repository to commit.",
+          "columns": [
+            {"label": "Month", "short": "month", "numeric": false},
+            {"label": "Earlier issue", "short": "earlier issue", "numeric": false},
+            {"label": "Sulphur graded", "short": "sulphur graded", "numeric": true},
+            {"label": "Octane graded", "short": "octane graded", "numeric": true},
+            {"label": "Later issue", "short": "later issue", "numeric": false},
+            {"label": "Sulphur graded", "short": "sulphur graded, later", "numeric": true},
+            {"label": "Octane graded", "short": "octane graded, later", "numeric": true}
+          ],
+          "rows": [
+            [
+              {"text": "February 2012"},
+              {"text": "April 2012"},
+              {"field": "earlier_headline", "value": 129.29, "format": "usd_bbl"},
+              {"field": "earlier_alternative", "value": 126.58, "format": "usd_bbl"},
+              {"text": "May 2012"},
+              {"field": "later_headline", "value": 115.76, "format": "usd_bbl"},
+              {"field": "later_alternative", "value": 129.34, "format": "usd_bbl"}
+            ],
+            [
+              {"text": "March 2012"},
+              {"text": "April 2012"},
+              {"field": "earlier_headline", "value": 141.01, "format": "usd_bbl"},
+              {"field": "earlier_alternative", "value": 138.05, "format": "usd_bbl"},
+              {"text": "May 2012"},
+              {"field": "later_headline", "value": 119.73, "format": "usd_bbl"},
+              {"field": "later_alternative", "value": 140.3, "format": "usd_bbl"}
+            ]
+          ]
+        },
+        {
+          "type": "h",
+          "text": "OPEC's own annual restatement, which settles nothing"
+        },
+        {
+          "type": "ref",
+          "artifact": "history",
+          "path": ["monthly", "dispute", "annual_segments"]
+        },
+        {
+          "type": "table",
+          "caption": "The Annual Statistical Bulletin's Rotterdam premium gasoline against the calendar year mean of each printed row, $/bbl. The octane graded column is the octane row where the reports printed one and the headline row where they did not, because a six month mean is not an annual average.",
+          "columns": [
+            {"label": "Year", "short": "year", "numeric": false},
+            {"label": "Bulletin", "short": "bulletin", "numeric": true},
+            {"label": "Sulphur graded row", "short": "sulphur graded row", "numeric": true},
+            {"label": "Octane graded row", "short": "octane graded row", "numeric": true}
+          ],
+          "rows": [
+            [
+              {"text": "2005"},
+              {"field": "asb_usd_bbl", "value": 62.58, "format": "usd_bbl"},
+              {"field": "headline_usd_bbl", "value": 68.9, "format": "usd_bbl"},
+              {"field": "alternative_usd_bbl", "value": 62.58, "format": "usd_bbl"}
+            ],
+            [
+              {"text": "2006"},
+              {"field": "asb_usd_bbl", "value": 72.9, "format": "usd_bbl"},
+              {"field": "headline_usd_bbl", "value": 81.73, "format": "usd_bbl"},
+              {"field": "alternative_usd_bbl", "value": 72.9, "format": "usd_bbl"}
+            ],
+            [
+              {"text": "2007"},
+              {"field": "asb_usd_bbl", "value": 92.03, "format": "usd_bbl"},
+              {"field": "headline_usd_bbl", "value": 92.02, "format": "usd_bbl"},
+              {"field": "alternative_usd_bbl", "value": 82.05, "format": "usd_bbl"}
+            ],
+            [
+              {"text": "2008"},
+              {"field": "asb_usd_bbl", "value": 108.27, "format": "usd_bbl"},
+              {"field": "headline_usd_bbl", "value": 108.16, "format": "usd_bbl"},
+              {"field": "alternative_usd_bbl", "value": 98.46, "format": "usd_bbl"}
+            ],
+            [
+              {"text": "2009"},
+              {"field": "asb_usd_bbl", "value": 70.45, "format": "usd_bbl"},
+              {"field": "headline_usd_bbl", "value": 70.51, "format": "usd_bbl"},
+              {"field": "alternative_usd_bbl", "value": 65.57, "format": "usd_bbl"}
+            ],
+            [
+              {"text": "2010"},
+              {"field": "asb_usd_bbl", "value": 92.35, "format": "usd_bbl"},
+              {"field": "headline_usd_bbl", "value": 91.04, "format": "usd_bbl"},
+              {"field": "alternative_usd_bbl", "value": 88.7, "format": "usd_bbl"}
+            ],
+            [
+              {"text": "2011"},
+              {"field": "asb_usd_bbl", "value": 120.35, "format": "usd_bbl"},
+              {"field": "headline_usd_bbl", "value": 120.42, "format": "usd_bbl"},
+              {"field": "alternative_usd_bbl", "value": 117.62, "format": "usd_bbl"}
+            ],
+            [
+              {"text": "2012"},
+              {"field": "asb_usd_bbl", "value": 127.29, "format": "usd_bbl"},
+              {"field": "headline_usd_bbl", "value": 111.97, "format": "usd_bbl"},
+              {"field": "alternative_usd_bbl", "value": 127.14, "format": "usd_bbl"}
+            ],
+            [
+              {"text": "2013"},
+              {"field": "asb_usd_bbl", "value": 122.57, "format": "usd_bbl"},
+              {"field": "headline_usd_bbl", "value": 115.22, "format": "usd_bbl"},
+              {"field": "alternative_usd_bbl", "value": 122.64, "format": "usd_bbl"}
+            ]
+          ]
+        },
+        {
+          "type": "h",
+          "text": "What the choice changes, measured"
+        },
+        {
+          "type": "ref",
+          "artifact": "history",
+          "path": ["seasonal_monthly", "panels", "gasoline", "row_sensitivity", "segments"]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "Nothing else on this site reads OPEC gasoline across these months. The ministry's margin, which the monthly R squared is measured against, begins after them; this study's weekly layer begins long after them; every dated event on the Events view is later; and no Model preset sits inside them. Those are sample start dates, checked against the window rather than asserted."}
+          ]
+        },
+        {
+          "type": "ref",
+          "artifact": "history",
+          "path": ["monthly", "dispute", "unresolved_segments"]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "This is not resolvable from published documents. Both readings are printed by OPEC, both are carried in the cache, and the site says so wherever it draws a gasoline line across these months."}
+          ]
+        }
+      ]
+    },
+    {
       "id": "reconstruction",
       "title": "The weekly series, and its measured error",
       "blocks": [
@@ -895,6 +1055,46 @@
             {"text": " $/t on average and "},
             {"field": "pair_worst_usd_t", "value": 1.68, "format": "usd_t_error"},
             {"text": " $/t at worst."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "Collecting a note changes the weeks already published"
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "Each note plots about "},
+            {"field": "chart_weeks", "value": 105, "format": "count"},
+            {"text": " weeks, so most weeks are drawn by several notes, and the value here is the median across the chart geometries that cover the week. One more note therefore does not only add a week at the right hand end: it restitches the series behind it. Collecting the note of "},
+            {"field": "restitch_note", "value": "2026-09-18", "label": "18 September 2026"},
+            {"text": " moved "},
+            {"field": "weeks_moved", "value": 104, "format": "count"},
+            {"text": " of the "},
+            {"field": "weeks_before", "value": 220, "format": "count"},
+            {"text": " weeks already in the series, by at most "},
+            {"field": "worst_price_move_usd_t", "value": 0.39, "format": "usd_t_error"},
+            {"text": " $/t on a price column, "},
+            {"field": "worst_spread_move_usd_t", "value": 0.62, "format": "usd_t_error"},
+            {"text": " $/t on a spread column and "},
+            {"field": "worst_crack_move_usd_bbl", "value": 0.06, "format": "usd_bbl"},
+            {"text": " $/bbl on a crack."}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "Those moves sit inside the reading's own measured error, and the same collection took the weeks read from two or more independent chart geometries from "},
+            {"field": "cross_checked_before", "value": 194, "format": "count"},
+            {"text": " to "},
+            {"field": "cross_checked_after", "value": 214, "format": "count"},
+            {"text": ". So this is the method working, more evidence giving a better estimate, and not a correction of a mistake. It is also a reproducibility fact worth stating plainly: a weekly figure quoted from this site today can differ slightly from the same figure next month, and anyone checking the study against an earlier reading of it should expect that on every week rather than on the newest one."}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The comparison above is between two vintages of the committed file, so it cannot be recomputed from the file as it stands; it is recorded in the collector with the collection it was measured on."}
           ]
         },
         {

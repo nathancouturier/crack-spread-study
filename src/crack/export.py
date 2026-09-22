@@ -56,7 +56,7 @@ import numpy as np
 import pandas as pd
 
 from crack import analysis, config, engine, series, versions
-from crack.sources import dgec_note, events_anchors
+from crack.sources import dgec_note, events_anchors, opec_momr
 
 __all__ = [
     "SCHEMA_VERSION",
@@ -1940,6 +1940,51 @@ def _season_sentence(row: Mapping[str, Any], product: str, shape: pd.DataFrame, 
     return out
 
 
+def _gasoline_row_sensitivity() -> Mapping[str, Any]:
+    """The driving season premium computed on each of OPEC's two gasoline rows.
+
+    SPEC.md section 2 rule 3 again: where the source prints two readings, the
+    published figure is reported on both rather than on the one the study
+    prefers. The two are within a tenth of a dollar here, which is worth saying
+    out loud, because a sensitivity is only reassuring once it is measured.
+    """
+    s = analysis.gasoline_row_sensitivity()
+    head, other = s["headline"], s["alternative"]
+    return {
+        "substituted_months": int(len(s["substituted_months"])),
+        "first_month": s["first_month"],
+        "last_month": s["last_month"],
+        "drawn_row": {
+            "difference_usd_bbl": _num(head["difference_usd_bbl"]),
+            "t": _num(head["t"]),
+            "seasons_positive": head["seasons_positive"],
+            "seasons": head["seasons"],
+        },
+        "other_row": {
+            "difference_usd_bbl": _num(other["difference_usd_bbl"]),
+            "t": _num(other["t"]),
+            "seasons_positive": other["seasons_positive"],
+            "seasons": other["seasons"],
+        },
+        "segments": [
+            T("OPEC printed two gasoline rows between "),
+            D("dispute_first", s["first_month"]), T(" and "), D("dispute_last", s["last_month"]),
+            T(" and in "), N("substituted_months", len(s["substituted_months"]), "count"),
+            T(" months they swap values, so this premium is computed on both. On the row drawn here it is "),
+            N("headline_difference", head["difference_usd_bbl"], "usd_bbl", signed=True),
+            T(" $/bbl, t "), N("headline_t", head["t"], "t", signed=True),
+            T(", positive in "), N("headline_positive", head["seasons_positive"], "count"),
+            T(" of "), N("headline_seasons", head["seasons"], "count"),
+            T(" seasons; on the other row "),
+            N("alternative_difference", other["difference_usd_bbl"], "usd_bbl", signed=True),
+            T(" $/bbl, t "), N("alternative_t", other["t"], "t", signed=True),
+            T(", positive in "), N("alternative_positive", other["seasons_positive"], "count"),
+            T(" of "), N("alternative_seasons", other["seasons"], "count"),
+            T(". The claim does not turn on which row is the series."),
+        ],
+    }
+
+
 def _seasonal_monthly_layer(frame: pd.DataFrame) -> Mapping[str, Any]:
     """The long monthly seasonality, OPEC, each complete year demeaned."""
     out: dict[str, Any] = {"panels": {}}
@@ -1990,6 +2035,12 @@ def _seasonal_monthly_layer(frame: pd.DataFrame) -> Mapping[str, Any]:
             "season_label": "May to September, the driving season" if product == "gasoline" else "November to March, the window desks quote",
             "variants": variants,
         }
+        if product == "gasoline":
+            # The driving season premium is the one published result that reads
+            # OPEC gasoline over the months where the source printed two rows
+            # that disagree, so it is reported on both of them. See
+            # crack.sources.opec_momr.GASOLINE_ROW_DISPUTE.
+            out["panels"][product]["row_sensitivity"] = _gasoline_row_sensitivity()
     last_partial = [y for y in out["panels"]["gasoil"]["partial_years"] if y > max(complete_years)]
     out["months"] = list(MONTH_SHORT)
     out["first_year"] = min(complete_years)
@@ -2000,6 +2051,170 @@ def _seasonal_monthly_layer(frame: pd.DataFrame) -> Mapping[str, Any]:
         note += [T(" "), N("partial_year", last_partial[0], "year"), T(" is not drawn: OPEC's quotations for it stop at "), D("monthly_last", _iso(last_month)), T(", and a year's shape needs its own twelve month mean.")]
     out["note_segments"] = note
     return out
+
+
+def _runs_of(flags: Sequence[bool], dates: Sequence[str]) -> list[dict]:
+    """Contiguous runs of True, as {first, last, months}. Used for the disputed
+    window, which is a property of the values and not a typed pair of dates."""
+    out: list[dict] = []
+    start: int | None = None
+    for index, flag in enumerate(list(flags) + [False]):
+        if flag and start is None:
+            start = index
+        elif not flag and start is not None:
+            out.append(
+                {
+                    "first": dates[start],
+                    "last": dates[index - 1],
+                    "months": index - start,
+                }
+            )
+            start = None
+    return out
+
+
+def gasoline_dispute(monthly: pd.DataFrame) -> Mapping[str, Any]:
+    """The two gasoline rows OPEC printed, and the months where they swap.
+
+    SPEC.md section 2 rule 3: a source that contradicts itself is reported, not
+    resolved. The record in crack.sources.opec_momr says what the dispute is and
+    carries the evidence that cannot be recomputed here, the readings of four
+    archived issues and OPEC's own annual bulletin, neither of which is a
+    committed file. Everything else is measured from the committed cache: which
+    months the rule marks, both cracks in each of them, and how many of them the
+    headline row puts below zero.
+    """
+    record = opec_momr.GASOLINE_ROW_DISPUTE
+    frame = monthly.dropna(subset=["gasoline_95_usd_bbl"]).copy()
+    swapped = opec_momr.gasoline_dispute_months(
+        frame, headline="gasoline_usd_bbl", alternative="gasoline_95_usd_bbl"
+    )
+    dates = [_iso(d) for d in frame["date"]]
+    windows = _runs_of(list(swapped), dates)
+    marked = frame[swapped.to_numpy()]
+    negative = marked[marked[analysis.CRACK_GASOLINE] < 0]
+    longest = max(windows, key=lambda w: w["months"]) if windows else None
+    sensitivity = analysis.gasoline_row_sensitivity()
+    head, other = sensitivity["headline"], sensitivity["alternative"]
+    # The years of the annual check where the bulletin is closer to the headline
+    # row than to the other one. Measured off the record, not typed, so the
+    # sentence cannot drift from the table under it.
+    agreeing = [
+        a["year"]
+        for a in record["annual_check"]
+        if abs(a["headline"] - a["asb"]) < abs(a["alternative"] - a["asb"])
+    ]
+    annual_agree_first = min(agreeing) if agreeing else None
+    annual_agree_last = max(agreeing) if agreeing else None
+
+    payload: dict[str, Any] = {
+        "id": record["id"],
+        "overlap_first": dates[0],
+        "overlap_last": dates[-1],
+        "windows": windows,
+        "months": int(swapped.sum()),
+        "negative_months": int(len(negative)),
+        "headline_spec": str(marked["gasoline_spec"].iloc[0]) if len(marked) else None,
+        "alternative_spec": opec_momr.GASOLINE_95,
+        "columns": [
+            "date",
+            "headline_usd_bbl",
+            "alternative_usd_bbl",
+            "headline_price_usd_bbl",
+            "alternative_price_usd_bbl",
+        ],
+        "rows": [
+            [
+                _iso(r["date"]),
+                _num(r[analysis.CRACK_GASOLINE]),
+                _num(r[analysis.CRACK_GASOLINE_95]),
+                _num(r["gasoline_usd_bbl"]),
+                _num(r["gasoline_95_usd_bbl"]),
+            ]
+            for _, r in marked.iterrows()
+        ],
+        # The evidence that cannot be recomputed from a committed file, as rows
+        # rather than as prose, because a sentence carrying a figure is a figure
+        # the reader cannot check against a column. tests/test_export.py forbids
+        # a digit in a words segment for the same reason.
+        "issue_columns": [
+            "month", "earlier_issue", "earlier_headline_usd_bbl", "earlier_alternative_usd_bbl",
+            "later_issue", "later_headline_usd_bbl", "later_alternative_usd_bbl",
+        ],
+        "issue_rows": [
+            [
+                _iso("%s-01" % e["month"]),
+                _iso("%s-01" % e["earlier_issue"]),
+                _num(e["earlier_headline"]),
+                _num(e["earlier_alternative"]),
+                _iso("%s-01" % e["later_issue"]),
+                _num(e["later_headline"]),
+                _num(e["later_alternative"]),
+            ]
+            for e in record["issue_evidence"]
+        ],
+        "annual_columns": ["year", "asb_usd_bbl", "headline_usd_bbl", "alternative_usd_bbl"],
+        "annual_rows": [
+            [int(a["year"]), _num(a["asb"]), _num(a["headline"]), _num(a["alternative"])]
+            for a in record["annual_check"]
+        ],
+        "annual_source": "OPEC Annual Statistical Bulletin, table 7.6, spot prices, Rotterdam",
+        "sources": [dict(s) for s in record["sources"]],
+        "bracket_label": "Two printed rows, which is the series is unresolved",
+        "heading_segments": [
+            T("In "), N("dispute_months", int(swapped.sum()), "count"),
+            T(" months OPEC printed two gasoline rows whose values swap between issues, and this panel draws both."),
+        ],
+        "what_segments": [
+            T("From "), D("overlap_first", dates[0]), T(" to "), D("overlap_last", dates[-1]),
+            T(" the Rotterdam block printed a sulphur graded premium gasoline row and an octane graded one side by side. The line above follows the sulphur graded label. In "),
+            N("dispute_months", int(swapped.sum()), "count"),
+            T(" of those months the two rows exchange values between consecutive issues, and the sulphur graded row is left carrying the lower of the two readings: "),
+            N("negative_months", int(len(negative)), "count"),
+            T(" of them then price Rotterdam gasoline below dated Brent, a negative crack on a barrel nobody would have run. The dotted line is the other row OPEC printed in the same table of the same issues."),
+        ],
+        "evidence_segments": [
+            T("The swap is visible issue by issue. The month of "),
+            D("swap_month", _iso("%s-01" % record["issue_evidence"][0]["month"])),
+            T(" as the issue of "),
+            D("swap_earlier_issue", _iso("%s-01" % record["issue_evidence"][0]["earlier_issue"])),
+            T(" printed it on the sulphur graded row, "),
+            N("swap_earlier_headline", record["issue_evidence"][0]["earlier_headline"], "usd_bbl"),
+            T(" $/bbl, is the same month as the issue of "),
+            D("swap_later_issue", _iso("%s-01" % record["issue_evidence"][0]["later_issue"])),
+            T(" printed it on the octane graded row, "),
+            N("swap_later_alternative", record["issue_evidence"][0]["later_alternative"], "usd_bbl"),
+            T(" $/bbl, while the sulphur graded row fell to "),
+            N("swap_later_headline", record["issue_evidence"][0]["later_headline"], "usd_bbl"),
+            T(". In the same block of the same two issues naphtha, jet and both fuel oils move by ordinary revision size, and the Mediterranean block prints the month identically, so this is the two gasoline rows and not a restatement of the table."),
+        ],
+        "annual_segments": [
+            T("OPEC's own Annual Statistical Bulletin restates these years onto one premium unleaded definition, and in "),
+            N("annual_year_a", record["annual_check"][-2]["year"], "year"), T(" and "),
+            N("annual_year_b", record["annual_check"][-1]["year"], "year"),
+            T(" it agrees with the dotted row, not this panel's line: it misses the line by "),
+            N("annual_gap_a", record["annual_check"][-2]["headline"] - record["annual_check"][-2]["asb"], "usd_bbl", signed=True),
+            T(" and "),
+            N("annual_gap_b", record["annual_check"][-1]["headline"] - record["annual_check"][-1]["asb"], "usd_bbl", signed=True),
+            T(" $/bbl and the other row by "),
+            N("annual_alt_gap_a", record["annual_check"][-2]["alternative"] - record["annual_check"][-2]["asb"], "usd_bbl", signed=True),
+            T(" and "),
+            N("annual_alt_gap_b", record["annual_check"][-1]["alternative"] - record["annual_check"][-1]["asb"], "usd_bbl", signed=True),
+            T(". From "), N("annual_agree_first", annual_agree_first, "year"),
+            T(" to "), N("annual_agree_last", annual_agree_last, "year"),
+            T(" the bulletin agrees with this panel's line instead, with no label change between, so it follows neither row consistently and settles nothing."),
+        ],
+        "unresolved_segments": [
+            T("So the study does not choose. Both readings are OPEC's, both are in the data, and the only published result that reads gasoline across these months, the driving season premium, is reported on both rows below: "),
+            N("headline_difference", head["difference_usd_bbl"], "usd_bbl", signed=True),
+            T(" $/bbl on the line, "),
+            N("alternative_difference", other["difference_usd_bbl"], "usd_bbl", signed=True),
+            T(" $/bbl on the dotted row. The seasonal claim does not turn on the choice."),
+        ],
+    }
+    if longest is not None:
+        payload["longest_window"] = longest
+    return payload
 
 
 def history(inputs: Inputs) -> Mapping[str, Any]:
@@ -2037,7 +2252,9 @@ def history(inputs: Inputs) -> Mapping[str, Any]:
         T("; nothing here extends the margin back before its first published month."),
     ]
 
-    # The monthly cracks panel.
+    # The monthly cracks panel, and the two gasoline rows under it.
+    dispute = gasoline_dispute(monthly)
+    disputed_months = {row[0]: True for row in dispute["rows"]}
     joined = monthly.merge(margin[["date", "mbr_usd_bbl"]], on="date", how="inner").dropna(subset=[analysis.CRACK_GASOIL, analysis.CRACK_GASOLINE, "mbr_usd_bbl"])
     r2 = {p: float(np.corrcoef(joined[c], joined["mbr_usd_bbl"])[0, 1] ** 2) for p, c in WEEKLY_COLUMNS.items()}
     payload["monthly"] = {
@@ -2045,9 +2262,9 @@ def history(inputs: Inputs) -> Mapping[str, Any]:
         "source": "OPEC Monthly Oil Market Report, Rotterdam barges FOB, assessments credited to Argus, less FRED Brent",
         "first": m_first,
         "last": m_last,
-        "columns": ["date", "gasoil_usd_bbl", "gasoline_usd_bbl", "gasoil_spec", "gasoline_spec"],
+        "columns": ["date", "gasoil_usd_bbl", "gasoline_usd_bbl", "gasoil_spec", "gasoline_spec", "gasoline_95_usd_bbl", "gasoline_disputed"],
         "rows": [
-            [_iso(r["date"]), _num(r[analysis.CRACK_GASOIL]), _num(r[analysis.CRACK_GASOLINE]), None if _is_missing(r.get("gasoil_spec")) else str(r["gasoil_spec"]), None if _is_missing(r.get("gasoline_spec")) else str(r["gasoline_spec"])]
+            [_iso(r["date"]), _num(r[analysis.CRACK_GASOIL]), _num(r[analysis.CRACK_GASOLINE]), None if _is_missing(r.get("gasoil_spec")) else str(r["gasoil_spec"]), None if _is_missing(r.get("gasoline_spec")) else str(r["gasoline_spec"]), _num(r[analysis.CRACK_GASOLINE_95]), bool(disputed_months.get(_iso(r["date"]), False))]
             for _, r in monthly.iterrows()
         ],
         "r2_months": int(len(joined)),
@@ -2058,6 +2275,7 @@ def history(inputs: Inputs) -> Mapping[str, Any]:
             T(" over the "), N("r2_months", len(joined), "count"), T(" months both exist. Gasoline is the weaker leg."),
         ],
         "end_segments": [T("OPEC's product quotations stop at "), D("last", m_last), T(": the archive holds no later issue, so the line ends there rather than being carried forward.")],
+        "dispute": dispute,
     }
 
     # The margin panel and the wedge beside it.
@@ -3664,6 +3882,7 @@ METHOD_SECTIONS: Sequence[tuple[str, str]] = (
     ("assumptions", "Assumptions, each with its source"),
     ("checks", "Cross checks, measured"),
     ("products", "What each product is"),
+    ("gasoline_rows", "The two gasoline rows OPEC printed, and the months they swap"),
     ("reconstruction", "The weekly series, and its measured error"),
     ("breaks", "Structural breaks"),
     ("limitations", "Limitations"),
@@ -3858,7 +4077,53 @@ def method(inputs: Inputs) -> Mapping[str, Any]:
         [_cell_text("Premium gasoline, unleaded 98"), _cell_text("OPEC Monthly Oil Market Report, assessed by Argus"), _cell_text("this study's gasoline in the monthly series; a different product from Eurosuper, relabelled four times since 2000")],
     ]))
 
-    # 6. The weekly reconstruction.
+    # 6. The two gasoline rows. SPEC.md section 2 rule 3: a source that
+    # contradicts itself is reported, not resolved. The words come from the
+    # History artifact that draws both rows, so the two views cannot drift.
+    g = blocks["gasoline_rows"]
+    record = opec_momr.GASOLINE_ROW_DISPUTE
+    g.append(_ref("history", "monthly", "dispute", "what_segments"))
+    g.append(_P(T("Which months those are is found by a rule and not by a list of dates: they are the months of the overlap where the octane graded row prints above the sulphur graded one, reversing the ordering that holds in every other month of it. A later issue that moved a value would move the window with it.")))
+    g.append({"type": "h", "text": "The same month, printed by two consecutive issues"})
+    g.append(_ref("history", "monthly", "dispute", "evidence_segments"))
+    g.append(_table(
+        "Two months of the Rotterdam block as the issue before and the issue after printed them, both gasoline rows, in $/bbl. Read from the archived reports, which their licence does not allow this repository to commit.",
+        [("Month", "month", False), ("Earlier issue", "earlier issue", False), ("Sulphur graded", "sulphur graded", True), ("Octane graded", "octane graded", True), ("Later issue", "later issue", False), ("Sulphur graded", "sulphur graded, later", True), ("Octane graded", "octane graded, later", True)],
+        [
+            [
+                _cell_text(month_label("%s-01" % e["month"])),
+                _cell_text(month_label("%s-01" % e["earlier_issue"])),
+                _cell_value("earlier_headline", e["earlier_headline"], "usd_bbl"),
+                _cell_value("earlier_alternative", e["earlier_alternative"], "usd_bbl"),
+                _cell_text(month_label("%s-01" % e["later_issue"])),
+                _cell_value("later_headline", e["later_headline"], "usd_bbl"),
+                _cell_value("later_alternative", e["later_alternative"], "usd_bbl"),
+            ]
+            for e in record["issue_evidence"]
+        ],
+    ))
+    g.append({"type": "h", "text": "OPEC's own annual restatement, which settles nothing"})
+    g.append(_ref("history", "monthly", "dispute", "annual_segments"))
+    g.append(_table(
+        "The Annual Statistical Bulletin's Rotterdam premium gasoline against the calendar year mean of each printed row, $/bbl. The octane graded column is the octane row where the reports printed one and the headline row where they did not, because a six month mean is not an annual average.",
+        [("Year", "year", False), ("Bulletin", "bulletin", True), ("Sulphur graded row", "sulphur graded row", True), ("Octane graded row", "octane graded row", True)],
+        [
+            [
+                _cell_text(str(a["year"])),
+                _cell_value("asb_usd_bbl", a["asb"], "usd_bbl"),
+                _cell_value("headline_usd_bbl", a["headline"], "usd_bbl"),
+                _cell_value("alternative_usd_bbl", a["alternative"], "usd_bbl"),
+            ]
+            for a in record["annual_check"]
+        ],
+    ))
+    g.append({"type": "h", "text": "What the choice changes, measured"})
+    g.append(_ref("history", "seasonal_monthly", "panels", "gasoline", "row_sensitivity", "segments"))
+    g.append(_P(T("Nothing else on this site reads OPEC gasoline across these months. The ministry's margin, which the monthly R squared is measured against, begins after them; this study's weekly layer begins long after them; every dated event on the Events view is later; and no Model preset sits inside them. Those are sample start dates, checked against the window rather than asserted.")))
+    g.append(_ref("history", "monthly", "dispute", "unresolved_segments"))
+    g.append(_P(T(record["unresolved"])))
+
+    # 7. The weekly reconstruction.
     r = blocks["reconstruction"]
     weekly = inputs.weekly
     error = dgec_note.RECONSTRUCTION_ERROR
@@ -3867,6 +4132,11 @@ def method(inputs: Inputs) -> Mapping[str, Any]:
     oldest = weekly[weekly["evidence_class"] == "single_geometry_oldest"]
     r.append(_P(T("The ministry prints two weeks of prices in each weekly note and deletes the note a week later, but each note also carries a chart of about two years of weekly prices. This study reads those charts: the curves are decoded from the vector drawing, calibrated against the figures the same note prints, and combined across every note collected. "), N("weeks", len(weekly), "count"), T(" weeks run from "), D("weekly_first", _iso(weekly["date"].min()), kind="day"), T(" to "), D("weekly_last", _iso(weekly["date"].max()), kind="day"), T("; "), N("printed_weeks", int(weekly["printed_gasoil_usd_bbl"].notna().sum()), "count"), T(" of them the ministry printed, and "), N("cross_checked_weeks", int((weekly["n_independent_geometries"] >= 2).sum()), "count"), T(" are read from two or more independent chart geometries. Nothing is interpolated between weeks and nothing is borrowed from another source.")))
     r.append(_P(T("The measured error: refitted on three products and tested on the fourth, a note's reading misses its printed figures by "), N("error_low_usd_t", error["out_of_sample_mae_usd_t"][0], "usd_t_error"), T(" to "), N("error_high_usd_t", error["out_of_sample_mae_usd_t"][1], "usd_t_error"), T(" $/t on average, worst "), N("error_worst_usd_t", error["out_of_sample_worst_usd_t"], "usd_t_error"), T(" $/t. Where two notes plot the same week they agree to "), N("pair_mean_usd_t", error["note_pair_mean_absolute_usd_t"], "usd_t_error"), T(" $/t on average and "), N("pair_worst_usd_t", error["note_pair_worst_week_usd_t"], "usd_t_error"), T(" $/t at worst.")))
+    restitch = dgec_note.COLLECTION_RESTITCHES_HISTORY
+    r.append({"type": "h", "text": "Collecting a note changes the weeks already published"})
+    r.append(_P(T("Each note plots about "), N("chart_weeks", dgec_note.CHART_WEEKS, "count"), T(" weeks, so most weeks are drawn by several notes, and the value here is the median across the chart geometries that cover the week. One more note therefore does not only add a week at the right hand end: it restitches the series behind it. Collecting the note of "), D("restitch_note", _iso(inputs.weekly["date"].max()), kind="day"), T(" moved "), N("weeks_moved", restitch["weeks_moved"], "count"), T(" of the "), N("weeks_before", restitch["weeks_before"], "count"), T(" weeks already in the series, by at most "), N("worst_price_move_usd_t", restitch["worst_price_move_usd_t"], "usd_t_error"), T(" $/t on a price column, "), N("worst_spread_move_usd_t", restitch["worst_spread_move_usd_t"], "usd_t_error"), T(" $/t on a spread column and "), N("worst_crack_move_usd_bbl", restitch["worst_crack_move_usd_bbl"], "usd_bbl"), T(" $/bbl on a crack.")))
+    r.append(_P(T("Those moves sit inside the reading's own measured error, and the same collection took the weeks read from two or more independent chart geometries from "), N("cross_checked_before", restitch["cross_checked_before"], "count"), T(" to "), N("cross_checked_after", restitch["cross_checked_after"], "count"), T(". So this is the method working, more evidence giving a better estimate, and not a correction of a mistake. It is also a reproducibility fact worth stating plainly: a weekly figure quoted from this site today can differ slightly from the same figure next month, and anyone checking the study against an earlier reading of it should expect that on every week rather than on the newest one.")))
+    r.append(_P(T("The comparison above is between two vintages of the committed file, so it cannot be recomputed from the file as it stands; it is recorded in the collector with the collection it was measured on.")))
     r.append(_P(T("That first error is leave one series out, not out of sample in time. Every calibration anchor sits in the last two weeks of a note's chart, so it measures the reading where the anchors are and does not bound the oldest weeks. A smooth bend in a chart anchored at its right hand end passes every check: bending one note's chart by "), N("tilt_points", int(tilt.group(1)) if tilt else None, "count"), T(" points moved its oldest week by "), N("tilt_usd_t", float(tilt.group(2)) if tilt else None, "usd_t_error"), T(" $/t. What defends a week against that is a second note plotting it at a different place on its chart. The "), N("oldest_weeks", len(oldest), "count"), T(" weeks from "), D("oldest_first", _iso(oldest["date"].min()), kind="day"), T(" have no second chart and sit where such a bend does most harm: they are the least defended data in the study, and every chart that draws them hatches them.")))
 
     # 7. Breaks.

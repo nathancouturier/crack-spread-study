@@ -194,6 +194,15 @@ def gas_monthly() -> pd.DataFrame:
 OPEC_PRODUCT_COLUMNS: Mapping[str, str] = {
     "gasoil": "gasoil_usd_bbl",
     "gasoline": "premium_gasoline_usd_bbl",
+    # THE SECOND PRINTED GASOLINE ROW, CRACKED THE SAME WAY. From May 2004 to
+    # June 2013 the Rotterdam block prints two premium gasoline rows and in
+    # twenty of those months they exchange values between issues, so the crack
+    # on the headline row is not the only reading the source supports. It is
+    # cracked here, through the same engine.crack with the same dated monthly
+    # legs, so that the site can draw both and let the reader choose. See
+    # crack.sources.opec_momr.GASOLINE_ROW_DISPUTE. The column is empty outside
+    # the overlap, which is a fact about the table and not a gap.
+    "gasoline_95": "premium_gasoline_95_usd_bbl",
 }
 
 
@@ -213,10 +222,14 @@ def opec_monthly_cracks(brent_source: str = "fred") -> pd.DataFrame:
 
     Returns:
         date, brent_usd_bbl, crack_gasoil_usd_bbl, crack_gasoline_usd_bbl,
-        gasoil_usd_bbl, gasoline_usd_bbl, gasoline_spec, gasoil_spec,
-        n_issues. The specification columns come from the cache and they matter:
-        the OPEC gasoil row changes specification over the sample and the
-        manifest carries the break.
+        crack_gasoline_95_usd_bbl, gasoil_usd_bbl, gasoline_usd_bbl,
+        gasoline_95_usd_bbl, gasoline_spec, gasoil_spec, n_issues. The
+        specification columns come from the cache and they matter: the OPEC
+        gasoil row changes specification over the sample and the manifest
+        carries the break. The two gasoline columns are the two rows the source
+        printed side by side from May 2004 to June 2013, and in twenty of those
+        months they exchange values between issues, so neither is "the" gasoline
+        crack on its own.
     """
     products = load("opec_rotterdam_products_monthly")
     products["date"] = _month_floor(products["date"])
@@ -252,8 +265,12 @@ def opec_monthly_cracks(brent_source: str = "fred") -> pd.DataFrame:
                 "brent_usd_bbl": float(row["brent_usd_bbl"]),
                 "gasoil_usd_bbl": float(row[OPEC_PRODUCT_COLUMNS["gasoil"]]),
                 "gasoline_usd_bbl": float(row[OPEC_PRODUCT_COLUMNS["gasoline"]]),
+                "gasoline_95_usd_bbl": float(
+                    row[OPEC_PRODUCT_COLUMNS["gasoline_95"]]
+                ),
                 "crack_gasoil_usd_bbl": values["gasoil"],
                 "crack_gasoline_usd_bbl": values["gasoline"],
+                "crack_gasoline_95_usd_bbl": values["gasoline_95"],
                 "gasoil_spec": row.get("gasoil_spec"),
                 "gasoline_spec": row.get("gasoline_spec"),
                 "n_issues": row.get("n_issues"),

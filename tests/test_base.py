@@ -17,7 +17,7 @@ import re
 import pandas as pd
 import pytest
 
-from crack import config
+from crack import config, manual_steps
 from crack.sources import base
 from crack.sources.base import (
     Adapter,
@@ -406,6 +406,48 @@ def test_manifest_upsert_round_trips_and_preserves_other_entries(sandbox):
     on_disk = json.loads((sandbox / "manifest.json").read_text(encoding="utf-8"))
     assert on_disk["series"] == payload["series"]
     assert sorted(dgec) == sorted(base.ENTRY_KEYS)
+
+
+def test_every_manifest_write_reattaches_the_manual_steps(sandbox):
+    """A collector must not leave a tree its own validator rejects.
+
+    scripts/refresh.py used to own the manual steps and attach them at the end of
+    a run. Every other writer of the manifest therefore replaced an entry WITHOUT
+    the manual_step field, and `make note` is such a writer: between it and the
+    next offline refresh, tools/validate-data.mjs failed with "manual step
+    dgec_weekly_note_collection names dgec_note_printed_weekly but that entry
+    does not carry it". The attachment moved into manifest_upsert, so the field
+    survives whichever command wrote the entry.
+    """
+    affected = manual_steps.steps_by_series()
+    name = "dgec_note_reconstructed_weekly"
+    assert name in affected, "the weekly collection duty names this series"
+
+    manifest_upsert(entry(series=name, method="reconstructed"))
+    payload = manifest_read()
+    written = payload["series"][0]
+    assert written["series"] == name
+    assert written["manual_step"] == affected[name], (
+        "the entry carries the steps that affect it, with no second run needed"
+    )
+    assert [s["id"] for s in payload["manual_steps"]] == [
+        s["id"] for s in manual_steps.MANUAL_STEPS
+    ]
+    assert payload["manual_steps_note"]
+
+    # A series no step names carries none, and a stale one does not linger.
+    manifest_upsert(entry(series="fred_brent_daily", frequency="daily"))
+    fred = [e for e in manifest_read()["series"] if e["series"] == "fred_brent_daily"][0]
+    assert "manual_step" not in fred
+
+
+def test_attaching_the_manual_steps_twice_changes_nothing(sandbox):
+    """scripts/refresh.py's offline byte idempotence rests on this."""
+    manifest_upsert(entry(series="dgec_note_printed_weekly"))
+    first = (sandbox / "manifest.json").read_bytes()
+    once = manual_steps.apply(json.loads(first.decode("utf-8")))
+    twice = manual_steps.apply(json.loads(json.dumps(once)))
+    assert twice == once
 
 
 def test_the_manifest_carries_every_field_this_project_added(sandbox):

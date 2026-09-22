@@ -39,7 +39,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from crack import config
+from crack import config, manual_steps
 from crack.sources import base, dgec_note
 from crack.sources.dgec_note import (
     CHART_COLUMNS,
@@ -1393,6 +1393,49 @@ def test_the_reconstructed_series_carries_its_method_and_its_error_in_the_manife
     assert "dgec_note_printed_weekly" not in names, (
         "the two series are written by two adapters and must never share an entry"
     )
+
+
+def test_a_collection_leaves_the_weekly_duty_attached_to_every_entry(sandbox, corpus):
+    """`make note` must leave a tree tools/validate-data.mjs accepts.
+
+    The four note adapters write their own manifest entries, and the weekly
+    collection duty is recorded against all four. It used to be attached only by
+    scripts/refresh.py at the end of a refresh, so a collection replaced the four
+    entries without it and the validator rejected the tree until the next offline
+    refresh. Nothing was lost if the documented order was followed, which is not
+    the standard: the scheduled workflow runs the collector unattended.
+
+    This is the collection half of the check. tests/test_base.py has the
+    manifest_upsert half.
+    """
+    notes = list(corpus.values())
+    for adapter_class in (
+        DgecNotePrintedWeekly,
+        DgecNotePrintedMonthly,
+        DgecNoteReconstructedWeekly,
+        DgecNoteReconstructedCracksWeekly,
+    ):
+        adapter = adapter_class()
+        adapter.notes = notes
+        assert adapter.run()["status"] == "ok"
+
+    expected = manual_steps.steps_by_series()
+    stored = {e["series"]: e for e in base.manifest_read()["series"]}
+    for name in (
+        "dgec_note_printed_weekly",
+        "dgec_note_printed_monthly",
+        "dgec_note_reconstructed_weekly",
+        "dgec_note_reconstructed_cracks_weekly",
+    ):
+        assert name in stored, "the collection wrote %s" % name
+        assert stored[name].get("manual_step") == expected[name], (
+            "%s lost the weekly collection duty, which is what the validator "
+            "checks and what a reader of the provenance panel sees" % name
+        )
+        assert any(
+            step["id"] == "dgec_weekly_note_collection"
+            for step in stored[name]["manual_step"]
+        )
 
 
 def test_the_printed_adapter_declares_an_honest_floor_per_column():

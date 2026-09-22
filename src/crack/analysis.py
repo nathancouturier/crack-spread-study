@@ -120,6 +120,7 @@ import numpy as np
 import pandas as pd
 
 from crack import config, series
+from crack.sources import opec_momr
 
 __all__ = [
     "CAPACITY_SERIES",
@@ -177,7 +178,10 @@ __all__ = [
     # SPEC.md section 6.3, the horse race
     "CRACK_GASOIL",
     "CRACK_GASOLINE",
+    "CRACK_GASOLINE_95",
     "crack_frame",
+    "gasoline_on_the_other_row",
+    "gasoline_row_sensitivity",
     "horse_frame",
     "Horse",
     "HORSES",
@@ -1984,6 +1988,13 @@ def threshold_grid_sensitivity(
 CRACK_GASOIL = "crack_gasoil_usd_bbl"
 CRACK_GASOLINE = "crack_gasoline_usd_bbl"
 
+#: The crack on the OTHER premium gasoline row OPEC printed, the octane graded
+#: one, wherever it printed two. Empty outside May 2004 to June 2013. It is
+#: carried on the frame rather than fetched where it is needed so that every
+#: result reading gasoline can be recomputed on either reading with one
+#: substitution. See crack.sources.opec_momr.GASOLINE_ROW_DISPUTE.
+CRACK_GASOLINE_95 = "crack_gasoline_95_usd_bbl"
+
 
 def crack_frame(brent_source: str = "fred") -> pd.DataFrame:
     """Monthly Rotterdam cracks in $/bbl, 2000-10 onward, for horse A.
@@ -1993,9 +2004,139 @@ def crack_frame(brent_source: str = "fred") -> pd.DataFrame:
     this module joins on.
     """
     frame = series.opec_monthly_cracks(brent_source)
-    out = frame[["date", CRACK_GASOIL, CRACK_GASOLINE, "brent_usd_bbl"]].copy()
+    out = frame[
+        ["date", CRACK_GASOIL, CRACK_GASOLINE, CRACK_GASOLINE_95, "brent_usd_bbl"]
+    ].copy()
     out["date"] = pd.to_datetime(out["date"]).dt.to_period("M").dt.to_timestamp()
     return out.sort_values("date").reset_index(drop=True)
+
+
+def gasoline_on_the_other_row(frame: pd.DataFrame | None = None) -> pd.DataFrame:
+    """crack_frame with the disputed months read off OPEC's OTHER gasoline row.
+
+    THIS IS NOT A CORRECTION AND IT IS NOT A PREFERENCE. SPEC.md section 2 rule 3
+    forbids choosing the reading that makes a chart behave, so nothing downstream
+    switches to this frame. It exists so that every published result reading OPEC
+    gasoline can be recomputed on the second reading the source also printed, and
+    the difference reported next to the first. Where the two disagree, both go on
+    the page.
+
+    The months substituted are the ones
+    crack.sources.opec_momr.gasoline_dispute_months marks by rule, which is the
+    months where the octane graded row prints above the sulphur graded one. Every
+    other month is untouched, including the rest of the two row overlap, where
+    the two rows keep the ordering they hold throughout.
+
+    Returns:
+        A copy of `frame` (crack_frame by default) with CRACK_GASOLINE replaced
+        in those months, carrying attrs["substituted_months"], the month starts,
+        as an ISO list.
+    """
+    if frame is None:
+        frame = crack_frame()
+    out = frame.copy()
+    swapped = opec_momr.gasoline_dispute_months(
+        out, headline=CRACK_GASOLINE, alternative=CRACK_GASOLINE_95
+    )
+    out.loc[swapped, CRACK_GASOLINE] = out.loc[swapped, CRACK_GASOLINE_95]
+    out.attrs["substituted_months"] = [
+        str(pd.Timestamp(d).date()) for d in out.loc[swapped, "date"]
+    ]
+    return out
+
+
+def gasoline_row_sensitivity() -> Mapping[str, object]:
+    """The gasoline seasonality on each of the two rows OPEC printed.
+
+    SPEC.md section 6.5's claim is the one published result that reads OPEC
+    gasoline over the months where the two printed rows disagree, so it is the
+    one that has to be reported both ways. Everything else the site draws from
+    this series is either gasoil, or a month outside the overlap: the official
+    margin begins in 2015 so the monthly R squared against it never touches these
+    months, the weekly layer begins in 2022, every dated event is 2020 or later,
+    and no Model preset is inside the window. Those exclusions are asserted here
+    rather than asserted in prose, in `unaffected`.
+
+    Returns:
+        headline and alternative, each the seasonal_textbook_check row for
+        gasoline under the contiguous window, with and without the crisis years,
+        plus the months substituted and the peak and trough months of the shape.
+    """
+    base = crack_frame()
+    other = gasoline_on_the_other_row(base)
+
+    def read(frame: pd.DataFrame) -> dict:
+        full = seasonal_textbook_check(frame=frame).set_index("crack")
+        without = seasonal_textbook_check(
+            frame=frame, exclude_years=SEASONAL_REMOVABLE_YEARS
+        ).set_index("crack")
+        shape = seasonal_shape(frame=frame)
+        row, row_without = full.loc[CRACK_GASOLINE], without.loc[CRACK_GASOLINE]
+        return {
+            "difference_usd_bbl": float(row["difference_usd_bbl"]),
+            "se": float(row["se"]),
+            "t": float(row["t"]),
+            "seasons": int(row["seasons"]),
+            "seasons_positive": int(row["seasons_positive"]),
+            "median_usd_bbl": float(row["median_usd_bbl"]),
+            "holds": bool(row["holds"]),
+            "difference_without_episodes_usd_bbl": float(
+                row_without["difference_usd_bbl"]
+            ),
+            "t_without_episodes": float(row_without["t"]),
+            "seasons_positive_without_episodes": int(row_without["seasons_positive"]),
+            "seasons_without_episodes": int(row_without["seasons"]),
+            "peak_month": int(shape.loc[shape["%s_mean" % CRACK_GASOLINE].idxmax(), "month"]),
+            "trough_month": int(shape.loc[shape["%s_mean" % CRACK_GASOLINE].idxmin(), "month"]),
+        }
+
+    months = list(other.attrs.get("substituted_months", ()))
+    first, last = (months[0], months[-1]) if months else (None, None)
+    return {
+        "substituted_months": months,
+        "first_month": first,
+        "last_month": last,
+        "headline": read(base),
+        "alternative": read(other),
+        "unaffected": _gasoline_untouched_results(months),
+    }
+
+
+def _gasoline_untouched_results(months: Sequence[str]) -> list[dict]:
+    """Which published results the row choice cannot reach, each with its reason.
+
+    Measured, not asserted: each entry carries the first month of the series the
+    result reads, and the claim is only that the substituted months fall before
+    it. A result whose sample ever reaches into the window would show up here
+    with covered true, and the site would have to report it both ways.
+    """
+    if not months:
+        return []
+    last = max(months)
+    out = []
+    margin = margin_frame()
+    weekly = series.dgec_weekly_cracks()
+    for name, what, first in (
+        (
+            "monthly_r2_against_the_margin",
+            "the R squared of each crack against the ministry's margin",
+            str(pd.Timestamp(margin["date"].min()).date()),
+        ),
+        (
+            "weekly_layer",
+            "every figure on the weekly reconstruction, including its seasonal band",
+            str(pd.Timestamp(pd.to_datetime(weekly["date"]).min()).date()),
+        ),
+    ):
+        out.append(
+            {
+                "result": name,
+                "what": what,
+                "sample_first_month": first,
+                "covered": bool(first <= last),
+            }
+        )
+    return out
 
 
 def horse_frame(

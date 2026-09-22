@@ -85,7 +85,7 @@ if str(SRC) not in sys.path:
 
 import pandas as pd  # noqa: E402
 
-from crack import config  # noqa: E402
+from crack import config, manual_steps  # noqa: E402
 from crack.sources import base  # noqa: E402
 from crack.sources import events_anchors  # noqa: E402
 from crack.sources.base import Adapter, MANIFEST, read_cache, utc_now_iso, validate_frame  # noqa: E402
@@ -125,67 +125,14 @@ for stream in (sys.stdout, sys.stderr):
 # Two of them, both real, both discovered rather than assumed, and both with a
 # cost stated in words. They go into the manifest on every run.
 
-MANUAL_STEPS: tuple[dict[str, Any], ...] = (
-    {
-        "id": "momr_unarchived_2026",
-        "series": ["opec_rotterdam_products_monthly"],
-        "what": (
-            "Six OPEC Monthly Oil Market Report issues, April to September 2026, are not in "
-            "the Internet Archive and cannot be fetched by this pipeline."
-        ),
-        "why": (
-            "opec.org answers HTTP 403 to every scripted request from this machine, recon 05 "
-            "section 1.1, so the adapter resolves issues through the Wayback Machine instead. "
-            "The archive holds every issue from January 2001 to March 2026 and stops there. "
-            "Nothing in this repository can close that gap on its own."
-        ),
-        "cost_if_skipped": (
-            "The headline monthly crack series ends at 2026-02 and the whole 2026 episode, "
-            "which is the most interesting period in the sample, is missing from it. The "
-            "weekly DGEC reconstruction covers 2026 and the official monthly MBR covers it, "
-            "so the study is not blind, but its longest crack series is."
-        ),
-        "how": (
-            "Open each issue in a browser from https://www.opec.org/monthly-oil-market-report.html "
-            ", save the PDF into data/private/momr/ under the name the index expects, then run "
-            "python -m crack.sources.opec_momr to reparse. The PDFs are never committed, only "
-            "the parsed values are."
-        ),
-        "cadence": "monthly, or once when the archive catches up",
-        "status": "outstanding",
-    },
-    {
-        "id": "dgec_weekly_note_collection",
-        "series": [
-            "dgec_note_printed_weekly",
-            "dgec_note_printed_monthly",
-            "dgec_note_reconstructed_weekly",
-            "dgec_note_reconstructed_cracks_weekly",
-        ],
-        "what": (
-            "The DGEC weekly note has to be downloaded in the week it is published. It is the "
-            "only source of the weekly Rotterdam quotations."
-        ),
-        "why": (
-            "The ministry publishes one note at a time and DELETES the previous one when the "
-            "next appears, recon 02 section 2.3. There is no archive on the ministry site and "
-            "the Internet Archive caught only ten of them. A note that is missed is gone: the "
-            "week it prints cannot be recovered from anywhere, at any price, ever."
-        ),
-        "cost_if_skipped": (
-            "A permanent hole in the weekly layer. Every week missed also removes two "
-            "calibration anchors from the chart reconstruction, because the reconstruction is "
-            "fitted on the printed figures of the same note."
-        ),
-        "how": (
-            "make note, or python scripts/note.py, two requests, which saves the note "
-            "that is online now into data/private/dgec_notes and then rebuilds the three "
-            "weekly series. Put it on a weekly schedule and check it ran."
-        ),
-        "cadence": "weekly, every week, without exception",
-        "status": "standing",
-    },
-)
+#: MOVED TO crack.manual_steps, and imported rather than copied. They used to
+#: live here and be attached at the end of a refresh, which left every OTHER
+#: writer of the manifest, `make note` above all, writing entries with no
+#: manual_step and a tree that tools/validate-data.mjs rejects. The attachment
+#: now happens inside crack.sources.base.manifest_upsert, on every write, and
+#: finalise_manifest below calls the same pure function so that nothing changes
+#: for a refresh.
+MANUAL_STEPS = manual_steps.MANUAL_STEPS
 
 
 # --------------------------------------------------------------------------
@@ -448,28 +395,7 @@ def finalise_manifest(mode: str, before: bytes | None, started: str) -> tuple[di
 
     Returns the payload and whether the file on disk changed.
     """
-    payload = base.manifest_read()
-
-    by_series: dict[str, list[dict]] = {}
-    for step in MANUAL_STEPS:
-        for name in step["series"]:
-            by_series.setdefault(name, []).append(
-                {k: v for k, v in step.items() if k != "series"}
-            )
-
-    for entry in payload.get("series", []):
-        steps = by_series.get(entry.get("series"))
-        if steps:
-            entry["manual_step"] = steps
-        else:
-            entry.pop("manual_step", None)
-
-    payload["manual_steps"] = [dict(step) for step in MANUAL_STEPS]
-    payload["manual_steps_note"] = (
-        "Work this pipeline cannot do for itself. Each entry says what it is, why it exists, "
-        "what it costs to skip it and how to do it. They are repeated against the series they "
-        "affect in the manual_step field of those entries."
-    )
+    payload = manual_steps.apply(base.manifest_read())
     payload["generated_at"] = utc_now_iso()
     payload["run"] = {
         "mode": mode,

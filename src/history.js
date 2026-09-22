@@ -350,10 +350,111 @@ function productName(product) {
   return product.charAt(0).toUpperCase() + product.slice(1);
 }
 
+/* The two gasoline rows OPEC printed, and the months where they swap.
+ *
+ * SPEC.md section 2 rule 3: a source that contradicts itself is reported, not
+ * resolved. The words, the evidence and both readings are fields of
+ * history.monthly.dispute; this builds the block that sits under the monthly
+ * panel and says so. Nothing here chooses a row. */
+function disputeBlock(dispute, decimals) {
+  const wrap = el("div", { class: "history-dispute", attrs: { "data-dispute": dispute.id } });
+  wrap.appendChild(sentence("h3", dispute.heading_segments, decimals, "history-panel__subheading"));
+  for (const segments of [dispute.what_segments, dispute.evidence_segments, dispute.annual_segments, dispute.unresolved_segments]) {
+    wrap.appendChild(sentence("p", segments, decimals, "note"));
+  }
+
+  const d = (name) => dispute.columns.indexOf(name);
+  const i = (name) => dispute.issue_columns.indexOf(name);
+  const a = (name) => dispute.annual_columns.indexOf(name);
+  const sulphurRow = "Sulphur graded, " + dispute.headline_spec;
+  const octaneRow = "Octane graded, " + dispute.alternative_spec;
+
+  wrap.appendChild(disclosure("Every month where the two rows swap, both readings, and the evidence", () => {
+    const block = el("div", { class: "history-dispute__tables" });
+
+    const monthsHead = el("tr", {}, [
+      el("th", { text: "Month", attrs: { scope: "col" } }),
+      el("th", { class: "col-num", text: sulphurRow + ", crack $/bbl", attrs: { scope: "col", "data-short": "sulphur graded crack" } }),
+      el("th", { class: "col-num", text: octaneRow + ", crack $/bbl", attrs: { scope: "col", "data-short": "octane graded crack" } }),
+      el("th", { class: "col-num", text: sulphurRow + ", $/bbl", attrs: { scope: "col", "data-short": "sulphur graded price" } }),
+      el("th", { class: "col-num", text: octaneRow + ", $/bbl", attrs: { scope: "col", "data-short": "octane graded price" } }),
+    ]);
+    const monthsBody = el("tbody");
+    for (const row of dispute.rows) {
+      monthsBody.appendChild(el("tr", {}, [
+        el("th", { class: "num", text: row[d("date")].slice(0, row[d("date")].lastIndexOf("-")), attrs: { scope: "row" } }),
+        figureCell(formatCell(row[d("headline_usd_bbl")], "usd_bbl", decimals), "headline_usd_bbl"),
+        figureCell(formatCell(row[d("alternative_usd_bbl")], "usd_bbl", decimals), "alternative_usd_bbl"),
+        figureCell(formatCell(row[d("headline_price_usd_bbl")], "usd_bbl", decimals), "headline_price_usd_bbl"),
+        figureCell(formatCell(row[d("alternative_price_usd_bbl")], "usd_bbl", decimals), "alternative_price_usd_bbl"),
+      ]));
+    }
+    block.appendChild(scrollTable(
+      ["The months of the overlap, " + monthWords(dispute.overlap_first) + " to " + monthWords(dispute.overlap_last) + ", where the octane graded row prints above the sulphur graded one. " + dispute.months + " months, " + dispute.negative_months + " of them with a negative crack on the line this panel draws; the longest run is " + dispute.longest_window.months + " months from " + monthWords(dispute.longest_window.first) + "."],
+      el("table", { class: "table history-table" }, [el("thead", {}, [monthsHead]), monthsBody]),
+    ));
+
+    const issueHead = el("tr", {}, [
+      el("th", { text: "Month printed", attrs: { scope: "col" } }),
+      el("th", { text: "Earlier issue", attrs: { scope: "col", "data-short": "earlier issue" } }),
+      el("th", { class: "col-num", text: "Sulphur graded, $/bbl", attrs: { scope: "col", "data-short": "sulphur graded" } }),
+      el("th", { class: "col-num", text: "Octane graded, $/bbl", attrs: { scope: "col", "data-short": "octane graded" } }),
+      el("th", { text: "Later issue", attrs: { scope: "col", "data-short": "later issue" } }),
+      el("th", { class: "col-num", text: "Sulphur graded, $/bbl", attrs: { scope: "col", "data-short": "sulphur graded, later" } }),
+      el("th", { class: "col-num", text: "Octane graded, $/bbl", attrs: { scope: "col", "data-short": "octane graded, later" } }),
+    ]);
+    const issueBody = el("tbody");
+    for (const row of dispute.issue_rows) {
+      issueBody.appendChild(el("tr", {}, [
+        el("th", { class: "num", text: monthWords(row[i("month")]), attrs: { scope: "row" } }),
+        el("td", { text: monthWords(row[i("earlier_issue")]) }),
+        figureCell(formatCell(row[i("earlier_headline_usd_bbl")], "usd_bbl", decimals), "earlier_headline_usd_bbl"),
+        figureCell(formatCell(row[i("earlier_alternative_usd_bbl")], "usd_bbl", decimals), "earlier_alternative_usd_bbl"),
+        el("td", { text: monthWords(row[i("later_issue")]) }),
+        figureCell(formatCell(row[i("later_headline_usd_bbl")], "usd_bbl", decimals), "later_headline_usd_bbl"),
+        figureCell(formatCell(row[i("later_alternative_usd_bbl")], "usd_bbl", decimals), "later_alternative_usd_bbl"),
+      ]));
+    }
+    block.appendChild(scrollTable(
+      ["The same month as two consecutive issues printed it, both rows. The figure on one row in the earlier issue is the figure on the other row in the later one."],
+      el("table", { class: "table history-table" }, [el("thead", {}, [issueHead]), issueBody]),
+    ));
+
+    const annualHead = el("tr", {}, [
+      el("th", { text: "Year", attrs: { scope: "col" } }),
+      el("th", { class: "col-num", text: "Annual bulletin, $/bbl", attrs: { scope: "col", "data-short": "annual bulletin" } }),
+      el("th", { class: "col-num", text: "Sulphur graded row, $/bbl", attrs: { scope: "col", "data-short": "sulphur graded row" } }),
+      el("th", { class: "col-num", text: "Octane graded row, $/bbl", attrs: { scope: "col", "data-short": "octane graded row" } }),
+    ]);
+    const annualBody = el("tbody");
+    for (const row of dispute.annual_rows) {
+      annualBody.appendChild(el("tr", {}, [
+        el("th", { class: "num", text: formatNumber(row[a("year")], "year", decimals), attrs: { scope: "row" } }),
+        figureCell(formatCell(row[a("asb_usd_bbl")], "usd_bbl", decimals), "asb_usd_bbl"),
+        figureCell(formatCell(row[a("headline_usd_bbl")], "usd_bbl", decimals), "headline_usd_bbl"),
+        figureCell(formatCell(row[a("alternative_usd_bbl")], "usd_bbl", decimals), "alternative_usd_bbl"),
+      ]));
+    }
+    block.appendChild(scrollTable(
+      [dispute.annual_source + ", against the calendar year mean of each printed row."],
+      el("table", { class: "table history-table" }, [el("thead", {}, [annualHead]), annualBody]),
+    ));
+
+    const links = el("ul", { class: "marker-list" });
+    for (const source of dispute.sources) {
+      links.appendChild(el("li", {}, [el("a", { class: "text-link", text: source.title, attrs: { href: source.url, rel: "noopener" } })]));
+    }
+    block.appendChild(links);
+    return block;
+  }));
+  return wrap;
+}
+
 /* The monthly OPEC cracks. */
 function monthlyPanel(decimals) {
   const { history, state } = held;
   const monthly = history.monthly;
+  const dispute = monthly.dispute;
   const c = (name) => monthly.columns.indexOf(name);
   const rows = rowsIn(monthly.rows, state.range);
   if (!rows.length) {
@@ -364,11 +465,24 @@ function monthlyPanel(decimals) {
   const times = rows.map((row) => charts.timeOf(row[0]));
   const xDomain = [times[0], times[times.length - 1]];
   const shown = state.products;
-  const yDomain = domainOf(rows.flatMap((row) => shown.map((p) => row[c(p + "_usd_bbl")])));
+  // The second gasoline row is drawn wherever OPEC printed one, and only with
+  // gasoline on: two readings of a line that is not on screen would be noise.
+  const secondRow = shown.includes("gasoline") && rows.some((row) => charts.present(row[c("gasoline_95_usd_bbl")]));
+  const yDomain = domainOf(rows.flatMap((row) => shown.map((p) => row[c(p + "_usd_bbl")]).concat(secondRow ? [row[c("gasoline_95_usd_bbl")]] : [])));
   const isLast = rows[rows.length - 1][0] === monthly.last;
   const breaksFor = (product) => history.breaks.filter((b) => b.drawn && b.panel === "monthly" && b.line === product).map((b) => charts.timeOf(b.date));
   const markers = markersFor("monthly", state.range, monthly.first, monthly.last);
   const heading = segmentsText(monthly.heading_segments, decimals);
+  const lastSecond = [...rows].reverse().find((row) => charts.present(row[c("gasoline_95_usd_bbl")]));
+  const disputeRails = secondRow
+    ? {
+        least: [],
+        newest: [],
+        leastLabel: "",
+        newestLabel: "",
+        brackets: dispute.windows.map((w) => ({ start: charts.timeOf(w.first), end: charts.timeOf(w.last), label: dispute.bracket_label })),
+      }
+    : null;
 
   const { section, list } = interactivePlot({
     heading,
@@ -384,7 +498,7 @@ function monthlyPanel(decimals) {
       yDomain,
       unit: UNITS.usd_bbl,
       title: heading,
-      desc: "Monthly cracks, one line per product, gasoil solid and gasoline dashed, " + monthWords(rows[0][0]) + " to " + monthWords(rows[rows.length - 1][0]) + ". A dashed rule and a split line mark each change in OPEC's product specification; thin rules mark events. Every value is in the table under the chart.",
+      desc: "Monthly cracks, one line per product, gasoil solid and gasoline dashed, " + monthWords(rows[0][0]) + " to " + monthWords(rows[rows.length - 1][0]) + ". Where OPEC printed a second gasoline row it is drawn dotted, and a bracket under the axis marks the months where the two rows swap. A dashed rule and a split line mark each change in OPEC's product specification; thin rules mark events. Every value is in the table under the chart.",
       lines: shown.map((product) => ({
         name: productName(product),
         style: product === "gasoil" ? "solid" : "dashed",
@@ -392,16 +506,27 @@ function monthlyPanel(decimals) {
         lastText: formatNumber(rows[rows.length - 1][c(product + "_usd_bbl")], "usd_bbl", decimals) || "no value",
         breaks: breaksFor(product),
         accent: isLast,
-      })),
+      })).concat(secondRow ? [{
+        name: "Gasoline, " + dispute.alternative_spec,
+        style: "dotted",
+        points: rows.map((row) => [charts.timeOf(row[0]), row[c("gasoline_95_usd_bbl")]]),
+        lastText: (lastSecond ? formatNumber(lastSecond[c("gasoline_95_usd_bbl")], "usd_bbl", decimals) : null) || "no value",
+        breaks: [],
+        accent: false,
+      }] : []),
       events: markers.filter((m) => m.kind === "event").map((m) => charts.timeOf(m.item.date)),
       breaks: markers.filter((m) => m.kind === "break" && shown.includes(m.item.line)).map((m) => charts.timeOf(m.item.date)),
-      rails: null,
+      rails: disputeRails,
+      labelAtEnd: secondRow,
     }),
     readout: (i) => {
       const row = rows[i];
       const parts = shown.map((p) => p + " " + (formatNumber(row[c(p + "_usd_bbl")], "usd_bbl", decimals) || "no value"));
       const specs = shown.map((p) => p + " " + (row[c(p + "_spec")] || "no label"));
-      return monthWords(row[0]) + ": " + parts.join(", ") + " $/bbl. OPEC's labels that month: " + specs.join(", ") + ".";
+      const both = row[c("gasoline_disputed")]
+        ? " OPEC printed a second gasoline row that month, " + dispute.alternative_spec + ", at " + (formatNumber(row[c("gasoline_95_usd_bbl")], "usd_bbl", decimals) || "no value") + " $/bbl, and which of the two is the series is unresolved."
+        : "";
+      return monthWords(row[0]) + ": " + parts.join(", ") + " $/bbl. OPEC's labels that month: " + specs.join(", ") + "." + both;
     },
   });
 
@@ -410,23 +535,29 @@ function monthlyPanel(decimals) {
       el("th", { text: "Month", attrs: { scope: "col" } }),
       el("th", { class: "col-num", text: "Gasoil, $/bbl", attrs: { scope: "col", "data-short": "gasoil" } }),
       el("th", { class: "col-num", text: "Gasoline, $/bbl", attrs: { scope: "col", "data-short": "gasoline" } }),
+      el("th", { class: "col-num", text: "Gasoline, second row, $/bbl", attrs: { scope: "col", "data-short": "gasoline, second row" } }),
       el("th", { text: "Gasoil label", attrs: { scope: "col", "data-short": "gasoil label" } }),
       el("th", { text: "Gasoline label", attrs: { scope: "col", "data-short": "gasoline label" } }),
+      el("th", { text: "Two rows", attrs: { scope: "col", "data-short": "two rows" } }),
     ]);
     const tbody = el("tbody");
     for (const row of rows) {
+      const second = formatCell(row[c("gasoline_95_usd_bbl")], "usd_bbl", decimals);
       tbody.appendChild(el("tr", {}, [
         el("th", { class: "num", text: row[0].slice(0, row[0].lastIndexOf("-")), attrs: { scope: "row" } }),
         figureCell(formatCell(row[c("gasoil_usd_bbl")], "usd_bbl", decimals), "gasoil_usd_bbl"),
         figureCell(formatCell(row[c("gasoline_usd_bbl")], "usd_bbl", decimals), "gasoline_usd_bbl"),
+        second === null ? el("td", { class: "is-missing", text: "one row only" }) : figureCell(second, "gasoline_95_usd_bbl"),
         el("td", { text: row[c("gasoil_spec")] || "no label" }),
         el("td", { text: row[c("gasoline_spec")] || "no label" }),
+        el("td", { text: row[c("gasoline_disputed")] ? "the two rows swap here" : "" }),
       ]));
     }
-    return scrollTable(["OPEC's monthly Rotterdam cracks, " + monthWords(rows[0][0]) + " to " + monthWords(rows[rows.length - 1][0]) + "."], el("table", { class: "table history-table" }, [el("thead", {}, [head]), tbody]));
+    return scrollTable(["OPEC's monthly Rotterdam cracks, " + monthWords(rows[0][0]) + " to " + monthWords(rows[rows.length - 1][0]) + ". The second gasoline row exists only where OPEC printed two."], el("table", { class: "table history-table" }, [el("thead", {}, [head]), tbody]));
   });
   const notes = [sentence("p", monthly.r2_segments, decimals, "note")];
   if (isLast) notes.push(sentence("p", monthly.end_segments, decimals, "note"));
+  if (secondRow) notes.push(disputeBlock(dispute, decimals));
   return finishPanel(section, list, notes, alternative);
 }
 
@@ -679,6 +810,34 @@ function breaksBlock() {
 
 /* ---------------------------------------------------------- by season --- */
 
+/* The season measured on each of the two rows OPEC printed, side by side. */
+function rowSensitivity(sensitivity, decimals) {
+  const wrap = el("div", { class: "history-sensitivity" });
+  wrap.appendChild(sentence("p", sensitivity.segments, decimals, "note"));
+  const head = el("tr", {}, [
+    el("th", { text: "Row", attrs: { scope: "col" } }),
+    el("th", { class: "col-num", text: "Season premium, $/bbl", attrs: { scope: "col", "data-short": "season premium" } }),
+    el("th", { class: "col-num", text: "t", attrs: { scope: "col", "data-short": "t" } }),
+    el("th", { class: "col-num", text: "Seasons positive", attrs: { scope: "col", "data-short": "seasons positive" } }),
+    el("th", { class: "col-num", text: "Seasons", attrs: { scope: "col", "data-short": "seasons" } }),
+  ]);
+  const tbody = el("tbody");
+  for (const [label, reading] of [["The row drawn above", sensitivity.drawn_row], ["The other row OPEC printed", sensitivity.other_row]]) {
+    tbody.appendChild(el("tr", {}, [
+      el("th", { text: label, attrs: { scope: "row" } }),
+      figureCell(formatCell(reading.difference_usd_bbl, "usd_bbl", decimals, true), "difference_usd_bbl"),
+      figureCell(formatCell(reading.t, "t", decimals, true), "t"),
+      figureCell(formatCell(reading.seasons_positive, "count", decimals), "seasons_positive"),
+      figureCell(formatCell(reading.seasons, "count", decimals), "seasons"),
+    ]));
+  }
+  wrap.appendChild(scrollTable(
+    ["The same season on each of the two rows OPEC printed, substituting the " + sensitivity.substituted_months + " months from " + monthWords(sensitivity.first_month) + " to " + monthWords(sensitivity.last_month) + " where they swap."],
+    el("table", { class: "table history-table" }, [el("thead", {}, [head]), tbody]),
+  ));
+  return wrap;
+}
+
 function drawSeason(body) {
   const { history, cracks, state } = held;
   const decimals = history.conventions.decimals;
@@ -768,6 +927,10 @@ function drawSeason(body) {
       }
       return scrollTable(["The " + panel.name + " crack by month less each year's own mean, $/bbl."], el("table", { class: "table history-table" }, [el("thead", {}, [head]), tbody]));
     }));
+    // Where OPEC printed two rows for this product, the season is measured on
+    // both and both are printed. The study does not pick one, so neither does
+    // this panel.
+    if (panel.row_sensitivity) figure.appendChild(rowSensitivity(panel.row_sensitivity, decimals));
     panels.appendChild(figure);
   }
   monthly.appendChild(panels);

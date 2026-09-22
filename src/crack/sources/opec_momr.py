@@ -154,6 +154,13 @@ built from, and the site must say so wherever it draws one.
 Both columns stay as printed, gasoline_spec stays with every value, and the
 choice is left to the reader rather than made here.
 
+AND IN TWENTY MONTHS THE TWO ROWS EXCHANGE VALUES. That is the sharp end of the
+same problem and it has its own record, GASOLINE_ROW_DISPUTE below: through 2012
+and the first half of 2013 the headline column carries the LOWER of the two
+readings and the crack it gives is negative in eight months, which is not a
+market anybody traded. The months are found by rule rather than typed, the
+evidence is recorded issue by issue, and the site draws both rows over them.
+
 THE OVERLAP RULE
 -----------------
 Every issue prints two or three months, so most months are printed by two or
@@ -246,6 +253,8 @@ __all__ = [
     "SLOTS",
     "PRODUCT_LABELS",
     "SPECIFICATION_BREAKS",
+    "GASOLINE_ROW_DISPUTE",
+    "gasoline_dispute_months",
     "CDX_URL",
     "WAYBACK_RAW",
     "PDF_DIR",
@@ -417,6 +426,183 @@ SPECIFICATION_BREAKS = (
         "source": "OPEC MOMR, refined product prices table, recon 05 section 1.4",
     },
 )
+
+
+# --------------------------------------------------------------------------
+# The gasoline row dispute
+# --------------------------------------------------------------------------
+#
+# THE TWO GASOLINE ROWS EXCHANGE VALUES BETWEEN ISSUES, AND THE SITE SHOWS BOTH
+# READINGS RATHER THAN PICKING ONE.
+#
+# The module docstring above already says that neither printed row continues
+# OPEC's own annual restatement consistently. This is the sharper form of the
+# same problem, and it is sharper because it is visible on a public chart:
+# through 2012 and the first half of 2013 the HEADLINE column, the sulphur
+# graded row, prints a Rotterdam premium gasoline BELOW dated Brent in eight
+# months. A Rotterdam gasoline crack below zero for most of a year is not a
+# market anybody traded, and drawing it as a single unannotated line would be
+# this study publishing an artefact of a parsing convention as a market fact.
+#
+# The answer is NOT to switch to the row that looks right. That would be
+# choosing a winner to make a chart behave, which SPEC.md section 2 rule 3
+# forbids as plainly as it forbids inventing a number. The answer is to draw
+# both printed rows over the months in question, say what the evidence is, and
+# leave the choice open, which is what this record exists to let the site do.
+#
+# WHICH MONTHS, BY RULE AND NOT BY EYE. In every month of the two row overlap
+# from March 2005 onward the octane graded row prints BELOW the sulphur graded
+# one, by 0.89 to 16.63 $/bbl, which is the ordering an octane spread would
+# give if the sulphur graded row were the higher specification. The months this
+# record marks are the months where that ordering REVERSES. They are found by
+# the rule below, applied to the committed cache, never by a typed list of
+# dates, so a later issue that changes the picture changes the marked window
+# with it.
+GASOLINE_ROW_DISPUTE: Mapping[str, Any] = {
+    "id": "opec_gasoline_two_rows",
+    "column": "premium_gasoline_usd_bbl",
+    "alternative_column": "premium_gasoline_95_usd_bbl",
+    "rule": (
+        "a month of the two row overlap in which the octane graded row, unleaded "
+        "95, prints ABOVE the sulphur graded row that the headline column "
+        "carries, reversing the ordering that holds in every other month of the "
+        "overlap"
+    ),
+    "what": (
+        "OPEC printed two Rotterdam premium gasoline rows at once from May 2004 "
+        "to June 2013, a sulphur graded one and an octane graded one, and in "
+        "these months the two exchange values between consecutive issues: the "
+        "figure one issue prints on the sulphur graded row is the figure the "
+        "next issue prints on the octane graded row. The headline column of this "
+        "cache follows the sulphur graded label, so in these months it carries "
+        "the lower of the two readings and the crack it gives falls below zero. "
+        "Which row continues the series is NOT resolved here."
+    ),
+    "consequence": (
+        "The gasoline crack in the marked months is drawn twice, once on each "
+        "printed row, and the choice between them is left to the reader. "
+        "Everything else on this site that reads OPEC gasoline is reported both "
+        "ways wherever the two disagree."
+    ),
+    # THE SWAP, READ OFF FOUR ISSUES. Each pair is the SAME month printed by two
+    # consecutive issues, both rows, verbatim. These are measurements taken from
+    # the archived PDFs under data/private/momr, which the licence forbids
+    # committing, so they are recorded here with the issue that carried them
+    # rather than recomputed from a file a clean checkout does not have.
+    "issue_evidence": (
+        {
+            "month": "2012-02",
+            "headline_spec": "unleaded 10 ppm",
+            "earlier_issue": "2012-04",
+            "earlier_headline": 129.29,
+            "earlier_alternative": 126.58,
+            "later_issue": "2012-05",
+            "later_headline": 115.76,
+            "later_alternative": 129.34,
+        },
+        {
+            "month": "2012-03",
+            "headline_spec": "unleaded 10 ppm",
+            "earlier_issue": "2012-04",
+            "earlier_headline": 141.01,
+            "earlier_alternative": 138.05,
+            "later_issue": "2012-05",
+            "later_headline": 119.73,
+            "later_alternative": 140.30,
+        },
+    ),
+    "issue_evidence_note": (
+        "February 2012 as the April 2012 issue printed it, 129.29 on the sulphur "
+        "graded row, is February 2012 as the May 2012 issue printed it on the "
+        "octane graded row, 129.34, to within 0.05 $/bbl; March 2012 moves the "
+        "same way, 141.01 to 140.30. The sulphur graded row falls 13.53 and 21.28 "
+        "$/bbl in the same two issues while naphtha moves 0.05, jet 0.27 and both "
+        "fuel oils 0.12 or less, and the Mediterranean block of the two issues "
+        "prints February 2012 identically. The three months of 2010 this rule "
+        "also marks carry the reversal with no restatement behind it: the May "
+        "2010 issue prints April 2010 with the octane row 7.32 $/bbl below the "
+        "sulphur graded one, the June 2010 issue prints May 2010 with it 4.31 "
+        "$/bbl above, and the ordering goes back the other way after July 2010."
+    ),
+    # OPEC'S OWN ANNUAL RESTATEMENT, the one external check there is. Annual
+    # Statistical Bulletin table 7.6, Rotterdam block, "Gasoline - Premium
+    # unleaded 98", in $/b, against the mean of this cache's twelve monthly
+    # values for the same year. "alternative" is the octane graded row where the
+    # issues printed one and the headline row where they did not, which is the
+    # only like for like comparison against a twelve month annual average: the
+    # octane row stops in June 2013 and a six month mean is not an annual one.
+    "annual_check": (
+        {"year": 2005, "asb": 62.58, "headline": 68.90, "alternative": 62.58},
+        {"year": 2006, "asb": 72.90, "headline": 81.73, "alternative": 72.90},
+        {"year": 2007, "asb": 92.03, "headline": 92.02, "alternative": 82.05},
+        {"year": 2008, "asb": 108.27, "headline": 108.16, "alternative": 98.46},
+        {"year": 2009, "asb": 70.45, "headline": 70.51, "alternative": 65.57},
+        {"year": 2010, "asb": 92.35, "headline": 91.04, "alternative": 88.70},
+        {"year": 2011, "asb": 120.35, "headline": 120.42, "alternative": 117.62},
+        {"year": 2012, "asb": 127.29, "headline": 111.97, "alternative": 127.14},
+        {"year": 2013, "asb": 122.57, "headline": 115.22, "alternative": 122.64},
+    ),
+    "annual_check_note": (
+        "The bulletin agrees with the octane graded reading to 0.16 $/b or better "
+        "in 2005, 2006, 2012 and 2013 and with the headline reading to 1.31 $/b "
+        "or better in 2007 to 2011, with no label change anywhere between 2006 "
+        "and 2007. So OPEC's own annual restatement follows NEITHER printed row "
+        "consistently and cannot settle the question either; what it does say is "
+        "that in the two disputed years it agrees with the row this cache does "
+        "not carry, and by 15.32 and 7.35 $/b."
+    ),
+    "unresolved": (
+        "This is not resolvable from published documents. Both readings are "
+        "printed by OPEC, both are carried in the cache, and the site says so "
+        "wherever it draws a gasoline line across these months."
+    ),
+    "sources": (
+        {
+            "title": "OPEC Monthly Oil Market Report, refined product prices, Rotterdam barges FOB",
+            "url": "https://www.opec.org/monthly-oil-market-report.html",
+        },
+        {
+            "title": "OPEC Annual Statistical Bulletin, table 7.6, spot prices",
+            "url": "https://www.opec.org/annual-statistical-bulletin.html",
+        },
+    ),
+}
+
+
+def gasoline_dispute_months(
+    frame: pd.DataFrame,
+    headline: str | None = None,
+    alternative: str | None = None,
+) -> pd.Series:
+    """True for each row of the cache that GASOLINE_ROW_DISPUTE["rule"] marks.
+
+    The rule and nothing else: both gasoline columns present and the octane
+    graded one above the headline one. No date is typed anywhere, so the window
+    the site draws is whatever the committed values say it is, and a later issue
+    that moves a value moves the window with it.
+
+    Subtracting Brent from both rows does not change which is larger, so this
+    answers the same on the cache's two price columns and on the two cracks
+    computed from them; the column names are arguments so that either pair can be
+    passed without a second copy of the rule.
+
+    Args:
+        frame: any frame carrying the two gasoline columns.
+        headline: the column of the row the cache leads with. Defaults to the
+            cache's own name for it.
+        alternative: the column of the octane graded row. Same default.
+
+    Returns:
+        A boolean Series on frame's own index.
+    """
+    first = pd.to_numeric(
+        frame[headline or GASOLINE_ROW_DISPUTE["column"]], errors="coerce"
+    )
+    second = pd.to_numeric(
+        frame[alternative or GASOLINE_ROW_DISPUTE["alternative_column"]],
+        errors="coerce",
+    )
+    return (second > first).fillna(False)
 
 
 # --------------------------------------------------------------------------
