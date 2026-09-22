@@ -1667,6 +1667,47 @@ SOURCES: Mapping[str, Source] = _registry(
         ),
         committable=False,
     ),
+    Source(
+        series="nwe5_refinery_capacity_annual",
+        label="NWE five country refinery capacity total, annual, thousand barrels daily",
+        publisher="this study, from the Energy Institute Statistical Review of World Energy 2026",
+        page_url="https://www.energyinst.org/statistical-review/resources-and-data-downloads",
+        machine_url=None,
+        url_note=(
+            "Not fetched. Derived by this study from the row above, by summing "
+            "the five country capacities at each year end. Only the owner can "
+            "rebuild it, because only the owner has the private table; everyone "
+            "else, CI included, reads the committed cache. The Review's own "
+            "download page is linked because that is where the underlying figures "
+            "come from and where a reader goes to check them."
+        ),
+        frequency="annual",
+        unit="thousand barrels daily",
+        # Not "published". EI publishes country rows; this total is arithmetic
+        # over five of them and the provenance panel says so.
+        method="derived",
+        licence="Energy Institute copyright on the underlying table, this total derived and attributed",
+        licence_note=(
+            "ONE NUMBER PER YEAR, the five country total, and NOT any of the "
+            "country rows it was summed from. Reproducing the Review's table is "
+            "not permitted without written permission and redistributing its S&P "
+            "Global sourced data is prohibited outright, which is why the table "
+            "itself stays in data/private/ under the entry above and is never "
+            "committed. This total is a derived aggregate rather than a row of "
+            "that table, it is attributed to the Energy Institute Statistical "
+            "Review of World Energy 2026 wherever it appears, and it is already "
+            "recoverable from what SPEC.md section 6.1 requires the site to "
+            "publish, since utilisation times the committed JODI intake returns "
+            "it to the decimal. It is committed because SPEC.md section 5.4 "
+            "requires the study to rebuild with no network and a GitHub runner "
+            "has nothing from data/private. If the Energy Institute reads this "
+            "differently, the remedy is one email to "
+            "statisticalreview@energyinst.org and the fallback of SPEC.md section "
+            "6.1, intake with a trend and closure dummies, which is already built "
+            "and reported beside the utilisation model."
+        ),
+        committable=True,
+    ),
     # -- Seeds --------------------------------------------------------------
     Source(
         series="eia_refinery_fuel_2023",

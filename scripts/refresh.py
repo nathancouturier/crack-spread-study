@@ -97,7 +97,7 @@ from crack.sources.dgec_note import (  # noqa: E402
     DgecNoteReconstructedWeekly,
     load_corpus,
 )
-from crack.sources.ei import EiRefineryCapacity  # noqa: E402
+from crack.sources.ei import EiRefineryCapacity, Nwe5RefineryCapacity  # noqa: E402
 from crack.sources.eia import EiaBrent, record_refinery_fuel_seed  # noqa: E402
 from crack.sources.fred import FredBrent, FredEurUsd  # noqa: E402
 from crack.sources.jodi import (  # noqa: E402
@@ -296,10 +296,18 @@ JOBS: tuple[Job, ...] = (
     ),
     Job(
         name="ei",
-        what="Energy Institute refinery capacity, annual, NOT committable",
-        series=("ei_refinery_capacity_annual",),
-        adapters=lambda: [EiRefineryCapacity()],
-        online=_simple(lambda: [EiRefineryCapacity()]),
+        what=(
+            "Energy Institute refinery capacity, annual. The table is NOT "
+            "committable; the five country total derived from it is"
+        ),
+        series=("ei_refinery_capacity_annual", "nwe5_refinery_capacity_annual"),
+        # The order matters on an online run and only there: the derived total is
+        # summed from the private cache the first adapter has just written, so a
+        # new Energy Institute edition reaches both in one pass. Offline they are
+        # independent, the private one is carried through and the derived one is
+        # revalidated from the committed file like any other cache.
+        adapters=lambda: [EiRefineryCapacity(), Nwe5RefineryCapacity()],
+        online=_simple(lambda: [EiRefineryCapacity(), Nwe5RefineryCapacity()]),
     ),
     Job(
         name="seeds",

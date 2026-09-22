@@ -4,7 +4,7 @@
   "generated_by": "src/crack/export.py",
   "data_date": "2026-09-22",
   "describes": "the manifest whole, the words the Provenance section prints for each series and manual step, and the attribution and licence line for every source",
-  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "source": "the committed caches in data/cache and data/seed and the manifest, nothing from data/private; no network",
   "conventions": {
     "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
     "decimals": {
@@ -96,11 +96,12 @@
       "id": "energy_institute",
       "who": "Energy Institute Statistical Review of World Energy 2026",
       "credit_line": "Energy Institute Statistical Review of World Energy 2026",
-      "third_party": "The capacity sheet includes ICIS and S&P Global Energy data, so the table is not published; only the derived utilisation is.",
+      "third_party": "The capacity sheet includes ICIS and S&P Global Energy data, so the table is not published. Only the five country total derived from it is, and the utilisation computed with it.",
       "licence": "Quotation with attribution; extensive reproduction needs permission",
-      "series": ["ei_refinery_capacity_annual"],
+      "series": ["ei_refinery_capacity_annual", "nwe5_refinery_capacity_annual"],
       "date_of_last_update": {
-        "ei_refinery_capacity_annual": "2025-12-31"
+        "ei_refinery_capacity_annual": "2025-12-31",
+        "nwe5_refinery_capacity_annual": "2025-12-31"
       }
     },
     {
@@ -282,6 +283,13 @@
           {"field": "provisional_from", "value": "2026-06-01", "label": "June 2026"}
         ]
       },
+      "nwe5_refinery_capacity_annual": {
+        "label": "Refinery capacity, annual, the five country total, which is what the analysis divides by",
+        "source": "Derived by this study from the Energy Institute Statistical Review",
+        "provisional_segments": [
+          {"text": "none flagged"}
+        ]
+      },
       "opec_rotterdam_products_monthly": {
         "label": "Rotterdam product prices, monthly, from OPEC's monthly report",
         "source": "OPEC Monthly Oil Market Report, prices from Argus",
@@ -321,7 +329,7 @@
   },
   "manifest": {
     "schema_version": 1,
-    "generated_at": "2026-09-22T07:09:40Z",
+    "generated_at": "2026-09-22T11:41:11Z",
     "series": [
       {
         "series": "anchors",
@@ -1125,6 +1133,39 @@
           "note": "offline, nothing was fetched",
           "reused_report": true
         }
+      },
+      {
+        "series": "nwe5_refinery_capacity_annual",
+        "source": "Energy Institute Statistical Review of World Energy, five country total",
+        "url": "https://www.energyinst.org/__data/assets/file/0008/1827620/EI-Stats-Review-ALL-data.xlsx",
+        "page_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
+        "machine_fetched": true,
+        "fetched_at": "2026-09-11T00:00:00Z",
+        "checked_at": "2026-09-22T11:41:11Z",
+        "rows": 61,
+        "observations": 61,
+        "file_rows": 61,
+        "first_date": "1965-12-31",
+        "last_date": "2025-12-31",
+        "frequency": "annual",
+        "gaps": [],
+        "provisional_from": null,
+        "vintage": "2026 Energy Institute Statistical Review of World Energy",
+        "method": "derived",
+        "committable": true,
+        "licence_note": "ONE NUMBER PER YEAR, the five country total, and NOT any of the country rows it was summed from. Reproducing the Review's table is not permitted without written permission and redistributing its S&P Global sourced data is prohibited outright, which is why the table itself stays in data/private/ under the entry above and is never committed. This total is a derived aggregate rather than a row of that table, it is attributed to the Energy Institute Statistical Review of World Energy 2026 wherever it appears, and it is already recoverable from what SPEC.md section 6.1 requires the site to publish, since utilisation times the committed JODI intake returns it to the decimal. It is committed because SPEC.md section 5.4 requires the study to rebuild with no network and a GitHub runner has nothing from data/private. If the Energy Institute reads this differently, the remedy is one email to statisticalreview@energyinst.org and the fallback of SPEC.md section 6.1, intake with a trend and closure dummies, which is already built and reported beside the utilisation model.",
+        "status": "ok",
+        "note": "THE FIVE COUNTRY TOTAL ONLY, BE, DE, FR, NL, GB summed, at each year end. It is derived by this study from the Energy Institute capacity table, which is NOT committed and stays in data/private/ because the Review forbids extensive reproduction of its tables and the capacity sheet carries S&P Global sourced data. No per country row is published here or anywhere else in this repository. This series is committed instead, so that a fresh clone with no data/private can rebuild the utilisation, the closure step years and the kb/d translation, which SPEC.md section 5.4 requires and which the repository could not do before. It discloses nothing that publishing utilisation did not already disclose: utilisation times the committed JODI intake returns this total to the decimal. A figure for year Y is capacity at 31 DECEMBER of year Y, so crack.analysis applies it to the months of year Y plus one and never earlier. THE LATEST YEAR IS 2025, 6238.0 kb/d, and there is no 2026 figure in the Review, so no month beyond the last year end carries a denominator unless a caller asks for one out loud.",
+        "file": "data/cache/nwe5_refinery_capacity_annual.csv",
+        "unit": "thousand barrels daily, capacity at year end",
+        "observation_column": "nwe5_capacity_kb_d",
+        "derived_from": "ei_refinery_capacity_annual",
+        "derived_from_committed": false,
+        "latest_year": 2025,
+        "countries_summed": ["BE", "DE", "FR", "NL", "GB"],
+        "published_columns": ["nwe5_capacity_kb_d"],
+        "withheld": "every per country capacity row of the Energy Institute table, which stays in data/private and is never committed",
+        "gate_5_decision": "The owner's option 2 from crack.sources.ei's docstring, taken in its narrowest form: the five country total is published, every per country row is withheld. Taken because a GitHub runner has a fresh clone and nothing from data/private, so before this the analysis could not run in CI at all. tools/validate-data.mjs fails the gate if a per country capacity column reaches a committed file."
       },
       {
         "series": "opec_rotterdam_products_monthly",

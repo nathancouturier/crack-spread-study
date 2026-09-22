@@ -4,7 +4,7 @@
   "generated_by": "src/crack/export.py",
   "data_date": "2026-09-18",
   "describes": "the monthly OPEC cracks, the ministry's margin with the gas wedge beside it, the weekly reconstruction, their events and breaks, the named ranges, and the monthly seasonality",
-  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "source": "the committed caches in data/cache and data/seed and the manifest, nothing from data/private; no network",
   "conventions": {
     "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
     "decimals": {

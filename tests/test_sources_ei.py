@@ -459,3 +459,83 @@ def test_the_utilisation_path_works_end_to_end_on_the_constructed_workbook(
     out = ei.utilisation(intake, capacity)
     assert out["capacity_is_published"].all()
     assert (out["utilisation"] > 0).all()
+
+
+# --------------------------------------------------------------------------
+# The one derived series that IS committed
+# --------------------------------------------------------------------------
+#
+# Gate 5. A GitHub runner has a fresh clone and nothing from data/private, so
+# before this series existed the analysis could not run there at all: 98 tests
+# and python scripts/export.py --check died on FileNotFoundError. The five
+# country total is now committed and every per country row is still withheld.
+# These tests hold both halves of that down. See crack.sources.ei's docstring,
+# "WHAT GATE 5 ADDED".
+
+
+def derived(sandbox, workbook) -> ei.Nwe5RefineryCapacity:
+    """The private table written, then the derived total built from it."""
+    adopted(sandbox, workbook).run()
+    return ei.Nwe5RefineryCapacity(root=sandbox / "private" / "ei")
+
+
+def test_the_derived_total_lands_in_cache_and_is_committable(sandbox, workbook):
+    entry = derived(sandbox, workbook).run()
+    assert entry["committable"] is True
+    assert entry["file"] == "data/cache/nwe5_refinery_capacity_annual.csv"
+    assert (sandbox / "cache" / "nwe5_refinery_capacity_annual.csv").exists()
+    assert not (sandbox / "private" / "nwe5_refinery_capacity_annual.csv").exists()
+    # The private table is still private, and still the only thing parsed.
+    assert (sandbox / "private" / "ei_refinery_capacity_annual.csv").exists()
+
+
+def test_the_derived_cache_carries_the_total_and_no_country_row(sandbox, workbook):
+    """THE LICENCE PROMISE, in the file itself. One column beside the date."""
+    derived(sandbox, workbook).run()
+    text = (sandbox / "cache" / "nwe5_refinery_capacity_annual.csv").read_text(
+        encoding="utf-8"
+    )
+    header = text.splitlines()[0].split(",")
+    assert header == ["date", ei.column_name(ei.AGGREGATE)]
+    for code in ei.COUNTRIES:
+        assert ei.column_name(code) not in text
+
+
+def test_the_derived_total_is_the_sum_of_the_five_private_rows(sandbox, workbook):
+    """Derived, not re-parsed: the same arithmetic, checked against the table."""
+    private = adopted(sandbox, workbook).fetch()
+    total = ei.Nwe5RefineryCapacity(
+        source_frame=private, root=sandbox / "private" / "ei"
+    ).fetch()
+    assert list(total.columns) == ["date", ei.column_name(ei.AGGREGATE)]
+    assert len(total) == len(private)
+    pd.testing.assert_series_equal(
+        total[ei.column_name(ei.AGGREGATE)],
+        private[ei.column_name(ei.AGGREGATE)],
+        check_names=False,
+    )
+
+
+def test_the_manifest_entry_names_neither_a_country_column_nor_the_country_values(
+    sandbox, workbook
+):
+    """The manifest is rendered in full on the provenance panel, so it is a
+    committed file like any other and tools/validate-data.mjs check 16 scans it."""
+    entry = derived(sandbox, workbook).run()
+    blob = json.dumps(entry)
+    for code in ei.COUNTRIES:
+        assert ei.column_name(code) not in blob
+    assert entry["published_columns"] == [ei.column_name(ei.AGGREGATE)]
+    assert entry["derived_from"] == ei.SERIES
+    assert entry["method"] == "derived"
+    assert "THE FIVE COUNTRY TOTAL ONLY" in entry["note"]
+
+
+def test_it_refuses_to_guess_when_the_private_table_is_not_on_the_machine(sandbox):
+    """CI has no data/private. It reads the committed cache and never runs this."""
+    with pytest.raises(SourceError) as raised:
+        ei.Nwe5RefineryCapacity(root=sandbox / "private" / "ei").run()
+    message = str(raised.value)
+    assert "data/private/ei_refinery_capacity_annual.csv" in message
+    assert "not on this machine" in message
+    assert not (sandbox / "cache" / "nwe5_refinery_capacity_annual.csv").exists()

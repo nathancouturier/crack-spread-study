@@ -43,6 +43,10 @@
 //       and every event and every anchor carries a source_url
 //   15  the manual steps are present, well formed, and attached to the series
 //       they name
+//   16  NO COMMITTED FILE REPRODUCES THE ENERGY INSTITUTE CAPACITY TABLE, by
+//       column name anywhere, and by value too on a machine that holds the
+//       private table. Check 7's companion: 7 proves the private files are not
+//       committed, 16 proves the table is not committed under another name
 //
 // NOTHING HERE IS ALLOWED TO SKIP. There is no third outcome between pass and
 // fail. A check that reports "unrecognised unit, skipping" under a PASS line is
@@ -133,6 +137,7 @@ const COLUMN_BOUNDS = [
     what: "a count of the documents or cells behind a row, provenance rather than a measurement",
   },
   { match: /_kbd$/, lo: 0.0, hi: 100000.0, what: "a flow or a capacity, kb/d" },
+  { match: /_capacity_kb_d$/, lo: 0.0, hi: 100000.0, what: "refinery capacity, kb/d" },
   { match: /_usd_mmbtu$/, lo: 0.0, hi: 150.0, what: "gas, $/MMBtu" },
   { match: /^eurusd$/, lo: 0.5, hi: 2.5, what: "US dollars per euro" },
   { match: /_eur_mwh$/, lo: 0.0, hi: 500.0, what: "TTF, EUR/MWh" },
@@ -521,6 +526,90 @@ check("nothing marked committable false is in the committed tree, SPEC.md sectio
       "outside the commit. That is the one check this repository cannot afford to " +
       "assume, so it fails rather than passes quietly"
     );
+  }
+  return problems;
+});
+
+// SPEC.md non negotiable 6, the other half of check 7. Check 7 proves the
+// private FILES are not committed. This proves the private TABLE is not
+// committed under another name: the Energy Institute capacity sheet may not be
+// reproduced and its S&P sourced rows may not be redistributed, and since Gate 5
+// one number derived from it, the five country total, IS committed so that a
+// fresh clone can rebuild the study. That is the whole of the permitted
+// disclosure and this is where it is held to. See crack.sources.ei's docstring.
+check("no committed file reproduces the Energy Institute capacity table", () => {
+  const problems = [];
+  const WITHHELD = ["be", "de", "fr", "nl", "gb"].map((c) => c + "_capacity_kb_d");
+  const PUBLISHED = "nwe5_capacity_kb_d";
+
+  const committedFiles = [];
+  const walk = (dir) => {
+    for (const name of readdirSync(dir)) {
+      if (name === "private") continue;
+      const full = path.join(dir, name);
+      if (statSync(full).isDirectory()) walk(full);
+      else committedFiles.push(full);
+    }
+  };
+  walk(path.join(ROOT, "data"));
+
+  // 1. By name. A per country capacity column is a row of the Review's table and
+  //    may not appear in a committed CSV header or a committed JSON key.
+  for (const full of committedFiles) {
+    const relative = path.relative(ROOT, full).split(path.sep).join("/");
+    const text = readFileSync(full, "utf8");
+    for (const column of WITHHELD) {
+      if (text.includes(column)) {
+        problems.push(
+          "THE LICENCE PROMISE IS BROKEN: " + relative + " carries " + column +
+          ", which is a row of the Energy Institute capacity table. Only " +
+          PUBLISHED + ", the five country total, may be published"
+        );
+      }
+    }
+  }
+
+  // 2. By value, and only on a machine that has the private table, so this half
+  //    is stronger for the owner and absent in CI rather than pretending. Every
+  //    per country figure the Review prints, in the spelling the caches write
+  //    floats in, must appear in no committed file.
+  const privateTable = path.join(ROOT, "data", "private", "ei_refinery_capacity_annual.csv");
+  if (existsSync(privateTable)) {
+    const lines = readFileSync(privateTable, "utf8").trim().split("\n");
+    const header = lines[0].split(",").map((h) => h.trim());
+    const withheldIndexes = header
+      .map((h, i) => (WITHHELD.includes(h) ? i : -1))
+      .filter((i) => i >= 0);
+    if (withheldIndexes.length !== WITHHELD.length) {
+      problems.push(
+        "data/private/ei_refinery_capacity_annual.csv no longer carries all five " +
+        "country columns, so this check cannot prove they are withheld"
+      );
+    }
+    // A short integer such as 757 occurs by chance in a file of prices, so only
+    // the figures long enough to be a fingerprint are searched for. The rounded
+    // ones are covered by the column name half above and by the fact that a
+    // reader cannot tell which country a bare 757 belongs to.
+    const fingerprints = new Set();
+    for (const line of lines.slice(1)) {
+      const cells = line.split(",");
+      for (const index of withheldIndexes) {
+        const cell = (cells[index] || "").trim();
+        if (cell.length >= 8) fingerprints.add(cell);
+      }
+    }
+    for (const full of committedFiles) {
+      const relative = path.relative(ROOT, full).split(path.sep).join("/");
+      const text = readFileSync(full, "utf8");
+      for (const value of fingerprints) {
+        if (text.includes(value)) {
+          problems.push(
+            "THE LICENCE PROMISE IS BROKEN: " + relative + " carries " + value +
+            ", which is a per country figure from the Energy Institute capacity table"
+          );
+        }
+      }
+    }
   }
   return problems;
 });

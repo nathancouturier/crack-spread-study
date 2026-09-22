@@ -4,7 +4,7 @@
   "generated_by": "src/crack/export.py",
   "data_date": "2026-06-01",
   "describes": "the Runs and crude demand view: runs and imports against the lagged margin, the run cut threshold scatter, the response with and without the episodes, the horse race with its power, the instrument, and the 2026 residuals",
-  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "source": "the committed caches in data/cache and data/seed and the manifest, nothing from data/private; no network",
   "conventions": {
     "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
     "decimals": {

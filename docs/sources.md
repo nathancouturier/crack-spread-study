@@ -36,6 +36,7 @@ of what was read, when, and what was decided on the strength of it.
 | `jodi_nwe_refinery_output_monthly` | refinery gross output by product, same five countries | same | same | same | **yes** | no explicit licence |
 | `jodi_nwe_crude_imports_monthly` | crude oil imports, same five countries | same | same | same | **yes** | no explicit licence |
 | `ei_refinery_capacity_annual` | refinery capacity by country, annual, kb/d | [EI-Stats-Review-ALL-data.xlsx](https://www.energyinst.org/__data/assets/file/0008/1827620/EI-Stats-Review-ALL-data.xlsx) | [Statistical Review](https://www.energyinst.org/statistical-review/resources-and-data-downloads) | annual, June | **NO**, `data/private/` | EI copyright, reproduction not permitted |
+| `nwe5_refinery_capacity_annual` | the five country total of the row above, annual, kb/d, derived | none, derived from the private table | [Statistical Review](https://www.energyinst.org/statistical-review/resources-and-data-downloads) | annual, June | **yes**, the total only, never a country row | derived and attributed to EI, section 4.4 |
 | `eia_refinery_fuel_2023` | US refinery gas use and crude inputs, the gas intensity inputs | none, seeded by hand | [Refinery Capacity Report](https://www.eia.gov/petroleum/refinerycapacity/) | annual, June | **yes** | US public domain |
 | `events` | dated events and structural breaks, one `source_url` each | none, written by hand | this repository | when something happens | **yes** | this study, MIT, the cited sources keep their own terms |
 | `anchors` | the SPEC.md section 5.5 figures the pipeline must reproduce | none, written by hand | DGEC, as above | when the spec's anchors change | **yes** | Licence Ouverte 2.0 |
@@ -241,8 +242,8 @@ supplier, so the S&P part cannot be stripped out.
 
 **Redistributable: no.** Committing the capacity table, even five country rows
 for 61 years, is extensive reproduction of a table. The cache is therefore in
-`data/private/`, it is not in the repository, and only the derived utilisation
-ratio is intended for publication. Section 4.4.
+`data/private/`, it is not in the repository, and only the derived five country
+total and the utilisation computed with it are published. Section 4.4.
 
 Also worth knowing, verbatim: "Each year revisions are made to historical data
 when updated or where more reliable data sources have become available." The
@@ -507,21 +508,36 @@ It collides directly with SPEC.md section 5.4, "cache files are committed, so th
 site builds and results reproduce with no network", and SPEC.md non negotiable 6,
 "anything that cannot be redistributed stays in `data/private/`". The two rules
 point in opposite directions and non negotiable 6 wins, so the capacity cache is
-private and a fresh clone cannot compute utilisation.
+private.
+
+**What that cost, and what Gate 5 did about it.** Until Gate 5 a fresh clone
+could not compute utilisation at all: `crack.analysis` read the private file
+directly, so on a checkout without `data/private` 98 tests and
+`python scripts/export.py --check` died on `FileNotFoundError`, and the study was
+reproducible only by its author. Measured, not assumed: the repository was cloned
+to a temporary directory, `data/private` deleted, and the gate run there. Option
+2 below is now taken in full. `nwe5_refinery_capacity_annual`, one column, the
+five country total at each year end, is a committed cache with its own manifest
+entry, and `crack.analysis` reads that. Nothing in the pipeline reads
+`data/private` any more. No per country row is published, and
+`tools/validate-data.mjs` check 16 fails the gate if one ever appears in a
+committed file, by column name anywhere and by value as well on a machine that
+holds the private table.
 
 Three options, and SPEC.md already wrote the third:
 
 1. **Ask EI.** One email to `statisticalreview@energyinst.org` asking to publish
    five country rows in a non commercial public portfolio repository with
    attribution. The clean path. It takes days, not minutes.
-2. **Publish only the ratio.** Keep capacity in `data/private/` and publish
-   `utilisation = intake / capacity` and the regression outputs. A ratio of a
-   JODI series to an EI series is arguably a derived output rather than a
-   reproduction of a table. Weaker on reproducibility, honest about it, and the
-   site keeps working. **This is what the code does today.** Note the honest
-   objection recorded in open question 13: publishing the ratio next to the JODI
-   numerator does not in fact withhold the denominator from anybody who can
-   divide.
+2. **Publish only the derived series.** Keep the table in `data/private/` and
+   publish `utilisation = intake / capacity`, the regression outputs, and the one
+   derived series the analysis needs to compute them. A five country total, or a
+   ratio of a JODI series to an EI series, is a derived output rather than a
+   reproduction of a table. **This is what the code does today, and at Gate 5 it
+   was completed rather than half done.** Note the honest objection recorded in
+   open question 13: publishing the ratio next to the JODI numerator does not in
+   fact withhold the denominator from anybody who can divide, which is precisely
+   why committing the total discloses nothing the ratio did not already.
 3. **Take SPEC.md section 6.1's own fallback**: "If the capacity table is
    unusable, use intake with a trend and closure dummies instead, and say so."
    That fallback was written for a usability failure and it applies just as well

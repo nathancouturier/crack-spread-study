@@ -1488,6 +1488,28 @@
         }
       }
     },
+    "data/cache/nwe5_refinery_capacity_annual.csv": {
+      "sha256": "5904622786707678995a667186b03f3aebf29c0751ddfa0bebe8d7aae9a66cf9",
+      "bytes": 1280,
+      "rows": 61,
+      "columns": [
+        "date",
+        "nwe5_capacity_kb_d"
+      ],
+      "anchors": {
+        "nwe5_capacity_kb_d": {
+          "observations": 61,
+          "first": [
+            "1965-12-31",
+            "5581"
+          ],
+          "last": [
+            "2025-12-31",
+            "6238"
+          ]
+        }
+      }
+    },
     "data/cache/opec_rotterdam_products_monthly.csv": {
       "sha256": "336a4e6e47d7eda9d9d2ce6398ea530749feff63aa90dd5e655341a163042f28",
       "bytes": 32358,

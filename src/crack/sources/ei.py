@@ -126,6 +126,49 @@ The consequence for SPEC.md section 8's weekly refresh job is that this series
 cannot be part of it. It is annual, the edition changes once a year, and the
 manifest records when the bytes were obtained rather than when this program last
 ran, so a stale edition is visible.
+
+WHAT GATE 5 ADDED, AND WHY THE ANALYSIS NO LONGER READS THE PRIVATE FILE
+--------------------------------------------------------------------------
+Everything above stands. What it did not cover is that a GitHub runner has a
+fresh clone and nothing from data/private, so until Gate 5 the analysis could
+not run there at all: crack.analysis.capacity_annual read the private cache
+directly, and on a clean checkout 98 tests and `python scripts/export.py
+--check` died on FileNotFoundError. A study whose central regression cannot be
+rebuilt from the repository is not reproducible, whatever the README says.
+
+So the owner's option 2 is now taken, and taken in the narrowest form that
+actually works. ONE DERIVED SERIES IS COMMITTED:
+
+    nwe5_refinery_capacity_annual   data/cache/, committable, method "derived"
+                                    date, nwe5_capacity_kb_d
+                                    ONE COLUMN. The sum of the five countries,
+                                    at each year end stamp.
+
+and crack.analysis reads that. The private table stays private and stays the
+only thing this module parses.
+
+WHY THE ANNUAL AGGREGATE AND NOT A FROZEN MONTHLY UTILISATION TABLE. The monthly
+utilisation is a function of this series and of JODI intake, and JODI publishes a
+new month around the 20th of every month. A committed monthly utilisation would
+therefore be stale the moment JODI moved, and the weekly refresh job would have
+to either extend it, which needs the capacity again, or leave the newest months
+without a denominator. The annual aggregate is the real upstream input: it
+changes once a year with the edition, new JODI months flow through it on their
+own, and the closure step years and the kb/d translation figure are both derived
+from it in code rather than frozen beside it. One committed number per year,
+three derived uses, no duplicated state.
+
+WHAT IS AND IS NOT DISCLOSED, said plainly rather than implied. The five country
+rows ARE rows of the Review's table and they are not published; the aggregate is
+a sum across five of them and is not a row of anything. It is also already
+recoverable from what SPEC.md section 6.1 requires the site to show: utilisation
+times the published JODI intake gives it back, to the decimal, which is the
+arithmetic the section above flagged before this decision was taken. So
+committing the aggregate discloses nothing that publishing utilisation did not
+already disclose, and it is the whole of what the analysis needs.
+tools/validate-data.mjs holds the line down rather than trusting it: it fails if
+any committed file carries a per country capacity column or the Review's own
+value for one of them.
 """
 
 from __future__ import annotations
@@ -142,10 +185,11 @@ import pandas as pd
 
 from ..config import BOUNDS_INTAKE_KB_D
 from ..config import source as registered_source
-from .base import PRIVATE, Adapter, SourceError, http_get, utc_now_iso
+from .base import PRIVATE, Adapter, SourceError, http_get, read_cache, utc_now_iso
 
 __all__ = [
     "SERIES",
+    "NWE5_SERIES",
     "SHEET",
     "CONTENTS_SHEET",
     "COUNTRY_ROWS",
@@ -158,16 +202,23 @@ __all__ = [
     "WORKBOOK_URL",
     "PAGE_URL",
     "column_name",
+    "read_index_file",
     "read_edition",
     "parse_capacity",
     "capacity_monthly",
     "utilisation",
     "EiRefineryCapacity",
+    "Nwe5RefineryCapacity",
     "main",
 ]
 
 
 SERIES = "ei_refinery_capacity_annual"
+
+#: The one derived series that IS committed. See the module docstring, "WHAT
+#: GATE 5 ADDED". It carries the five country total and nothing else, and
+#: crack.analysis reads it instead of the private table above.
+NWE5_SERIES = "nwe5_refinery_capacity_annual"
 
 #: The sheet, by name. There are 97 sheets in the workbook.
 SHEET = "Oil refinery - capacity"
@@ -235,6 +286,14 @@ _EDITION = re.compile(r"(?P<year>(19|20)\d{2})\s+Energy Institute Statistical Re
 def column_name(area: str) -> str:
     """The cache column for one country's capacity."""
     return "%s_capacity_kb_d" % area.lower()
+
+
+def read_index_file(path: Path) -> dict:
+    """The small json beside the stored workbook, or an empty dict."""
+    if not Path(path).exists():
+        return {}
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 # --------------------------------------------------------------------------
@@ -639,10 +698,7 @@ class EiRefineryCapacity(Adapter):
             handle.write("\n")
 
     def read_index(self) -> dict:
-        if not self.index_path.exists():
-            return {}
-        with open(self.index_path, "r", encoding="utf-8") as handle:
-            return json.load(handle)
+        return read_index_file(self.index_path)
 
     def load_workbook_bytes(self) -> bytes:
         """The workbook, from disk when it is there and from EI when it is not."""
@@ -840,6 +896,193 @@ class EiRefineryCapacity(Adapter):
             "the bytes that were parsed."
         )
         entry["workbook_fetched_this_run"] = self.fetched
+        return entry
+
+
+# --------------------------------------------------------------------------
+# The one derived series that is committed
+# --------------------------------------------------------------------------
+
+class Nwe5RefineryCapacity(Adapter):
+    """The NWE5 capacity total, derived from the private table and committed.
+
+    This is the series crack.analysis reads. It exists so that a fresh clone with
+    no data/private can rebuild the whole study, which is what SPEC.md section
+    5.4 asks for and what the repository could not do before Gate 5. See the
+    module docstring, "WHAT GATE 5 ADDED", for the licence reasoning and for why
+    it is the annual aggregate rather than a frozen monthly utilisation.
+
+    ONE COLUMN, deliberately. The five country columns of the private cache are
+    rows of the Review's own table and none of them is written here. Adding one
+    would be the reproduction the licence forbids, so the required_cols below are
+    the whole contract and tools/validate-data.mjs fails the gate if a per
+    country capacity column ever appears in a committed file.
+
+    REBUILDING IT NEEDS THE PRIVATE TABLE, and that is the right shape. Only the
+    owner can rebuild it, once a year when a new edition lands; everyone else,
+    CI included, reads the committed file. fetch() therefore says so in words
+    when the private cache is absent rather than writing a shorter series or a
+    guess.
+    """
+
+    name = NWE5_SERIES
+    source = "Energy Institute Statistical Review of World Energy, five country total"
+    url = WORKBOOK_URL
+    page_url = PAGE_URL
+    unit = "thousand barrels daily, capacity at year end"
+    frequency = "annual"
+    #: Not "published". EI publishes country rows; this total is this study's
+    #: arithmetic over five of them and the manifest says so.
+    method = "derived"
+    committable = True
+    date_col = "date"
+    min_rows = MIN_OBSERVATIONS
+    observation_column = column_name(AGGREGATE)
+    required_cols = ("date", column_name(AGGREGATE))
+    bounds = {column_name(AGGREGATE): BOUNDS_INTAKE_KB_D}
+    min_observations = {column_name(AGGREGATE): MIN_OBSERVATIONS}
+
+    def __init__(
+        self,
+        *,
+        source_frame: pd.DataFrame | None = None,
+        root: Path | None = None,
+    ) -> None:
+        """
+        Args:
+            source_frame: the private table, already read. Defaults to reading
+                data/private/ei_refinery_capacity_annual.csv.
+            root: where the stored workbook sits, for the edition string.
+                Defaults to data/private/ei, the same directory the private
+                adapter beside this one uses.
+        """
+        self.licence_note = registered_source(NWE5_SERIES).licence_note
+        self.latest_year: int | None = None
+        self._source_frame = source_frame
+        self._root = root
+
+    def private_frame(self) -> pd.DataFrame:
+        """The private capacity cache, or a clear stop when it is not here."""
+        if self._source_frame is not None:
+            return self._source_frame
+        frame = read_cache(SERIES, date_col="date", directory="private")
+        if frame is None:
+            raise SourceError(
+                "%s is derived from data/private/%s.csv, which is not on this "
+                "machine. That cache may not be redistributed, SPEC.md non "
+                "negotiable 6, so only the owner can rebuild this series, and "
+                "only when a new Energy Institute edition lands. Everything else, "
+                "CI included, reads the committed data/cache/%s.csv and does not "
+                "run this adapter. Nothing was written."
+                % (NWE5_SERIES, SERIES, NWE5_SERIES)
+            )
+        return frame
+
+    def fetch(self) -> pd.DataFrame:
+        source = self.private_frame()
+        total = column_name(AGGREGATE)
+        missing = [c for c in ("date", total) if c not in source.columns]
+        if missing:
+            raise SourceError(
+                "data/private/%s.csv carries no %s column, so the five country "
+                "total cannot be taken from it"
+                % (SERIES, " and no ".join(missing))
+            )
+        frame = pd.DataFrame(
+            {
+                "date": pd.to_datetime(source["date"]),
+                total: source[total].astype(float),
+            }
+        ).sort_values("date").reset_index(drop=True)
+        self.latest_year = int(pd.Timestamp(frame["date"].iloc[-1]).year)
+        self.vintage = self._edition()
+        self.note = self._note(frame)
+        return frame
+
+    @property
+    def root(self) -> Path:
+        return Path(self._root) if self._root is not None else PRIVATE / WORKBOOK_DIRNAME
+
+    @property
+    def index_path(self) -> Path:
+        return self.root / "index.json"
+
+    def _edition(self) -> str | None:
+        """The edition string, from the stored workbook when it is beside the cache.
+
+        The workbook and the private capacity cache live in the same gitignored
+        directory, so an owner who can rebuild this series has both. When the
+        workbook is not there the vintage is left None and the offline path
+        carries the committed one through, rather than this adapter inventing an
+        edition it did not read.
+        """
+        path = self.root / WORKBOOK_FILENAME
+        if not path.exists():
+            return None
+        return read_edition(path.read_bytes())
+
+    def _note(self, frame: pd.DataFrame) -> str:
+        total = column_name(AGGREGATE)
+        latest = frame[total].iloc[-1]
+        return (
+            "THE FIVE COUNTRY TOTAL ONLY, %s summed, at each year end. It is "
+            "derived by this study from the Energy Institute capacity table, "
+            "which is NOT committed and stays in data/private/ because the Review "
+            "forbids extensive reproduction of its tables and the capacity sheet "
+            "carries S&P Global sourced data. No per country row is published "
+            "here or anywhere else in this repository. This series is committed "
+            "instead, so that a fresh clone with no data/private can rebuild the "
+            "utilisation, the closure step years and the kb/d translation, which "
+            "SPEC.md section 5.4 requires and which the repository could not do "
+            "before. It discloses nothing that publishing utilisation did not "
+            "already disclose: utilisation times the committed JODI intake "
+            "returns this total to the decimal. A figure for year Y is capacity "
+            "at 31 DECEMBER of year Y, so crack.analysis applies it to the months "
+            "of year Y plus one and never earlier. THE LATEST YEAR IS %d, %s "
+            "kb/d, and there is no 2026 figure in the Review, so no month beyond "
+            "the last year end carries a denominator unless a caller asks for one "
+            "out loud."
+            % (
+                ", ".join(COUNTRIES),
+                self.latest_year,
+                ("%.1f" % latest) if pd.notna(latest) else "not published",
+            )
+        )
+
+    def offline_note(self, note: str, frame: pd.DataFrame) -> str:
+        """Nothing in the note depends on a fetch, so restate it from the file."""
+        self.latest_year = int(pd.Timestamp(frame["date"].iloc[-1]).year)
+        return self._note(frame)
+
+    def _entry(self, *, status: str, frame, note: str) -> dict:
+        entry = super()._entry(status=status, frame=frame, note=note)
+        # Derived from stored bytes, so the fetch time is when those bytes were
+        # obtained, exactly as for the private parse beside it.
+        stored = read_index_file(self.index_path)
+        entry["fetched_at"] = stored.get("obtained_at") or stored.get("fetched_at")
+        entry["checked_at"] = utc_now_iso()
+        entry["derived_from"] = SERIES
+        entry["derived_from_committed"] = False
+        entry["latest_year"] = self.latest_year
+        entry["countries_summed"] = list(COUNTRIES)
+        entry["published_columns"] = [column_name(AGGREGATE)]
+        # The withheld columns are NOT listed by name here. They are named once,
+        # in tools/validate-data.mjs, which is the thing that enforces the
+        # promise; writing them into the manifest as well would put the strings
+        # this repository undertakes not to publish into the one file the site
+        # renders in full, and would trip that very check.
+        entry["withheld"] = (
+            "every per country capacity row of the Energy Institute table, which "
+            "stays in data/private and is never committed"
+        )
+        entry["gate_5_decision"] = (
+            "The owner's option 2 from crack.sources.ei's docstring, taken in its "
+            "narrowest form: the five country total is published, every per "
+            "country row is withheld. Taken because a GitHub runner has a fresh "
+            "clone and nothing from data/private, so before this the analysis "
+            "could not run in CI at all. tools/validate-data.mjs fails the gate "
+            "if a per country capacity column reaches a committed file."
+        )
         return entry
 
 

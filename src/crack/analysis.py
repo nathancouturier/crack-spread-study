@@ -124,6 +124,7 @@ from crack.sources import opec_momr
 
 __all__ = [
     "CAPACITY_SERIES",
+    "CAPACITY_SOURCE_SERIES",
     "CAPACITY_COLUMN",
     "INTAKE_COLUMN",
     "IMPORTS_COLUMN",
@@ -231,14 +232,34 @@ __all__ = [
 # Names of the things this module reads
 # ---------------------------------------------------------------------------
 
-#: The Energy Institute capacity cache. It lives in data/private and NOT in
-#: data/cache, and the directory is the licence: recon 03 section 2.5 quotes the
-#: sheet's own footnote, "Source: Includes data from ICIS and S&P Global Energy",
-#: and S&P sourced data is not redistributable. Only the derived utilisation
-#: computed from it is published. SPEC.md non negotiable 6.
-CAPACITY_SERIES = "ei_refinery_capacity_annual"
-CAPACITY_DIRECTORY = "private"
+#: THE COMMITTED FIVE COUNTRY TOTAL, and not the Energy Institute table it was
+#: summed from.
+#:
+#: The table itself is in data/private and stays there: recon 03 section 2.5
+#: quotes the sheet's own footnote, "Source: Includes data from ICIS and S&P
+#: Global Energy", and S&P sourced data is not redistributable, while the Review
+#: separately requires written permission for extensive reproduction of a table.
+#: SPEC.md non negotiable 6.
+#:
+#: This module used to read that private file directly, and the cost of it was
+#: only visible from outside: a GitHub runner has a fresh clone and nothing from
+#: data/private, so on a clean checkout 98 tests and `python scripts/export.py
+#: --check` died on FileNotFoundError and the study could not be rebuilt by
+#: anyone but its author. SPEC.md section 5.4 asks for the opposite. So the one
+#: derived series this module actually needs, the NWE5 total at each year end, is
+#: now a committed cache with its own manifest entry, crack.sources.ei's
+#: Nwe5RefineryCapacity builds it from the private table, and nothing here reads
+#: data/private any more. The per country rows are still not published anywhere
+#: and tools/validate-data.mjs fails the gate if one reaches a committed file.
+#: See crack.sources.ei's docstring, "WHAT GATE 5 ADDED", for the whole argument,
+#: including why this is the annual aggregate and not a frozen monthly
+#: utilisation table.
+CAPACITY_SERIES = "nwe5_refinery_capacity_annual"
+CAPACITY_DIRECTORY = "cache"
 CAPACITY_COLUMN = "nwe5_capacity_kb_d"
+#: The private table the series above is derived from, named here because the
+#: reports and the Method view have to say where the number came from.
+CAPACITY_SOURCE_SERIES = "ei_refinery_capacity_annual"
 
 #: JODI, sum of BE DE FR NL GB. Crude oil only, not total feed: SPEC.md section
 #: 6.1 says "refinery crude intake", and the Energy Institute denominator is
@@ -323,7 +344,10 @@ CLOSURE_STEP_MIN_FALL = 0.02
 
 
 def capacity_annual() -> pd.DataFrame:
-    """NWE5 refinery capacity by year, kb/d, from the private Energy Institute cache.
+    """NWE5 refinery capacity by year, kb/d, from the committed derived cache.
+
+    The cache is the five country total only, summed by crack.sources.ei from the
+    Energy Institute table that stays in data/private. See CAPACITY_SERIES.
 
     Returns:
         year, capacity_kb_d. The date column of the cache is a 31 December

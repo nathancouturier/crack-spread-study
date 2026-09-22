@@ -4,7 +4,7 @@
   "generated_by": "src/crack/export.py",
   "data_date": "2026-08-01",
   "describes": "the waterfall from product contributions to the ministry's margin, then the gas wedge to the margin at this study's gas intensity",
-  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "source": "the committed caches in data/cache and data/seed and the manifest, nothing from data/private; no network",
   "conventions": {
     "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
     "decimals": {

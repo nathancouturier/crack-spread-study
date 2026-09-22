@@ -19,12 +19,15 @@ from __future__ import annotations
 
 import dataclasses
 import math
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from crack import analysis
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 # ---------------------------------------------------------------------------
@@ -1978,3 +1981,47 @@ class TestGateThreeReport:
             assert phrase in text, "the report no longer says %r" % phrase
         for banned in (chr(0x2014), chr(0x2013)):
             assert banned not in text
+
+
+# ---------------------------------------------------------------------------
+# The analysis must run on a checkout that has no data/private
+# ---------------------------------------------------------------------------
+#
+# Gate 5, and it is the regression these tests exist for rather than a nicety.
+# The Energy Institute capacity table may not be redistributed, so it lives in
+# data/private, which is gitignored; a GitHub runner clones the repository and
+# has none of it. This module used to read that file directly, and on a clean
+# checkout 98 tests and python scripts/export.py --check died on
+# FileNotFoundError, which means the study could not be rebuilt by anybody but
+# its author whatever the README claimed. The five country total is now a
+# committed derived cache. These two tests prove it stayed that way.
+
+
+def test_the_capacity_series_is_a_committed_cache_and_not_the_private_table():
+    assert analysis.CAPACITY_DIRECTORY == "cache"
+    assert analysis.CAPACITY_SERIES == "nwe5_refinery_capacity_annual"
+    assert analysis.CAPACITY_SOURCE_SERIES == "ei_refinery_capacity_annual"
+    assert (REPO_ROOT / "data" / "cache" / "nwe5_refinery_capacity_annual.csv").exists()
+
+
+def test_every_capacity_path_runs_with_data_private_taken_away(tmp_path, monkeypatch):
+    """The clean checkout, simulated: data/private points at an empty directory.
+
+    Nothing here is allowed to fall back to a private file, so if any of these
+    four paths still reached for one it would raise FileNotFoundError here
+    exactly as it did in CI.
+    """
+    from crack.sources import base as sources_base
+
+    monkeypatch.setattr(sources_base, "PRIVATE", tmp_path / "no-private")
+
+    annual = analysis.capacity_annual()
+    assert len(annual) > 50
+    assert list(annual.columns) == ["year", "capacity_kb_d"]
+
+    monthly = analysis.utilisation_monthly()
+    assert monthly["utilisation"].notna().any()
+
+    capacity, year = analysis.latest_capacity_kb_d()
+    assert capacity > 0 and year >= 2020
+    assert analysis.capacity_step_years()

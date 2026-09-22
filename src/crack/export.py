@@ -35,11 +35,15 @@ keys are written in insertion order, text is ASCII with LF endings and one
 trailing newline. Building twice leaves the tree clean, and `build-check`
 rebuilds in memory and compares bytes without writing.
 
-THE CAPACITY CACHE. Utilisation needs data/private/ei_refinery_capacity_annual,
-which may not be committed (docs/sources.md section 2.7). A build on a machine
-without it cannot produce run-economics.json, and this module lets
-FileNotFoundError propagate rather than export a page without the run economics
-section. Gate 5's workflow has to answer that before it can run build-check.
+THE CAPACITY CACHE, ANSWERED AT GATE 5. Utilisation used to need
+data/private/ei_refinery_capacity_annual, which may not be committed
+(docs/sources.md section 2.7), so a build on any machine without it, every
+GitHub runner included, died on FileNotFoundError before it could write
+run-economics.json. The five country total the analysis actually needs is now a
+committed derived cache, nwe5_refinery_capacity_annual, and nothing in this
+module or in crack.analysis reads data/private any more. The Energy Institute
+table itself is still private and still never published. See crack.sources.ei's
+docstring, "WHAT GATE 5 ADDED".
 """
 
 from __future__ import annotations
@@ -262,7 +266,7 @@ def _header(artifact: str, data_date: str, describes: str) -> dict[str, Any]:
         "generated_by": GENERATED_BY,
         "data_date": data_date,
         "describes": describes,
-        "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+        "source": "the committed caches in data/cache and data/seed and the manifest, nothing from data/private; no network",
     }
 
 
@@ -1563,9 +1567,9 @@ ATTRIBUTIONS: Sequence[Mapping[str, Any]] = (
         "id": "energy_institute",
         "who": "Energy Institute Statistical Review of World Energy 2026",
         "credit_line": "Energy Institute Statistical Review of World Energy 2026",
-        "third_party": "The capacity sheet includes ICIS and S&P Global Energy data, so the table is not published; only the derived utilisation is.",
+        "third_party": "The capacity sheet includes ICIS and S&P Global Energy data, so the table is not published. Only the five country total derived from it is, and the utilisation computed with it.",
         "licence": "Quotation with attribution; extensive reproduction needs permission",
-        "series": ["ei_refinery_capacity_annual"],
+        "series": ["ei_refinery_capacity_annual", "nwe5_refinery_capacity_annual"],
     },
     {
         "id": "fred_eia",
@@ -1639,6 +1643,10 @@ SERIES_READER: Mapping[str, Mapping[str, str]] = {
     "ei_refinery_capacity_annual": {
         "label": "Refinery capacity, annual, five northwest European countries",
         "source": "Energy Institute Statistical Review",
+    },
+    "nwe5_refinery_capacity_annual": {
+        "label": "Refinery capacity, annual, the five country total, which is what the analysis divides by",
+        "source": "Derived by this study from the Energy Institute Statistical Review",
     },
     "eia_brent_daily": {
         "label": "Brent spot, daily, from the EIA",
@@ -2396,7 +2404,7 @@ def history(inputs: Inputs) -> Mapping[str, Any]:
         })
     # The capacity steps inside the months the run regressions use, the same
     # list run-economics.json names, so the two views never disagree on them.
-    capacity = inputs.entry("ei_refinery_capacity_annual")
+    capacity = inputs.entry(analysis.CAPACITY_SERIES)
     cap_first, cap_last = pd.Timestamp(inputs.capacity_model.first_month), pd.Timestamp(inputs.capacity_model.last_month)
     for year in sorted(y + analysis.CAPACITY_SOURCE_LAG_YEARS for y in analysis.capacity_step_years()):
         day = "%d-01-01" % year
