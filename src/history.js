@@ -406,7 +406,7 @@ function disputeBlock(dispute, decimals) {
     const issueBody = el("tbody");
     for (const row of dispute.issue_rows) {
       issueBody.appendChild(el("tr", {}, [
-        el("th", { class: "num", text: monthWords(row[i("month")]), attrs: { scope: "row" } }),
+        el("th", { text: monthWords(row[i("month")]), attrs: { scope: "row" } }),
         el("td", { text: monthWords(row[i("earlier_issue")]) }),
         figureCell(formatCell(row[i("earlier_headline_usd_bbl")], "usd_bbl", decimals), "earlier_headline_usd_bbl"),
         figureCell(formatCell(row[i("earlier_alternative_usd_bbl")], "usd_bbl", decimals), "earlier_alternative_usd_bbl"),
@@ -480,7 +480,10 @@ function monthlyPanel(decimals) {
         newest: [],
         leastLabel: "",
         newestLabel: "",
-        brackets: dispute.windows.map((w) => ({ start: charts.timeOf(w.first), end: charts.timeOf(w.last), label: dispute.bracket_label })),
+        // Every window is bracketed and only the longest is labelled: the label
+        // says the same thing about all of them and two copies of it a few
+        // hundred pixels apart is not a second fact, it is noise.
+        brackets: dispute.windows.map((w) => ({ start: charts.timeOf(w.first), end: charts.timeOf(w.last), label: w.months === dispute.longest_window.months ? dispute.bracket_label : "" })),
       }
     : null;
 
@@ -507,7 +510,7 @@ function monthlyPanel(decimals) {
         breaks: breaksFor(product),
         accent: isLast,
       })).concat(secondRow ? [{
-        name: "Gasoline, " + dispute.alternative_spec,
+        name: dispute.alternative_spec.charAt(0).toUpperCase() + dispute.alternative_spec.slice(1),
         style: "dotted",
         points: rows.map((row) => [charts.timeOf(row[0]), row[c("gasoline_95_usd_bbl")]]),
         lastText: (lastSecond ? formatNumber(lastSecond[c("gasoline_95_usd_bbl")], "usd_bbl", decimals) : null) || "no value",
@@ -913,7 +916,16 @@ function drawSeason(body) {
       frame.replaceChildren(svg);
       charts.plateRailLabels(svg);
     });
-    figure.appendChild(disclosure("The " + panel.name + " shape by month, the mean and every year", () => {
+    // The third row of the panel's subgrid holds everything under the chart, so
+    // a panel with a sensitivity block under it does not spill into a fourth row
+    // the grid does not have and overlap the panel beside it.
+    const below = el("div", { class: "panel__below" });
+    figure.appendChild(below);
+    // Where OPEC printed two rows for this product, the season is measured on
+    // both and both are printed. The study does not pick one, so neither does
+    // this panel.
+    if (panel.row_sensitivity) below.appendChild(rowSensitivity(panel.row_sensitivity, decimals));
+    below.appendChild(disclosure("The " + panel.name + " shape by month, the mean and every year", () => {
       const head = el("tr", {}, [el("th", { text: "Year", attrs: { scope: "col" } })]);
       layer.months.forEach((name) => head.appendChild(el("th", { class: "col-num", text: name, attrs: { scope: "col" } })));
       const tbody = el("tbody");
@@ -927,10 +939,6 @@ function drawSeason(body) {
       }
       return scrollTable(["The " + panel.name + " crack by month less each year's own mean, $/bbl."], el("table", { class: "table history-table" }, [el("thead", {}, [head]), tbody]));
     }));
-    // Where OPEC printed two rows for this product, the season is measured on
-    // both and both are printed. The study does not pick one, so neither does
-    // this panel.
-    if (panel.row_sensitivity) figure.appendChild(rowSensitivity(panel.row_sensitivity, decimals));
     panels.appendChild(figure);
   }
   monthly.appendChild(panels);

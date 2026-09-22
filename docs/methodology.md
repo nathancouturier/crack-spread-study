@@ -46,18 +46,25 @@ Ten notes survive: one live and nine from the Internet Archive. Recon 02 section
 backwards, because before mid 2024 the note lived at a single constant URL that
 was overwritten every week.
 
-So the printed tables across all ten notes amount to **18 distinct weekly
-observations**, and the charts in the same ten documents are the ministry's own
-record of **219**.
+So the printed tables across all ten notes amounted to **18 distinct weekly
+observations**, and the charts in the same ten documents were the ministry's own
+record of **219**. Every note collected since adds two printed weeks, one of them
+usually a reprint, and about 105 charted ones of which one is new. The counts
+below are the counts at the collection of 18 September 2026 and section 1.12 says
+what a collection does to them.
 
 ### 1.3 Four series, never merged
 
 | Series | Method | Rows | Span | What it is |
 |---|---|---|---|---|
-| `dgec_note_printed_weekly` | `parsed` | 18 | 2024-06-21 to 2026-09-04 | the weekly figures DGEC set in type, read by row and column label |
+| `dgec_note_printed_weekly` | `parsed` | 20 | 2024-06-21 to 2026-09-18 | the weekly figures DGEC set in type, read by row and column label |
 | `dgec_note_printed_monthly` | `parsed` | 7 | 2025-11-01 to 2026-09-01 | the monthly columns of the same table, with the ministry's own provisional flag and every vintage of every month |
-| `dgec_note_reconstructed_weekly` | `reconstructed` | 219 | 2022-07-01 to 2026-09-04 | the page 3 curves, decoded and calibrated against the printed figures on the same page |
-| `dgec_note_reconstructed_cracks_weekly` | `derived` | 219 | 2022-07-01 to 2026-09-04 | cracks computed from the row above |
+| `dgec_note_reconstructed_weekly` | `reconstructed` | 221 | 2022-07-01 to 2026-09-18 | the page 3 curves, decoded and calibrated against the printed figures on the same page |
+| `dgec_note_reconstructed_cracks_weekly` | `derived` | 221 | 2022-07-01 to 2026-09-18 | cracks computed from the row above |
+
+Those row counts grow every week the note is collected, and the rest of the table
+does not. `data/manifest.json` carries the current ones and is the place to read
+them; the figures in this document are the collection of 18 September 2026.
 
 They are separate caches with separate manifest entries and different `method`
 values. A reconstructed value is never written into a printed series, and no row
@@ -163,12 +170,16 @@ Anything rendering the column must print the empty cell as "no cross check".
 
 ### 1.6 Where it is weakest, stated rather than buried
 
-**Twenty five of the 219 weeks have no cross check at all.** They are the six
-oldest, 2022-07-01 to 2022-08-05, and the nineteen newest, 2026-05-01 to
-2026-09-04. On those weeks the spread columns are empty rather than zero, the
-`cross_checked` column is `false`, and `evidence_class` says which kind of
-uncorroborated week it is. Nineteen of the twenty five are at the RECENT end,
-which is the end a reader looks at first.
+**Seven of the 221 weeks have no cross check at all.** They are the six oldest,
+2022-07-01 to 2022-08-05, and the single newest. On those weeks the spread columns
+are empty rather than zero, the `cross_checked` column is `false`, and
+`evidence_class` says which kind of uncorroborated week it is.
+
+This count is the one that moves most. Before the note of 18 September 2026 was
+collected it was twenty five, nineteen of them at the recent end, which is the end
+a reader looks at first; that note's chart reached back over the whole run and
+cross checked twenty of them. Section 1.12 measures what else the same collection
+moved.
 
 *(Recon 05 section 12 describes this split as "the 20 oldest and the 5 newest".
 The count of twenty five is right and the split is not; recon 05's own
@@ -207,10 +218,10 @@ crack, passes with the headline gate reading 0.711 of its 1.50 limit. A pure
 translation, by contrast, is absorbed exactly and moves nothing, which is correct
 behaviour. What defends the series against the tilt is not the gates, it is the
 overlap between notes, because a given week sits at a different horizontal
-position in each note that plots it, and 194 of 219 weeks have two or more
-independent geometries. **The 25 that do not have no defence against it, and the
-six marked `single_geometry_oldest` sit exactly where such a distortion would be
-largest.**
+position in each note that plots it, and 214 of the 221 weeks have two or more
+independent geometries. **The seven that do not have no defence against it, and
+the six marked `single_geometry_oldest` sit exactly where such a distortion would
+be largest.**
 
 **Pixel quantisation is invisible in the file.** A decoded value is the
 calibrated height of a point on a vector curve, but the curve was drawn from
@@ -222,7 +233,7 @@ a genuinely flat week from a quantisation collision. No single case can be prove
 either way without the underlying prices, which is the whole problem. Treat an
 exact repeat of a reconstructed value at adjacent weeks as "indistinguishable at
 the resolution of the chart", never as "the price did not move". The printed
-table is the only cure and it covers 18 weeks.
+table is the only cure and it covers 20 of the 221 weeks.
 
 **One note pair proves nothing.** `wb_NPG-2026.04.03` and `NPG-2026.09.04` draw
 the same 400 to 1500 axis over 12 ticks at the same 4.3212 point pitch, so an
@@ -355,7 +366,8 @@ it is the reason this study has a weekly crack at all.
 
 ### 1.11 Provenance and collection
 
-The ten note PDFs are preserved under `data/private/dgec_notes/`. They are NOT
+The note PDFs, ten from recon 02 and one more for every week collected since,
+are preserved under `data/private/dgec_notes/`. They are NOT
 committed, because they are the ministry's own documents and the Licence Ouverte
 mitigation recorded in `config.SOURCES` is to republish the parsed values rather
 than the PDFs. They are irreplaceable.
@@ -372,6 +384,67 @@ landing page and never constructing it from a date. It never overwrites a file
 already held. **Run it weekly.** Every week it is not run is a week that is gone:
 the note is deleted when the next one appears and the Internet Archive is not
 picking them up.
+
+`make note` also leaves a manifest that `node tools/validate-data.mjs` accepts.
+It did not until September 2026: the four note adapters wrote their own manifest
+entries and the weekly collection duty was attached only by
+`scripts/refresh.py`, so between `make note` and the next `make data-offline`
+the manifest no longer recorded the duty and the validator failed on all four
+entries. The steps moved to `crack/manual_steps.py` and are reattached inside
+`base.manifest_upsert`, on every write by any writer, which is the property that
+matters: the collector runs unattended on a schedule and must not leave a tree
+its own validator rejects.
+
+### 1.12 Collecting a note restitches the weeks already published
+
+**A weekly figure on this site can change next month, and the reason is more
+evidence rather than a correction.** Each note plots about 105 weeks, so most
+weeks are drawn by several notes, and the value written to the cache is the
+median across the chart geometries that cover that week. Adding a note therefore
+does not only extend the series at the right hand end. It re-estimates the weeks
+behind it.
+
+Measured, by comparing the committed cache before and after the collection of the
+note of **18 September 2026**, the first note collected by the weekly duty rather
+than by recon:
+
+| | |
+|---|---|
+| Weeks already in the series | 220 |
+| Weeks whose value moved | **104** |
+| Largest move on a price column | **0.39 $/t**, `gazole_usd_t` |
+| Largest move on a spread column | **0.62 $/t**, `spread_fioul_domestique_usd_t` |
+| Largest move on a crack | **0.06 $/bbl**, `crack_gasoil_usd_bbl` |
+| Weeks read from two or more independent geometries | **194 to 214** |
+| Weeks added | 1 |
+
+Every move is inside the reconstruction's own measured error of 0.17 to 0.44 $/t,
+and the same collection took twenty of the twenty one weeks that stood on a single
+reading and gave them a second geometry. So the series after the collection is
+better defended than the series before it, which is the method working rather
+than failing.
+
+Two consequences, both of which belong on the record:
+
+- **Reproducibility.** A weekly figure quoted from this site today, and checked
+  against the site next month, can differ by a tenth of a dollar per tonne on any
+  week, not only on the newest one. Anyone reproducing a number from an earlier
+  reading of the study should expect that, and the vintage to quote is the
+  manifest's `vintage` field, which names the note the series ends on.
+- **Counts go stale.** Every count of weeks in this document and in the manifest
+  moves with a collection, and several of them were published stale for a
+  fortnight after this one: the provenance panel still read "19 newest single
+  geometry weeks", "194 of 219 weeks" and "25 of the 219 reconstructed weeks and
+  16 of the 18 printed weeks" when the true figures were 1, 214 of 221, and 7 of
+  221 and 16 of 20. Every count a collection moves is now counted from the frame
+  rather than typed into prose, and the two note adapters carry an `offline_note`
+  so that `python scripts/refresh.py --offline` restates them from the committed
+  cache.
+
+The comparison in the table above is between two vintages of the committed file,
+so it cannot be recomputed from the file as it stands. It is recorded in
+`crack.sources.dgec_note.COLLECTION_RESTITCHES_HISTORY` with the collection it
+was measured on, and the Method view prints it.
 
 ---
 
@@ -402,6 +475,96 @@ gasoline, not Eurobob blendstock. In the OPEC data the rows are "Gasoil/Diesel
 (10 ppm)" and "Premium gasoline (unleaded 98)" assessed by Argus. They are not
 relabelled as futures anywhere, and the difference between them is the subject of
 open question 23.
+
+### 2.1.1 OPEC printed two gasoline rows, and in twenty months they swap
+
+**From May 2004 to June 2013 the Rotterdam block prints two premium gasoline rows
+at once**, a sulphur graded one and an octane graded one. Both are carried, in
+`premium_gasoline_usd_bbl` and `premium_gasoline_95_usd_bbl`, and which of them
+continues OPEC's own annual series is open question 11: neither does,
+consistently.
+
+What is new here is the sharp end of it. **In twenty of those months the two rows
+exchange values between consecutive issues, and the column this study leads with
+is left carrying the lower of the two readings.** In eight of the twenty the crack
+it gives is negative, which prices Rotterdam premium gasoline below dated Brent
+for most of a year:
+
+| Month | Sulphur graded row | Octane graded row |
+|---|---|---|
+| 2012-02 | **-3.57** | +10.01 |
+| 2012-03 | **-5.72** | +14.85 |
+| 2012-05 | **-2.63** | +15.88 |
+| 2012-10 | **-0.36** | +14.89 |
+| 2012-11 | **-5.38** | +8.83 |
+| 2012-12 | **-3.92** | +10.54 |
+| 2013-01 | **-3.07** | +11.99 |
+| 2013-03 | **-0.70** | +14.07 |
+
+**Which months, by rule.** In every other month of the overlap from March 2005
+on, the octane graded row prints below the sulphur graded one, by 0.89 to 16.63
+$/bbl; in the ten months from May 2004 to February 2005 the octane row is the
+only gasoline row printed and lands in both columns. The months
+marked are the months where that ordering reverses, and they are found by
+applying that rule to the committed cache rather than by a typed list of dates,
+so a later issue that moved a value would move the window with it. They are two
+runs, **2010-05 to 2010-07** and **2012-02 to 2013-06**.
+
+**The swap, issue by issue.** February 2012 as the April 2012 issue printed it is
+129.29 on the sulphur graded row and 126.58 on the octane graded one. The same
+month as the May 2012 issue printed it is 115.76 and 129.34: the figure has moved
+from one row to the other, to within 0.05 $/bbl. March 2012 moves the same way,
+141.01 to 140.30. In the same block of the same two issues naphtha moves 0.05,
+jet 0.27 and both fuel oils 0.12 or less, and the Mediterranean block prints
+February 2012 identically, so this is the two gasoline rows and not a restatement
+of the table.
+
+**OPEC's own annual bulletin agrees with the other row, and settles nothing.**
+Annual Statistical Bulletin table 7.6 restates the years onto one premium
+unleaded definition. Against the calendar year mean of each printed row:
+
+| Year | Bulletin | Sulphur graded row | Octane graded row |
+|---|---|---|---|
+| 2005 | 62.58 | 68.90 (+6.32) | 62.58 (-0.00) |
+| 2006 | 72.90 | 81.73 (+8.83) | 72.90 (-0.00) |
+| 2007 | 92.03 | 92.02 (-0.01) | 82.05 (-9.98) |
+| 2008 | 108.27 | 108.16 (-0.11) | 98.46 (-9.81) |
+| 2009 | 70.45 | 70.51 (+0.06) | 65.57 (-4.88) |
+| 2010 | 92.35 | 91.04 (-1.31) | 88.70 (-3.65) |
+| 2011 | 120.35 | 120.42 (+0.07) | 117.62 (-2.73) |
+| 2012 | 127.29 | **111.97 (-15.32)** | 127.14 (-0.15) |
+| 2013 | 122.57 | **115.22 (-7.35)** | 122.64 (+0.07) |
+
+The octane graded column above is the octane row where the reports printed one
+and the headline row where they did not, because the octane row stops in June
+2013 and a six month mean is not an annual average. That definition corrects the
+2013 line of open question 11, which compared a six month mean of 123.21 against
+a twelve month bulletin figure.
+
+**Nothing switches to the row that looks right.** SPEC.md section 2 rule 3
+forbids choosing the reading that makes a chart behave as plainly as it forbids
+inventing one, and the bulletin agrees with the sulphur graded row in 2007 to
+2011 with no label change in between, so it cannot arbitrate. Both rows are
+therefore drawn on the History gasoline panel over the whole overlap, the
+disputed months are bracketed under the axis, and the Method view carries the
+evidence above.
+
+**What the choice changes, measured.** The driving season premium of section 4.9
+is the only published result that reads OPEC gasoline across these months, and it
+survives the substitution:
+
+| Reading | Season premium | t | Positive |
+|---|---|---|---|
+| The row drawn, sulphur graded | **+4.78 $/bbl** | +4.64 | 22 of 25 |
+| The other row, octane graded, in the twenty months | **+4.87 $/bbl** | +4.77 | 23 of 25 |
+
+Peak month June and trough December either way; with the crisis years removed,
++4.31 against +4.41. **No published figure changes.** Nothing else reaches the
+window: the ministry's margin begins 2015-01 so the monthly R squared against it
+never touches these months, the weekly layer begins 2022-07, every dated event on
+the Events view is 2020 or later, and no Model preset sits inside it. Those are
+sample start dates checked against the window in
+`analysis.gasoline_row_sensitivity`, not an assertion.
 
 ### 2.2 The margin, in four layers
 
@@ -1142,7 +1305,7 @@ line**:
   2026-02, 305 months. This is the only series in the project deep enough to give
   the five year range SPEC.md section 6.5 asks for.
 - **Weekly, where it reaches.** This study's reconstruction of the DGEC note
-  chart, 2022-07-01 to 2026-09-04, 219 Fridays. It is not a DGEC publication and
+  chart, 2022-07-01 to 2026-09-18, 221 Fridays. It is not a DGEC publication and
   it carries the reconstruction error measured in section 6 below.
 
 They quote different products: DGEC's Gazole and Eurosuper against OPEC's gasoil
@@ -1378,13 +1541,13 @@ weekly crack:
 
 | | |
 |---|---|
-| What it is | four series decoded from the vector polylines on page 3 of ten DGEC weekly notes |
-| Span | 219 consecutive weeks, 2022-07-01 to 2026-09-04, no holes |
+| What it is | four series decoded from the vector polylines on page 3 of the DGEC weekly notes |
+| Span | 221 consecutive weeks, 2022-07-01 to 2026-09-18, no holes, one more every week the note is collected |
 | Calibration | one additive offset per note, fitted by least squares on that note's own eight printed anchors |
 | Out of sample error, **across products only** | **0.17 to 0.44 $/t mean absolute**, worst single point 0.87 $/t |
 | In $/bbl on the gasoil leg | about 0.02 to 0.12 |
 | Agreement between overlapping notes, **the figure that speaks to time** | 0.30 $/t mean absolute, 1.68 $/t worst single week |
-| Weeks with no independent cross check | 25 of 219, flagged in the data itself, split by kind in `evidence_class` |
+| Weeks with no independent cross check | 7 of 221, flagged in the data itself, split by kind in `evidence_class`. It was 25 of 219 before the collection of 18 September 2026, section 1.12 |
 | Least defended weeks | the six of 2022-07-01 to 2022-08-05, uncorroborated **and** 105 weeks from the nearest anchor, flagged `single_geometry_oldest` |
 | Least accurate of the four | Brent date, flagged in the manifest |
 | Not reconstructed | Jet and Fioul lourd TBTS are not plotted on the chart and are therefore absent. Regressing them on the three that are plotted would be the synthetic series SPEC.md non negotiable 1 forbids |

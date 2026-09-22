@@ -2160,7 +2160,7 @@ def gasoline_dispute(monthly: pd.DataFrame) -> Mapping[str, Any]:
         ],
         "annual_source": "OPEC Annual Statistical Bulletin, table 7.6, spot prices, Rotterdam",
         "sources": [dict(s) for s in record["sources"]],
-        "bracket_label": "Two printed rows, which is the series is unresolved",
+        "bracket_label": "The two printed rows swap here",
         "heading_segments": [
             T("In "), N("dispute_months", int(swapped.sum()), "count"),
             T(" months OPEC printed two gasoline rows whose values swap between issues, and this panel draws both."),

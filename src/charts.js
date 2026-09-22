@@ -360,6 +360,10 @@ function bracket(group, x0, x1, y, label) {
     class: "mark-context",
     d: "M" + px(x0) + " " + px(y - tick) + " V" + px(y + tick) + " M" + px(x0) + " " + px(y) + " H" + px(x1) + " M" + px(x1) + " " + px(y - tick) + " V" + px(y + tick),
   }));
+  // An empty label draws no text node at all. Two brackets on one rail that mean
+  // the same thing are labelled once, and an empty <text> would still be placed
+  // by plateRailLabels and would take a plate of its own.
+  if (!label) return;
   group.appendChild(svgEl("text", {
     class: "chart-caption rail-label",
     x: px((x0 + x1) * GEOMETRY.HALF),

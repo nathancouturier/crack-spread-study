@@ -452,7 +452,7 @@
         {"title": "OPEC Monthly Oil Market Report, refined product prices, Rotterdam barges FOB", "url": "https://www.opec.org/monthly-oil-market-report.html"},
         {"title": "OPEC Annual Statistical Bulletin, table 7.6, spot prices", "url": "https://www.opec.org/annual-statistical-bulletin.html"}
       ],
-      "bracket_label": "Two printed rows, which is the series is unresolved",
+      "bracket_label": "The two printed rows swap here",
       "heading_segments": [
         {"text": "In "},
         {"field": "dispute_months", "value": 20, "format": "count"},

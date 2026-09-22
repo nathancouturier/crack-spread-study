@@ -330,8 +330,16 @@ four that do not, the OTHER column is the one that agrees exactly:
 |---|---|---|---|
 | 2005 | 62.58 | 68.90 (+6.32) | 62.58 (-0.00) |
 | 2006 | 72.90 | 81.73 (+8.83) | 72.90 (-0.00) |
-| 2012 | 127.29 | 111.97 (-15.32) | 127.13 (-0.16) |
-| 2013 | 122.57 | 115.22 (-7.35) | 123.21 (+0.64) |
+| 2012 | 127.29 | 111.97 (-15.32) | 127.14 (-0.15) |
+| 2013 | 122.57 | 115.22 (-7.35) | 122.64 (+0.07) |
+
+**The 2013 line is corrected.** It read 123.21 (+0.64), which was the mean of the
+**six** months the octane row was printed in 2013 compared against a twelve month
+annual average. The like for like figure takes the octane row where the reports
+printed one and the headline row where they did not, and it is 122.64, +0.07 from
+the bulletin. The 2012 figure moves by a rounding place, 127.13 to 127.14 and
+-0.16 to -0.15; the measured error is -0.155. Both are quoted in their corrected
+form in `docs/methodology.md` section 2.1.1 and on the Method view.
 
 and across 2007 to 2011, with no label change anywhere between 2006 and 2007, it
 is the other way round: `premium_gasoline_usd_bbl` agrees to 0.01 to 1.31 and
@@ -1602,3 +1610,60 @@ be estimated from one. It closes when Europe has another one, which is not
 something to wish for, or when a longer margin series reaches back to 2008 and
 1998, which needs a margin before DGEC's file starts in 2015-01 and is open
 question 32's problem in a different form.
+
+---
+
+## 46. The two MOMR gasoline rows exchange values in twenty months, and the study cannot say which is the series
+
+**Status: open, and probably not closable from published documents. The site now
+draws both rows and says so.**
+
+Open question 11 says the MOMR premium gasoline column is not one product across
+2004 to 2013. This is the part of that which reaches a public chart.
+
+**What was found.** Eight months of the History gasoline line sat below zero, all
+of them on the sulphur graded row the cache leads with: 2012-02 -3.57, 2012-03
+-5.72, 2012-05 -2.63, 2012-10 -0.36, 2012-11 -5.38, 2012-12 -3.92, 2013-01 -3.07
+and 2013-03 -0.70. The octane graded row printed in the same table of the same
+issues gives +10.01, +14.85, +15.88, +14.89, +8.83, +10.54, +11.99 and +14.07. A
+Rotterdam gasoline crack below dated Brent for most of a year is not a market
+anybody traded, and the view drew it as one unannotated dashed line.
+
+**Which months.** In every month of the overlap from March 2005 on, the octane
+graded row prints below the sulphur graded one, by 0.89 to 16.63 $/bbl. Twenty
+months reverse that ordering, in two runs, 2010-05 to 2010-07 and 2012-02 to
+2013-06. They are found by applying that rule to the committed cache rather than
+by a typed list of dates. **The three months of 2010 had not been noticed before**
+and they matter, because they carry the reversal with no restatement behind them:
+the ordering simply flips for three months and flips back.
+
+**The evidence that it is a swap.** February 2012 as the April 2012 issue printed
+it is 129.29 on the sulphur graded row and 126.58 on the octane graded one; as
+the May 2012 issue printed it, 115.76 and 129.34. The figure moved from one row
+to the other to within 0.05 $/bbl. March 2012 moves the same way, 141.01 to
+140.30. Open question 10 recorded the 13.53 and 21.28 $/bbl falls on the sulphur
+graded row as an unexplained disagreement between issues; this is what they are.
+Open question 10 stays open on the gasoil rows of the same two months, which move
+8.80 and 10.46 and have no second row to move to.
+
+**Why the study does not pick one.** OPEC's Annual Statistical Bulletin agrees
+with the octane graded reading in 2005, 2006, 2012 and 2013 and with the sulphur
+graded one in 2007 to 2011, with no label change anywhere between 2006 and 2007.
+It follows neither row consistently, so it cannot arbitrate, and picking the row
+that makes the chart behave is exactly what SPEC.md section 2 rule 3 forbids.
+
+**What the choice changes.** Measured, in `analysis.gasoline_row_sensitivity`:
+the driving season premium is +4.78 $/bbl, t +4.64, positive in 22 of 25 seasons
+on the row drawn and +4.87, t +4.77, positive in 23 of 25 on the other, with June
+the peak and December the trough either way. **No published figure changes.**
+Nothing else reaches the window, and the sample start of everything that could is
+checked against it rather than asserted.
+
+**Treatment now:** both rows are drawn on the History gasoline panel over the
+whole overlap, distinguishable without colour, the disputed months are bracketed
+under the axis and listed with both readings in the panel's table, and the Method
+view carries the issue evidence and the bulletin comparison.
+
+**To close it:** ask OPEC or Argus which row the published series is, or find one
+month of an independent Rotterdam premium gasoline quotation in $/bbl from a
+third source inside the window. Until then it stays open and the site shows both.
