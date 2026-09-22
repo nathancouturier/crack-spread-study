@@ -1193,6 +1193,19 @@ def test_a_failing_fetch_keeps_the_cache_and_marks_the_entry_failed(sandbox, mon
         }
     )
     base.write_cache(adapter.name, existing, directory="cache")
+
+    # NOTE_DIR is built from base.PRIVATE when the module is imported, so the
+    # sandbox fixture cannot redirect it and note_paths() reads the real
+    # data/private/dgec_notes. That made this test depend on the machine: where
+    # the PDFs exist the corpus reaches load_corpus and raises the error below,
+    # and on a clean checkout, which is what a runner has, it never gets there
+    # and fails earlier with "there is no committed decode". Point NOTE_DIR at
+    # the sandbox and put one file in it, so the adapter takes the same path in
+    # both places and this test measures the failure path it names.
+    notes = sandbox / "private" / "dgec_notes"
+    notes.mkdir(parents=True)
+    (notes / "NPG-2022.07.01.pdf").write_bytes(b"%PDF-1.4 not a real note")
+    monkeypatch.setattr(dgec_note, "NOTE_DIR", notes)
     monkeypatch.setattr(
         dgec_note,
         "load_corpus",
