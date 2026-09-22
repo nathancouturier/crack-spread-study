@@ -42,6 +42,19 @@ and the diff it produces is the thing to read before committing. That diff is
 the point: a deliberate data change shows up as a reviewable change to a
 committed file, and an accidental one cannot hide.
 
+THE ONE EXPECTED CHANGE, AND HOW IT IS RENEWED WITHOUT DEFEATING THE PIN
+
+    python tests/cache_digests.py --renew --allow dgec_note_
+
+The weekly refresh job collects a DGEC note, and a note legitimately changes the
+note caches every week. A job that failed on that would fail every week and be
+ignored inside a month; a job that ran --write would renew every pin in the file
+with nobody seeing what moved. --renew does neither: it renews only the caches
+whose name starts with an allowed prefix, REFUSES and writes nothing if anything
+else moved, and prints the old and new sha256, the old and new row count and the
+last value of every column that changed, which the job puts in the commit
+message. See renew().
+
 WHAT THIS DOES NOT COVER
 -------------------------
 The two private caches, data/private/ttf_daily.csv and
@@ -202,8 +215,120 @@ def write() -> Path:
     return DIGEST_FILE
 
 
+def _anchor_text(anchor: dict | None, key: str) -> str:
+    value = (anchor or {}).get(key)
+    return " ".join(str(x) for x in value) if value else "none"
+
+
+def _record_lines(relative: str, before: dict | None, after: dict) -> list[str]:
+    """One readable before and after for a renewed entry."""
+    out = [
+        "  %s%s" % (relative, "" if before else "  (new cache)"),
+        "      sha256  %s  ->  %s"
+        % ((before or {}).get("sha256", "not recorded")[:16], after["sha256"][:16]),
+        "      rows    %s  ->  %d" % ((before or {}).get("rows", "none"), after["rows"]),
+    ]
+    for column, anchor in after.get("anchors", {}).items():
+        was = ((before or {}).get("anchors") or {}).get(column)
+        if (
+            _anchor_text(was, "first") == _anchor_text(anchor, "first")
+            and _anchor_text(was, "last") == _anchor_text(anchor, "last")
+            and (was or {}).get("observations") == anchor.get("observations")
+        ):
+            continue
+        out.append(
+            "      %s: first %s -> %s, last %s -> %s, %s -> %s observations"
+            % (
+                column,
+                _anchor_text(was, "first"),
+                _anchor_text(anchor, "first"),
+                _anchor_text(was, "last"),
+                _anchor_text(anchor, "last"),
+                (was or {}).get("observations", "none"),
+                anchor.get("observations"),
+            )
+        )
+    return out
+
+
+def renew(allow: list[str]) -> tuple[int, list[str]]:
+    """Rewrite the digests of the caches an allowed change may touch, and no others.
+
+    THIS IS THE ANSWER TO A REAL DILEMMA AND IT IS NOT A LOOSENING OF THE PIN.
+    The weekly refresh job of SPEC.md section 8 collects a DGEC note, and a note
+    legitimately changes the note caches every single week. A job that failed on
+    that would fail every week and be ignored inside a month, which is the same
+    as having no job. A job that ran --write would renew every pin in the file
+    without anybody seeing what moved, which is the same as having no pin.
+
+    So the renewal is SCOPED and ITEMISED. Only a cache whose name starts with
+    one of the allowed prefixes may have its digest renewed; a change to any
+    other cache is refused, nothing is written, and the caller is expected to
+    stop and open an issue rather than commit. What is renewed comes back as
+    readable lines, old and new sha256, old and new row count, and the last
+    value of every column that moved, so the commit that carries the renewal
+    says in words what changed.
+
+    Returns (exit code, report lines).
+    """
+    payload = build()
+    committed = load() if DIGEST_FILE.exists() else {"files": {}}
+    lines: list[str] = []
+    changed = [
+        relative
+        for relative, record in payload["files"].items()
+        if committed["files"].get(relative, {}).get("sha256") != record["sha256"]
+    ]
+    removed = sorted(set(committed["files"]) - set(payload["files"]))
+
+    def allowed(relative: str) -> bool:
+        stem = Path(relative).stem
+        return any(stem.startswith(prefix) for prefix in allow)
+
+    refused = sorted(r for r in changed + removed if not allowed(r))
+    if refused:
+        lines.append(
+            "REFUSED. %d cache(s) changed that the allowed change cannot touch, "
+            "so nothing was renewed and nothing should be committed:" % len(refused)
+        )
+        lines.extend("  %s" % r for r in refused)
+        lines.append("")
+        lines.append(
+            "Allowed prefixes were: %s. Find out which source served what and "
+            "why before anything else." % ", ".join(allow)
+        )
+        return 1, lines
+
+    if not changed and not removed:
+        lines.append("no committed cache changed, so no digest was renewed")
+        return 0, lines
+
+    for relative in sorted(changed):
+        lines.extend(
+            _record_lines(
+                relative,
+                committed["files"].get(relative),
+                payload["files"][relative],
+            )
+        )
+    for relative in removed:
+        lines.append("  %s removed" % relative)
+    write()
+    lines.insert(0, "renewed %d digest(s) in %s:" % (len(changed) + len(removed), DIGEST_FILE.name))
+    return 0, lines
+
+
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
+    if "--renew" in args:
+        allow = [args[i + 1] for i, a in enumerate(args) if a == "--allow" and i + 1 < len(args)]
+        if not allow:
+            print("--renew needs at least one --allow <series name prefix>")
+            return 2
+        code, lines = renew(allow)
+        for line in lines:
+            print(line)
+        return code
     if "--write" in args:
         path = write()
         payload = load()

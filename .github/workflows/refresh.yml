@@ -1,0 +1,398 @@
+# The weekly refresh. SPEC.md section 8: "weekly, public sources only: commit if
+# validators pass, open an issue if not."
+#
+# THE ONE STEP THAT CANNOT WAIT IS FIRST, AND THAT IS THE WHOLE SHAPE OF THIS
+# JOB. DGEC publishes one "Note de conjoncture petroliere" at a time and DELETES
+# the previous one. The Internet Archive holds nine of them and that is the whole
+# population; recon 02 section 2.5 established there is no archive to crawl and
+# no URL pattern to walk backwards. Every week this job does not run is a week of
+# Rotterdam quotations that no longer exists anywhere. So the collection runs
+# before anything else, before the other sources, before the tests, and its
+# failure opens an issue on its own rather than being reported at the end among
+# everything else. Every other source in this project can be fetched again
+# tomorrow. This one cannot.
+#
+# WHAT IT DOES NOT DO
+#
+#   It does not fetch anything whose cache may not be redistributed. The Yahoo
+#   TTF series and the Energy Institute capacity table are committable false,
+#   SPEC.md non negotiable 6, so their jobs are not in the --only list below and
+#   nothing this workflow runs writes into data/private except the note PDF
+#   itself, which is gitignored and dies with the runner. The note PDFs, the two
+#   private caches and the Energy Institute workbook never reach a commit, and
+#   "git add data" cannot change that: data/private is gitignored, the final
+#   commit step refuses any path under it, and tools/validate-data.mjs check 7
+#   fails the gate if git would ever carry one.
+#
+#   It does not regenerate a pinned value except one, in one scoped way, and the
+#   next section is about that.
+#
+#   It does not deploy. A push to the default branch triggers build.yml, which
+#   runs the gate again from a clean checkout and deploys if it passes. This job
+#   proving the tree green and build.yml proving it green are two runs of the
+#   same commands on two machines, and that is worth the minute it costs.
+#
+# THE PINNED VALUES PROBLEM, AND THE DECISION
+#
+# tests/cache_digests.json records the sha256 of every committed cache, plus its
+# row count and the first and last value of every column. It exists because the
+# Gate 1 self audit set one cell of dgec_mbr_monthly.csv to 99.99, a 172 percent
+# error comfortably inside the declared bounds, and watched the offline refresh
+# and the data validator both pass. Bounds are a units check and gap counts are a
+# shape check; neither can see a plausible wrong number. The digest can.
+#
+# A weekly refresh moves those digests every week, because that is what a refresh
+# is for. So this job has exactly two bad options and one good one.
+#
+#   ALWAYS FAIL. Leave the pin alone, let the digest test fail every week, and
+#   let somebody renew it by hand. A job that fails every week is a job that is
+#   ignored inside a month, and an ignored job is the same as no job, except that
+#   it also trains the owner to ignore a red tick on this repository.
+#
+#   SILENTLY RENEW. Run tests/cache_digests.py --write, which rewrites every pin
+#   in the file from whatever is on disk. That defeats the pin completely: the
+#   exact edit the audit planted would be adopted by the next weekly run and
+#   committed with a green tick.
+#
+#   RENEW WHAT WAS REFRESHED, ITEMISED. What this job does. The renewal is
+#   scoped: --allow names only the series whose jobs actually ran, so a cache
+#   that moved WITHOUT a source having been fetched refuses the renewal, writes
+#   nothing and fails the job. nwe5_refinery_capacity_annual is deliberately not
+#   in the list, because no job here refreshes it and it must not move. And the
+#   renewal is itemised: --renew prints the old and the new sha256, the old and
+#   the new row count and the first and last value of every column that moved,
+#   and this job puts that report in the commit message body, so the renewal is a
+#   reviewable paragraph in the history rather than a hash that changed while
+#   nobody was looking.
+#
+# NOTHING ELSE PINNED IS EVER REGENERATED HERE. Not data/fixtures/
+# engine-cases.json, not the model cases, not the DGEC anchors of SPEC.md section
+# 5.5, not a test. If one of those fails, the gate fails, nothing is committed
+# and an issue is opened with the output. A pipeline that repaired its own
+# expectations would be a pipeline with no expectations.
+#
+# WHAT A NEW WEEK ACTUALLY MOVES, so the commit message is readable. Collecting
+# one note adds two printed weeks, usually one of them a reprint, and about 105
+# charted weeks of which one is new. It therefore changes all eight note caches
+# and, through them, the weekly cracks, and it RESTITCHES HISTORY: the median
+# across notes moves on every week the new note also covers, and the count of
+# weeks with no independent cross check usually falls. That is expected and it is
+# why the note caches move by more than one row a week.
+
+name: refresh
+
+on:
+  schedule:
+    # 07:10 UTC on Fridays. The ministry publishes the note late in the week, and
+    # a cron a few minutes past the hour is less likely to queue behind the
+    # thundering herd that lands exactly on the hour. GitHub may delay a
+    # scheduled run under load, which is one more reason the collection is the
+    # first step rather than the last.
+    - cron: "10 7 * * 5"
+  # So a missed week can be collected by hand the moment somebody notices, which
+  # is the only repair available for a note that is still online.
+  workflow_dispatch:
+
+# The write is to commit the refreshed caches, and issues is to open the issue
+# SPEC.md section 8 asks for when something fails.
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: collect, refresh, validate, commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install the Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      # ------------------------------------------------------------------
+      # 1. THE NOTE, FIRST, BECAUSE IT CANNOT WAIT
+      # ------------------------------------------------------------------
+      #
+      # Two requests: the landing page, then the one NPG pdf its href names. The
+      # URL is never constructed from a date; recon 02 section 2.2 probed
+      # fourteen constructed spellings and every one returned 404. The PDF lands
+      # in data/private/dgec_notes, which is gitignored and dies with the runner;
+      # what is committed is the DECODE of it, in the four dgec_note_decoded_*
+      # caches, which is what makes this restitch possible at all. The other
+      # notes are not on this machine and are not needed: their decode is already
+      # committed.
+      #
+      # continue-on-error, and it is the only one in either workflow. The
+      # collection failing must not stop the rest of the refresh, because JODI
+      # and FRED and OPEC still have work to do, but it must be reported loudly
+      # and separately, which the step after it does.
+      - name: Collect this week's DGEC note
+        id: note
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python scripts/note.py 2>&1 | tee note.log
+
+      - name: Say what the collection did
+        id: note_state
+        run: |
+          if [ "${{ steps.note.outcome }}" = "success" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+          tail -40 note.log || true
+
+      # Opened immediately, not at the end, and separately from everything else.
+      # A missed note is not one failure among several: it is a week of the only
+      # weekly series this study has, gone for good.
+      - name: Open an issue if the note was not collected
+        if: steps.note_state.outputs.ok == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            let log = "";
+            try { log = fs.readFileSync("note.log", "utf8").slice(-4000); } catch {}
+            const body = [
+              "The weekly DGEC note was not collected on this run.",
+              "",
+              "This one matters more than an ordinary source failure. The ministry",
+              "publishes one note at a time and deletes the previous one, and there is",
+              "no archive to crawl, so a week that is not collected in its own week is",
+              "gone from the weekly series for good.",
+              "",
+              "What to do, in order:",
+              "",
+              "1. Open https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+              "   and see whether a note is linked. If one is, download it by hand into",
+              "   data/private/dgec_notes and run `make note`, then commit what changes.",
+              "2. If the page carries no NPG link, or carries more than one, the layout",
+              "   changed. Read the error below before touching the parser, and do not",
+              "   construct the pdf URL from a date: every constructed spelling 404s.",
+              "3. If the note is simply not published yet, re-run this workflow later in",
+              "   the week from the Actions tab.",
+              "",
+              "```",
+              log,
+              "```",
+              "",
+              "Run: " + context.serverUrl + "/" + context.repo.owner + "/" + context.repo.repo +
+                "/actions/runs/" + context.runId,
+            ].join("\n");
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Weekly refresh: the DGEC note was not collected",
+              body,
+              labels: ["data"],
+            });
+
+      # ------------------------------------------------------------------
+      # 2. THE PUBLIC SOURCES
+      # ------------------------------------------------------------------
+      #
+      # Named one by one rather than "everything except", so that adding a source
+      # with a licence that forbids redistribution does not put it into the
+      # weekly job by default. Two are deliberately absent:
+      #
+      #   yahoo  ttf_daily is committable false, no redistribution grant at all.
+      #          Fetching it here would write a file that is gitignored and then
+      #          thrown away, for nothing.
+      #   ei     the capacity table is committable false, energyinst.org answers
+      #          a Cloudflare bot challenge to every scripted request, and the
+      #          edition changes once a year. It is a manual step, recorded as
+      #          one in the manifest.
+      #
+      # refresh.py records its own failures per series and exits non zero if any
+      # source failed, leaving every cache on disk exactly as it was. So a dead
+      # source here means no commit and an issue, never a half written cache.
+      - name: Refresh the public sources
+        id: refresh
+        run: |
+          set -o pipefail
+          python scripts/refresh.py --only fred --only eia --only worldbank \
+            --only dgec --only dgec-note --only opec --only jodi --only seeds 2>&1 | tee refresh.log
+
+      # ------------------------------------------------------------------
+      # 3. REBUILD, RENEW THE ONE PIN THAT A REFRESH MOVES, THEN THE WHOLE GATE
+      # ------------------------------------------------------------------
+
+      - name: Rebuild the site facing artifacts from the refreshed caches
+        run: python scripts/export.py
+
+      # Scoped and itemised. See the decision at the top of this file. The
+      # allowed prefixes are exactly the series whose jobs ran above; anything
+      # else that moved refuses the renewal and fails the step.
+      - name: Renew the digests of the caches this run refreshed, and no others
+        id: digests
+        run: |
+          set -o pipefail
+          python tests/cache_digests.py --renew \
+            --allow dgec_ --allow fred_ --allow eia_ --allow jodi_ \
+            --allow opec_ --allow worldbank_ --allow events --allow anchors \
+            --allow sp_global_ 2>&1 | tee digests.log
+
+      # The same eleven commands build.yml runs, in the same order. Not piped
+      # into anything: a pipeline reports the exit code of its last command, and
+      # this repository has already had one failing tree committed because a test
+      # run was piped into tail and tail's zero was read as the result.
+      - name: Run the whole gate on the refreshed tree
+        id: gate
+        run: |
+          set -e
+          python scripts/refresh.py --offline
+          python -m pytest tests
+          node tools/validate-data.mjs
+          node tools/validate-engine.mjs
+          python scripts/export.py --check
+          node tools/validate-artifacts.mjs
+          node tools/check-literals.mjs
+          node tools/check-paths.mjs
+          node tools/check-styles.mjs
+          node tools/validate-format.mjs
+          node tools/check-dashes.mjs
+
+      # ------------------------------------------------------------------
+      # 4. COMMIT, ONLY IF EVERYTHING ABOVE PASSED
+      # ------------------------------------------------------------------
+      #
+      # Nothing before this point writes to the repository, so a failure at any
+      # step leaves the branch exactly as it was. The commit message carries the
+      # itemised digest report, so what moved is readable in `git log` without
+      # opening the diff.
+      - name: Commit what changed
+        id: commit
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # The licence promise, enforced here as well as in the validator. Nothing
+          # under data/private may ever be staged, whatever .gitignore says.
+          if git status --porcelain --ignored=no | grep -q "data/private"; then
+            echo "a path under data/private is not ignored. Nothing was committed."
+            git status --porcelain --ignored=no
+            exit 1
+          fi
+
+          git add data tests/cache_digests.json index.html
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "nothing changed this week. No commit."
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "Weekly refresh: the sources as they stood on $(date -u +%Y-%m-%d)"
+            echo
+            echo "Collected the DGEC note first, then refreshed the public sources,"
+            echo "rebuilt the artifacts and ran the whole gate. Nothing is committed"
+            echo "unless every validator passed, and this message was written by"
+            echo ".github/workflows/refresh.yml."
+            echo
+            echo "The note collection:"
+            echo
+            sed 's/^/    /' note.log 2>/dev/null | head -20
+            echo
+            echo "The pinned digests this run renewed, old and new:"
+            echo
+            sed 's/^/    /' digests.log 2>/dev/null | head -80
+            echo
+            echo "Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+          } > commit.txt
+
+          git commit -F commit.txt
+          git push
+
+      # ------------------------------------------------------------------
+      # 5. AN ISSUE IF ANYTHING FAILED, SPEC.md SECTION 8
+      # ------------------------------------------------------------------
+      #
+      # always(), so it runs after a failed step, and a condition that asks
+      # whether any of the four steps that can fail actually did. The note
+      # collection is not in the list: it has its own issue above, with its own
+      # instructions, because it is its own kind of loss.
+      - name: Open an issue if anything failed
+        if: always() && (steps.refresh.outcome == 'failure' || steps.digests.outcome == 'failure' || steps.gate.outcome == 'failure' || steps.commit.outcome == 'failure')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const read = (name) => {
+              try { return fs.readFileSync(name, "utf8").slice(-3000); } catch { return "(no output)"; }
+            };
+            const outcomes = {
+              "refresh the public sources": "${{ steps.refresh.outcome }}",
+              "renew the digests": "${{ steps.digests.outcome }}",
+              "run the whole gate": "${{ steps.gate.outcome }}",
+              "commit what changed": "${{ steps.commit.outcome }}",
+            };
+            const failed = Object.entries(outcomes)
+              .filter(([, outcome]) => outcome === "failure")
+              .map(([name]) => name);
+            const body = [
+              "The weekly refresh failed and NOTHING WAS COMMITTED. The committed",
+              "caches, the manifest and the artifacts are exactly as they were, which",
+              "is what SPEC.md section 5.4 asks for: on failure keep the old cache,",
+              "mark failed, exit non zero.",
+              "",
+              "Steps that failed: " + failed.join(", "),
+              "",
+              "Where to start, by step:",
+              "",
+              "* **refresh the public sources**: one source served something the",
+              "  adapter would not accept, or did not answer. The log names the series",
+              "  and the reason. A source that is simply down is a re-run; a source",
+              "  that changed shape is a parser change, and the rule is to find out",
+              "  what it actually served before touching the parser.",
+              "* **renew the digests**: a committed cache moved that no job in this",
+              "  workflow refreshes. That is the interesting failure. Read the list of",
+              "  refused files; something changed a cache without a source behind it.",
+              "* **run the whole gate**: a test or a validator disagreed with the",
+              "  refreshed data. If it is an anchor from SPEC.md section 5.5 or an",
+              "  engine fixture, DO NOT regenerate it. Those are pinned deliberately",
+              "  and this workflow never touches them.",
+              "* **commit what changed**: the push was rejected, or a path under",
+              "  data/private was staged, which the step refuses outright.",
+              "",
+              "### The note collection",
+              "",
+              "```", read("note.log"), "```",
+              "",
+              "### The refresh",
+              "",
+              "```", read("refresh.log"), "```",
+              "",
+              "### The digests",
+              "",
+              "```", read("digests.log"), "```",
+              "",
+              "Full log: " + context.serverUrl + "/" + context.repo.owner + "/" +
+                context.repo.repo + "/actions/runs/" + context.runId,
+            ].join("\n");
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Weekly refresh failed on " + new Date().toISOString().slice(0, 10),
+              body,
+              labels: ["data"],
+            });

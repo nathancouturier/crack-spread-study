@@ -1,0 +1,290 @@
+# The deploy gate.
+#
+# SPEC.md non negotiable 7 says "do not ship with failing tests or validators.
+# The CI gate is the deploy gate", so nothing here annotates a failure and
+# carries on. Every step runs a command that exits non zero on failure, GitHub
+# Actions stops the job on the first one that does, and the deploy job declares
+# "needs: [gate, layout]", so a failed check means no deploy at all rather than a
+# deploy with a red tick beside it.
+#
+# NOTHING IN THIS WORKFLOW TOUCHES THE NETWORK FOR DATA. SPEC.md section 5.4 says
+# the caches are committed and that "make build" never fetches, so the gate runs
+# scripts/refresh.py --offline, which reads the committed files, recomputes rows,
+# dates and gaps from them, and fails if the manifest and the files disagree.
+# That is deliberately not "make data": a build whose result depends on
+# ecologie.gouv.fr, jodidata.org and Yahoo being up on the morning somebody
+# merges is not a reproducible build, and a third party outage must not be able
+# to turn this repository red. The weekly job that does fetch is refresh.yml, and
+# it is a separate workflow for exactly that reason.
+#
+# A RUNNER HAS NOTHING FROM data/private, AND THAT USED TO BE FATAL. Two caches
+# in this project may not be redistributed, the Energy Institute capacity table
+# and the Yahoo TTF series, and the DGEC note PDFs cannot be redistributed either
+# and cannot be downloaded again. At Gate 5 the study was cloned to a temporary
+# directory, data/private was deleted, and the gate was run there: 98 tests and
+# scripts/export.py --check died on FileNotFoundError. Two things fixed it, both
+# committed: nwe5_refinery_capacity_annual, the five country total the analysis
+# actually divides by, and the four dgec_note_decoded_* caches, the decoded
+# values per note per week per product that the weekly series are stitched from.
+# The raw table and the PDFs are still private and still never committed. If a
+# future change makes the gate need data/private again, this workflow is where it
+# will show, and the fix is to publish what the licence allows rather than to
+# skip the step.
+#
+# The site itself has no build step. It is plain HTML, CSS and ES modules reading
+# JSON out of data/, so the deploy uploads the repository root exactly as it is
+# committed. Nothing is compiled, bundled or minified, and no npm install runs.
+
+name: build
+
+# Both spellings of the default branch are listed, because a repository created
+# before GitHub changed the default is on master and one created after is on
+# main. Which of the two is actually the default is decided in the deploy job,
+# against github.event.repository.default_branch, so only the real default
+# branch can ever publish and the name is never assumed here.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  # So the gate can be run by hand against a branch without pushing to it.
+  workflow_dispatch:
+
+# The read is for the checkout. The other two are what actions/deploy-pages
+# needs: pages to publish, and id-token because the Pages deployment is
+# authenticated with an OIDC token rather than a secret.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time. cancel-in-progress is false on purpose: cancelling a
+# half finished Pages deployment can leave the site on a partial upload, and a
+# queued deploy that runs a minute later is the cheaper failure.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # Runs on every push and on every pull request. This is the gate: the eleven
+  # commands the Makefile calls "make gate", in the order the Makefile runs them.
+  gate:
+    name: tests and validators
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # pyproject.toml is the single source of truth for the dependency list, so
+      # it is installed from there rather than from a requirements file that
+      # would drift away from it. The dev extra adds pytest and nothing else.
+      # This is the ONLY install in the workflow: the site and the ten node tools
+      # run on plain node with no npm install, SPEC.md section 0.1.
+      - name: Install the Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      # 1. Revalidates the committed caches against data/manifest.json and
+      #    rewrites the manifest from what it measured. Never fetches. Exits non
+      #    zero if a series is empty, is in a failed state, or disagrees with its
+      #    file.
+      - name: Revalidate the committed data, offline
+        run: python scripts/refresh.py --offline
+
+      # An offline refresh is byte idempotent when nothing has changed, so a
+      # dirty manifest here means the committed manifest does not describe the
+      # committed caches and the change was never recorded. The caches are in the
+      # same check because refresh.py must never rewrite one: it measures files
+      # and records what it found, and a cache that moved under it is a finding.
+      - name: Fail if the offline refresh changed anything
+        run: git diff --exit-code -- data/manifest.json data/cache data/seed
+
+      # 2. The test suite. Never piped into anything: a pipeline reports the exit
+      #    code of its last command, and piping pytest into tail reports tail's 0
+      #    on a failing run. This repository has already had one failing tree
+      #    committed that way.
+      - name: Run the test suite
+        run: python -m pytest tests
+
+      # 3.
+      - name: Validate the data layer
+        run: node tools/validate-data.mjs
+
+      # 4. SPEC.md section 7.1. Runs src/engine.js against the cases
+      #    scripts/gen_fixtures.py emitted from src/crack/engine.py and fails if
+      #    the two engines disagree by more than 1e-9 on any line. If they do, the
+      #    JavaScript is what gets fixed.
+      - name: Check python to javascript engine parity
+        run: node tools/validate-engine.mjs
+
+      # 5. Rebuilds the ten site facing artifacts in memory and compares them
+      #    with what is committed, writing nothing. An engine or analysis change
+      #    that was never re-exported is a site that disagrees with the model
+      #    behind it, and this is the step that catches it. It also checks the
+      #    sha256 content hashes in index.html, and that every versioned file on
+      #    disk is LF: a CRLF copy hashes to bytes no checkout reproduces, which
+      #    is how a tree that was green on Windows first failed here.
+      - name: Check the committed artifacts against the engine
+        run: python scripts/export.py --check
+
+      # 6.
+      - name: Validate the site facing artifacts
+        run: node tools/validate-artifacts.mjs
+
+      # 7. SPEC.md section 2 rule 2: every number in the browser comes from a
+      #    JSON artifact. This is the grep the rule asks for.
+      - name: Check for numeric literals in the frontend
+        run: node tools/check-literals.mjs
+
+      # 8. SPEC.md section 0.1. The site is served from a subpath and every path
+      #    must be relative. This is the classic way this deployment breaks.
+      - name: Check every path is relative to the subpath
+        run: node tools/check-paths.mjs
+
+      # 9. SPEC.md section 0.2, the inherited design system.
+      - name: Check the stylesheets against the design system
+        run: node tools/check-styles.mjs
+
+      # 10. Runs the frontend's pure modules under plain node and cross checks
+      #     what they print against data/now.json.
+      - name: Check the formatting, routing and section state
+        run: node tools/validate-format.mjs
+
+      # 11. SPEC.md section 0.1. No em dash and no en dash anywhere in the
+      #     tracked text files, this workflow included.
+      - name: Check for em dashes and en dashes
+        run: node tools/check-dashes.mjs
+
+  # The twelfth check, which needs a browser and a server and therefore cannot be
+  # a step of the job above.
+  #
+  # WHY IT IS HERE AT ALL. The Gate 4 audit found failures that every static
+  # validator passed: a manifest table with a 44 px window at 375 px, captions
+  # clipped inside their own scroll containers, a Source column off screen with
+  # nothing saying so, focus rings clipped by a section body, an accent rule
+  # through a label. Each is a property of layout, none is visible to a grep, and
+  # a site whose whole job is to be read on a screen cannot leave them
+  # unmeasured. tools/check-layout.mjs measures nineteen of them in headless
+  # Chromium at 375, 768, 1024, 1280 and 1440 px, in both themes, against
+  # scripts/serve.py, which serves the repository at the /crack-spread-study/
+  # subpath exactly as Pages does.
+  #
+  # WHY IT IS A SEPARATE JOB AND NOT A STEP. It takes about ten minutes, it needs
+  # a browser, and the eleven command gate takes two. Splitting them means a
+  # broken artifact is reported in two minutes rather than twelve, and the two
+  # failures are told apart at a glance in the checks list.
+  #
+  # WHAT I COULD NOT VERIFY, said plainly rather than pretended. This job has not
+  # been observed on a GitHub runner: it was written on Windows and the nineteen
+  # checks were run there against the same scripts/serve.py on a local port. Two
+  # things about a runner are therefore arguments rather than observations.
+  # First, ubuntu-latest ships Google Chrome at /usr/bin/google-chrome, which is
+  # already in tools/browser.mjs's candidate list, so the browser should be
+  # found without installing anything. Second, ubuntu-24.04 restricts
+  # unprivileged user namespaces through AppArmor, which makes Chrome's own
+  # sandbox fail to start, so CRACK_BROWSER_NO_SANDBOX is set below; that is safe
+  # here, where the only thing loaded is this repository's own localhost server
+  # on a machine that is destroyed at the end of the job, and it is off by
+  # default everywhere else.
+  #
+  # IF IT PROVES UNRELIABLE, the honest fix is to find out why and fix it, or to
+  # take it out and say in the README that layout is checked by hand. It is NOT
+  # to add continue-on-error, which would leave a job that is allowed to fail,
+  # which is a job nobody reads.
+  layout:
+    name: rendered layout in a browser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Named rather than assumed. If the image ever stops shipping Chrome this
+      # step fails with a sentence that says so, instead of the launch timing out
+      # later and reading as a broken browser.
+      - name: Find the browser the image ships
+        run: |
+          set -e
+          for candidate in /usr/bin/google-chrome /usr/bin/google-chrome-stable /usr/bin/chromium /usr/bin/chromium-browser; do
+            if [ -x "$candidate" ]; then
+              echo "CRACK_BROWSER=$candidate" >> "$GITHUB_ENV"
+              "$candidate" --version
+              exit 0
+            fi
+          done
+          echo "no Chromium on this image. tools/check-layout.mjs cannot run."
+          exit 1
+
+      # scripts/serve.py is standard library only, so nothing is installed for
+      # it. The port is not 8000 and not 8123: the owner's own preview holds one
+      # and the local runs of this tool hold the other, and a workflow that
+      # picked either would be a nuisance the day somebody runs it locally with
+      # act.
+      - name: Serve the repository at the Pages subpath
+        run: |
+          python scripts/serve.py --port 8126 &
+          for _ in $(seq 1 40); do
+            if curl -fsS "http://localhost:8126/crack-spread-study/" > /dev/null; then
+              echo "serving"
+              exit 0
+            fi
+            sleep 0.5
+          done
+          echo "scripts/serve.py did not answer on port 8126"
+          exit 1
+
+      - name: Measure the rendered layout, nineteen checks, five widths, both themes
+        env:
+          CRACK_BROWSER_NO_SANDBOX: "1"
+        run: node tools/check-layout.mjs --base http://localhost:8126/crack-spread-study/
+
+  # Only on a push to the default branch, and only if both gates passed. A pull
+  # request never deploys, and neither does a push to any other branch.
+  deploy:
+    name: deploy to github pages
+    needs: [gate, layout]
+    if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      # The whole repository root, because the site is static and served from
+      # it: index.html, styles/, src/, vendor/, data/ and assets/. .nojekyll is
+      # committed at the root so Pages does not run the files through Jekyll.
+      # The action excludes .git and .github from the tar itself. data/private is
+      # gitignored, so it is not in the checkout and cannot reach Pages; the
+      # licence promise does not depend on this step remembering it.
+      - name: Upload the repository root as the Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -14,6 +14,8 @@
 //   1  --browser <path> on the command line of the calling script
 //   2  the CRACK_BROWSER environment variable
 //   3  the usual install paths of Edge and Chrome on Windows, macOS and Linux
+// CRACK_BROWSER_NO_SANDBOX=1 adds --no-sandbox, which a CI image whose AppArmor
+// policy refuses unprivileged user namespaces needs and nothing else should.
 // Any Chromium works: Edge, Chrome, Chromium. Firefox and Safari do not speak
 // this protocol and are not supported.
 //
@@ -148,6 +150,20 @@ class Page {
 export async function launch(argv = process.argv) {
   const executable = findBrowser(argv);
   const profile = mkdtempSync(path.join(tmpdir(), "crack-browser-"));
+  // CRACK_BROWSER_NO_SANDBOX, for a CI container and for nothing else.
+  //
+  // Chrome's own sandbox needs unprivileged user namespaces, and several CI
+  // images, GitHub's ubuntu-24.04 among them, restrict those through AppArmor.
+  // Chrome then exits immediately and this launch times out waiting for
+  // DevToolsActivePort, which reads as "the browser is broken" rather than as
+  // "the sandbox was refused". Turning the sandbox off is safe where the thing
+  // being loaded is the repository's own localhost server and the machine is
+  // destroyed at the end of the job, and is NOT safe anywhere else, so it is
+  // opt in by environment variable, off by default, and never a flag a local
+  // run reaches for.
+  const sandbox = process.env.CRACK_BROWSER_NO_SANDBOX === "1"
+    ? ["--no-sandbox", "--disable-dev-shm-usage"]
+    : [];
   const child = spawn(executable, [
     "--headless=new",
     "--remote-debugging-port=0",
@@ -156,6 +172,7 @@ export async function launch(argv = process.argv) {
     "--no-default-browser-check",
     "--disable-extensions",
     "--hide-scrollbars",
+    ...sandbox,
     "about:blank",
   ], { stdio: "ignore" });
 

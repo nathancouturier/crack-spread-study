@@ -71,6 +71,10 @@ MANUAL_STEPS: tuple[dict[str, Any], ...] = (
     {
         "id": "dgec_weekly_note_collection",
         "series": [
+            "dgec_note_decoded_index",
+            "dgec_note_decoded_weekly",
+            "dgec_note_decoded_printed",
+            "dgec_note_decoded_monthly",
             "dgec_note_printed_weekly",
             "dgec_note_printed_monthly",
             "dgec_note_reconstructed_weekly",
@@ -95,8 +99,13 @@ MANUAL_STEPS: tuple[dict[str, Any], ...] = (
         ),
         "how": (
             "make note, or python scripts/note.py, two requests, which saves the note "
-            "that is online now into data/private/dgec_notes and then rebuilds the three "
-            "weekly series. Put it on a weekly schedule and check it ran."
+            "that is online now into data/private/dgec_notes and then rebuilds the "
+            "weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml "
+            "runs it first, before every other source, and opens an issue of its own if "
+            "it fails. Check that the issue is not sitting unread. The PDF stays "
+            "private; what is committed is the decode of it, in the four "
+            "dgec_note_decoded_* caches, which is what lets a runner that has only this "
+            "week's note restitch the whole four year series."
         ),
         "cadence": "weekly, every week, without exception",
         "status": "standing",

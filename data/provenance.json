@@ -363,7 +363,7 @@
   },
   "manifest": {
     "schema_version": 1,
-    "generated_at": "2026-09-22T12:11:04Z",
+    "generated_at": "2026-09-22T12:40:03Z",
     "series": [
       {
         "series": "anchors",
@@ -372,7 +372,7 @@
         "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
         "machine_fetched": false,
         "fetched_at": null,
-        "checked_at": "2026-09-22T06:30:40Z",
+        "checked_at": "2026-09-22T12:40:03Z",
         "rows": 15,
         "observations": 10,
         "file_rows": 15,
@@ -484,7 +484,7 @@
         "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
         "machine_fetched": true,
         "fetched_at": "2026-09-22T12:11:04Z",
-        "checked_at": "2026-09-22T12:11:04Z",
+        "checked_at": null,
         "rows": 12,
         "observations": 12,
         "file_rows": 12,
@@ -502,7 +502,10 @@
         "file": "data/cache/dgec_note_decoded_index.csv",
         "unit": "USD per tonne for the two axis values, points for the pitch, a count for the ticks",
         "observation_column": "note_file",
-        "documents_read_this_run": true
+        "documents_read_this_run": true,
+        "manual_step": [
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml runs it first, before every other source, and opens an issue of its own if it fails. Check that the issue is not sitting unread. The PDF stays private; what is committed is the decode of it, in the four dgec_note_decoded_* caches, which is what lets a runner that has only this week's note restitch the whole four year series.", "cadence": "weekly, every week, without exception", "status": "standing"}
+        ]
       },
       {
         "series": "dgec_note_decoded_monthly",
@@ -511,7 +514,7 @@
         "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
         "machine_fetched": true,
         "fetched_at": "2026-09-22T12:11:04Z",
-        "checked_at": "2026-09-22T12:11:04Z",
+        "checked_at": null,
         "rows": 7,
         "observations": 7,
         "file_rows": 7,
@@ -529,7 +532,10 @@
         "file": "data/cache/dgec_note_decoded_monthly.csv",
         "unit": "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
         "observation_column": "r1_gazole_usd_t",
-        "documents_read_this_run": true
+        "documents_read_this_run": true,
+        "manual_step": [
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml runs it first, before every other source, and opens an issue of its own if it fails. Check that the issue is not sitting unread. The PDF stays private; what is committed is the decode of it, in the four dgec_note_decoded_* caches, which is what lets a runner that has only this week's note restitch the whole four year series.", "cadence": "weekly, every week, without exception", "status": "standing"}
+        ]
       },
       {
         "series": "dgec_note_decoded_printed",
@@ -538,7 +544,7 @@
         "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
         "machine_fetched": true,
         "fetched_at": "2026-09-22T12:11:04Z",
-        "checked_at": "2026-09-22T12:11:04Z",
+        "checked_at": null,
         "rows": 20,
         "observations": 20,
         "file_rows": 20,
@@ -556,7 +562,10 @@
         "file": "data/cache/dgec_note_decoded_printed.csv",
         "unit": "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
         "observation_column": "r1_gazole_usd_t",
-        "documents_read_this_run": true
+        "documents_read_this_run": true,
+        "manual_step": [
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml runs it first, before every other source, and opens an issue of its own if it fails. Check that the issue is not sitting unread. The PDF stays private; what is committed is the decode of it, in the four dgec_note_decoded_* caches, which is what lets a runner that has only this week's note restitch the whole four year series.", "cadence": "weekly, every week, without exception", "status": "standing"}
+        ]
       },
       {
         "series": "dgec_note_decoded_weekly",
@@ -565,7 +574,7 @@
         "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
         "machine_fetched": true,
         "fetched_at": "2026-09-22T12:11:04Z",
-        "checked_at": "2026-09-22T12:11:04Z",
+        "checked_at": null,
         "rows": 221,
         "observations": 221,
         "file_rows": 221,
@@ -583,7 +592,10 @@
         "file": "data/cache/dgec_note_decoded_weekly.csv",
         "unit": "USD per tonne",
         "observation_column": "r1_gazole_usd_t",
-        "documents_read_this_run": true
+        "documents_read_this_run": true,
+        "manual_step": [
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml runs it first, before every other source, and opens an issue of its own if it fails. Check that the issue is not sitting unread. The PDF stays private; what is committed is the decode of it, in the four dgec_note_decoded_* caches, which is what lets a runner that has only this week's note restitch the whole four year series.", "cadence": "weekly, every week, without exception", "status": "standing"}
+        ]
       },
       {
         "series": "dgec_note_printed_monthly",
@@ -592,7 +604,7 @@
         "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
         "machine_fetched": true,
         "fetched_at": "2026-09-22T12:11:04Z",
-        "checked_at": "2026-09-22T12:11:04Z",
+        "checked_at": null,
         "rows": 7,
         "observations": 7,
         "file_rows": 7,
@@ -612,7 +624,7 @@
         "observation_column": "brent_date_usd_t",
         "documents_read_this_run": true,
         "manual_step": [
-          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.", "cadence": "weekly, every week, without exception", "status": "standing"}
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml runs it first, before every other source, and opens an issue of its own if it fails. Check that the issue is not sitting unread. The PDF stays private; what is committed is the decode of it, in the four dgec_note_decoded_* caches, which is what lets a runner that has only this week's note restitch the whole four year series.", "cadence": "weekly, every week, without exception", "status": "standing"}
         ]
       },
       {
@@ -622,7 +634,7 @@
         "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
         "machine_fetched": true,
         "fetched_at": "2026-09-22T12:11:04Z",
-        "checked_at": "2026-09-22T12:11:04Z",
+        "checked_at": null,
         "rows": 20,
         "observations": 20,
         "file_rows": 20,
@@ -642,7 +654,7 @@
         "observation_column": "brent_date_usd_t",
         "documents_read_this_run": true,
         "manual_step": [
-          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.", "cadence": "weekly, every week, without exception", "status": "standing"}
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml runs it first, before every other source, and opens an issue of its own if it fails. Check that the issue is not sitting unread. The PDF stays private; what is committed is the decode of it, in the four dgec_note_decoded_* caches, which is what lets a runner that has only this week's note restitch the whole four year series.", "cadence": "weekly, every week, without exception", "status": "standing"}
         ]
       },
       {
@@ -652,7 +664,7 @@
         "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
         "machine_fetched": true,
         "fetched_at": "2026-09-22T12:11:04Z",
-        "checked_at": "2026-09-22T12:11:04Z",
+        "checked_at": null,
         "rows": 221,
         "observations": 221,
         "file_rows": 221,
@@ -672,7 +684,7 @@
         "observation_column": "crack_gasoil_usd_bbl",
         "documents_read_this_run": true,
         "manual_step": [
-          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.", "cadence": "weekly, every week, without exception", "status": "standing"}
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml runs it first, before every other source, and opens an issue of its own if it fails. Check that the issue is not sitting unread. The PDF stays private; what is committed is the decode of it, in the four dgec_note_decoded_* caches, which is what lets a runner that has only this week's note restitch the whole four year series.", "cadence": "weekly, every week, without exception", "status": "standing"}
         ]
       },
       {
@@ -682,7 +694,7 @@
         "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
         "machine_fetched": true,
         "fetched_at": "2026-09-22T12:11:04Z",
-        "checked_at": "2026-09-22T12:11:04Z",
+        "checked_at": null,
         "rows": 221,
         "observations": 221,
         "file_rows": 221,
@@ -748,7 +760,7 @@
           }
         },
         "manual_step": [
-          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.", "cadence": "weekly, every week, without exception", "status": "standing"}
+          {"id": "dgec_weekly_note_collection", "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.", "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.", "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.", "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml runs it first, before every other source, and opens an issue of its own if it fails. Check that the issue is not sitting unread. The PDF stays private; what is committed is the decode of it, in the four dgec_note_decoded_* caches, which is what lets a runner that has only this week's note restitch the whole four year series.", "cadence": "weekly, every week, without exception", "status": "standing"}
         ]
       },
       {
@@ -837,7 +849,7 @@
         "page_url": "https://www.eia.gov/petroleum/refinerycapacity/",
         "machine_fetched": false,
         "fetched_at": null,
-        "checked_at": "2026-09-22T06:30:40Z",
+        "checked_at": "2026-09-22T12:40:03Z",
         "rows": 4,
         "observations": 4,
         "file_rows": 4,
@@ -890,7 +902,7 @@
         "page_url": "https://nathancouturier.github.io/crack-spread-study/",
         "machine_fetched": false,
         "fetched_at": null,
-        "checked_at": "2026-09-22T06:30:40Z",
+        "checked_at": "2026-09-22T12:40:03Z",
         "rows": 21,
         "observations": 21,
         "file_rows": 21,
@@ -1287,7 +1299,7 @@
         "page_url": "https://www.energyinst.org/statistical-review/resources-and-data-downloads",
         "machine_fetched": true,
         "fetched_at": "2026-09-11T00:00:00Z",
-        "checked_at": "2026-09-22T11:41:11Z",
+        "checked_at": null,
         "rows": 61,
         "observations": 61,
         "file_rows": 61,
@@ -1389,7 +1401,7 @@
         "page_url": "https://www.spglobal.com/energy/en/news-research/latest-news/crude-oil/032822-refinery-margin-tracker-record-high-global-diesel-cracks-propel-margins-upward",
         "machine_fetched": false,
         "fetched_at": null,
-        "checked_at": "2026-09-22T06:30:40Z",
+        "checked_at": "2026-09-22T12:40:03Z",
         "rows": 5,
         "observations": 5,
         "file_rows": 5,
@@ -1516,20 +1528,20 @@
       },
       {
         "id": "dgec_weekly_note_collection",
-        "series": ["dgec_note_printed_weekly", "dgec_note_printed_monthly", "dgec_note_reconstructed_weekly", "dgec_note_reconstructed_cracks_weekly"],
+        "series": ["dgec_note_decoded_index", "dgec_note_decoded_weekly", "dgec_note_decoded_printed", "dgec_note_decoded_monthly", "dgec_note_printed_weekly", "dgec_note_printed_monthly", "dgec_note_reconstructed_weekly", "dgec_note_reconstructed_cracks_weekly"],
         "what": "The DGEC weekly note has to be downloaded in the week it is published. It is the only source of the weekly Rotterdam quotations.",
         "why": "The ministry publishes one note at a time and DELETES the previous one when the next appears, recon 02 section 2.3. There is no archive on the ministry site and the Internet Archive caught only ten of them. A note that is missed is gone: the week it prints cannot be recovered from anywhere, at any price, ever.",
         "cost_if_skipped": "A permanent hole in the weekly layer. Every week missed also removes two calibration anchors from the chart reconstruction, because the reconstruction is fitted on the printed figures of the same note. Collecting one also restitches the weeks already published, which is the method working and which the Method view measures.",
-        "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the three weekly series. Put it on a weekly schedule and check it ran.",
+        "how": "make note, or python scripts/note.py, two requests, which saves the note that is online now into data/private/dgec_notes and then rebuilds the weekly series. IT IS ON A WEEKLY SCHEDULE: .github/workflows/refresh.yml runs it first, before every other source, and opens an issue of its own if it fails. Check that the issue is not sitting unread. The PDF stays private; what is committed is the decode of it, in the four dgec_note_decoded_* caches, which is what lets a runner that has only this week's note restitch the whole four year series.",
         "cadence": "weekly, every week, without exception",
         "status": "standing"
       }
     ],
     "manual_steps_note": "Work this pipeline cannot do for itself. Each entry says what it is, why it exists, what it costs to skip it and how to do it. They are repeated against the series they affect in the manual_step field of those entries.",
     "run": {
-      "mode": "online",
-      "started_at": "2026-09-22T12:11:01Z",
-      "finished_at": "2026-09-22T12:11:04Z",
+      "mode": "offline",
+      "started_at": "2026-09-22T12:40:03Z",
+      "finished_at": "2026-09-22T12:40:03Z",
       "script": "scripts/refresh.py"
     }
   }
