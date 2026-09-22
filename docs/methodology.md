@@ -1710,3 +1710,52 @@ The two private caches are outside all of this, because they are outside the
 repository. An invalid private cache now marks its manifest entry `failed`
 instead of leaving it reading `ok`, which is the most a run can honestly say
 about a file it will not revalidate into the manifest.
+
+## 10. The bytes an artifact rebuilds to on a machine that is not this one
+
+`python scripts/export.py --check` rebuilds the ten artifacts in memory and
+fails if any one of them differs from the committed bytes. That is what makes
+the site a function of the committed data rather than of the laptop it was
+built on, so it is worth saying what it survives and where it nearly did not.
+
+The first run of the CI gate, on a GitHub runner, installed the newest of
+everything: numpy 2.5.3, scipy 1.18.1, pandas 3.0.6 and statsmodels 0.15.0,
+against the numpy 2.4.6, scipy 1.17.1, pandas 2.3.3 and statsmodels 0.14.6 the
+committed artifacts were built with. Across four major numeric libraries, two of
+them a major version apart, the ten artifacts rebuilt byte for byte except for
+**one number**, and it moved in its twelfth significant digit:
+
+    forecasts_for_target_power   670407.913298   committed, built here
+                                 670407.913295   rebuilt on the runner
+
+It is the count of one month ahead forecasts the A against C pair of the horse
+race would need for 95 percent power. `src/crack/analysis.py` calls it an order
+of magnitude rather than a plan, the page draws it with the `count` format,
+which prints no decimals, and both of those numbers print as 670408.
+
+**What was done about it, and why it is not a rounding away of a real
+difference.** Artifact floats are stored to six decimal places, which was chosen
+so the bytes do not turn on the last bit of a sum. Six places does that for a
+value of order one. For a value of order a million it keeps thirteen significant
+digits, which is past the point where two builds of a numeric library have to
+agree, so the rule that was meant to make the file reproducible had a hole in it
+at the top of its range. A count of forecasts is now stored to the unit, which
+is the unit it is published in, and which is already what a count inside a
+sentence is stored as. **Nothing the reader sees changes**, and no figure that
+is published to a decimal place is rounded anywhere to make a build agree.
+
+It is the only field this touches. Sweeping the ten artifacts for a number that
+is both larger than ten thousand and not a whole number returns that field and
+nothing else, so there is no second place where the six place rule is keeping
+digits no two machines need share.
+
+**The versions are deliberately not pinned.** Pinning `pyproject.toml` to the
+four versions used here would make any machine reproduce the bytes, and it would
+also mean the study could not be rebuilt on a stack newer than the day it was
+written, and that nobody would ever learn whether its figures depend on a
+library version. They do not: that is now a measured claim about numpy 2.4
+through 2.5, scipy 1.17 through 1.18, pandas 2.3 through 3.0 and statsmodels
+0.14 through 0.15, and the gate is what keeps measuring it. If a future version
+moves a number that the site actually prints, build-check goes red, which is
+exactly what it is for, and the answer will be to find out which number and why,
+not to pin the library that found it.

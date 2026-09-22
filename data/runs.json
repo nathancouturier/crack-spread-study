@@ -654,9 +654,9 @@
           "in_the_race": false
         },
         "pairs": [
-          {"first": "A", "second": "B", "observed_gap_percent": 0.819317, "detectable_gap_percent": 7.417147, "power": 0.054373, "forecasts_for_target_power": 24575.369421, "t": -0.195119, "distinguishable": false},
-          {"first": "A", "second": "C", "observed_gap_percent": 0.284428, "detectable_gap_percent": 12.284996, "power": 0.05016, "forecasts_for_target_power": 670407.913298, "t": -0.037358, "distinguishable": false},
-          {"first": "B", "second": "C", "observed_gap_percent": 0.536415, "detectable_gap_percent": 8.314369, "power": 0.051433, "forecasts_for_target_power": 74845.150611, "t": 0.111807, "distinguishable": false}
+          {"first": "A", "second": "B", "observed_gap_percent": 0.819317, "detectable_gap_percent": 7.417147, "power": 0.054373, "forecasts_for_target_power": 24575, "t": -0.195119, "distinguishable": false},
+          {"first": "A", "second": "C", "observed_gap_percent": 0.284428, "detectable_gap_percent": 12.284996, "power": 0.05016, "forecasts_for_target_power": 670408, "t": -0.037358, "distinguishable": false},
+          {"first": "B", "second": "C", "observed_gap_percent": 0.536415, "detectable_gap_percent": 8.314369, "power": 0.051433, "forecasts_for_target_power": 74845, "t": 0.111807, "distinguishable": false}
         ],
         "caption_segments": [
           {"text": "On "},
@@ -752,9 +752,9 @@
           "in_the_race": false
         },
         "pairs": [
-          {"first": "A", "second": "B", "observed_gap_percent": 1.719989, "detectable_gap_percent": 7.16004, "power": 0.07164, "forecasts_for_target_power": 5013.4823, "t": 0.431996, "distinguishable": false},
-          {"first": "A", "second": "C", "observed_gap_percent": 2.962748, "detectable_gap_percent": 7.048958, "power": 0.120549, "forecasts_for_target_power": 1570.355556, "t": 0.771881, "distinguishable": false},
-          {"first": "B", "second": "C", "observed_gap_percent": 1.264508, "detectable_gap_percent": 3.525886, "power": 0.10423, "forecasts_for_target_power": 2030.515117, "t": 0.678807, "distinguishable": false}
+          {"first": "A", "second": "B", "observed_gap_percent": 1.719989, "detectable_gap_percent": 7.16004, "power": 0.07164, "forecasts_for_target_power": 5013, "t": 0.431996, "distinguishable": false},
+          {"first": "A", "second": "C", "observed_gap_percent": 2.962748, "detectable_gap_percent": 7.048958, "power": 0.120549, "forecasts_for_target_power": 1570, "t": 0.771881, "distinguishable": false},
+          {"first": "B", "second": "C", "observed_gap_percent": 1.264508, "detectable_gap_percent": 3.525886, "power": 0.10423, "forecasts_for_target_power": 2031, "t": 0.678807, "distinguishable": false}
         ],
         "caption_segments": [
           {"text": "On "},

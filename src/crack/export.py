@@ -204,6 +204,25 @@ def _num(value: Any) -> float | None:
     return 0.0 if out == 0.0 else out  # no negative zero in a file
 
 
+def _count(value: Any) -> int | None:
+    """A whole count for JSON, the unit the page prints a count in.
+
+    ROUND_DP places keeps a value of order one to the last bit every machine
+    agrees on, and a value of order a million to thirteen significant digits,
+    which no two versions of a numeric library need agree on. The one field in
+    the ten artifacts that is both large and fractional is the count of forecasts
+    a horse race pair would need for 95 percent power, and on a GitHub runner
+    with numpy 2.5, scipy 1.18, pandas 3.0 and statsmodels 0.15 it rebuilt as
+    670407.913295 against the committed 670407.913298: the twelfth digit of a
+    count of months. So a count is stored the way it is published, to the unit,
+    which is what N() already does with a count inside a sentence. Nothing the
+    page prints moves: both of those are 670408 forecasts. docs/methodology.md
+    says so under "Counts are stored to the unit".
+    """
+    number = _num(value)
+    return None if number is None else int(round(number))
+
+
 def _int(value: Any) -> int | None:
     return None if _is_missing(value) else int(value)
 
@@ -3250,7 +3269,9 @@ def _runs_race(inputs: Inputs) -> Mapping[str, Any]:
                     "observed_gap_percent": _num(p.observed_gap_pct),
                     "detectable_gap_percent": _num(p.detectable_gap_pct),
                     "power": _num(p.power_at_observed),
-                    "forecasts_for_target_power": _num(p.forecasts_for_target_power),
+                    # A count of forecasts, drawn with the count format, stored
+                    # to the unit. _count says why.
+                    "forecasts_for_target_power": _count(p.forecasts_for_target_power),
                     "t": _num(p.t),
                     "distinguishable": bool(p.distinguishable),
                 }
