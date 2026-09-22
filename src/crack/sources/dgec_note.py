@@ -90,6 +90,26 @@ three products that are plotted would be exactly the synthetic series SPEC.md
 section 2 rule 1 forbids. They appear in dgec_note_printed_weekly, a
 couple of dozen observations, and nowhere else.
 
+THE PDFS ARE NOT COMMITTED, SO THE DECODE IS
+---------------------------------------------
+Gate 5. Everything above describes how the numbers are got out of the documents.
+The documents are gitignored and cannot be downloaded again, which means that
+until Gate 5 none of the three series could be rebuilt by anybody who did not
+already have the PDFs: a GitHub runner clones the repository, finds
+data/private empty, and could not stitch a single week. That also made the
+weekly refresh job of SPEC.md section 8 impossible, because the one step in this
+project that cannot wait is collecting this week's note, and a runner that
+collected it could then decode exactly one note and would restitch a 105 week
+series over the four year one already committed.
+
+So four more caches are committed, and they are the decode itself: the register
+of the notes, the chart readings, the printed weekly readings and the printed
+monthly readings, one reading per note per date per product. The stitch reads
+those, through _NoteAdapter.corpus, and opens no PDF. A machine that HAS a PDF
+still decodes it and checks it against its committed row, so the table is proved
+against the documents on every run rather than trusted. See "The committed
+decode" below, and load_corpus_committed for the three situations.
+
 WHY NOT JUST USE THE PRINTED NUMBERS
 -------------------------------------
 Because the ministry prints two weeks and deletes last week's note, so the
@@ -126,6 +146,7 @@ from .base import (
     PRIVATE,
     Adapter,
     SourceError,
+    read_cache,
 )
 
 __all__ = [
@@ -151,6 +172,15 @@ __all__ = [
     "parse_fr_date",
     "decode_note",
     "load_corpus",
+    "DECODED_INDEX",
+    "DECODED_WEEKLY",
+    "DECODED_PRINTED",
+    "DECODED_MONTHLY",
+    "DECODED_SERIES",
+    "decoded_frames",
+    "notes_from_decoded",
+    "read_decoded",
+    "load_corpus_committed",
     "build_printed_weekly",
     "build_printed_monthly",
     "build_reconstructed_weekly",
@@ -159,6 +189,11 @@ __all__ = [
     "DgecNotePrintedMonthly",
     "DgecNoteReconstructedWeekly",
     "DgecNoteReconstructedCracksWeekly",
+    "DgecNoteDecodedIndex",
+    "DgecNoteDecodedWeekly",
+    "DgecNoteDecodedPrinted",
+    "DgecNoteDecodedMonthly",
+    "DECODE_ADAPTERS",
     "main",
 ]
 
@@ -1756,6 +1791,383 @@ def weekly_cracks(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# The committed decode, so the stitch is a pure function of committed data
+# ---------------------------------------------------------------------------
+#
+# THE PROBLEM THIS SOLVES, and it was a real blocker at Gate 5. The three
+# stitched series above are built by decoding twelve PDFs that are NOT committed
+# and CANNOT BE RE-DOWNLOADED: the ministry publishes one note at a time and
+# deletes the previous one. A GitHub runner therefore has a fresh clone, no
+# data/private, and no way to rebuild any of them. That is fatal for the weekly
+# refresh job SPEC.md section 8 asks for, because the one step that cannot wait
+# is collecting this week's note, and a runner that collected it could then
+# decode exactly one note and would restitch a 105 week series over the four
+# year one already committed.
+#
+# So the DECODE is committed and the PDFs are not. Four caches, and each is a
+# plain time series that obeys the same contract as every other cache here:
+#
+#   dgec_note_decoded_index     one row per note: its vintage, its file name, the
+#                               page the table was found on, and its chart
+#                               geometry, which is what tells two notes that
+#                               CANNOT disagree from two that agree
+#   dgec_note_decoded_weekly    the page 3 chart, one row per week, one READING
+#                               SLOT per note that covers that week
+#   dgec_note_decoded_printed   the printed weekly columns, same shape
+#   dgec_note_decoded_monthly   the printed monthly columns, same shape, with
+#                               each note's provisional marker beside its values
+#
+# WHY SLOTS AND NOT ONE ROW PER (note, week, product). Because a cache in this
+# project is a time series and crack.sources.base.validate_frame requires the
+# date column to be unique and strictly increasing, which a long table is not.
+# The slot layout keeps one row per date and puts the k-th note covering that
+# date in the k-th slot, with the note's own file name in r<k>_note beside its
+# values, so nothing about which reading came from where is lost. The width is
+# BOUNDED, which a column per note would not be: a note's chart covers about 105
+# weeks, so at most about 105 notes can ever cover one week and the table cannot
+# grow past that however long the collection runs. Today the widest week carries
+# nine readings.
+#
+# THE ORDER OF THE SLOTS IS THE SORTED FILE NAME, the same order note_paths
+# returns, so a rebuild is deterministic and a diff is readable. It is not the
+# vintage order, because two notes can carry the same content date.
+#
+# NOTHING IS ROUNDED ON THE WAY IN OR OUT. write_cache writes plain decimal
+# floats that round trip exactly, so decoding a PDF and reading the committed
+# table give the same float, and load_corpus_committed asserts exactly that on
+# every note that is present both ways. On the owner's machine that is all twelve
+# of them, on every run, which makes the committed decode continuously proved
+# against the documents rather than trusted.
+
+DECODED_INDEX = "dgec_note_decoded_index"
+DECODED_WEEKLY = "dgec_note_decoded_weekly"
+DECODED_PRINTED = "dgec_note_decoded_printed"
+DECODED_MONTHLY = "dgec_note_decoded_monthly"
+
+DECODED_SERIES = (DECODED_INDEX, DECODED_WEEKLY, DECODED_PRINTED, DECODED_MONTHLY)
+
+#: Columns of the per note index. The four geometry fields are the signature
+#: decode_note builds: the number of y axis ticks, the value of the first and the
+#: last of them, and the point pitch in points. Two notes with the same signature
+#: map an identical value onto an identical pixel. See DEGENERATE_PAIR.
+INDEX_COLUMNS = (
+    "note_file",
+    "note_page",
+    "geometry_ticks",
+    "geometry_first_usd_t",
+    "geometry_last_usd_t",
+    "geometry_pitch_pt",
+)
+
+#: The float the decode and the committed table must agree to. They are written
+#: with a round trip exact decimal representation, so the real tolerance is zero
+#: and this exists only so a future change of writer cannot make the check
+#: meaningless without anybody noticing.
+DECODE_AGREEMENT_USD_T = 1e-9
+
+
+def _slot_column(slot: int, name: str) -> str:
+    return "r%d_%s" % (slot, name)
+
+
+def _slot_frame(
+    per_date: Mapping[Any, Sequence[tuple[str, Mapping[str, Any]]]],
+    columns: Sequence[str],
+    *,
+    flags: Sequence[str] = (),
+) -> pd.DataFrame:
+    """One row per date, one reading slot per note that covers it.
+
+    Args:
+        per_date: date -> [(note file, {column: value}), ...], already in slot
+            order.
+        columns: the value columns, written as floats.
+        flags: extra non numeric columns per slot, such as the provisional
+            marker.
+
+    Returns:
+        A frame carrying date, n_readings, and for each slot r<k>_note plus one
+        column per name in columns and flags.
+    """
+    slots = max((len(v) for v in per_date.values()), default=0)
+    rows = []
+    for when in sorted(per_date):
+        readings = per_date[when]
+        row: dict[str, Any] = {"date": pd.Timestamp(when), "n_readings": len(readings)}
+        for slot in range(1, slots + 1):
+            take = readings[slot - 1] if slot <= len(readings) else None
+            row[_slot_column(slot, "note")] = take[0] if take else ""
+            for name in columns:
+                value = take[1].get(name) if take else None
+                row[_slot_column(slot, name)] = (
+                    float("nan") if value is None else float(value)
+                )
+            for name in flags:
+                value = take[1].get(name) if take else None
+                row[_slot_column(slot, name)] = "" if value is None else bool(value)
+        rows.append(row)
+    ordered = ["date", "n_readings"]
+    for slot in range(1, slots + 1):
+        ordered.append(_slot_column(slot, "note"))
+        ordered.extend(_slot_column(slot, name) for name in tuple(columns) + tuple(flags))
+    frame = pd.DataFrame(rows)
+    if frame.empty:
+        frame = pd.DataFrame(columns=ordered)
+    return frame[ordered].reset_index(drop=True)
+
+
+def _read_slots(
+    frame: pd.DataFrame, columns: Sequence[str], *, flags: Sequence[str] = ()
+) -> dict[str, dict[Any, dict[str, Any]]]:
+    """The inverse of _slot_frame: note file -> date -> {column: value}."""
+    out: dict[str, dict[Any, dict[str, Any]]] = defaultdict(dict)
+    slots = 0
+    while _slot_column(slots + 1, "note") in frame.columns:
+        slots += 1
+    for _, row in frame.iterrows():
+        when = pd.Timestamp(row["date"]).date()
+        for slot in range(1, slots + 1):
+            note = row.get(_slot_column(slot, "note"))
+            if not isinstance(note, str) or not note:
+                continue
+            values: dict[str, Any] = {}
+            for name in columns:
+                value = row.get(_slot_column(slot, name))
+                if value is not None and not pd.isna(value):
+                    values[name] = float(value)
+            for name in flags:
+                value = row.get(_slot_column(slot, name))
+                if isinstance(value, str):
+                    if not value.strip():
+                        continue
+                    value = value.strip().lower() == "true"
+                if value is not None and not pd.isna(value):
+                    values[name] = bool(value)
+            out[note][when] = values
+    return dict(out)
+
+
+def decoded_frames(notes: Sequence[NoteDecode]) -> dict[str, pd.DataFrame]:
+    """The four committed decode tables, from a decoded corpus."""
+    ordered = sorted(notes, key=lambda n: n.file)
+
+    index = (
+        pd.DataFrame(
+            [
+                {
+                    "date": pd.Timestamp(note.vintage),
+                    "note_file": note.file,
+                    "note_page": int(note.page),
+                    "geometry_ticks": float(note.geometry[0]),
+                    "geometry_first_usd_t": float(note.geometry[1]),
+                    "geometry_last_usd_t": float(note.geometry[2]),
+                    "geometry_pitch_pt": float(note.geometry[3]),
+                }
+                for note in ordered
+            ]
+        )
+        .sort_values("date")
+        .reset_index(drop=True)
+    )
+
+    chart: dict[Any, list[tuple[str, dict[str, Any]]]] = defaultdict(list)
+    for note in ordered:
+        for when in note.weeks:
+            chart[when].append(
+                (note.file, {c: note.chart[c][when] for c in CHART_COLUMNS})
+            )
+
+    printed: dict[Any, list[tuple[str, dict[str, Any]]]] = defaultdict(list)
+    for note in ordered:
+        for when, values in sorted(note.printed_weekly.items()):
+            printed[when].append((note.file, dict(values)))
+
+    monthly: dict[Any, list[tuple[str, dict[str, Any]]]] = defaultdict(list)
+    for note in ordered:
+        for key, values in sorted(note.printed_monthly.items()):
+            when = date(key[0], key[1], 1)
+            payload = dict(values)
+            payload["provisional"] = bool(
+                note.printed_monthly_provisional.get(key, False)
+            )
+            monthly[when].append((note.file, payload))
+
+    return {
+        DECODED_INDEX: index,
+        DECODED_WEEKLY: _slot_frame(chart, CHART_COLUMNS),
+        DECODED_PRINTED: _slot_frame(printed, PRINTED_COLUMNS),
+        DECODED_MONTHLY: _slot_frame(monthly, PRINTED_COLUMNS, flags=("provisional",)),
+    }
+
+
+def notes_from_decoded(frames: Mapping[str, pd.DataFrame]) -> list[NoteDecode]:
+    """Rebuild the corpus from the four committed tables. No PDF is opened.
+
+    This is what makes the stitch a pure function of committed data, and
+    therefore what lets a GitHub runner rebuild the three note series. The
+    NoteDecode objects it returns carry everything the three builders read: the
+    file name, the vintage, the geometry, the printed weekly and monthly values
+    with their provisional markers, and the decoded chart.
+
+    diagnostics is empty. Nothing downstream reads it, and filling it with
+    invented numbers to look complete is exactly what SPEC.md section 2 rule 1
+    forbids.
+    """
+    index = frames[DECODED_INDEX]
+    chart = _read_slots(frames[DECODED_WEEKLY], CHART_COLUMNS)
+    printed = _read_slots(frames[DECODED_PRINTED], PRINTED_COLUMNS)
+    monthly = _read_slots(
+        frames[DECODED_MONTHLY], PRINTED_COLUMNS, flags=("provisional",)
+    )
+
+    out: list[NoteDecode] = []
+    for _, row in index.iterrows():
+        file = str(row["note_file"])
+        by_week = chart.get(file, {})
+        if not by_week:
+            raise NoteDecodeError(
+                "%s is in %s but draws no week in %s, so the committed decode "
+                "disagrees with itself and nothing is rebuilt from it"
+                % (file, DECODED_INDEX, DECODED_WEEKLY)
+            )
+        columns: dict[str, dict[Any, float]] = {c: {} for c in CHART_COLUMNS}
+        for when, values in by_week.items():
+            for column in CHART_COLUMNS:
+                if column in values:
+                    columns[column][when] = values[column]
+
+        printed_monthly: dict[tuple[int, int], dict[str, float]] = {}
+        provisional: dict[tuple[int, int], bool] = {}
+        for when, values in monthly.get(file, {}).items():
+            key = (when.year, when.month)
+            carried = dict(values)
+            provisional[key] = bool(carried.pop("provisional", False))
+            printed_monthly[key] = carried
+
+        out.append(
+            NoteDecode(
+                file=file,
+                page=int(row["note_page"]),
+                vintage=pd.Timestamp(row["date"]).date(),
+                printed_weekly=dict(printed.get(file, {})),
+                printed_monthly=printed_monthly,
+                printed_monthly_provisional=provisional,
+                chart=columns,
+                geometry=(
+                    int(row["geometry_ticks"]),
+                    float(row["geometry_first_usd_t"]),
+                    float(row["geometry_last_usd_t"]),
+                    float(row["geometry_pitch_pt"]),
+                ),
+                diagnostics={},
+            )
+        )
+    return sorted(out, key=lambda n: n.file)
+
+
+def read_decoded() -> dict[str, pd.DataFrame] | None:
+    """The four committed decode tables, or None when one of them is missing."""
+    frames: dict[str, pd.DataFrame] = {}
+    for name in DECODED_SERIES:
+        frame = read_cache(name, date_col="date")
+        if frame is None:
+            return None
+        frames[name] = frame
+    return frames
+
+
+def _disagreements(
+    decoded: Sequence[NoteDecode], committed: Sequence[NoteDecode]
+) -> list[str]:
+    """Where a freshly decoded note and its committed row differ. Empty is right."""
+    by_file = {note.file: note for note in committed}
+    problems: list[str] = []
+    for note in decoded:
+        other = by_file.get(note.file)
+        if other is None:
+            continue
+        if tuple(note.geometry) != tuple(other.geometry):
+            problems.append(
+                "%s: the chart geometry decodes as %s and the committed table "
+                "says %s" % (note.file, note.geometry, other.geometry)
+            )
+        if note.vintage != other.vintage:
+            problems.append(
+                "%s: the note prints the week ending %s and the committed table "
+                "says %s" % (note.file, note.vintage, other.vintage)
+            )
+        for column, values in note.chart.items():
+            theirs = other.chart.get(column, {})
+            for when, value in values.items():
+                if when not in theirs:
+                    problems.append(
+                        "%s: the chart draws %s on %s and the committed table has "
+                        "no reading for it" % (note.file, column, when)
+                    )
+                elif abs(theirs[when] - value) > DECODE_AGREEMENT_USD_T:
+                    problems.append(
+                        "%s: %s on %s decodes as %.10f and the committed table "
+                        "says %.10f" % (note.file, column, when, value, theirs[when])
+                    )
+    return problems
+
+
+def load_corpus_committed(
+    directory: Path | None = None, *, strict: bool = True
+) -> list[NoteDecode]:
+    """The corpus, from the committed decode plus any note PDF on this machine.
+
+    THREE SITUATIONS, AND ONE RULE EACH.
+
+        The owner's machine, every PDF present. Every note is decoded from the
+        document and checked against its committed row. A disagreement is a
+        finding, not a rounding, so it raises and nothing is rebuilt. This is
+        what keeps the committed decode honest: it is proved against the
+        documents on every run rather than trusted.
+
+        A GitHub runner, no PDF at all. Every note comes from the committed
+        decode. This is the case that makes the weekly refresh possible.
+
+        A runner that has just collected this week's note. That one PDF is
+        decoded, the others come from the committed decode, and the stitch runs
+        over all of them. Decode, append, restitch, which is the whole point.
+
+    Raises:
+        NoteDecodeError: when there is no committed decode and no PDF, when a PDF
+            trips a decode gate under strict, or when a decoded note disagrees
+            with its committed row.
+    """
+    committed = read_decoded()
+    on_disk = note_paths(directory)
+
+    from_files: list[NoteDecode] = []
+    if on_disk:
+        from_files = load_corpus(directory, strict=strict)
+    if committed is None:
+        if not from_files:
+            raise NoteDecodeError(
+                "there is no committed decode in data/cache and no note PDF under "
+                "%s, so the weekly note series cannot be built at all. On a fresh "
+                "checkout the four dgec_note_decoded_* caches should be there; if "
+                "they are not, the clone is incomplete" % (directory or NOTE_DIR)
+            )
+        return from_files
+
+    from_table = notes_from_decoded(committed)
+    problems = _disagreements(from_files, from_table)
+    if problems:
+        raise NoteDecodeError(
+            "%d note reading(s) decode differently from the committed decode in "
+            "data/cache. That is a finding about one of the two, not a rounding, "
+            "so nothing was rebuilt: %s"
+            % (len(problems), "; ".join(problems[:5]))
+        )
+    known = {note.file for note in from_table}
+    merged = list(from_table) + [n for n in from_files if n.file not in known]
+    return sorted(merged, key=lambda n: n.file)
+
+
+# ---------------------------------------------------------------------------
 # The adapters
 # ---------------------------------------------------------------------------
 
@@ -1809,8 +2221,15 @@ class _NoteAdapter(Adapter):
     note_directory: Path | None = None
 
     def corpus(self) -> Sequence[NoteDecode]:
+        """The corpus, from the committed decode plus any PDF on this machine.
+
+        THIS USED TO BE load_corpus, which opens the PDFs and nothing else, and
+        that is what made the three stitched series unbuildable on a GitHub
+        runner: the documents are not committed and cannot be re-downloaded. See
+        load_corpus_committed for the three situations and the rule for each.
+        """
         if self.notes is None:
-            self.notes = load_corpus(self.note_directory, strict=True)
+            self.notes = load_corpus_committed(self.note_directory, strict=True)
         return self.notes
 
     def _vintage(self, notes: Sequence[NoteDecode]) -> str:
@@ -2182,6 +2601,275 @@ class DgecNoteReconstructedCracksWeekly(_NoteAdapter):
             % (DGEC_BBL_PER_T_BRENT_NOTE, ERROR_BAR_AXIS)
         )
         return frame
+
+
+# ---------------------------------------------------------------------------
+# The four decode adapters
+# ---------------------------------------------------------------------------
+#
+# These are the only adapters in this module that read a PDF. The four series
+# above read the committed decode these write, through _NoteAdapter.corpus, so
+# on a machine with no data/private nothing opens a document and everything
+# still rebuilds.
+#
+# THE FLOORS ARE ONE PER SLOT COLUMN AND THAT IS DELIBERATE. A slot table's per
+# column counts are a property of how the corpus's windows overlap, which is not
+# a constant anybody can write down in advance and which moves with every
+# collection. What actually protects these caches is the pair of checks that do
+# not need a constant: min_rows, and validate_frame's rule that a column's
+# observation count may not SHRINK against the cache already on disk. The one
+# column with a real floor is the observation column, r1_gazole_usd_t, because
+# Gazole is drawn on every chart and printed in every table, so slot one of every
+# row carries it or something is wrong.
+
+
+class _DecodeAdapter(Adapter):
+    """Shared plumbing for the four decode caches.
+
+    The corpus is decoded once per run and injected, exactly as for the stitched
+    series, so a refresh does not open twelve PDFs four times over.
+    """
+
+    #: injected by scripts/refresh.py or a test
+    notes: Sequence[NoteDecode] | None = None
+    note_directory: Path | None = None
+
+    url = "https://www.ecologie.gouv.fr/sites/default/files/documents/"
+    page_url = "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers"
+    committable = True
+    date_col = "date"
+    machine_fetched = True
+
+    #: the columns the slot layout repeats, set by each subclass
+    slot_columns: tuple[str, ...] = ()
+    slot_flags: tuple[str, ...] = ()
+
+    def __init__(self, notes: Sequence[NoteDecode] | None = None) -> None:
+        if notes is not None:
+            self.notes = notes
+        self._slots: int | None = None
+
+    def corpus(self) -> Sequence[NoteDecode]:
+        if self.notes is None:
+            self.notes = load_corpus_committed(self.note_directory, strict=True)
+        return self.notes
+
+    def _slot_names(self) -> list[str]:
+        slots = self._slots if self._slots is not None else 1
+        return [
+            _slot_column(slot, name)
+            for slot in range(1, slots + 1)
+            for name in self.slot_columns
+        ]
+
+    @property
+    def bounds(self) -> Mapping[str, tuple[float, float]]:
+        return {name: BOUNDS_PRODUCT_USD_T for name in self._slot_names()}
+
+    @property
+    def min_observations(self) -> Mapping[str, int]:
+        floors = {name: 1 for name in self._slot_names()}
+        floors[self.observation_column] = self.min_rows
+        return floors
+
+    def frame(self, notes: Sequence[NoteDecode]) -> pd.DataFrame:
+        return decoded_frames(notes)[self.name]
+
+    def fetch(self) -> pd.DataFrame:
+        notes = self.corpus()
+        self.vintage = "latest note prints the week ending %s" % max(
+            n.vintage for n in notes
+        )
+        frame = self.frame(notes)
+        self._slots = 0
+        while _slot_column(self._slots + 1, "note") in frame.columns:
+            self._slots += 1
+        self.note = self._note(notes, frame)
+        return frame
+
+    def offline_note(self, note: str, frame: pd.DataFrame) -> str:
+        return _restate_note(note, self._body(frame))
+
+    def _note(self, notes: Sequence[NoteDecode], frame: pd.DataFrame) -> str:
+        return _CORPUS_NOTE % len(notes) + " " + self._body(frame)
+
+    def _body(self, frame: pd.DataFrame) -> str:
+        raise NotImplementedError
+
+
+class DgecNoteDecodedIndex(_DecodeAdapter):
+    """One row per note: its vintage, its file, its page and its chart geometry."""
+
+    name = DECODED_INDEX
+    source = "DGEC weekly note, one row per preserved note, recorded by this study"
+    unit = "USD per tonne for the two axis values, points for the pitch, a count for the ticks"
+    frequency = "weekly"
+    method = "parsed"
+    required_cols = ("date",) + INDEX_COLUMNS
+    observation_column = "note_file"
+    min_rows = 1
+    slot_columns = ()
+
+    @property
+    def bounds(self) -> Mapping[str, tuple[float, float]]:
+        return {
+            "geometry_first_usd_t": BOUNDS_PRODUCT_USD_T,
+            "geometry_last_usd_t": BOUNDS_PRODUCT_USD_T,
+        }
+
+    @property
+    def min_observations(self) -> Mapping[str, int]:
+        return {
+            "geometry_first_usd_t": self.min_rows,
+            "geometry_last_usd_t": self.min_rows,
+        }
+
+    def _body(self, frame: pd.DataFrame) -> str:
+        distinct = len(
+            frame[
+                [
+                    "geometry_ticks",
+                    "geometry_first_usd_t",
+                    "geometry_last_usd_t",
+                    "geometry_pitch_pt",
+                ]
+            ].drop_duplicates()
+        )
+        return (
+            "THE REGISTER OF THE CORPUS, and the committed half of a decode whose "
+            "documents are not committed. One row per preserved note: the week it "
+            "prints, its file name, the page its quotation table was found on, and "
+            "its chart geometry. The date is the note's CONTENT date, the latest "
+            "week printed inside it, not the date in its file name, because four "
+            "of the notes carry a content date later than their name. The geometry "
+            "is what tells two notes that CANNOT disagree from two that agree: %d "
+            "of the %d notes have a distinct geometry, and the rest share one. %s"
+            % (distinct, len(frame), DEGENERATE_PAIR)
+        )
+
+
+class _DecodedSlotAdapter(_DecodeAdapter):
+    """A slot table: one row per date, one reading slot per covering note."""
+
+    observation_column = "r1_gazole_usd_t"
+
+    @property
+    def required_cols(self) -> tuple[str, ...]:
+        return ("date", "n_readings", "r1_note") + tuple(
+            _slot_column(1, name) for name in self.slot_columns
+        )
+
+    def _slot_sentence(self, frame: pd.DataFrame) -> str:
+        counts = pd.to_numeric(frame["n_readings"], errors="coerce")
+        slots = 0
+        while _slot_column(slots + 1, "note") in frame.columns:
+            slots += 1
+        return (
+            "One row per date and one READING SLOT per note that covers it, with "
+            "the note's own file name in r<k>_note beside its values, so every "
+            "number here can be traced to the document it was read from. %d row(s), "
+            "%d slot(s), between %d and %d reading(s) per row. The layout is a "
+            "time series because every cache in this project is one; the width is "
+            "bounded by the length of a note's chart window and cannot grow past "
+            "it however long the collection runs."
+            % (len(frame), slots, int(counts.min()), int(counts.max()))
+        )
+
+
+class DgecNoteDecodedWeekly(_DecodedSlotAdapter):
+    """The page 3 chart, decoded, per note per week per product."""
+
+    name = DECODED_WEEKLY
+    source = (
+        "DGEC, ministere de la Transition ecologique, weekly note, page 3 chart, "
+        "decoded by this study, one reading per note"
+    )
+    unit = "USD per tonne"
+    frequency = "weekly"
+    # NOT "parsed". These are values recovered from the geometry of a curve.
+    method = "reconstructed"
+    slot_columns = CHART_COLUMNS
+    min_rows = 200
+
+    def _body(self, frame: pd.DataFrame) -> str:
+        return (
+            "THE DECODED CHART, BEFORE ANY STITCHING. %s "
+            "dgec_note_reconstructed_weekly is the median across these readings "
+            "per week, with their spread and their evidence class; this is the "
+            "readings themselves. It is committed because the note PDFs are not "
+            "and cannot be: the ministry publishes one note at a time and deletes "
+            "the previous one, so without this table a fresh checkout could not "
+            "rebuild the weekly series at all and the weekly refresh job could not "
+            "restitch after collecting a note. Every value carries the "
+            "reconstruction and its measured error; read "
+            "dgec_note_reconstructed_weekly before using any of it. %s"
+            % (self._slot_sentence(frame), BRENT_IS_WORST)
+        )
+
+
+class DgecNoteDecodedPrinted(_DecodedSlotAdapter):
+    """The printed WEEKLY columns, per note per week per product."""
+
+    name = DECODED_PRINTED
+    source = (
+        "DGEC, ministere de la Transition ecologique, weekly note, printed table, "
+        "one reading per note"
+    )
+    unit = "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne"
+    frequency = "weekly"
+    method = "parsed"
+    slot_columns = PRINTED_COLUMNS
+    min_rows = 18
+
+    def _body(self, frame: pd.DataFrame) -> str:
+        return (
+            "THE FIGURES DGEC PRINTED, BEFORE ANY STITCHING, read by row and "
+            "column label. %s dgec_note_printed_weekly is the stitch of these, one "
+            "row per distinct week with the disagreement between notes carried "
+            "rather than averaged away; this is what each note printed. A blank is "
+            "a row that note's layout does not print, never a zero: "
+            "wb_NPG-2025.01.17 prints no Fioul lourd row at all and the EUR per "
+            "tonne row only exists from the December 2025 layout onward."
+            % self._slot_sentence(frame)
+        )
+
+
+class DgecNoteDecodedMonthly(_DecodedSlotAdapter):
+    """The printed MONTHLY columns, per note per month per product, with the flag."""
+
+    name = DECODED_MONTHLY
+    source = (
+        "DGEC, ministere de la Transition ecologique, weekly note, printed monthly "
+        "columns, one reading per note"
+    )
+    unit = "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne"
+    frequency = "monthly"
+    method = "parsed"
+    slot_columns = PRINTED_COLUMNS
+    slot_flags = ("provisional",)
+    min_rows = 1
+
+    def _body(self, frame: pd.DataFrame) -> str:
+        return (
+            "THE MONTHLY COLUMNS OF THE PRINTED TABLE, which the six column layout "
+            "has printed since December 2025, one reading per note. %s r<k>_"
+            "provisional is the marker that note printed against that month, so "
+            "the whole revision history of a provisional figure is in the file "
+            "rather than in a note about it: SPEC.md section 2 rule 5 asks for "
+            "every vintage to be kept and the flag to be shown, and this is where "
+            "the vintages are. dgec_note_printed_monthly is the stitch of these."
+            % self._slot_sentence(frame)
+        )
+
+
+#: In the order a refresh runs them. The index first, because it is the register
+#: the other three are read against.
+DECODE_ADAPTERS = (
+    DgecNoteDecodedIndex,
+    DgecNoteDecodedWeekly,
+    DgecNoteDecodedPrinted,
+    DgecNoteDecodedMonthly,
+)
 
 
 # ---------------------------------------------------------------------------

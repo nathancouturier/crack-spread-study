@@ -91,11 +91,15 @@ from crack.sources import events_anchors  # noqa: E402
 from crack.sources.base import Adapter, MANIFEST, read_cache, utc_now_iso, validate_frame  # noqa: E402
 from crack.sources.dgec import DgecBrentMonthly, DgecMbrMonthly  # noqa: E402
 from crack.sources.dgec_note import (  # noqa: E402
+    DgecNoteDecodedIndex,
+    DgecNoteDecodedMonthly,
+    DgecNoteDecodedPrinted,
+    DgecNoteDecodedWeekly,
     DgecNotePrintedMonthly,
     DgecNotePrintedWeekly,
     DgecNoteReconstructedCracksWeekly,
     DgecNoteReconstructedWeekly,
-    load_corpus,
+    load_corpus_committed,
 )
 from crack.sources.ei import EiRefineryCapacity, Nwe5RefineryCapacity  # noqa: E402
 from crack.sources.eia import EiaBrent, record_refinery_fuel_seed  # noqa: E402
@@ -184,21 +188,40 @@ def _simple(factory: Callable[[], list[Adapter]]) -> Callable[[Any], list[dict]]
     return run
 
 
-def _notes_online(args) -> list[dict]:
-    """The three note series share one decode of one corpus.
+def _note_adapters() -> list[Adapter]:
+    """The four decode caches first, then the four series stitched from them.
 
-    load_corpus is strict: if any note trips a gate it raises rather than
-    dropping that note and shipping a shorter series. A shorter series would hide
-    a layout change, which is the thing this decode is most likely to meet.
+    THE ORDER IS THE DEPENDENCY. The decode caches are what a note PDF produces;
+    the stitched series are a pure function of the decode, and on a machine with
+    no PDFs, which is every GitHub runner, they are rebuilt from the committed
+    decode alone. Writing the decode first means a run that has just collected
+    this week's note records the new readings before the stitch reads them.
     """
-    adapters = [
+    return [
+        DgecNoteDecodedIndex(),
+        DgecNoteDecodedWeekly(),
+        DgecNoteDecodedPrinted(),
+        DgecNoteDecodedMonthly(),
         DgecNotePrintedWeekly(),
         DgecNotePrintedMonthly(),
         DgecNoteReconstructedWeekly(),
         DgecNoteReconstructedCracksWeekly(),
     ]
+
+
+def _notes_online(args) -> list[dict]:
+    """The eight note series share one decode of one corpus.
+
+    load_corpus_committed is strict: a note PDF that trips a gate raises rather
+    than being dropped and a shorter series shipped, because a shorter series
+    would hide a layout change, which is the thing this decode is most likely to
+    meet. It is also where a PDF on this machine is checked against its committed
+    row, so a disagreement between the documents and the committed decode stops
+    the run instead of quietly overwriting one with the other.
+    """
+    adapters = _note_adapters()
     try:
-        notes = load_corpus(None, strict=True)
+        notes = load_corpus_committed(None, strict=True)
     except Exception as exc:  # noqa: BLE001
         args.failures.append(
             {
@@ -256,22 +279,21 @@ JOBS: tuple[Job, ...] = (
     Job(
         name="dgec-note",
         what=(
-            "The weekly note: the printed weekly table, the printed monthly "
-            "table with its provisional flags, the chart reconstruction and its "
-            "cracks"
+            "The weekly note: the committed decode of every preserved note, then "
+            "the printed weekly table, the printed monthly table with its "
+            "provisional flags, the chart reconstruction and its cracks"
         ),
         series=(
+            "dgec_note_decoded_index",
+            "dgec_note_decoded_weekly",
+            "dgec_note_decoded_printed",
+            "dgec_note_decoded_monthly",
             "dgec_note_printed_weekly",
             "dgec_note_printed_monthly",
             "dgec_note_reconstructed_weekly",
             "dgec_note_reconstructed_cracks_weekly",
         ),
-        adapters=lambda: [
-            DgecNotePrintedWeekly(),
-            DgecNotePrintedMonthly(),
-            DgecNoteReconstructedWeekly(),
-            DgecNoteReconstructedCracksWeekly(),
-        ],
+        adapters=_note_adapters,
         online=_notes_online,
     ),
     Job(

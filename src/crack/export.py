@@ -1537,7 +1537,7 @@ ATTRIBUTIONS: Sequence[Mapping[str, Any]] = (
         "credit_line": "Source: DGEC, prices credited DGEC-Reuters",
         "third_party": "Every DGEC price table carries 'Source : DGEC-REUTERS'; the assessments are Reuters'. Parsed values are republished with attribution and the note PDFs are not.",
         "licence": "Licence Ouverte 2.0, attribution and the date of last update",
-        "series": ["dgec_mbr_monthly", "dgec_brent_monthly", "dgec_note_printed_monthly", "dgec_note_printed_weekly", "dgec_note_reconstructed_weekly", "dgec_note_reconstructed_cracks_weekly", "anchors"],
+        "series": ["dgec_mbr_monthly", "dgec_brent_monthly", "dgec_note_printed_monthly", "dgec_note_printed_weekly", "dgec_note_reconstructed_weekly", "dgec_note_reconstructed_cracks_weekly", "dgec_note_decoded_index", "dgec_note_decoded_weekly", "dgec_note_decoded_printed", "dgec_note_decoded_monthly", "anchors"],
     },
     {
         "id": "opec_argus",
@@ -1639,6 +1639,24 @@ SERIES_READER: Mapping[str, Mapping[str, str]] = {
     "dgec_note_reconstructed_cracks_weekly": {
         "label": "Gasoil and gasoline cracks, weekly, from the chart reading",
         "source": "Computed by this study",
+    },
+    "dgec_note_decoded_index": {
+        "label": "The register of the weekly notes this study preserved, one row each",
+        "source": "DGEC weekly note, recorded by this study",
+    },
+    "dgec_note_decoded_weekly": {
+        "label": "Every note's chart reading, week by week, before they are stitched together",
+        "source": "DGEC weekly note, chart read by this study",
+    },
+    "dgec_note_decoded_printed": {
+        "label": "Every note's printed weekly table, before they are stitched together",
+        "source": "DGEC weekly note",
+        "gaps_reason": "the weeks no preserved note printed, not lost data",
+    },
+    "dgec_note_decoded_monthly": {
+        "label": "Every note's printed monthly table, with the provisional marker it carried",
+        "source": "DGEC weekly note",
+        "gaps_reason": "the months no preserved note printed, not lost data",
     },
     "ei_refinery_capacity_annual": {
         "label": "Refinery capacity, annual, five northwest European countries",

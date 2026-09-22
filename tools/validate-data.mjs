@@ -132,9 +132,20 @@ const COLUMN_BOUNDS = [
     what: "a difference between two readings of the same quantity, which has no level",
   },
   {
-    match: /^(n_notes|n_issues|n_independent_geometries|n_prints|cells|cells_code_\d+)$/,
+    match: /^(n_notes|n_issues|n_independent_geometries|n_prints|n_readings|cells|cells_code_\d+)$/,
     lo: 0.0, hi: 1000000.0,
     what: "a count of the documents or cells behind a row, provenance rather than a measurement",
+  },
+  {
+    // The geometry of one note's page 3 chart, and the page the table sat on.
+    // They are measurements of a PDF rather than of a market: the number of y
+    // axis ticks, the distance between two plotted points in typographic
+    // points, and a one based page number. The bands are what a page of A4 can
+    // physically hold, so a decode that went wrong by an order of magnitude
+    // fails here as well as at its own gates.
+    match: /^(geometry_ticks|geometry_pitch_pt|note_page)$/,
+    lo: 0.0, hi: 2000.0,
+    what: "a measurement of the note PDF's own geometry, not of the market",
   },
   { match: /_kbd$/, lo: 0.0, hi: 100000.0, what: "a flow or a capacity, kb/d" },
   { match: /_capacity_kb_d$/, lo: 0.0, hi: 100000.0, what: "refinery capacity, kb/d" },

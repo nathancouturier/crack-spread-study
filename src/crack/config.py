@@ -1385,6 +1385,117 @@ SOURCES: Mapping[str, Source] = _registry(
         ),
         committable=True,
     ),
+    # -- The committed decode of the weekly notes --------------------------
+    #
+    # SPEC.md section 5.4 says the caches are committed so the site builds and
+    # results reproduce with no network. The three series above could not honour
+    # that: they are built by decoding note PDFs that are gitignored and cannot
+    # be downloaded again, so a fresh clone could not rebuild any of them and the
+    # weekly refresh job of SPEC.md section 8 could not restitch after collecting
+    # a note. These four caches are the decode itself, committed, so the stitch
+    # is a pure function of committed data. The PDFs stay private. See
+    # crack.sources.dgec_note, "The committed decode".
+    Source(
+        series="dgec_note_decoded_index",
+        label=(
+            "One row per preserved weekly note: the week it prints, its file, its "
+            "quotation page and its chart geometry"
+        ),
+        publisher="DGEC, ministere de la Transition ecologique, recorded by this study",
+        page_url="https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        machine_url=None,
+        url_note=(
+            "Not fetched. Written from the corpus of preserved note PDFs, which "
+            "are gitignored and irreplaceable. The date is the note's CONTENT "
+            "date, the latest week printed inside it, never the date in its file "
+            "name: four of the notes carry a content date later than their name "
+            "because the ministry sometimes replaces the contents of an existing "
+            "URL. The geometry is the signature that tells two notes which cannot "
+            "disagree from two which agree."
+        ),
+        frequency="weekly",
+        unit="USD per tonne for the axis values, points for the pitch, a count for the ticks",
+        method="parsed",
+        licence=_ETALAB,
+        licence_note=_ETALAB_NOTE,
+        committable=True,
+    ),
+    Source(
+        series="dgec_note_decoded_weekly",
+        label=(
+            "The page 3 chart of every preserved note, decoded, one reading per "
+            "note per week per product, $/t"
+        ),
+        publisher="DGEC weekly note chart, decoded by this study",
+        page_url="https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        machine_url=None,
+        url_note=(
+            "Not fetched. The readings themselves, before the stitch. "
+            "dgec_note_reconstructed_weekly is the median across them per week "
+            "with its spread and its evidence class; this is what each note drew. "
+            "One row per week and one reading slot per note that covers it, with "
+            "the note's file name beside its values, because a cache here is a "
+            "time series and a long table would not have a unique date."
+        ),
+        frequency="weekly",
+        unit="USD per tonne",
+        method="reconstructed",
+        licence=_ETALAB,
+        licence_note=(
+            _ETALAB_NOTE
+            + " This series is additionally a reconstruction by this study, not a "
+            "DGEC publication. It must be labelled as such everywhere it appears, "
+            "with its measured error next to it, and never presented as a DGEC "
+            "figure."
+        ),
+        committable=True,
+    ),
+    Source(
+        series="dgec_note_decoded_printed",
+        label=(
+            "The printed weekly columns of every preserved note, one reading per "
+            "note per week per product"
+        ),
+        publisher="DGEC, ministere de la Transition ecologique, weekly note",
+        page_url="https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        machine_url=None,
+        url_note=(
+            "Not fetched. Parsed out of each note's own table by row and column "
+            "label. dgec_note_printed_weekly is the stitch of these, one row per "
+            "distinct week with the disagreement between notes carried rather than "
+            "averaged; this is what each note printed. A blank is a row that "
+            "note's layout does not print, never a zero."
+        ),
+        frequency="weekly",
+        unit="USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
+        method="parsed",
+        licence=_ETALAB,
+        licence_note=_ETALAB_NOTE,
+        committable=True,
+    ),
+    Source(
+        series="dgec_note_decoded_monthly",
+        label=(
+            "The printed monthly columns of every preserved note, one reading per "
+            "note per month per product, with that note's provisional marker"
+        ),
+        publisher="DGEC, ministere de la Transition ecologique, weekly note",
+        page_url="https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
+        machine_url=None,
+        url_note=(
+            "Not fetched. The monthly columns the six column layout has printed "
+            "since December 2025, with the provisional marker each note set "
+            "against each month. SPEC.md section 2 rule 5 asks for every vintage "
+            "to be kept and the flag shown; this file is where the vintages are. "
+            "dgec_note_printed_monthly is the stitch of these."
+        ),
+        frequency="monthly",
+        unit="USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
+        method="parsed",
+        licence=_ETALAB,
+        licence_note=_ETALAB_NOTE,
+        committable=True,
+    ),
     # -- OPEC ---------------------------------------------------------------
     Source(
         series="opec_rotterdam_products_monthly",

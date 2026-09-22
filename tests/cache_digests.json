@@ -69,6 +69,1098 @@
         }
       }
     },
+    "data/cache/dgec_note_decoded_index.csv": {
+      "sha256": "67f2476060b5c8209e0e7e286ddd5bd28a5e0ee3fefac64cf1ea1fb19b65edce",
+      "bytes": 721,
+      "rows": 12,
+      "columns": [
+        "date",
+        "note_file",
+        "note_page",
+        "geometry_ticks",
+        "geometry_first_usd_t",
+        "geometry_last_usd_t",
+        "geometry_pitch_pt"
+      ],
+      "anchors": {
+        "note_page": {
+          "observations": 12,
+          "first": [
+            "2024-06-28",
+            "3"
+          ],
+          "last": [
+            "2026-09-18",
+            "3"
+          ]
+        },
+        "geometry_ticks": {
+          "observations": 12,
+          "first": [
+            "2024-06-28",
+            "12"
+          ],
+          "last": [
+            "2026-09-18",
+            "14"
+          ]
+        },
+        "geometry_first_usd_t": {
+          "observations": 12,
+          "first": [
+            "2024-06-28",
+            "1600"
+          ],
+          "last": [
+            "2026-09-18",
+            "1700"
+          ]
+        },
+        "geometry_last_usd_t": {
+          "observations": 12,
+          "first": [
+            "2024-06-28",
+            "500"
+          ],
+          "last": [
+            "2026-09-18",
+            "400"
+          ]
+        },
+        "geometry_pitch_pt": {
+          "observations": 12,
+          "first": [
+            "2024-06-28",
+            "4.165"
+          ],
+          "last": [
+            "2026-09-18",
+            "4.321"
+          ]
+        }
+      }
+    },
+    "data/cache/dgec_note_decoded_monthly.csv": {
+      "sha256": "7eb78133c8ae021528cabc537fe53dd8c570b2c454acebbd1b0879084dc8d038",
+      "bytes": 1805,
+      "rows": 7,
+      "columns": [
+        "date",
+        "n_readings",
+        "r1_note",
+        "r1_eurosuper_usd_t",
+        "r1_gazole_usd_t",
+        "r1_fioul_domestique_usd_t",
+        "r1_jet_usd_t",
+        "r1_fioul_lourd_tbts_usd_t",
+        "r1_fioul_lourd_tbts_eur_t",
+        "r1_brent_date_usd_t",
+        "r1_provisional",
+        "r2_note",
+        "r2_eurosuper_usd_t",
+        "r2_gazole_usd_t",
+        "r2_fioul_domestique_usd_t",
+        "r2_jet_usd_t",
+        "r2_fioul_lourd_tbts_usd_t",
+        "r2_fioul_lourd_tbts_eur_t",
+        "r2_brent_date_usd_t",
+        "r2_provisional",
+        "r3_note",
+        "r3_eurosuper_usd_t",
+        "r3_gazole_usd_t",
+        "r3_fioul_domestique_usd_t",
+        "r3_jet_usd_t",
+        "r3_fioul_lourd_tbts_usd_t",
+        "r3_fioul_lourd_tbts_eur_t",
+        "r3_brent_date_usd_t",
+        "r3_provisional",
+        "r4_note",
+        "r4_eurosuper_usd_t",
+        "r4_gazole_usd_t",
+        "r4_fioul_domestique_usd_t",
+        "r4_jet_usd_t",
+        "r4_fioul_lourd_tbts_usd_t",
+        "r4_fioul_lourd_tbts_eur_t",
+        "r4_brent_date_usd_t",
+        "r4_provisional"
+      ],
+      "anchors": {
+        "n_readings": {
+          "observations": 7,
+          "first": [
+            "2025-11-01",
+            "1"
+          ],
+          "last": [
+            "2026-09-01",
+            "3"
+          ]
+        },
+        "r1_eurosuper_usd_t": {
+          "observations": 7,
+          "first": [
+            "2025-11-01",
+            "739"
+          ],
+          "last": [
+            "2026-09-01",
+            "1380"
+          ]
+        },
+        "r1_gazole_usd_t": {
+          "observations": 7,
+          "first": [
+            "2025-11-01",
+            "750"
+          ],
+          "last": [
+            "2026-09-01",
+            "1424"
+          ]
+        },
+        "r1_fioul_domestique_usd_t": {
+          "observations": 7,
+          "first": [
+            "2025-11-01",
+            "727"
+          ],
+          "last": [
+            "2026-09-01",
+            "1389"
+          ]
+        },
+        "r1_jet_usd_t": {
+          "observations": 7,
+          "first": [
+            "2025-11-01",
+            "772"
+          ],
+          "last": [
+            "2026-09-01",
+            "1459"
+          ]
+        },
+        "r1_fioul_lourd_tbts_usd_t": {
+          "observations": 7,
+          "first": [
+            "2025-11-01",
+            "403"
+          ],
+          "last": [
+            "2026-09-01",
+            "563"
+          ]
+        },
+        "r1_fioul_lourd_tbts_eur_t": {
+          "observations": 7,
+          "first": [
+            "2025-11-01",
+            "349"
+          ],
+          "last": [
+            "2026-09-01",
+            "486"
+          ]
+        },
+        "r1_brent_date_usd_t": {
+          "observations": 7,
+          "first": [
+            "2025-11-01",
+            "479"
+          ],
+          "last": [
+            "2026-09-01",
+            "743"
+          ]
+        },
+        "r2_eurosuper_usd_t": {
+          "observations": 5,
+          "first": [
+            "2026-02-01",
+            "695"
+          ],
+          "last": [
+            "2026-09-01",
+            "1339"
+          ]
+        },
+        "r2_gazole_usd_t": {
+          "observations": 5,
+          "first": [
+            "2026-02-01",
+            "705"
+          ],
+          "last": [
+            "2026-09-01",
+            "1457"
+          ]
+        },
+        "r2_fioul_domestique_usd_t": {
+          "observations": 5,
+          "first": [
+            "2026-02-01",
+            "695"
+          ],
+          "last": [
+            "2026-09-01",
+            "1427"
+          ]
+        },
+        "r2_jet_usd_t": {
+          "observations": 5,
+          "first": [
+            "2026-02-01",
+            "776"
+          ],
+          "last": [
+            "2026-09-01",
+            "1490"
+          ]
+        },
+        "r2_fioul_lourd_tbts_usd_t": {
+          "observations": 5,
+          "first": [
+            "2026-02-01",
+            "405"
+          ],
+          "last": [
+            "2026-09-01",
+            "579"
+          ]
+        },
+        "r2_fioul_lourd_tbts_eur_t": {
+          "observations": 5,
+          "first": [
+            "2026-02-01",
+            "343"
+          ],
+          "last": [
+            "2026-09-01",
+            "499"
+          ]
+        },
+        "r2_brent_date_usd_t": {
+          "observations": 5,
+          "first": [
+            "2026-02-01",
+            "532"
+          ],
+          "last": [
+            "2026-09-01",
+            "796"
+          ]
+        },
+        "r3_eurosuper_usd_t": {
+          "observations": 3,
+          "first": [
+            "2026-03-01",
+            "988"
+          ],
+          "last": [
+            "2026-09-01",
+            "1347"
+          ]
+        },
+        "r3_gazole_usd_t": {
+          "observations": 3,
+          "first": [
+            "2026-03-01",
+            "1219"
+          ],
+          "last": [
+            "2026-09-01",
+            "1484"
+          ]
+        },
+        "r3_fioul_domestique_usd_t": {
+          "observations": 3,
+          "first": [
+            "2026-03-01",
+            "1169"
+          ],
+          "last": [
+            "2026-09-01",
+            "1458"
+          ]
+        },
+        "r3_jet_usd_t": {
+          "observations": 3,
+          "first": [
+            "2026-03-01",
+            "1518"
+          ],
+          "last": [
+            "2026-09-01",
+            "1543"
+          ]
+        },
+        "r3_fioul_lourd_tbts_usd_t": {
+          "observations": 3,
+          "first": [
+            "2026-03-01",
+            "601"
+          ],
+          "last": [
+            "2026-09-01",
+            "592"
+          ]
+        },
+        "r3_fioul_lourd_tbts_eur_t": {
+          "observations": 3,
+          "first": [
+            "2026-03-01",
+            "520"
+          ],
+          "last": [
+            "2026-09-01",
+            "511"
+          ]
+        },
+        "r3_brent_date_usd_t": {
+          "observations": 3,
+          "first": [
+            "2026-03-01",
+            "774"
+          ],
+          "last": [
+            "2026-09-01",
+            "844"
+          ]
+        },
+        "r4_eurosuper_usd_t": {
+          "observations": 1,
+          "first": [
+            "2026-03-01",
+            "988"
+          ],
+          "last": [
+            "2026-03-01",
+            "988"
+          ]
+        },
+        "r4_gazole_usd_t": {
+          "observations": 1,
+          "first": [
+            "2026-03-01",
+            "1219"
+          ],
+          "last": [
+            "2026-03-01",
+            "1219"
+          ]
+        },
+        "r4_fioul_domestique_usd_t": {
+          "observations": 1,
+          "first": [
+            "2026-03-01",
+            "1169"
+          ],
+          "last": [
+            "2026-03-01",
+            "1169"
+          ]
+        },
+        "r4_jet_usd_t": {
+          "observations": 1,
+          "first": [
+            "2026-03-01",
+            "1518"
+          ],
+          "last": [
+            "2026-03-01",
+            "1518"
+          ]
+        },
+        "r4_fioul_lourd_tbts_usd_t": {
+          "observations": 1,
+          "first": [
+            "2026-03-01",
+            "601"
+          ],
+          "last": [
+            "2026-03-01",
+            "601"
+          ]
+        },
+        "r4_fioul_lourd_tbts_eur_t": {
+          "observations": 1,
+          "first": [
+            "2026-03-01",
+            "520"
+          ],
+          "last": [
+            "2026-03-01",
+            "520"
+          ]
+        },
+        "r4_brent_date_usd_t": {
+          "observations": 1,
+          "first": [
+            "2026-03-01",
+            "774"
+          ],
+          "last": [
+            "2026-03-01",
+            "774"
+          ]
+        }
+      }
+    },
+    "data/cache/dgec_note_decoded_printed.csv": {
+      "sha256": "0b0bfb0dc7a8fcc4440d210f181be340d467a2ad12cad40d3eac3922ca2542fd",
+      "bytes": 1919,
+      "rows": 20,
+      "columns": [
+        "date",
+        "n_readings",
+        "r1_note",
+        "r1_eurosuper_usd_t",
+        "r1_gazole_usd_t",
+        "r1_fioul_domestique_usd_t",
+        "r1_jet_usd_t",
+        "r1_fioul_lourd_tbts_usd_t",
+        "r1_fioul_lourd_tbts_eur_t",
+        "r1_brent_date_usd_t",
+        "r2_note",
+        "r2_eurosuper_usd_t",
+        "r2_gazole_usd_t",
+        "r2_fioul_domestique_usd_t",
+        "r2_jet_usd_t",
+        "r2_fioul_lourd_tbts_usd_t",
+        "r2_fioul_lourd_tbts_eur_t",
+        "r2_brent_date_usd_t"
+      ],
+      "anchors": {
+        "n_readings": {
+          "observations": 20,
+          "first": [
+            "2024-06-21",
+            "1"
+          ],
+          "last": [
+            "2026-09-18",
+            "1"
+          ]
+        },
+        "r1_eurosuper_usd_t": {
+          "observations": 20,
+          "first": [
+            "2024-06-21",
+            "861"
+          ],
+          "last": [
+            "2026-09-18",
+            "1361"
+          ]
+        },
+        "r1_gazole_usd_t": {
+          "observations": 20,
+          "first": [
+            "2024-06-21",
+            "794"
+          ],
+          "last": [
+            "2026-09-18",
+            "1532"
+          ]
+        },
+        "r1_fioul_domestique_usd_t": {
+          "observations": 20,
+          "first": [
+            "2024-06-21",
+            "797"
+          ],
+          "last": [
+            "2026-09-18",
+            "1505"
+          ]
+        },
+        "r1_jet_usd_t": {
+          "observations": 20,
+          "first": [
+            "2024-06-21",
+            "834"
+          ],
+          "last": [
+            "2026-09-18",
+            "1633"
+          ]
+        },
+        "r1_fioul_lourd_tbts_usd_t": {
+          "observations": 18,
+          "first": [
+            "2024-06-21",
+            "499"
+          ],
+          "last": [
+            "2026-09-18",
+            "611"
+          ]
+        },
+        "r1_fioul_lourd_tbts_eur_t": {
+          "observations": 12,
+          "first": [
+            "2025-12-12",
+            "326"
+          ],
+          "last": [
+            "2026-09-18",
+            "530"
+          ]
+        },
+        "r1_brent_date_usd_t": {
+          "observations": 20,
+          "first": [
+            "2024-06-21",
+            "630"
+          ],
+          "last": [
+            "2026-09-18",
+            "929"
+          ]
+        },
+        "r2_eurosuper_usd_t": {
+          "observations": 4,
+          "first": [
+            "2026-03-20",
+            "1066"
+          ],
+          "last": [
+            "2026-09-11",
+            "1317"
+          ]
+        },
+        "r2_gazole_usd_t": {
+          "observations": 4,
+          "first": [
+            "2026-03-20",
+            "1292"
+          ],
+          "last": [
+            "2026-09-11",
+            "1462"
+          ]
+        },
+        "r2_fioul_domestique_usd_t": {
+          "observations": 4,
+          "first": [
+            "2026-03-20",
+            "1221"
+          ],
+          "last": [
+            "2026-09-11",
+            "1441"
+          ]
+        },
+        "r2_jet_usd_t": {
+          "observations": 4,
+          "first": [
+            "2026-03-20",
+            "1705"
+          ],
+          "last": [
+            "2026-09-11",
+            "1487"
+          ]
+        },
+        "r2_fioul_lourd_tbts_usd_t": {
+          "observations": 4,
+          "first": [
+            "2026-03-20",
+            "629"
+          ],
+          "last": [
+            "2026-09-11",
+            "584"
+          ]
+        },
+        "r2_fioul_lourd_tbts_eur_t": {
+          "observations": 4,
+          "first": [
+            "2026-03-20",
+            "547"
+          ],
+          "last": [
+            "2026-09-11",
+            "502"
+          ]
+        },
+        "r2_brent_date_usd_t": {
+          "observations": 4,
+          "first": [
+            "2026-03-20",
+            "813"
+          ],
+          "last": [
+            "2026-09-11",
+            "815"
+          ]
+        }
+      }
+    },
+    "data/cache/dgec_note_decoded_weekly.csv": {
+      "sha256": "d4f29f994de962f5d724b36c4257f80757c0b8e4c8b727f6504f6c724e98c7c6",
+      "bytes": 124683,
+      "rows": 221,
+      "columns": [
+        "date",
+        "n_readings",
+        "r1_note",
+        "r1_eurosuper_usd_t",
+        "r1_gazole_usd_t",
+        "r1_fioul_domestique_usd_t",
+        "r1_brent_date_usd_t",
+        "r2_note",
+        "r2_eurosuper_usd_t",
+        "r2_gazole_usd_t",
+        "r2_fioul_domestique_usd_t",
+        "r2_brent_date_usd_t",
+        "r3_note",
+        "r3_eurosuper_usd_t",
+        "r3_gazole_usd_t",
+        "r3_fioul_domestique_usd_t",
+        "r3_brent_date_usd_t",
+        "r4_note",
+        "r4_eurosuper_usd_t",
+        "r4_gazole_usd_t",
+        "r4_fioul_domestique_usd_t",
+        "r4_brent_date_usd_t",
+        "r5_note",
+        "r5_eurosuper_usd_t",
+        "r5_gazole_usd_t",
+        "r5_fioul_domestique_usd_t",
+        "r5_brent_date_usd_t",
+        "r6_note",
+        "r6_eurosuper_usd_t",
+        "r6_gazole_usd_t",
+        "r6_fioul_domestique_usd_t",
+        "r6_brent_date_usd_t",
+        "r7_note",
+        "r7_eurosuper_usd_t",
+        "r7_gazole_usd_t",
+        "r7_fioul_domestique_usd_t",
+        "r7_brent_date_usd_t",
+        "r8_note",
+        "r8_eurosuper_usd_t",
+        "r8_gazole_usd_t",
+        "r8_fioul_domestique_usd_t",
+        "r8_brent_date_usd_t",
+        "r9_note",
+        "r9_eurosuper_usd_t",
+        "r9_gazole_usd_t",
+        "r9_fioul_domestique_usd_t",
+        "r9_brent_date_usd_t"
+      ],
+      "anchors": {
+        "n_readings": {
+          "observations": 221,
+          "first": [
+            "2022-07-01",
+            "1"
+          ],
+          "last": [
+            "2026-09-18",
+            "1"
+          ]
+        },
+        "r1_eurosuper_usd_t": {
+          "observations": 221,
+          "first": [
+            "2022-07-01",
+            "1414.6217821361515"
+          ],
+          "last": [
+            "2026-09-18",
+            "1360.990586164868"
+          ]
+        },
+        "r1_gazole_usd_t": {
+          "observations": 221,
+          "first": [
+            "2022-07-01",
+            "1268.8563458823082"
+          ],
+          "last": [
+            "2026-09-18",
+            "1531.916110193526"
+          ]
+        },
+        "r1_fioul_domestique_usd_t": {
+          "observations": 221,
+          "first": [
+            "2022-07-01",
+            "1286.5248836100468"
+          ],
+          "last": [
+            "2026-09-18",
+            "1505.6198757275788"
+          ]
+        },
+        "r1_brent_date_usd_t": {
+          "observations": 221,
+          "first": [
+            "2022-07-01",
+            "899.5839073725732"
+          ],
+          "last": [
+            "2026-09-18",
+            "928.1983939128187"
+          ]
+        },
+        "r2_eurosuper_usd_t": {
+          "observations": 214,
+          "first": [
+            "2022-08-12",
+            "1034.84921832716"
+          ],
+          "last": [
+            "2026-09-11",
+            "1317.1635287216222"
+          ]
+        },
+        "r2_gazole_usd_t": {
+          "observations": 214,
+          "first": [
+            "2022-08-12",
+            "1013.5294893165872"
+          ],
+          "last": [
+            "2026-09-11",
+            "1461.7928182843325"
+          ]
+        },
+        "r2_fioul_domestique_usd_t": {
+          "observations": 214,
+          "first": [
+            "2022-08-12",
+            "1016.7496567192261"
+          ],
+          "last": [
+            "2026-09-11",
+            "1440.974965998791"
+          ]
+        },
+        "r2_brent_date_usd_t": {
+          "observations": 214,
+          "first": [
+            "2022-08-12",
+            "779.7342318594997"
+          ],
+          "last": [
+            "2026-09-11",
+            "815.3437209964619"
+          ]
+        },
+        "r3_eurosuper_usd_t": {
+          "observations": 209,
+          "first": [
+            "2022-09-09",
+            "928.3270085763048"
+          ],
+          "last": [
+            "2026-09-04",
+            "1348.9381453679753"
+          ]
+        },
+        "r3_gazole_usd_t": {
+          "observations": 209,
+          "first": [
+            "2022-09-09",
+            "1109.5382346322688"
+          ],
+          "last": [
+            "2026-09-04",
+            "1393.8608792473024"
+          ]
+        },
+        "r3_fioul_domestique_usd_t": {
+          "observations": 209,
+          "first": [
+            "2022-09-09",
+            "1087.0474796253227"
+          ],
+          "last": [
+            "2026-09-04",
+            "1358.799233292706"
+          ]
+        },
+        "r3_brent_date_usd_t": {
+          "observations": 209,
+          "first": [
+            "2022-09-09",
+            "680.2861104997024"
+          ],
+          "last": [
+            "2026-09-04",
+            "720.0198710574033"
+          ]
+        },
+        "r4_eurosuper_usd_t": {
+          "observations": 171,
+          "first": [
+            "2023-01-20",
+            "929.5672960610191"
+          ],
+          "last": [
+            "2026-04-24",
+            "1062.1254918970014"
+          ]
+        },
+        "r4_gazole_usd_t": {
+          "observations": 171,
+          "first": [
+            "2023-01-20",
+            "943.7023482512025"
+          ],
+          "last": [
+            "2026-04-24",
+            "1199.6042515525053"
+          ]
+        },
+        "r4_fioul_domestique_usd_t": {
+          "observations": 171,
+          "first": [
+            "2023-01-20",
+            "941.7526858801425"
+          ],
+          "last": [
+            "2026-04-24",
+            "1145.4858902021963"
+          ]
+        },
+        "r4_brent_date_usd_t": {
+          "observations": 171,
+          "first": [
+            "2023-01-20",
+            "628.8318753250521"
+          ],
+          "last": [
+            "2026-04-24",
+            "802.489152511652"
+          ]
+        },
+        "r5_eurosuper_usd_t": {
+          "observations": 120,
+          "first": [
+            "2023-12-22",
+            "790.9937562290269"
+          ],
+          "last": [
+            "2026-04-03",
+            "1098.6986310743794"
+          ]
+        },
+        "r5_gazole_usd_t": {
+          "observations": 120,
+          "first": [
+            "2023-12-22",
+            "808.694994948202"
+          ],
+          "last": [
+            "2026-04-03",
+            "1415.0892337327311"
+          ]
+        },
+        "r5_fioul_domestique_usd_t": {
+          "observations": 120,
+          "first": [
+            "2023-12-22",
+            "793.5225046174804"
+          ],
+          "last": [
+            "2026-04-03",
+            "1390.7071409478124"
+          ]
+        },
+        "r5_brent_date_usd_t": {
+          "observations": 120,
+          "first": [
+            "2023-12-22",
+            "596.2801303181033"
+          ],
+          "last": [
+            "2026-04-03",
+            "926.0470551379287"
+          ]
+        },
+        "r6_eurosuper_usd_t": {
+          "observations": 106,
+          "first": [
+            "2024-03-22",
+            "946.9360307375873"
+          ],
+          "last": [
+            "2026-03-27",
+            "1063.6081867285168"
+          ]
+        },
+        "r6_gazole_usd_t": {
+          "observations": 106,
+          "first": [
+            "2024-03-22",
+            "864.2426085721238"
+          ],
+          "last": [
+            "2026-03-27",
+            "1314.513100994942"
+          ]
+        },
+        "r6_fioul_domestique_usd_t": {
+          "observations": 106,
+          "first": [
+            "2024-03-22",
+            "849.0695035876352"
+          ],
+          "last": [
+            "2026-03-27",
+            "1230.328983338906"
+          ]
+        },
+        "r6_brent_date_usd_t": {
+          "observations": 106,
+          "first": [
+            "2024-03-22",
+            "644.9912415462627"
+          ],
+          "last": [
+            "2026-03-27",
+            "829.5071472192647"
+          ]
+        },
+        "r7_eurosuper_usd_t": {
+          "observations": 104,
+          "first": [
+            "2024-03-29",
+            "981.7595831640268"
+          ],
+          "last": [
+            "2026-03-20",
+            "1065.7498570407058"
+          ]
+        },
+        "r7_gazole_usd_t": {
+          "observations": 104,
+          "first": [
+            "2024-03-29",
+            "841.8603832001476"
+          ],
+          "last": [
+            "2026-03-20",
+            "1291.778446911707"
+          ]
+        },
+        "r7_fioul_domestique_usd_t": {
+          "observations": 104,
+          "first": [
+            "2024-03-29",
+            "829.2188892275079"
+          ],
+          "last": [
+            "2026-03-20",
+            "1220.856210804225"
+          ]
+        },
+        "r7_brent_date_usd_t": {
+          "observations": 104,
+          "first": [
+            "2024-03-29",
+            "642.1247784324408"
+          ],
+          "last": [
+            "2026-03-20",
+            "812.703272462091"
+          ]
+        },
+        "r8_eurosuper_usd_t": {
+          "observations": 87,
+          "first": [
+            "2024-04-05",
+            "987.874099951654"
+          ],
+          "last": [
+            "2025-12-19",
+            "645.9001039166176"
+          ]
+        },
+        "r8_gazole_usd_t": {
+          "observations": 87,
+          "first": [
+            "2024-04-05",
+            "872.8809615619998"
+          ],
+          "last": [
+            "2025-12-19",
+            "631.3202714067172"
+          ]
+        },
+        "r8_fioul_domestique_usd_t": {
+          "observations": 87,
+          "first": [
+            "2024-04-05",
+            "867.3167774463718"
+          ],
+          "last": [
+            "2025-12-19",
+            "615.1753721302173"
+          ]
+        },
+        "r8_brent_date_usd_t": {
+          "observations": 87,
+          "first": [
+            "2024-04-05",
+            "671.6429693801056"
+          ],
+          "last": [
+            "2025-12-19",
+            "457.4331164440038"
+          ]
+        },
+        "r9_eurosuper_usd_t": {
+          "observations": 28,
+          "first": [
+            "2024-04-26",
+            "964.8442365625799"
+          ],
+          "last": [
+            "2025-01-17",
+            "766.6573607500325"
+          ]
+        },
+        "r9_gazole_usd_t": {
+          "observations": 28,
+          "first": [
+            "2024-04-26",
+            "795.15805028916"
+          ],
+          "last": [
+            "2025-01-17",
+            "764.4333185027588"
+          ]
+        },
+        "r9_fioul_domestique_usd_t": {
+          "observations": 28,
+          "first": [
+            "2024-04-26",
+            "792.1926606261293"
+          ],
+          "last": [
+            "2025-01-17",
+            "747.6294437455856"
+          ]
+        },
+        "r9_brent_date_usd_t": {
+          "observations": 28,
+          "first": [
+            "2024-04-26",
+            "661.3036557773601"
+          ],
+          "last": [
+            "2025-01-17",
+            "615.9167195459747"
+          ]
+        }
+      }
+    },
     "data/cache/dgec_note_printed_monthly.csv": {
       "sha256": "fde6f7f3f5adb73501622d811dde6222a8821e28ba3a629c3d6bf8b93653c5d3",
       "bytes": 3920,

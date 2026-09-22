@@ -682,6 +682,12 @@ def test_the_monthly_series_is_the_only_monthly_home_of_the_dgec_jet_quotation()
         if other.name in (
             "dgec_note_printed_monthly.csv",
             "dgec_note_printed_weekly.csv",
+            # The committed decode the two above are STITCHED FROM. Same
+            # quotations, same notes, one row per reading instead of one row per
+            # week, so it is the same claim written once more and not a new home
+            # for the jet and heavy fuel oil rows.
+            "dgec_note_decoded_monthly.csv",
+            "dgec_note_decoded_printed.csv",
         ):
             continue
         header = pd.read_csv(other, nrows=0).columns
@@ -1477,3 +1483,122 @@ def test_the_committed_caches_are_what_the_adapters_built():
     assert list(frames["dgec_note_reconstructed_cracks_weekly.csv"]["date"]) == list(quotes["date"])
     assert frames["dgec_note_printed_weekly.csv"]["date"].max() == last
     assert len(frames["dgec_note_printed_weekly.csv"]) >= 18
+
+
+# ==========================================================================
+# The committed decode, so a checkout with no PDF can still stitch
+# ==========================================================================
+#
+# Gate 5. The stitched series above are built by decoding note PDFs that are
+# gitignored and cannot be downloaded again, so a GitHub runner could not rebuild
+# any of them and the weekly refresh job of SPEC.md section 8 could not restitch
+# after collecting a note. The decode is now committed as four caches and the
+# stitch reads those. These tests hold down the two things that has to mean:
+# the committed decode reproduces the stitched series EXACTLY, and it agrees with
+# the documents wherever both are on the machine.
+#
+# Everything here that needs a PDF skips on a fresh checkout. The two tests that
+# matter most on a runner, the round trip and the equality of the stitch, need
+# only the committed caches and therefore run everywhere.
+
+
+def _committed_decode():
+    frames = dgec_note.read_decoded()
+    if frames is None:
+        pytest.skip("the committed decode is not built; run make data")
+    return frames
+
+
+def test_the_four_decode_caches_are_committed_and_complete():
+    frames = _committed_decode()
+    assert sorted(frames) == sorted(dgec_note.DECODED_SERIES)
+    index = frames[dgec_note.DECODED_INDEX]
+    assert len(index) >= 10
+    assert list(index.columns) == ["date"] + list(dgec_note.INDEX_COLUMNS)
+    weekly = frames[dgec_note.DECODED_WEEKLY]
+    assert weekly["n_readings"].min() >= 1
+    # One row per week, which is what makes it a cache like any other.
+    assert weekly["date"].is_unique and weekly["date"].is_monotonic_increasing
+
+
+def test_the_committed_decode_rebuilds_the_three_stitched_series_exactly():
+    """THE WHOLE POINT. No PDF is opened anywhere in this test."""
+    notes = dgec_note.notes_from_decoded(_committed_decode())
+    assert notes
+
+    for name, builder in (
+        ("dgec_note_printed_weekly", build_printed_weekly),
+        ("dgec_note_printed_monthly", build_printed_monthly),
+        ("dgec_note_reconstructed_weekly", build_reconstructed_weekly),
+    ):
+        path = CACHE / ("%s.csv" % name)
+        if not path.exists():
+            pytest.skip("%s is not built" % path)
+        rebuilt = builder(notes)
+        committed = pd.read_csv(path)
+        committed["date"] = pd.to_datetime(committed["date"])
+        assert list(rebuilt.columns) == list(committed.columns), name
+        assert len(rebuilt) == len(committed), name
+        for column in rebuilt.columns:
+            left, right = rebuilt[column], committed[column]
+            if pd.api.types.is_numeric_dtype(left) and pd.api.types.is_numeric_dtype(right):
+                pd.testing.assert_series_equal(
+                    left.astype(float), right.astype(float),
+                    check_names=False, rtol=0, atol=1e-9,
+                )
+            else:
+                assert list(left.astype(str)) == list(right.astype(str)), (name, column)
+
+
+def test_the_committed_decode_agrees_with_the_documents(corpus):
+    """On the owner's machine, every run proves the table against the PDFs."""
+    from_files = list(corpus.values())
+    from_table = dgec_note.notes_from_decoded(_committed_decode())
+    assert dgec_note._disagreements(from_files, from_table) == []
+    assert {n.file for n in from_files} <= {n.file for n in from_table}, (
+        "a note PDF on this machine is not in the committed decode. Run: make data"
+    )
+
+
+def test_a_round_trip_through_the_slot_tables_changes_nothing(corpus):
+    notes = list(corpus.values())
+    frames = dgec_note.decoded_frames(notes)
+    back = dgec_note.notes_from_decoded(frames)
+    assert dgec_note._disagreements(notes, back) == []
+    for original in notes:
+        other = next(n for n in back if n.file == original.file)
+        assert other.printed_weekly == original.printed_weekly
+        assert other.printed_monthly == original.printed_monthly
+        assert other.printed_monthly_provisional == original.printed_monthly_provisional
+        assert other.page == original.page
+
+
+def test_a_planted_disagreement_stops_the_build_rather_than_overwriting(corpus):
+    """A document and its committed row that differ is a finding, not a rounding."""
+    notes = list(corpus.values())
+    frames = dgec_note.decoded_frames(notes)
+    tampered = frames[dgec_note.DECODED_WEEKLY].copy()
+    tampered.loc[0, "r1_gazole_usd_t"] = float(tampered.loc[0, "r1_gazole_usd_t"]) + 5.0
+    frames = dict(frames)
+    frames[dgec_note.DECODED_WEEKLY] = tampered
+    problems = dgec_note._disagreements(notes, dgec_note.notes_from_decoded(frames))
+    assert problems, "a planted 5 $/t error was not noticed"
+    assert "gazole_usd_t" in problems[0]
+
+
+def test_every_reading_names_the_note_it_came_from(corpus):
+    """Provenance survives the slot layout: no value is orphaned from its note."""
+    frames = dgec_note.decoded_frames(list(corpus.values()))
+    files = {n.file for n in corpus.values()}
+    for name in (dgec_note.DECODED_WEEKLY, dgec_note.DECODED_PRINTED, dgec_note.DECODED_MONTHLY):
+        frame = frames[name]
+        slots = 0
+        while ("r%d_note" % (slots + 1)) in frame.columns:
+            slots += 1
+        assert slots >= 1, name
+        for _, row in frame.iterrows():
+            filled = [row["r%d_note" % k] for k in range(1, slots + 1) if row["r%d_note" % k]]
+            assert len(filled) == int(row["n_readings"]), name
+            assert set(filled) <= files, name
+            # The slots fill from the left, so a gap would silently drop a note.
+            assert filled == [row["r%d_note" % k] for k in range(1, len(filled) + 1)], name
