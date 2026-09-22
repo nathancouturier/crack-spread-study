@@ -17,6 +17,13 @@ dependencies = [
   "beautifulsoup4",
   "lxml",
   "openpyxl",
+  # EIA still publishes the daily Brent series as a legacy .xls, which openpyxl
+  # refuses by design, so src/crack/sources/eia.py reads it with xlrd. It was
+  # missing from this list until the first CI run, where the EIA parser's own
+  # refusal test failed on a machine that had never had xlrd installed by
+  # accident. Version 2 and later read .xls and nothing else, which is all this
+  # is for. See docs/sources.md.
+  "xlrd>=2",
   "statsmodels",
   # The DGEC weekly note is a PDF and its quotation table has to be read by
   # label rather than by position, which needs word coordinates. pdfplumber is

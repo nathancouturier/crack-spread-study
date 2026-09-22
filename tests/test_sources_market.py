@@ -505,9 +505,28 @@ def test_eia_parses_the_probe_workbook():
     assert frame["date"].is_monotonic_increasing
 
 
+def test_the_legacy_xls_reader_is_installed():
+    """RBRTEd.xls is a legacy .xls and openpyxl cannot read it, so pyproject.toml
+    lists xlrd. An environment without it fails here, by name, rather than inside
+    the refusal test below, where a missing library reads as a parser that
+    refused the payload for the wrong reason. That is how the first CI run
+    reported it."""
+    import xlrd
+
+    assert int(xlrd.__version__.split(".")[0]) >= 2
+
+
 def test_eia_refuses_a_workbook_that_is_not_this_series():
-    with pytest.raises(SourceError, match="did not open as an xls"):
+    # What is asserted is this project's refusal: the series it was reading and
+    # the fact that it would not take the payload. The exception type and the
+    # words xlrd chooses for a file that is not a workbook are quoted in the
+    # message but never asserted, because they belong to xlrd and to the machine
+    # it is installed on, not to this study.
+    with pytest.raises(SourceError) as caught:
         eia.parse_xls(b"<html>not a workbook at all</html>")
+    message = str(caught.value)
+    assert message.startswith("eia %s:" % eia.SERIES)
+    assert "did not open as an xls workbook" in message
 
 
 # ==========================================================================
