@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-22T12:02:29Z",
+  "generated_at": "2026-09-22T12:11:04Z",
   "series": [
     {
       "series": "anchors",
@@ -125,8 +125,8 @@
       "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
       "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
       "machine_fetched": true,
-      "fetched_at": "2026-09-22T12:02:29Z",
-      "checked_at": null,
+      "fetched_at": "2026-09-22T12:11:04Z",
+      "checked_at": "2026-09-22T12:11:04Z",
       "rows": 12,
       "observations": 12,
       "file_rows": 12,
@@ -249,7 +249,8 @@
       "note": "Built from the 12 weekly note PDFs preserved under data/private/dgec_notes/, which were machine fetched from ecologie.gouv.fr and the Internet Archive. The PDFs are not committed. The ministry publishes one note at a time and deletes the previous one, so this corpus cannot be rebuilt from the web and the only way the series grows is prospective collection: run 'python scripts/note.py' (make note) weekly. READ fetched_at CAREFULLY: it is when this run read the preserved documents, not when the documents were downloaded, and last_date is the honest end of the data. THE REGISTER OF THE CORPUS, and the committed half of a decode whose documents are not committed. One row per preserved note: the week it prints, its file name, the page its quotation table was found on, and its chart geometry. The date is the note's CONTENT date, the latest week printed inside it, not the date in its file name, because four of the notes carry a content date later than their name. The geometry is what tells two notes that CANNOT disagree from two that agree: 10 of the 12 notes have a distinct geometry, and the rest share one. wb_NPG-2026.04.03 and NPG-2026.09.04 both draw a 400 to 1500 axis over 12 ticks at the same 4.3212 point pitch, so over their 83 common weeks the decoder cannot disagree with itself: their standard deviation is exactly 0.00 and their difference a constant 0.18 $/t. That pair proves the decoder is deterministic and proves the two notes carry the same underlying values. It proves nothing about accuracy. The independent evidence comes from the pairs with different axis scales, which is most of them, and they give the 0.30 $/t figure. n_independent_geometries counts distinct chart geometries rather than notes so that this is visible per week.",
       "file": "data/cache/dgec_note_decoded_index.csv",
       "unit": "USD per tonne for the two axis values, points for the pitch, a count for the ticks",
-      "observation_column": "note_file"
+      "observation_column": "note_file",
+      "documents_read_this_run": true
     },
     {
       "series": "dgec_note_decoded_monthly",
@@ -257,8 +258,8 @@
       "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
       "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
       "machine_fetched": true,
-      "fetched_at": "2026-09-22T12:02:29Z",
-      "checked_at": null,
+      "fetched_at": "2026-09-22T12:11:04Z",
+      "checked_at": "2026-09-22T12:11:04Z",
       "rows": 7,
       "observations": 7,
       "file_rows": 7,
@@ -280,7 +281,8 @@
       "note": "Built from the 12 weekly note PDFs preserved under data/private/dgec_notes/, which were machine fetched from ecologie.gouv.fr and the Internet Archive. The PDFs are not committed. The ministry publishes one note at a time and deletes the previous one, so this corpus cannot be rebuilt from the web and the only way the series grows is prospective collection: run 'python scripts/note.py' (make note) weekly. READ fetched_at CAREFULLY: it is when this run read the preserved documents, not when the documents were downloaded, and last_date is the honest end of the data. THE MONTHLY COLUMNS OF THE PRINTED TABLE, which the six column layout has printed since December 2025, one reading per note. One row per date and one READING SLOT per note that covers it, with the note's own file name in r<k>_note beside its values, so every number here can be traced to the document it was read from. 7 row(s), 4 slot(s), between 1 and 4 reading(s) per row. The layout is a time series because every cache in this project is one; the width is bounded by the length of a note's chart window and cannot grow past it however long the collection runs. r<k>_provisional is the marker that note printed against that month, so the whole revision history of a provisional figure is in the file rather than in a note about it: SPEC.md section 2 rule 5 asks for every vintage to be kept and the flag to be shown, and this is where the vintages are. dgec_note_printed_monthly is the stitch of these.",
       "file": "data/cache/dgec_note_decoded_monthly.csv",
       "unit": "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
-      "observation_column": "r1_gazole_usd_t"
+      "observation_column": "r1_gazole_usd_t",
+      "documents_read_this_run": true
     },
     {
       "series": "dgec_note_decoded_printed",
@@ -288,8 +290,8 @@
       "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
       "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
       "machine_fetched": true,
-      "fetched_at": "2026-09-22T12:02:29Z",
-      "checked_at": null,
+      "fetched_at": "2026-09-22T12:11:04Z",
+      "checked_at": "2026-09-22T12:11:04Z",
       "rows": 20,
       "observations": 20,
       "file_rows": 20,
@@ -405,7 +407,8 @@
       "note": "Built from the 12 weekly note PDFs preserved under data/private/dgec_notes/, which were machine fetched from ecologie.gouv.fr and the Internet Archive. The PDFs are not committed. The ministry publishes one note at a time and deletes the previous one, so this corpus cannot be rebuilt from the web and the only way the series grows is prospective collection: run 'python scripts/note.py' (make note) weekly. READ fetched_at CAREFULLY: it is when this run read the preserved documents, not when the documents were downloaded, and last_date is the honest end of the data. THE FIGURES DGEC PRINTED, BEFORE ANY STITCHING, read by row and column label. One row per date and one READING SLOT per note that covers it, with the note's own file name in r<k>_note beside its values, so every number here can be traced to the document it was read from. 20 row(s), 2 slot(s), between 1 and 2 reading(s) per row. The layout is a time series because every cache in this project is one; the width is bounded by the length of a note's chart window and cannot grow past it however long the collection runs. dgec_note_printed_weekly is the stitch of these, one row per distinct week with the disagreement between notes carried rather than averaged away; this is what each note printed. A blank is a row that note's layout does not print, never a zero: wb_NPG-2025.01.17 prints no Fioul lourd row at all and the EUR per tonne row only exists from the December 2025 layout onward.",
       "file": "data/cache/dgec_note_decoded_printed.csv",
       "unit": "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
-      "observation_column": "r1_gazole_usd_t"
+      "observation_column": "r1_gazole_usd_t",
+      "documents_read_this_run": true
     },
     {
       "series": "dgec_note_decoded_weekly",
@@ -413,8 +416,8 @@
       "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
       "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
       "machine_fetched": true,
-      "fetched_at": "2026-09-22T12:02:29Z",
-      "checked_at": null,
+      "fetched_at": "2026-09-22T12:11:04Z",
+      "checked_at": "2026-09-22T12:11:04Z",
       "rows": 221,
       "observations": 221,
       "file_rows": 221,
@@ -431,7 +434,8 @@
       "note": "Built from the 12 weekly note PDFs preserved under data/private/dgec_notes/, which were machine fetched from ecologie.gouv.fr and the Internet Archive. The PDFs are not committed. The ministry publishes one note at a time and deletes the previous one, so this corpus cannot be rebuilt from the web and the only way the series grows is prospective collection: run 'python scripts/note.py' (make note) weekly. READ fetched_at CAREFULLY: it is when this run read the preserved documents, not when the documents were downloaded, and last_date is the honest end of the data. THE DECODED CHART, BEFORE ANY STITCHING. One row per date and one READING SLOT per note that covers it, with the note's own file name in r<k>_note beside its values, so every number here can be traced to the document it was read from. 221 row(s), 9 slot(s), between 1 and 9 reading(s) per row. The layout is a time series because every cache in this project is one; the width is bounded by the length of a note's chart window and cannot grow past it however long the collection runs. dgec_note_reconstructed_weekly is the median across these readings per week, with their spread and their evidence class; this is the readings themselves. It is committed because the note PDFs are not and cannot be: the ministry publishes one note at a time and deletes the previous one, so without this table a fresh checkout could not rebuild the weekly series at all and the weekly refresh job could not restitch after collecting a note. Every value carries the reconstruction and its measured error; read dgec_note_reconstructed_weekly before using any of it. brent_date_usd_t is the least accurately decoded of the four plotted series. It is the lowest line on a chart scaled for the product lines, so the same pixel error is a larger relative error, and the worst single week disagreement between two notes in the whole overlap test, 1.68 $/t, is on Brent. Where a Brent figure matters, prefer dgec_brent_monthly, which DGEC publishes as a workbook.",
       "file": "data/cache/dgec_note_decoded_weekly.csv",
       "unit": "USD per tonne",
-      "observation_column": "r1_gazole_usd_t"
+      "observation_column": "r1_gazole_usd_t",
+      "documents_read_this_run": true
     },
     {
       "series": "dgec_note_printed_monthly",
@@ -439,8 +443,8 @@
       "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
       "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
       "machine_fetched": true,
-      "fetched_at": "2026-09-22T12:02:29Z",
-      "checked_at": null,
+      "fetched_at": "2026-09-22T12:11:04Z",
+      "checked_at": "2026-09-22T12:11:04Z",
       "rows": 7,
       "observations": 7,
       "file_rows": 7,
@@ -463,6 +467,7 @@
       "file": "data/cache/dgec_note_printed_monthly.csv",
       "unit": "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
       "observation_column": "brent_date_usd_t",
+      "documents_read_this_run": true,
       "manual_step": [
         {
           "id": "dgec_weekly_note_collection",
@@ -481,8 +486,8 @@
       "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
       "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
       "machine_fetched": true,
-      "fetched_at": "2026-09-22T12:02:29Z",
-      "checked_at": null,
+      "fetched_at": "2026-09-22T12:11:04Z",
+      "checked_at": "2026-09-22T12:11:04Z",
       "rows": 20,
       "observations": 20,
       "file_rows": 20,
@@ -599,6 +604,7 @@
       "file": "data/cache/dgec_note_printed_weekly.csv",
       "unit": "USD per tonne, except fioul_lourd_tbts_eur_t which is EUR per tonne",
       "observation_column": "brent_date_usd_t",
+      "documents_read_this_run": true,
       "manual_step": [
         {
           "id": "dgec_weekly_note_collection",
@@ -617,8 +623,8 @@
       "url": "",
       "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
       "machine_fetched": true,
-      "fetched_at": "2026-09-22T12:02:29Z",
-      "checked_at": null,
+      "fetched_at": "2026-09-22T12:11:04Z",
+      "checked_at": "2026-09-22T12:11:04Z",
       "rows": 221,
       "observations": 221,
       "file_rows": 221,
@@ -636,6 +642,7 @@
       "file": "data/cache/dgec_note_reconstructed_cracks_weekly.csv",
       "unit": "USD per barrel",
       "observation_column": "crack_gasoil_usd_bbl",
+      "documents_read_this_run": true,
       "manual_step": [
         {
           "id": "dgec_weekly_note_collection",
@@ -654,8 +661,8 @@
       "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/",
       "page_url": "https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers",
       "machine_fetched": true,
-      "fetched_at": "2026-09-22T12:02:29Z",
-      "checked_at": null,
+      "fetched_at": "2026-09-22T12:11:04Z",
+      "checked_at": "2026-09-22T12:11:04Z",
       "rows": 221,
       "observations": 221,
       "file_rows": 221,
@@ -673,6 +680,7 @@
       "file": "data/cache/dgec_note_reconstructed_weekly.csv",
       "unit": "USD per tonne",
       "observation_column": "gazole_usd_t",
+      "documents_read_this_run": true,
       "reconstruction": {
         "method": "reconstructed from the vector polyline on page 3 of the DGEC weekly note, calibrated against the printed weekly averages on the same page",
         "calibration": "one additive offset per note, fitted by least squares on that note's own eight printed anchors, four plotted series times the two printed weeks. The offset runs -2.38 to +2.82 $/t across the corpus and changes sign between notes, so it can never be a constant",
@@ -2800,8 +2808,8 @@
   "manual_steps_note": "Work this pipeline cannot do for itself. Each entry says what it is, why it exists, what it costs to skip it and how to do it. They are repeated against the series they affect in the manual_step field of those entries.",
   "run": {
     "mode": "online",
-    "started_at": "2026-09-22T12:02:23Z",
-    "finished_at": "2026-09-22T12:02:29Z",
+    "started_at": "2026-09-22T12:11:01Z",
+    "finished_at": "2026-09-22T12:11:04Z",
     "script": "scripts/refresh.py"
   }
 }

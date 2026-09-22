@@ -146,7 +146,9 @@ from .base import (
     PRIVATE,
     Adapter,
     SourceError,
+    manifest_read,
     read_cache,
+    utc_now_iso,
 )
 
 __all__ = [
@@ -2209,7 +2211,42 @@ def _restate_note(previous: str, body: str) -> str:
     return head + marker + " " + body
 
 
-class _NoteAdapter(Adapter):
+def _committed_entry(name: str) -> dict:
+    """The manifest entry as committed, or an empty dict."""
+    for entry in manifest_read().get("series", []):
+        if entry.get("series") == name:
+            return dict(entry)
+    return {}
+
+
+class _NoDocumentWasOpened:
+    """fetched_at means when the documents were read, not when this ran.
+
+    Since Gate 5 the note series can be rebuilt with no PDF at all, from the
+    committed decode, and that is the ordinary case on a GitHub runner. A run
+    that opened no document must not stamp a fresh fetch time onto the
+    provenance panel, because a visitor reading "fetched 20 minutes ago" would
+    take it to mean the ministry was asked 20 minutes ago. So the committed
+    fetch time is carried through and checked_at is what this run did, which is
+    the same rule crack.sources.ei already applies to a stored workbook.
+    """
+
+    def _entry(self, **kwargs) -> dict:
+        entry = super()._entry(**kwargs)
+        opened = bool(note_paths(self.note_directory))
+        entry["checked_at"] = utc_now_iso()
+        entry["documents_read_this_run"] = opened
+        if not opened:
+            entry["fetched_at"] = _committed_entry(self.name).get("fetched_at")
+            entry["rebuilt_from"] = (
+                "the committed decode in data/cache. No note PDF is on this "
+                "machine, which is the ordinary case anywhere but the owner's, "
+                "and no document was opened."
+            )
+        return entry
+
+
+class _NoteAdapter(_NoDocumentWasOpened, Adapter):
     """Shared plumbing: decode the corpus once, then build one frame from it."""
 
     #: injected by a test or by main() so the corpus is decoded once per run
@@ -2623,7 +2660,7 @@ class DgecNoteReconstructedCracksWeekly(_NoteAdapter):
 # row carries it or something is wrong.
 
 
-class _DecodeAdapter(Adapter):
+class _DecodeAdapter(_NoDocumentWasOpened, Adapter):
     """Shared plumbing for the four decode caches.
 
     The corpus is decoded once per run and injected, exactly as for the stitched

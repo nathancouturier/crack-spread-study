@@ -157,13 +157,13 @@
       "status_word": "reconstructed",
       "fetch_status": "ok",
       "vintage": "latest note prints the week ending 2026-09-18",
-      "fetched_at": "2026-09-22T12:02:29Z",
+      "fetched_at": "2026-09-22T12:11:04Z",
       "series": ["dgec_note_reconstructed_weekly", "dgec_note_printed_weekly"],
       "segments": [
         {"text": "Weekly cracks run to the week of "},
         {"field": "date", "value": "2026-09-18", "label": "18 September 2026"},
         {"text": ", read off the ministry's weekly chart; last fetched on "},
-        {"field": "fetched_at", "value": "2026-09-22T12:02:29Z", "label": "22 September 2026 at 12:02 UTC"},
+        {"field": "fetched_at", "value": "2026-09-22T12:11:04Z", "label": "22 September 2026 at 12:11 UTC"},
         {"text": "."}
       ]
     },
@@ -246,7 +246,7 @@
         {"field": "series_count", "value": 25, "format": "count"},
         {"text": " series failed or went stale"},
         {"text": " at the last fetch, "},
-        {"field": "last_fetched_at", "value": "2026-09-22T12:02:29Z", "label": "22 September 2026 at 12:02 UTC"},
+        {"field": "last_fetched_at", "value": "2026-09-22T12:11:04Z", "label": "22 September 2026 at 12:11 UTC"},
         {"text": "; "},
         {"field": "manual_steps_outstanding", "value": 1, "format": "count"},
         {"text": " manual step is outstanding: the OPEC archive stops, so the monthly OPEC history of the cracks ends at "},
