@@ -32,7 +32,9 @@
       "power": 3,
       "f_stat": 3,
       "gap_percent": 2,
-      "slope": 2
+      "slope": 2,
+      "mmbtu_per_bbl_5": 5,
+      "bbl_per_t_4": 4
     },
     "rounding": "Floats are stored to 6 places. The page prints the decimals of the format a value names.",
     "segments": "A sentence is a list of segments. A text segment holds words only. A value segment names its field and holds a value with a format, or an ISO date or a word with its label."
@@ -245,7 +247,7 @@
         {"text": "Cracks from the ministry's final monthly prices for "},
         {"field": "month", "value": "2026-08-01", "label": "August 2026"},
         {"text": ", printed in its note of "},
-        {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+        {"field": "quotations_vintage", "value": "2026-09-18", "label": "18 September 2026"},
         {"text": ", against the ministry's own Brent; gas and the exchange rate for the same month."}
       ],
       "reason_segments": [
@@ -280,7 +282,7 @@
               {"text": "The ministry's monthly average for "},
               {"field": "month", "value": "2026-08-01", "label": "August 2026"},
               {"text": ", final in its note of "},
-              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"field": "quotations_vintage", "value": "2026-09-18", "label": "18 September 2026"},
               {"text": ": "},
               {"field": "label", "value": "Gazole", "label": "Gazole"},
               {"text": " at "},
@@ -298,7 +300,7 @@
               {"text": "The ministry's monthly average for "},
               {"field": "month", "value": "2026-08-01", "label": "August 2026"},
               {"text": ", final in its note of "},
-              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"field": "quotations_vintage", "value": "2026-09-18", "label": "18 September 2026"},
               {"text": ": "},
               {"field": "label", "value": "Eurosuper", "label": "Eurosuper"},
               {"text": " at "},
@@ -316,7 +318,7 @@
               {"text": "The ministry's monthly average for "},
               {"field": "month", "value": "2026-08-01", "label": "August 2026"},
               {"text": ", final in its note of "},
-              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"field": "quotations_vintage", "value": "2026-09-18", "label": "18 September 2026"},
               {"text": ": "},
               {"field": "label", "value": "Jet", "label": "Jet"},
               {"text": " at "},
@@ -334,7 +336,7 @@
               {"text": "The ministry's monthly average for "},
               {"field": "month", "value": "2026-08-01", "label": "August 2026"},
               {"text": ", final in its note of "},
-              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"field": "quotations_vintage", "value": "2026-09-18", "label": "18 September 2026"},
               {"text": ": "},
               {"field": "label", "value": "Fioul domestique", "label": "Fioul domestique"},
               {"text": " at "},
@@ -352,7 +354,7 @@
               {"text": "The ministry's monthly average for "},
               {"field": "month", "value": "2026-08-01", "label": "August 2026"},
               {"text": ", final in its note of "},
-              {"field": "quotations_vintage", "value": "2026-09-11", "label": "11 September 2026"},
+              {"field": "quotations_vintage", "value": "2026-09-18", "label": "18 September 2026"},
               {"text": ": "},
               {"field": "label", "value": "Fioul lourd TBTS (< 1%)", "label": "Fioul lourd TBTS (< 1%)"},
               {"text": " at "},
@@ -720,7 +722,7 @@
         {"text": " The first of those weeks starts in "},
         {"field": "previous_month", "value": "2026-06-01", "label": "June 2026"},
         {"text": "."},
-        {"text": " No second chart has checked any of them yet."},
+        {"text": " Every one of them is checked against a second chart."},
         {"text": " The ministry printed its monthly prices for the month only in a note of the following month, which it deleted and nobody archived, so none is used here; and the chart plots no jet and no fuel oil."}
       ],
       "reason_segments": [
@@ -733,15 +735,15 @@
         "fridays": ["2026-07-03", "2026-07-10", "2026-07-17", "2026-07-24", "2026-07-31"],
         "printed": 0,
         "evidence_classes": {
-          "single_geometry_newest": 5
+          "cross_checked": 5
         }
       },
       "inputs": {
         "cracks": {
-          "gasoil": 69.011225,
-          "gasoline": 46.613791,
+          "gasoil": 69.015578,
+          "gasoline": 46.606583,
           "jet": null,
-          "heating_oil": 65.003021,
+          "heating_oil": 64.983829,
           "fuel_oil_1pct": null
         },
         "yields": {

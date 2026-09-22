@@ -117,13 +117,26 @@ RECON_05_NOTES = frozenset({
 })
 
 #: The first Friday the chart reaches, and the first week of the newest run of
-#: single geometry weeks. Both are facts of the notes recon 05 read: the oldest
-#: chart starts on 2022-07-01, and wb_NPG-2026.04.03 is the last note with a
-#: second geometry, ending 2026-04-24. A later note with a new geometry would
-#: move the second, and test_the_newest_single_geometry_run_starts_where_the_last_second_chart_ends
-#: says so by failing.
+#: single geometry weeks. Both are facts of the notes actually collected: the
+#: oldest chart starts on 2022-07-01, and the last note whose chart covers an
+#: earlier week is the newest one held, so the run of single geometry weeks is
+#: whatever the newest note does not reach back over.
+#:
+#: This constant MOVES every time a note is collected, and the two tests below
+#: are built to fail when it does, which is the point: they report that a new
+#: chart has given earlier weeks a second reading.
+#:
+#: 2026-05-01, when wb_NPG-2026.04.03 was the newest chart, 21 weeks stood on one
+#:             geometry and 194 were cross checked.
+#: 2026-09-18, after NPG-2026.09.11 and NPG-2026.09.18 were collected. Each note
+#:             plots about 105 weeks, so the September charts reach back over
+#:             every week of that run: 20 of those 21 weeks gained a second
+#:             reading, 214 weeks are now cross checked, and only the newest
+#:             week itself stands alone. The restitched median moved 104
+#:             historical weeks by at most 0.39 $/t on a price column, inside
+#:             the reconstruction's own measured error.
 FIRST_FRIDAY = pd.Timestamp("2022-07-01")
-NEWEST_RUN_START = pd.Timestamp("2026-05-01")
+NEWEST_RUN_START = pd.Timestamp("2026-09-18")
 
 
 def _fridays(first: pd.Timestamp, last: pd.Timestamp) -> int:

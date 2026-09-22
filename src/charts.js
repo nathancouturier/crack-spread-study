@@ -922,8 +922,18 @@ function splitAtBreaks(points, breaks) {
  *                       newestLabel, brackets: [{ start, end, label }] }, the
  *                       evidence rail under the axis, or null; brackets are
  *                       named spans on a rail of their own
+ *  xTicks             optional [{ t, label, key }]: numeric x labels the caller
+ *                       names, in place of the Januaries, thinned on the 1, 2,
+ *                       5, 10 ladder by the integer key, so key 0 is always
+ *                       kept. The Events view's months from the event, Part 8.4
+ *  marker             optional ms: the one accent rule on the plot, the event
+ *                       the plot exists for, Part 8.4 E5
+ *  labelAtEnd         optional: an end label sits just after its line's own
+ *                       last point, with no leader, rather than at the right
+ *                       edge, so a line that stops early is not drawn on to
+ *                       the edge by its leader, Part 8.4 E6
  *  Returns { svg, xOf, yOf, left, right, top, bottom }. */
-export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, lines, squares, events, breaks, rails, className }) {
+export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, lines, squares, events, breaks, rails, className, xTicks, marker, labelAtEnd }) {
   const g = GEOMETRY;
   const least = rails ? rails.least.filter(([t0, t1]) => t1 >= xDomain[0] && t0 <= xDomain[1]) : [];
   const newest = rails ? rails.newest.filter(([t0, t1]) => t1 >= xDomain[0] && t0 <= xDomain[1]) : [];
@@ -960,20 +970,24 @@ export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, 
   frame.appendChild(svgEl("text", { class: "chart-axis-title", x: left - g.LABEL_GAP, y: top - g.LABEL_GAP - g.TICK_LENGTH, "text-anchor": "end" }, unit));
 
   // x: a label at each January, on the smallest 1, 2, 5 or 10 year step that
-  // keeps two labels YEAR_SPACING apart.
-  const januaries = yearTicks(xDomain[0], xDomain[1], TICK_LADDER[0]).length;
+  // keeps two labels YEAR_SPACING apart; or the caller's own ticks, thinned
+  // the same way by their integer key.
+  const candidates = xTicks
+    ? xTicks.filter((tick) => tick.t >= xDomain[0] && tick.t <= xDomain[1])
+    : yearTicks(xDomain[0], xDomain[1], TICK_LADDER[0]).map(([t, year]) => ({ t, label: String(year), key: year }));
   let step = TICK_LADDER[TICK_LADDER.length - 1];
   for (const rung of TICK_LADDER) {
-    if ((right - left) / Math.max(januaries / rung, TICK_LADDER[0]) >= g.YEAR_SPACING) {
+    if ((right - left) / Math.max(candidates.length / rung, TICK_LADDER[0]) >= g.YEAR_SPACING) {
       step = rung;
       break;
     }
   }
   const tickY = bottom + g.AXIS_GAP;
-  for (const [t, year] of yearTicks(xDomain[0], xDomain[1], step)) {
-    const x = xOf(t);
+  for (const tick of candidates) {
+    if (tick.key % step !== 0) continue;
+    const x = xOf(tick.t);
     frame.appendChild(svgEl("line", { class: "mark-context", x1: px(x), x2: px(x), y1: bottom, y2: bottom + g.TICK_LENGTH }));
-    frame.appendChild(svgEl("text", { class: "tick", x: px(x), y: px(tickY), "text-anchor": "middle", "dominant-baseline": "central" }, String(year)));
+    frame.appendChild(svgEl("text", { class: "tick", x: px(x), y: px(tickY), "text-anchor": "middle", "dominant-baseline": "central" }, tick.label));
   }
   frame.appendChild(svgEl("line", { class: "mark-context", x1: left, x2: right, y1: bottom, y2: bottom }));
 
@@ -989,6 +1003,12 @@ export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, 
     if (t < xDomain[0] || t > xDomain[1]) continue;
     const x = px(xOf(t));
     rules.appendChild(svgEl("line", { class: "mark-break", x1: x, x2: x, y1: top - g.TICK_LENGTH, y2: bottom }));
+  }
+
+  // The event the plot exists for: one accent rule, the height of the plot.
+  if (marker !== undefined && marker !== null && marker >= xDomain[0] && marker <= xDomain[1]) {
+    const x = px(xOf(marker));
+    rules.appendChild(svgEl("line", { class: "mark-event", x1: x, x2: x, y1: top - g.TICK_LENGTH, y2: bottom }));
   }
 
   // Lines, each split at its own breaks and at every gap, never joined.
@@ -1022,8 +1042,8 @@ export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, 
   const wanted = spreadPairs(ends.map((end) => ({ end, y: end.pointY })), lineHeight, top + lineHeight * g.HALF, bottom);
   for (const label of wanted) {
     const end = label.end;
-    const tx = right + g.LABEL_GAP;
-    if (Math.abs(label.y - end.pointY) >= 1 || Math.abs(end.x - right) >= 1) {
+    const tx = (labelAtEnd ? end.x : right) + g.LABEL_GAP;
+    if (Math.abs(label.y - end.pointY) >= 1 || (!labelAtEnd && Math.abs(end.x - right) >= 1)) {
       labels.appendChild(svgEl("line", { class: "mark-context", x1: px(end.x), y1: px(end.pointY), x2: px(tx - g.TICK_LENGTH), y2: px(label.y) }));
     }
     const text = svgEl("text", { class: "chart-end-label halo", x: px(tx), y: px(label.y - lineHeight * g.HALF), "dominant-baseline": "central" });

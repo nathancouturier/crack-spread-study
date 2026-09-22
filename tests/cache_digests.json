@@ -70,8 +70,8 @@
       }
     },
     "data/cache/dgec_note_printed_monthly.csv": {
-      "sha256": "1933c7cbefe8d77837f524b9b35635ade3feab36209acb1798bcb403b98dd54d",
-      "bytes": 3527,
+      "sha256": "fde6f7f3f5adb73501622d811dde6222a8821e28ba3a629c3d6bf8b93653c5d3",
+      "bytes": 3920,
       "rows": 7,
       "columns": [
         "date",
@@ -100,7 +100,7 @@
           ],
           "last": [
             "2026-09-01",
-            "1339"
+            "1347"
           ]
         },
         "gazole_usd_t": {
@@ -111,7 +111,7 @@
           ],
           "last": [
             "2026-09-01",
-            "1457"
+            "1484"
           ]
         },
         "fioul_domestique_usd_t": {
@@ -122,7 +122,7 @@
           ],
           "last": [
             "2026-09-01",
-            "1427"
+            "1458"
           ]
         },
         "jet_usd_t": {
@@ -133,7 +133,7 @@
           ],
           "last": [
             "2026-09-01",
-            "1490"
+            "1543"
           ]
         },
         "fioul_lourd_tbts_usd_t": {
@@ -144,7 +144,7 @@
           ],
           "last": [
             "2026-09-01",
-            "579"
+            "592"
           ]
         },
         "fioul_lourd_tbts_eur_t": {
@@ -155,7 +155,7 @@
           ],
           "last": [
             "2026-09-01",
-            "499"
+            "511"
           ]
         },
         "brent_date_usd_t": {
@@ -166,7 +166,7 @@
           ],
           "last": [
             "2026-09-01",
-            "796"
+            "844"
           ]
         },
         "n_prints": {
@@ -177,7 +177,7 @@
           ],
           "last": [
             "2026-09-01",
-            "2"
+            "3"
           ]
         },
         "max_revision_usd_t": {
@@ -188,15 +188,15 @@
           ],
           "last": [
             "2026-09-01",
-            "53"
+            "101"
           ]
         }
       }
     },
     "data/cache/dgec_note_printed_weekly.csv": {
-      "sha256": "93b542390051b0e6f0e31fefc23f4215846ff382b3daf4265e2f158530457423",
-      "bytes": 1445,
-      "rows": 19,
+      "sha256": "d6e22d5b4adf276409a47a88be23aa83c0ffaa6d40e131f3476d4f72f7871e13",
+      "bytes": 1530,
+      "rows": 20,
       "columns": [
         "date",
         "eurosuper_usd_t",
@@ -212,110 +212,110 @@
       ],
       "anchors": {
         "eurosuper_usd_t": {
-          "observations": 19,
+          "observations": 20,
           "first": [
             "2024-06-21",
             "861"
           ],
           "last": [
-            "2026-09-11",
-            "1317"
+            "2026-09-18",
+            "1361"
           ]
         },
         "gazole_usd_t": {
-          "observations": 19,
+          "observations": 20,
           "first": [
             "2024-06-21",
             "794"
           ],
           "last": [
-            "2026-09-11",
-            "1462"
+            "2026-09-18",
+            "1532"
           ]
         },
         "fioul_domestique_usd_t": {
-          "observations": 19,
+          "observations": 20,
           "first": [
             "2024-06-21",
             "797"
           ],
           "last": [
-            "2026-09-11",
-            "1441"
+            "2026-09-18",
+            "1505"
           ]
         },
         "jet_usd_t": {
-          "observations": 19,
+          "observations": 20,
           "first": [
             "2024-06-21",
             "834"
           ],
           "last": [
-            "2026-09-11",
-            "1487"
+            "2026-09-18",
+            "1633"
           ]
         },
         "fioul_lourd_tbts_usd_t": {
-          "observations": 17,
+          "observations": 18,
           "first": [
             "2024-06-21",
             "499"
           ],
           "last": [
-            "2026-09-11",
-            "584"
+            "2026-09-18",
+            "611"
           ]
         },
         "fioul_lourd_tbts_eur_t": {
-          "observations": 11,
+          "observations": 12,
           "first": [
             "2025-12-12",
             "326"
           ],
           "last": [
-            "2026-09-11",
-            "502"
+            "2026-09-18",
+            "530"
           ]
         },
         "brent_date_usd_t": {
-          "observations": 19,
+          "observations": 20,
           "first": [
             "2024-06-21",
             "630"
           ],
           "last": [
-            "2026-09-11",
-            "815"
+            "2026-09-18",
+            "929"
           ]
         },
         "n_notes": {
-          "observations": 19,
+          "observations": 20,
           "first": [
             "2024-06-21",
             "1"
           ],
           "last": [
-            "2026-09-11",
+            "2026-09-18",
             "1"
           ]
         },
         "max_disagreement_usd_t": {
-          "observations": 3,
+          "observations": 4,
           "first": [
             "2026-03-20",
             "0"
           ],
           "last": [
-            "2026-09-04",
+            "2026-09-11",
             "0"
           ]
         }
       }
     },
     "data/cache/dgec_note_reconstructed_cracks_weekly.csv": {
-      "sha256": "e4a66c7a545445a78b3f8da3b5f69a9557d476177368021edfdb6ff942de93f4",
-      "bytes": 24055,
-      "rows": 220,
+      "sha256": "230539dada1e16c2d8061088b34ae871c80973951d21583055b96139a65d2b2f",
+      "bytes": 23966,
+      "rows": 221,
       "columns": [
         "date",
         "brent_usd_bbl",
@@ -329,77 +329,77 @@
       ],
       "anchors": {
         "brent_usd_bbl": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "119.94452098300977"
           ],
           "last": [
-            "2026-09-11",
-            "108.70331644500074"
+            "2026-09-18",
+            "123.7597858550425"
           ]
         },
         "crack_gasoil_usd_bbl": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "50.37176705488395"
           ],
           "last": [
-            "2026-09-11",
-            "87.61546996962248"
+            "2026-09-18",
+            "81.86653766086702"
           ]
         },
         "crack_gasoline_usd_bbl": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "49.87802189047781"
           ],
           "last": [
-            "2026-09-11",
-            "49.39738076548339"
+            "2026-09-18",
+            "39.62443817435344"
           ]
         },
         "crack_fioul_domestique_usd_bbl": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "52.743382857264976"
           ],
           "last": [
-            "2026-09-11",
-            "84.75246695710673"
+            "2026-09-18",
+            "78.33684175939761"
           ]
         },
         "n_notes": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "1"
           ],
           "last": [
-            "2026-09-11",
+            "2026-09-18",
             "1"
           ]
         },
         "n_independent_geometries": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "1"
           ],
           "last": [
-            "2026-09-11",
+            "2026-09-18",
             "1"
           ]
         }
       }
     },
     "data/cache/dgec_note_reconstructed_weekly.csv": {
-      "sha256": "e717dc79542ee0f92dd80815363be207d2a7a57b0bc5149bc3a8685b12587fcb",
-      "bytes": 40093,
-      "rows": 220,
+      "sha256": "297c821702332054927e9a64a1d06bf8aa768f269b1ff8083148b094441f1374",
+      "bytes": 40065,
+      "rows": 221,
       "columns": [
         "date",
         "eurosuper_usd_t",
@@ -417,113 +417,113 @@
       ],
       "anchors": {
         "eurosuper_usd_t": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "1414.6217821361515"
           ],
           "last": [
-            "2026-09-11",
-            "1316.9788077633327"
+            "2026-09-18",
+            "1360.990586164868"
           ]
         },
         "gazole_usd_t": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "1268.8563458823082"
           ],
           "last": [
-            "2026-09-11",
-            "1462.574958788943"
+            "2026-09-18",
+            "1531.916110193526"
           ]
         },
         "fioul_domestique_usd_t": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "1286.5248836100468"
           ],
           "last": [
-            "2026-09-11",
-            "1441.2455863457008"
+            "2026-09-18",
+            "1505.6198757275788"
           ]
         },
         "brent_date_usd_t": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "899.5839073725732"
           ],
           "last": [
-            "2026-09-11",
-            "815.2748733375055"
+            "2026-09-18",
+            "928.1983939128187"
           ]
         },
         "n_notes": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "1"
           ],
           "last": [
-            "2026-09-11",
+            "2026-09-18",
             "1"
           ]
         },
         "n_independent_geometries": {
-          "observations": 220,
+          "observations": 221,
           "first": [
             "2022-07-01",
             "1"
           ],
           "last": [
-            "2026-09-11",
+            "2026-09-18",
             "1"
           ]
         },
         "spread_eurosuper_usd_t": {
-          "observations": 213,
+          "observations": 214,
           "first": [
             "2022-08-12",
             "0.10099733738707073"
           ],
           "last": [
-            "2026-09-04",
-            "0.2902512801956618"
+            "2026-09-11",
+            "0.1847209582895175"
           ]
         },
         "spread_gazole_usd_t": {
-          "observations": 213,
+          "observations": 214,
           "first": [
             "2022-08-12",
             "0.01648639989991807"
           ],
           "last": [
-            "2026-09-04",
-            "0.2902512801956618"
+            "2026-09-11",
+            "0.7821405046104246"
           ]
         },
         "spread_fioul_domestique_usd_t": {
-          "observations": 213,
+          "observations": 214,
           "first": [
             "2022-08-12",
             "0.3300265428086959"
           ],
           "last": [
-            "2026-09-04",
-            "0.2902512801956618"
+            "2026-09-11",
+            "0.27062034690970904"
           ]
         },
         "spread_brent_date_usd_t": {
-          "observations": 213,
+          "observations": 214,
           "first": [
             "2022-08-12",
             "0.2963810355482792"
           ],
           "last": [
-            "2026-09-04",
-            "0.29025128019554813"
+            "2026-09-11",
+            "0.06884765895642886"
           ]
         }
       }

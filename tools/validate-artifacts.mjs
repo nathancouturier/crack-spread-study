@@ -29,11 +29,14 @@
 //    7  the waterfall adds up: each step starts where the previous row ended,
 //       the product rows and the residual end at the official margin, and the
 //       wedge row ends at the margin at this study's gas intensity
+//    8  per view: History, Model, Runs, Events and Method keep their findings
+//    9  every exported field has a reader in src/, or a sentence that prints
+//       it, or a declared reason it has none (docs/design.md Part 8.5, D9)
 //
 // Nothing here is allowed to skip. A field this tool expects and cannot find is
 // a failure, not a warning.
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -368,6 +371,43 @@ const REQUIRED = {
     "break.explanations[].name",
     "break.events[].source_url",
     "break.desc_segments",
+  ],
+  // docs/design.md Part 8.4, the Events view.
+  events: [
+    "conventions.decimals",
+    "title_segments",
+    "lead_segments",
+    "window.months_before",
+    "window.months_after",
+    "series[].id",
+    "series[].first",
+    "series[].last",
+    "margin_segments",
+    "monthly_columns",
+    "weekly_columns",
+    "events[].id",
+    "events[].date",
+    "events[].precision",
+    "events[].label",
+    "events[].name",
+    "events[].source_url",
+    "events[].precision_segments",
+    "events[].window.first",
+    "events[].window.last",
+    "events[].window.event_month",
+    "events[].rows",
+    "events[].coverage_segments",
+    "not_panels[].id",
+    "not_panels_segments",
+  ],
+  // docs/design.md Part 8.5, the Method view.
+  method: [
+    "conventions.decimals",
+    "title_segments",
+    "lead_segments",
+    "sections[].id",
+    "sections[].title",
+    "sections[].blocks",
   ],
 };
 
@@ -714,6 +754,141 @@ if (loaded.runs && loaded["run-economics"]) {
     if (!pre.length || !post.length || !(post[0][0] > pre[pre.length - 1][0])) problems.push("the post break residuals do not start after the fitted months");
     if (r.break.tested !== re.utilisation.tested) problems.push("the view and the Now section disagree on whether 2026 is tested");
     for (const row of r.series.rows) if (row[1] === 0 && row[3] === null) problems.push("a missing month drawn as zero at " + row[0]);
+    return problems;
+  });
+}
+
+if (loaded.events) {
+  // Part 8.4: every window is the full thirteen months, a missing month is
+  // null and never zero, every missing series is named, the precision the
+  // source gives is kept.
+  check("events.json keeps every window whole, fills nothing and names every gap", () => {
+    const problems = [];
+    const e = loaded.events;
+    const c = (name) => e.monthly_columns.indexOf(name);
+    const span = e.window.months_before + e.window.months_after + 1;
+    const series = Object.fromEntries(e.series.map((s) => [s.id, s]));
+    const columns = { monthly_cracks: ["gasoil_usd_bbl", "gasoline_usd_bbl"], margin: ["mbr_usd_bbl"], utilisation: ["utilisation_percent"] };
+    for (const ev of e.events) {
+      if (ev.rows.length !== span) problems.push(ev.id + " has " + ev.rows.length + " months, not " + span);
+      const offsets = ev.rows.map((row) => row[c("offset_months")]);
+      if (offsets[0] !== -e.window.months_before || offsets[offsets.length - 1] !== e.window.months_after) problems.push(ev.id + " window does not run from minus to plus the declared months");
+      if (!["day", "month"].includes(ev.precision)) problems.push(ev.id + " precision is " + ev.precision);
+      for (const [id, cols] of Object.entries(columns)) {
+        const empty = ev.rows.some((row) => cols.every((col) => row[c(col)] === null));
+        const named = ev.missing.some((m) => m.series === id);
+        if (empty && !named) problems.push(ev.id + " lacks months of " + id + " and does not say so");
+        if (!empty && named) problems.push(ev.id + " names " + id + " as missing and it is not");
+        for (const row of ev.rows) {
+          for (const col of cols) {
+            if (row[c(col)] !== null && (row[0] < series[id].first || row[0] > series[id].last)) problems.push(ev.id + " has a value for " + col + " at " + row[0] + ", outside the series");
+          }
+        }
+      }
+      if (!ev.weekly_rows.length && !ev.missing.some((m) => m.series === "weekly")) problems.push(ev.id + " has no weekly rows and does not say so");
+      if (!/^https?:\/\//.test(ev.source_url)) problems.push(ev.id + " has no source link");
+    }
+    const words = JSON.stringify(e).toLowerCase();
+    for (const word of ["impact", "caused by"]) if (words.includes(word)) problems.push("the word " + JSON.stringify(word) + ", which claims a cause");
+    return problems;
+  });
+}
+
+if (loaded.method) {
+  // Part 8.5: every ref resolves to a sentence another artifact carries, every
+  // reads block names a table the view builds, every table row has its columns.
+  check("method.json refs resolve, tables are whole, the departures and the findings are there", () => {
+    const problems = [];
+    const READS = ["response_diagnostics", "margin_stack_prices", "breaks", "manual_steps", "reuse"];
+    const resolveRef = (ref) => {
+      let value = loaded[ref.artifact];
+      for (const key of ref.path) value = value === undefined || value === null ? undefined : value[key];
+      return Array.isArray(value) && value.length ? value : null;
+    };
+    const reads = new Set();
+    for (const section of loaded.method.sections) {
+      for (const block of section.blocks) {
+        if (block.type === "ref" && !resolveRef(block)) problems.push(section.id + ": the ref " + block.artifact + " " + block.path.join(".") + " does not resolve to a sentence");
+        if (block.type === "list") for (const item of block.items) if (!Array.isArray(item) && !resolveRef(item.ref)) problems.push(section.id + ": the list ref " + item.ref.artifact + " " + item.ref.path.join(".") + " does not resolve");
+        if (block.type === "reads") {
+          if (!READS.includes(block.what)) problems.push(section.id + ": unknown reads block " + block.what);
+          reads.add(block.what);
+        }
+        if (block.type === "table") for (const row of block.rows) if (row.length !== block.columns.length) problems.push(section.id + ": a table row has " + row.length + " cells for " + block.columns.length + " columns");
+      }
+    }
+    for (const what of READS) if (!reads.has(what)) problems.push("the Method view never reads " + what);
+    const text = JSON.stringify(loaded.method);
+    for (const needle of ["already net", "substitution", "leave one series out", "Eurosuper", "Gazole", "Carbon costs", "does not bound the oldest weeks"]) {
+      if (!text.includes(needle)) problems.push("the Method view does not say " + JSON.stringify(needle));
+    }
+    return problems;
+  });
+}
+
+// ORPHAN FIELDS, docs/design.md Part 8.5 D9. Every key of every artifact is
+// read by some module in src/, or printed through a sentence segment that
+// names it, or is declared below with the reason it is carried and not
+// printed. The Gate 4 audit found four fields exported and never rendered;
+// they may not be declared here, and a declared key that a module starts
+// reading fails too, so the list cannot go stale.
+const NEVER_SUPPORTING = ["factor_citation", "price_usd_t", "r2", "newey_west_lag"];
+const WHY = {
+  flag: "a flag or count the validators and tests assert on; the page prints the sentence it produced",
+  copy: "a machine readable copy of a figure the page prints through a sentence under another field name",
+  map: "a key of a map the page reads by iterating it, never by name",
+  provenance: "provenance of a value for a reader of the file, not for the page",
+  model: "read by the export or the parity fixture, not by the page",
+};
+const SUPPORTING = {
+  cracks: { iso_year: WHY.provenance, iso_week: WHY.provenance, printed_usd_bbl: WHY.copy, n_independent_geometries: WHY.provenance, least_defended: WHY.flag, prior_years: WHY.copy, printed_weeks: WHY.flag, gasoil_bbl_per_t: WHY.provenance, gasoline_bbl_per_t: WHY.provenance, brent_bbl_per_t: WHY.provenance },
+  events: { data_last: WHY.copy },
+  history: { study_intensity_mmbtu_per_bbl: WHY.copy, ministry_intensity_mmbtu_per_bbl: WHY.copy, no_break_source_url: WHY.provenance, partial_years: WHY.flag, difference_usd_bbl: WHY.copy, seasons_positive: WHY.copy, seasons: WHY.copy },
+  "margin-stack": { slate_line: WHY.provenance, volume_yield: WHY.model, unattributed_mass_yield_percent: WHY.copy, approximations: WHY.provenance, residual_share: WHY.copy, gas_source: WHY.provenance, embedded_cost_usd_bbl: WHY.copy, study_cost_usd_bbl: WHY.copy, includes_zero: WHY.flag, official_usd_bbl: WHY.copy, quotations_vintage: WHY.provenance, not_decomposed: WHY.flag },
+  model: { margin_basis: WHY.flag, official_margin_basis: WHY.flag, official_is_a_step: WHY.flag, slate_line: WHY.provenance, volume_yield: WHY.model, unattributed_slate_lines: WHY.provenance, study_mmbtu_per_bbl: WHY.copy, embedded_mmbtu_per_bbl: WHY.copy, run_cut_threshold_usd_bbl: WHY.flag, crack_source: WHY.provenance, jet: WHY.map, heating_oil: WHY.map, fuel_oil_1pct: WHY.map, evidence_classes: WHY.provenance },
+  now: { margin_basis: WHY.flag, net_of: WHY.provenance, embedded_gas_intensity_mmbtu_per_bbl: WHY.copy, embedded_gas_mass_yield_percent: WHY.copy, costs_subtracted: WHY.provenance, costs_not_subtracted: WHY.provenance, percentile_10y: WHY.copy, percentile_rank: WHY.copy, percentile_months_below: WHY.copy, percentile_window_months: WHY.copy, percentile_window_first_month: WHY.copy, percentile_window_last_month: WHY.copy, study_gas_intensity_mmbtu_per_bbl: WHY.copy, margin_study_intensity_usd_bbl: WHY.copy, intensity_ratio: WHY.copy, crack_month: WHY.copy, carrier_label: WHY.copy, carrier_reason: WHY.provenance, run_verdict: WHY.flag, headroom_segments: WHY.copy, fetch_status: WHY.flag, quotations_provisional: WHY.flag },
+  "run-economics": { threshold_ci_width_usd_bbl: WHY.copy, max_ci_width_usd_bbl: WHY.flag, interval_touches_lower_edge: WHY.flag, interval_touches_upper_edge: WHY.flag, interval_too_wide: WHY.flag, slope_below_usd_bbl: WHY.copy, slope_below_without_episode: WHY.copy, slope_changes_sign_without_episode: WHY.flag, months_below_every_month: WHY.copy, nobs_every_month: WHY.copy, months_below_without_episode: WHY.copy, nobs_without_episode: WHY.copy, bootstrap_replications: WHY.provenance, bootstrap_seed: WHY.provenance, reasons: WHY.flag, closure_step_years_in_sample: WHY.provenance, lower_share: WHY.copy, share_of_runs_low_percent: WHY.copy, share_of_runs_high_percent: WHY.copy, sum_of_lags_unit: WHY.provenance, capacity_step_years_in_sample: WHY.provenance, diagnostic_sum_of_lags: WHY.copy, diagnostic_is_reported_as_a_result: WHY.flag, latest_provisional: WHY.flag, first_month_not_fitted: WHY.copy },
+  runs: { margin_regressor: WHY.provenance, mean_imports_over_intake: WHY.copy, min_imports_over_intake: WHY.copy, max_imports_over_intake: WHY.copy, is_a_model: WHY.flag, headline: WHY.flag, level_percent: WHY.copy, regressor_low_usd_bbl: WHY.copy, regressor_high_usd_bbl: WHY.copy, reaches_search_edge: WHY.flag, trimmed: WHY.flag, any_distinguishable: WHY.flag, in_the_race: WHY.flag, distinguishable: WHY.flag, wedge_before_2022_usd_bbl: WHY.copy, wedge_2022_usd_bbl: WHY.copy },
+};
+/* A key whose children are map keys is walked no further, and the provenance
+ * manifest is skipped whole: it is shipped as SPEC.md section 5.3's first class
+ * artifact, and the page prints its reader layer, checked above. */
+const MAP_PARENTS = new Set(["date_of_last_update", "provenance.reader.series"]);
+const HEADER = new Set(["schema_version", "artifact", "generated_by", "data_date", "describes", "source", "conventions"]);
+{
+  const srcDir = path.join(ROOT, "src");
+  const source = readdirSync(srcDir).filter((f) => f.endsWith(".js")).map((f) => readFileSync(path.join(srcDir, f), "utf8")).join("\n");
+  const readsKey = (key) => new RegExp("\\b" + key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(source);
+  check("every exported field has a reader, or a declared reason it has none", () => {
+    const problems = [];
+    for (const name of NEVER_SUPPORTING) for (const [artifact, list] of Object.entries(SUPPORTING)) if (name in list) problems.push(artifact + " declares " + name + " as supporting, and the Gate 4 audit requires it rendered");
+    for (const [name, payload] of Object.entries(loaded)) {
+      const keys = new Set();
+      const said = new Set();
+      const walk = (value, top, where) => {
+        if (Array.isArray(value)) value.forEach((item) => walk(item, false, where));
+        else if (value && typeof value === "object") {
+          if (typeof value.field === "string") said.add(value.field);
+          for (const [key, child] of Object.entries(value)) {
+            if (top && HEADER.has(key)) continue;
+            if (top && name === "provenance" && key === "manifest") continue;
+            keys.add(key);
+            const here = where + "." + key;
+            if (!MAP_PARENTS.has(key) && !MAP_PARENTS.has(here)) walk(child, false, here);
+          }
+        }
+      };
+      walk(payload, true, name);
+      const declared = SUPPORTING[name] || {};
+      for (const key of keys) {
+        const read = readsKey(key) || said.has(key);
+        if (!read && !(key in declared)) problems.push(name + ".json exports " + key + ", which no module reads and no sentence prints");
+      }
+      for (const key of Object.keys(declared)) {
+        if (!keys.has(key)) problems.push(name + ".json declares " + key + " as supporting and no longer exports it");
+        else if (readsKey(key) || said.has(key)) problems.push(name + ".json declares " + key + " as supporting and it is now read or printed; take it off the list");
+      }
+    }
     return problems;
   });
 }

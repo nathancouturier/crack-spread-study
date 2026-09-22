@@ -32,7 +32,9 @@
       "power": 3,
       "f_stat": 3,
       "gap_percent": 2,
-      "slope": 2
+      "slope": 2,
+      "mmbtu_per_bbl_5": 5,
+      "bbl_per_t_4": 4
     },
     "rounding": "Floats are stored to 6 places. The page prints the decimals of the format a value names.",
     "segments": "A sentence is a list of segments. A text segment holds words only. A value segment names its field and holds a value with a format, or an ISO date or a word with its label."
@@ -271,7 +273,7 @@
       {"month": "2025-11-01", "residual_usd_bbl": -4.847633, "official_usd_bbl": 16.469831, "carrier": "gasoil", "quotations_vintage": "2025-12-19"},
       {"month": "2026-02-01", "residual_usd_bbl": -6.802232, "official_usd_bbl": 6.501493, "carrier": "gasoil", "quotations_vintage": "2026-03-27"},
       {"month": "2026-03-01", "residual_usd_bbl": -9.103608, "official_usd_bbl": 24.71577, "carrier": "gasoil", "quotations_vintage": "2026-04-24"},
-      {"month": "2026-08-01", "residual_usd_bbl": -6.502075, "official_usd_bbl": 38.050505, "carrier": "gasoil", "quotations_vintage": "2026-09-11"}
+      {"month": "2026-08-01", "residual_usd_bbl": -6.502075, "official_usd_bbl": 38.050505, "carrier": "gasoil", "quotations_vintage": "2026-09-18"}
     ],
     "not_decomposed": [
       {"month": "2025-12-01", "reason": "the monthly quotations for 2025-12 are provisional in the note of 2025-12-19, and a provisional month is not decomposed"},

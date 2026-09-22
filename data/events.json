@@ -1,0 +1,1210 @@
+{
+  "schema_version": 1,
+  "artifact": "events",
+  "generated_by": "src/crack/export.py",
+  "data_date": "2026-09-18",
+  "describes": "the Events view: for each event of data/seed/events.json, the cracks, the margin after gas and utilisation from six months before its month to six months after, with every missing month named",
+  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "conventions": {
+    "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
+    "decimals": {
+      "usd_bbl": 2,
+      "usd_t": 0,
+      "usd_t_error": 2,
+      "usd_mmbtu": 2,
+      "eur_mwh": 2,
+      "eurusd": 4,
+      "mmbtu_per_mwh": 6,
+      "mmbtu_per_bbl": 3,
+      "kb_d": 1,
+      "t": 2,
+      "r2": 3,
+      "pp": 1,
+      "pp_per_usd_bbl": 3,
+      "percent": 1,
+      "ratio": 1,
+      "yield_percent": 1,
+      "bbl_per_t": 2,
+      "count": 0,
+      "year": 0,
+      "coef": 5,
+      "rmse": 3,
+      "power": 3,
+      "f_stat": 3,
+      "gap_percent": 2,
+      "slope": 2,
+      "mmbtu_per_bbl_5": 5,
+      "bbl_per_t_4": 4
+    },
+    "rounding": "Floats are stored to 6 places. The page prints the decimals of the format a value names.",
+    "segments": "A sentence is a list of segments. A text segment holds words only. A value segment names its field and holds a value with a format, or an ISO date or a word with its label."
+  },
+  "title_segments": [
+    {"text": "What the cracks, the margin after gas and utilisation did from "},
+    {"field": "months_before", "value": 6, "format": "count"},
+    {"text": " months before to "},
+    {"field": "months_after", "value": 6, "format": "count"},
+    {"text": " months after each event."}
+  ],
+  "lead_segments": [
+    {"text": "Each panel shows levels around a dated event, in the source's own units: what moved around the date, never an estimate of the event's effect, because other things happened in the same months. Every window runs the full "},
+    {"field": "window_months", "value": 13, "format": "count"},
+    {"text": " months; a month a series does not cover is left empty and named, never filled."}
+  ],
+  "window": {
+    "months_before": 6,
+    "months_after": 6
+  },
+  "series": [
+    {"id": "monthly_cracks", "name": "OPEC's monthly gasoil and gasoline cracks", "first": "2000-10-01", "last": "2026-02-01"},
+    {"id": "margin", "name": "the ministry's margin", "first": "2015-01-01", "last": "2026-08-01"},
+    {"id": "utilisation", "name": "utilisation", "first": "2015-01-01", "last": "2026-06-01"},
+    {"id": "weekly", "name": "this study's weekly reading of the ministry's chart", "first": "2022-07-01", "last": "2026-09-18"}
+  ],
+  "data_last": "2026-09-18",
+  "capacity_steps": ["2017-01-01", "2026-01-01"],
+  "margin_segments": [
+    {"text": "Both lines are after gas and nothing is subtracted twice: the ministry's margin is already net of its own "},
+    {"field": "ministry_intensity", "value": 0.065903, "format": "mmbtu_per_bbl"},
+    {"text": " MMBtu/bbl of gas, and the dotted line is the same margin at the average US refinery's "},
+    {"field": "study_intensity", "value": 0.21217, "format": "mmbtu_per_bbl"},
+    {"text": " MMBtu/bbl, the extra gas priced at each month's European gas price."}
+  ],
+  "monthly_columns": ["date", "offset_months", "gasoil_usd_bbl", "gasoline_usd_bbl", "mbr_usd_bbl", "margin_us_gas_usd_bbl", "utilisation_percent", "utilisation_provisional"],
+  "weekly_columns": ["date", "gasoil_usd_bbl", "gasoline_usd_bbl", "printed_gasoil_usd_bbl", "printed_gasoline_usd_bbl", "evidence_class"],
+  "least_defended_class": "single_geometry_oldest",
+  "newest_class": "single_geometry_newest",
+  "events": [
+    {
+      "id": "imo_2020_sulphur_cap",
+      "date": "2020-01-01",
+      "precision": "day",
+      "label": "1 January 2020",
+      "short": "Ship fuel sulphur cap",
+      "name": "IMO 2020 sulphur cap",
+      "kind": "market",
+      "what": "From 1 January 2020 the limit on sulphur in fuel oil used on board ships outside emission control areas fell from 3.50 percent to 0.50 percent by mass.",
+      "precision_segments": [
+        {"text": "Dated to the day by the source, "},
+        {"field": "date", "value": "2020-01-01", "label": "1 January 2020"},
+        {"text": ", and drawn as a rule at that day."}
+      ],
+      "source_url": "https://www.imo.org/en/MediaCentre/HotTopics/Pages/Sulphur-2020.aspx",
+      "source_title": "IMO 2020, cutting sulphur oxide emissions",
+      "source_publisher": "International Maritime Organization",
+      "additional_sources": [],
+      "window": {
+        "first": "2019-07-01",
+        "last": "2020-07-01",
+        "end": "2020-07-31",
+        "event_month": "2020-01-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2019-07-01", "label": "July 2019"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2020-07-01", "label": "July 2020"}
+        ]
+      },
+      "capacity_steps": [],
+      "rows": [
+        ["2019-07-01", -6, 14.62087, 18.41087, 5.353635, 4.824149, 87.918479, false],
+        ["2019-08-01", -5, 16.398182, 18.598182, 5.93548, 5.397219, 88.720862, false],
+        ["2019-09-01", -4, 16.883333, 14.383333, 4.4112, 3.795417, 84.816971, false],
+        ["2019-10-01", -3, 18.756957, 16.536957, 7.020412, 6.280302, 84.718616, false],
+        ["2019-11-01", -2, 14.928095, 15.008095, 4.862816, 4.109542, 83.010422, false],
+        ["2019-12-01", -1, 13.152857, 10.132857, 2.682889, 2.007136, 84.513886, false],
+        ["2020-01-01", 0, 12.424545, 12.544545, 4.126334, 3.595385, 85.283684, false],
+        ["2020-02-01", 1, 10.793, 13.993, 3.612182, 3.186546, 83.739148, false],
+        ["2020-03-01", 2, 14.348636, 8.508636, 4.255139, 3.857293, 72.963732, false],
+        ["2020-04-01", 3, 14.7415, 9.2315, 5.587226, 5.27714, 69.3596, false],
+        ["2020-05-01", 4, 4.721053, 8.421053, -0.183118, -0.41422, 69.583847, false],
+        ["2020-06-01", 5, 4.293182, 9.483182, -0.266804, -0.522771, 66.506142, false],
+        ["2020-07-01", 6, 6.287826, 10.857826, 0.816852, 0.553572, 70.54356, false]
+      ],
+      "weekly_rows": [],
+      "missing": [
+        {
+          "series": "weekly",
+          "segments": [
+            {"text": "This study's weekly reading of the ministry's chart starts on "},
+            {"field": "series_first", "value": "2022-07-01", "label": "1 July 2022"},
+            {"text": ", after this window ends, so this window has no weekly cracks."}
+          ]
+        }
+      ],
+      "coverage_segments": [
+        {"text": "Missing in part or in whole: "},
+        {"field": "series_name", "value": "this study's weekly reading of the ministry's chart", "label": "this study's weekly reading of the ministry's chart"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "covid_pandemic_and_european_lockdowns_2020_03",
+      "date": "2020-03-01",
+      "precision": "month",
+      "label": "March 2020",
+      "short": "Lockdowns",
+      "name": "Pandemic lockdowns across Europe",
+      "kind": "market",
+      "what": "WHO characterised COVID-19 as a pandemic on 11 March 2020, and European governments ordered movement restrictions during the same month. France restricted movement by decree of 16 March 2020.",
+      "precision_segments": [
+        {"text": "Dated to the month, "},
+        {"field": "date", "value": "2020-03-01", "label": "March 2020"},
+        {"text": ": the source gives no single day, so the whole month is bracketed under the axis rather than a day being invented."}
+      ],
+      "source_url": "https://www.who.int/news/item/27-04-2020-who-timeline---covid-19",
+      "source_title": "WHO timeline, COVID-19",
+      "source_publisher": "World Health Organization",
+      "additional_sources": [
+        {"url": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000041728476", "title": "D\u00e9cret n\u00b0 2020-260 du 16 mars 2020 portant r\u00e9glementation des d\u00e9placements dans le cadre de la lutte contre la propagation du virus covid-19", "publisher": "Journal officiel de la R\u00e9publique fran\u00e7aise, via Legifrance", "why": "One hard dated European lockdown, in the country whose ministry publishes the margin series this study is built on. The lockdowns were national and staggered, so no single date covers Europe and none is claimed."}
+      ],
+      "window": {
+        "first": "2019-09-01",
+        "last": "2020-09-01",
+        "end": "2020-09-30",
+        "event_month": "2020-03-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2019-09-01", "label": "September 2019"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2020-09-01", "label": "September 2020"}
+        ]
+      },
+      "capacity_steps": [],
+      "rows": [
+        ["2019-09-01", -6, 16.883333, 14.383333, 4.4112, 3.795417, 84.816971, false],
+        ["2019-10-01", -5, 18.756957, 16.536957, 7.020412, 6.280302, 84.718616, false],
+        ["2019-11-01", -4, 14.928095, 15.008095, 4.862816, 4.109542, 83.010422, false],
+        ["2019-12-01", -3, 13.152857, 10.132857, 2.682889, 2.007136, 84.513886, false],
+        ["2020-01-01", -2, 12.424545, 12.544545, 4.126334, 3.595385, 85.283684, false],
+        ["2020-02-01", -1, 10.793, 13.993, 3.612182, 3.186546, 83.739148, false],
+        ["2020-03-01", 0, 14.348636, 8.508636, 4.255139, 3.857293, 72.963732, false],
+        ["2020-04-01", 1, 14.7415, 9.2315, 5.587226, 5.27714, 69.3596, false],
+        ["2020-05-01", 2, 4.721053, 8.421053, -0.183118, -0.41422, 69.583847, false],
+        ["2020-06-01", 3, 4.293182, 9.483182, -0.266804, -0.522771, 66.506142, false],
+        ["2020-07-01", 4, 6.287826, 10.857826, 0.816852, 0.553572, 70.54356, false],
+        ["2020-08-01", 5, 4.964, 8.674, -0.271065, -0.689388, 70.690165, false],
+        ["2020-09-01", 6, 2.450455, 10.460455, 0.039998, -0.537756, 72.471571, false]
+      ],
+      "weekly_rows": [],
+      "missing": [
+        {
+          "series": "weekly",
+          "segments": [
+            {"text": "This study's weekly reading of the ministry's chart starts on "},
+            {"field": "series_first", "value": "2022-07-01", "label": "1 July 2022"},
+            {"text": ", after this window ends, so this window has no weekly cracks."}
+          ]
+        }
+      ],
+      "coverage_segments": [
+        {"text": "Missing in part or in whole: "},
+        {"field": "series_name", "value": "this study's weekly reading of the ministry's chart", "label": "this study's weekly reading of the ministry's chart"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "russia_invades_ukraine_2022_02_24",
+      "date": "2022-02-24",
+      "precision": "day",
+      "label": "24 February 2022",
+      "short": "Invasion",
+      "name": "Russia invades Ukraine",
+      "kind": "market",
+      "what": "The start of Russia's full scale invasion of Ukraine.",
+      "precision_segments": [
+        {"text": "Dated to the day by the source, "},
+        {"field": "date", "value": "2022-02-24", "label": "24 February 2022"},
+        {"text": ", and drawn as a rule at that day."}
+      ],
+      "source_url": "https://www.consilium.europa.eu/en/policies/sanctions-against-russia/sanctions-against-russia-explained/",
+      "source_title": "EU sanctions against Russia explained",
+      "source_publisher": "Council of the European Union",
+      "additional_sources": [],
+      "window": {
+        "first": "2021-08-01",
+        "last": "2022-08-01",
+        "end": "2022-08-31",
+        "event_month": "2022-02-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2021-08-01", "label": "August 2021"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2022-08-01", "label": "August 2022"}
+        ]
+      },
+      "capacity_steps": [],
+      "rows": [
+        ["2021-08-01", -6, 6.922857, 19.992857, 2.99824, 0.741344, 78.285126, false],
+        ["2021-09-01", -5, 9.861364, 19.401364, 3.862281, 0.521549, 75.018165, false],
+        ["2021-10-01", -4, 13.381905, 19.941905, 5.123809, 0.582226, 78.153236, false],
+        ["2021-11-01", -3, 11.78, 19.72, 3.716283, -0.323605, 80.755191, false],
+        ["2021-12-01", -2, 12.209524, 16.319524, 3.744608, -1.817917, 77.884581, false],
+        ["2022-01-01", -1, 14.674762, 15.964762, 4.515553, 0.382054, 76.123295, false],
+        ["2022-02-01", 0, 15.641, 16.991, 4.39523, 0.412386, 76.162885, false],
+        ["2022-03-01", 1, 39.234783, 17.704783, 12.251837, 6.051589, 73.270639, false],
+        ["2022-04-01", 2, 46.884737, 28.864737, 22.47107, 17.761281, 77.511698, false],
+        ["2022-05-01", 3, 39.032381, 52.802381, 19.790253, 15.523652, 79.35778, false],
+        ["2022-06-01", 4, 56.579048, 65.829048, 20.530615, 15.621903, 81.864477, false],
+        ["2022-07-01", 5, 41.364286, 46.094286, 10.491878, 2.984006, 81.859544, false],
+        ["2022-08-01", 6, 42.553636, 37.003636, 11.168954, 0.92443, 82.143763, false]
+      ],
+      "weekly_rows": [
+        ["2022-07-01", 50.371767, 49.878022, null, null, "single_geometry_oldest"],
+        ["2022-07-08", 46.660188, 40.967394, null, null, "single_geometry_oldest"],
+        ["2022-07-15", 45.918663, 35.792542, null, null, "single_geometry_oldest"],
+        ["2022-07-22", 36.580821, 24.423025, null, null, "single_geometry_oldest"],
+        ["2022-07-29", 39.502652, 30.041323, null, null, "single_geometry_oldest"],
+        ["2022-08-05", 38.174547, 26.999705, null, null, "single_geometry_oldest"],
+        ["2022-08-12", 32.100528, 20.280731, null, null, "cross_checked"],
+        ["2022-08-19", 44.617706, 25.621953, null, null, "cross_checked"],
+        ["2022-08-26", 57.198227, 25.092652, null, null, "cross_checked"]
+      ],
+      "missing": [
+        {
+          "series": "weekly",
+          "segments": [
+            {"text": "This study's weekly reading of the ministry's chart"},
+            {"text": " starts on "},
+            {"field": "series_first", "value": "2022-07-01", "label": "1 July 2022"},
+            {"text": ", so the weeks of this window before it have none"},
+            {"text": ". Nothing fills them."}
+          ]
+        }
+      ],
+      "coverage_segments": [
+        {"text": "Missing in part or in whole: "},
+        {"field": "series_name", "value": "this study's weekly reading of the ministry's chart", "label": "this study's weekly reading of the ministry's chart"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "sp_record_diesel_cracks_week_to_2022_03_25",
+      "date": "2022-03-25",
+      "precision": "day",
+      "label": "25 March 2022",
+      "short": "Diesel record",
+      "name": "Week of record European diesel cracks, about 44 $/bbl",
+      "kind": "reference",
+      "what": "S&P Global reported European diesel cracks averaging about 44 $/bbl in the week to 25 March 2022, and NWE cracking margins of 15.35 $/bbl on Forties for the same week.",
+      "precision_segments": [
+        {"text": "Dated to the day by the source, "},
+        {"field": "date", "value": "2022-03-25", "label": "25 March 2022"},
+        {"text": ", and drawn as a rule at that day."}
+      ],
+      "source_url": "https://www.spglobal.com/energy/en/news-research/latest-news/crude-oil/032822-refinery-margin-tracker-record-high-global-diesel-cracks-propel-margins-upward",
+      "source_title": "Refinery margin tracker: record high global diesel cracks propel margins upward, 28 March 2022",
+      "source_publisher": "S&P Global Commodity Insights",
+      "additional_sources": [],
+      "window": {
+        "first": "2021-09-01",
+        "last": "2022-09-01",
+        "end": "2022-09-30",
+        "event_month": "2022-03-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2021-09-01", "label": "September 2021"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2022-09-01", "label": "September 2022"}
+        ]
+      },
+      "capacity_steps": [],
+      "rows": [
+        ["2021-09-01", -6, 9.861364, 19.401364, 3.862281, 0.521549, 75.018165, false],
+        ["2021-10-01", -5, 13.381905, 19.941905, 5.123809, 0.582226, 78.153236, false],
+        ["2021-11-01", -4, 11.78, 19.72, 3.716283, -0.323605, 80.755191, false],
+        ["2021-12-01", -3, 12.209524, 16.319524, 3.744608, -1.817917, 77.884581, false],
+        ["2022-01-01", -2, 14.674762, 15.964762, 4.515553, 0.382054, 76.123295, false],
+        ["2022-02-01", -1, 15.641, 16.991, 4.39523, 0.412386, 76.162885, false],
+        ["2022-03-01", 0, 39.234783, 17.704783, 12.251837, 6.051589, 73.270639, false],
+        ["2022-04-01", 1, 46.884737, 28.864737, 22.47107, 17.761281, 77.511698, false],
+        ["2022-05-01", 2, 39.032381, 52.802381, 19.790253, 15.523652, 79.35778, false],
+        ["2022-06-01", 3, 56.579048, 65.829048, 20.530615, 15.621903, 81.864477, false],
+        ["2022-07-01", 4, 41.364286, 46.094286, 10.491878, 2.984006, 81.859544, false],
+        ["2022-08-01", 5, 42.553636, 37.003636, 11.168954, 0.92443, 82.143763, false],
+        ["2022-09-01", 6, 49.655238, 34.965238, 15.948064, 7.303698, 81.807042, false]
+      ],
+      "weekly_rows": [
+        ["2022-07-01", 50.371767, 49.878022, null, null, "single_geometry_oldest"],
+        ["2022-07-08", 46.660188, 40.967394, null, null, "single_geometry_oldest"],
+        ["2022-07-15", 45.918663, 35.792542, null, null, "single_geometry_oldest"],
+        ["2022-07-22", 36.580821, 24.423025, null, null, "single_geometry_oldest"],
+        ["2022-07-29", 39.502652, 30.041323, null, null, "single_geometry_oldest"],
+        ["2022-08-05", 38.174547, 26.999705, null, null, "single_geometry_oldest"],
+        ["2022-08-12", 32.100528, 20.280731, null, null, "cross_checked"],
+        ["2022-08-19", 44.617706, 25.621953, null, null, "cross_checked"],
+        ["2022-08-26", 57.198227, 25.092652, null, null, "cross_checked"],
+        ["2022-09-02", 56.514194, 17.473658, null, null, "cross_checked"],
+        ["2022-09-09", 58.210144, 20.66582, null, null, "cross_checked"],
+        ["2022-09-16", 50.004917, 18.845219, null, null, "cross_checked"],
+        ["2022-09-23", 45.134217, 20.392602, null, null, "cross_checked"],
+        ["2022-09-30", 49.544668, 22.298774, null, null, "cross_checked"]
+      ],
+      "missing": [
+        {
+          "series": "weekly",
+          "segments": [
+            {"text": "This study's weekly reading of the ministry's chart"},
+            {"text": " starts on "},
+            {"field": "series_first", "value": "2022-07-01", "label": "1 July 2022"},
+            {"text": ", so the weeks of this window before it have none"},
+            {"text": ". Nothing fills them."}
+          ]
+        }
+      ],
+      "coverage_segments": [
+        {"text": "Missing in part or in whole: "},
+        {"field": "series_name", "value": "this study's weekly reading of the ministry's chart", "label": "this study's weekly reading of the ministry's chart"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "sp_ara_diesel_cracks_2022_10_13",
+      "date": "2022-10-13",
+      "precision": "day",
+      "label": "13 October 2022",
+      "short": "Refinery strikes",
+      "name": "ARA diesel cracks near 80 $/bbl during French refinery strikes",
+      "kind": "reference",
+      "what": "S&P Global reported ARA diesel cracks near 80 $/bbl on 13 October 2022 during strikes at French refineries, NWE cracking margins of 23.11 $/bbl on Dated Brent for the week to 14 October 2022, and gas fired refiners earning about 7 $/bbl less than fuel oil fired ones.",
+      "precision_segments": [
+        {"text": "Dated to the day by the source, "},
+        {"field": "date", "value": "2022-10-13", "label": "13 October 2022"},
+        {"text": ", and drawn as a rule at that day."}
+      ],
+      "source_url": "https://www.spglobal.com/energy/en/news-research/latest-news/crude-oil/101722-refinery-margin-tracker-atlantic-basin-margins-soar-on-refinery-outages-tight-diesel-supply",
+      "source_title": "Refinery margin tracker: Atlantic basin margins soar on refinery outages, tight diesel supply, 17 October 2022",
+      "source_publisher": "S&P Global Commodity Insights",
+      "additional_sources": [],
+      "window": {
+        "first": "2022-04-01",
+        "last": "2023-04-01",
+        "end": "2023-04-30",
+        "event_month": "2022-10-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2022-04-01", "label": "April 2022"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2023-04-01", "label": "April 2023"}
+        ]
+      },
+      "capacity_steps": [],
+      "rows": [
+        ["2022-04-01", -6, 46.884737, 28.864737, 22.47107, 17.761281, 77.511698, false],
+        ["2022-05-01", -5, 39.032381, 52.802381, 19.790253, 15.523652, 79.35778, false],
+        ["2022-06-01", -4, 56.579048, 65.829048, 20.530615, 15.621903, 81.864477, false],
+        ["2022-07-01", -3, 41.364286, 46.094286, 10.491878, 2.984006, 81.859544, false],
+        ["2022-08-01", -2, 42.553636, 37.003636, 11.168954, 0.92443, 82.143763, false],
+        ["2022-09-01", -1, 49.655238, 34.965238, 15.948064, 7.303698, 81.807042, false],
+        ["2022-10-01", 0, 69.568095, 43.688095, 24.782993, 19.075664, 74.790239, false],
+        ["2022-11-01", 1, 43.514545, 36.474545, 10.844405, 5.619756, 79.34035, false],
+        ["2022-12-01", 2, 39.796, 29.406, 10.523595, 5.252141, 81.876914, false],
+        ["2023-01-01", 3, 42.398571, 40.698571, 16.606333, 13.65467, 81.808459, false],
+        ["2023-02-01", 4, 27.445, 39.565, 10.276923, 7.857671, 82.051021, false],
+        ["2023-03-01", 5, 28.685652, 42.255652, 10.211158, 8.191214, 71.429921, false],
+        ["2023-04-01", 6, 16.471667, 44.831667, 3.722394, 1.744867, 75.185367, false]
+      ],
+      "weekly_rows": [
+        ["2022-07-01", 50.371767, 49.878022, null, null, "single_geometry_oldest"],
+        ["2022-07-08", 46.660188, 40.967394, null, null, "single_geometry_oldest"],
+        ["2022-07-15", 45.918663, 35.792542, null, null, "single_geometry_oldest"],
+        ["2022-07-22", 36.580821, 24.423025, null, null, "single_geometry_oldest"],
+        ["2022-07-29", 39.502652, 30.041323, null, null, "single_geometry_oldest"],
+        ["2022-08-05", 38.174547, 26.999705, null, null, "single_geometry_oldest"],
+        ["2022-08-12", 32.100528, 20.280731, null, null, "cross_checked"],
+        ["2022-08-19", 44.617706, 25.621953, null, null, "cross_checked"],
+        ["2022-08-26", 57.198227, 25.092652, null, null, "cross_checked"],
+        ["2022-09-02", 56.514194, 17.473658, null, null, "cross_checked"],
+        ["2022-09-09", 58.210144, 20.66582, null, null, "cross_checked"],
+        ["2022-09-16", 50.004917, 18.845219, null, null, "cross_checked"],
+        ["2022-09-23", 45.134217, 20.392602, null, null, "cross_checked"],
+        ["2022-09-30", 49.544668, 22.298774, null, null, "cross_checked"],
+        ["2022-10-07", 50.997152, 26.987569, null, null, "cross_checked"],
+        ["2022-10-14", 62.006817, 31.435147, null, null, "cross_checked"],
+        ["2022-10-21", 82.061062, 29.259302, null, null, "cross_checked"],
+        ["2022-10-28", 74.372766, 28.659604, null, null, "cross_checked"],
+        ["2022-11-04", 52.625812, 24.605095, null, null, "cross_checked"],
+        ["2022-11-11", 38.632606, 25.996281, null, null, "cross_checked"],
+        ["2022-11-18", 40.83346, 21.903223, null, null, "cross_checked"],
+        ["2022-11-25", 41.139147, 17.181551, null, null, "cross_checked"],
+        ["2022-12-02", 42.627592, 18.291313, null, null, "cross_checked"],
+        ["2022-12-09", 40.217787, 16.696655, null, null, "cross_checked"],
+        ["2022-12-16", 45.825353, 12.328442, null, null, "cross_checked"],
+        ["2022-12-23", 46.211278, 15.575816, null, null, "cross_checked"],
+        ["2022-12-30", 51.622024, 19.753059, null, null, "cross_checked"],
+        ["2023-01-06", 41.835513, 25.165618, null, null, "cross_checked"],
+        ["2023-01-13", 41.183785, 23.586707, null, null, "cross_checked"],
+        ["2023-01-20", 42.88065, 27.740321, null, null, "cross_checked"],
+        ["2023-01-27", 45.275741, 31.037246, null, null, "cross_checked"],
+        ["2023-02-03", 36.720878, 30.319295, null, null, "cross_checked"],
+        ["2023-02-10", 27.376919, 26.248317, null, null, "cross_checked"],
+        ["2023-02-17", 25.779694, 25.679666, null, null, "cross_checked"],
+        ["2023-02-24", 24.93934, 26.057541, null, null, "cross_checked"],
+        ["2023-03-03", 28.287099, 25.802828, null, null, "cross_checked"],
+        ["2023-03-10", 26.745214, 26.038964, null, null, "cross_checked"],
+        ["2023-03-17", 29.629276, 24.217112, null, null, "cross_checked"],
+        ["2023-03-24", 31.745498, 33.608904, null, null, "cross_checked"],
+        ["2023-03-31", 26.790677, 36.829992, null, null, "cross_checked"],
+        ["2023-04-07", 20.373448, 32.911094, null, null, "cross_checked"],
+        ["2023-04-14", 17.579489, 31.586476, null, null, "cross_checked"],
+        ["2023-04-21", 15.419345, 28.471902, null, null, "cross_checked"],
+        ["2023-04-28", 13.602516, 26.504189, null, null, "cross_checked"]
+      ],
+      "missing": [
+        {
+          "series": "weekly",
+          "segments": [
+            {"text": "This study's weekly reading of the ministry's chart"},
+            {"text": " starts on "},
+            {"field": "series_first", "value": "2022-07-01", "label": "1 July 2022"},
+            {"text": ", so the weeks of this window before it have none"},
+            {"text": ". Nothing fills them."}
+          ]
+        }
+      ],
+      "coverage_segments": [
+        {"text": "Missing in part or in whole: "},
+        {"field": "series_name", "value": "this study's weekly reading of the ministry's chart", "label": "this study's weekly reading of the ministry's chart"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "eu_embargo_russian_seaborne_crude_2022_12_05",
+      "date": "2022-12-05",
+      "precision": "day",
+      "label": "5 December 2022",
+      "short": "Crude embargo",
+      "name": "EU embargo on Russian seaborne crude and the G7 price cap",
+      "kind": "policy",
+      "what": "The EU prohibition on the purchase, import and transfer of Russian seaborne crude oil took effect, together with the price cap exemption agreed with the Price Cap Coalition.",
+      "precision_segments": [
+        {"text": "Dated to the day by the source, "},
+        {"field": "date", "value": "2022-12-05", "label": "5 December 2022"},
+        {"text": ", and drawn as a rule at that day."}
+      ],
+      "source_url": "https://www.consilium.europa.eu/en/policies/sanctions-against-russia/sanctions-against-russia-explained/",
+      "source_title": "EU sanctions against Russia explained",
+      "source_publisher": "Council of the European Union",
+      "additional_sources": [
+        {"url": "https://eur-lex.europa.eu/eli/reg/2022/879/oj", "title": "Council Regulation (EU) 2022/879 of 3 June 2022, the sixth sanctions package", "publisher": "Official Journal of the European Union", "why": "The primary legal text. It is the regulation that sets both wind down dates, 5 December 2022 for goods under CN 2709 00 and 5 February 2023 for goods under CN 2710."},
+        {"url": "https://eur-lex.europa.eu/eli/reg/2022/2367/oj", "title": "Council Regulation (EU) 2022/2367 of 3 December 2022, the price cap", "publisher": "Official Journal of the European Union", "why": "The price cap itself."}
+      ],
+      "window": {
+        "first": "2022-06-01",
+        "last": "2023-06-01",
+        "end": "2023-06-30",
+        "event_month": "2022-12-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2022-06-01", "label": "June 2022"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2023-06-01", "label": "June 2023"}
+        ]
+      },
+      "capacity_steps": [],
+      "rows": [
+        ["2022-06-01", -6, 56.579048, 65.829048, 20.530615, 15.621903, 81.864477, false],
+        ["2022-07-01", -5, 41.364286, 46.094286, 10.491878, 2.984006, 81.859544, false],
+        ["2022-08-01", -4, 42.553636, 37.003636, 11.168954, 0.92443, 82.143763, false],
+        ["2022-09-01", -3, 49.655238, 34.965238, 15.948064, 7.303698, 81.807042, false],
+        ["2022-10-01", -2, 69.568095, 43.688095, 24.782993, 19.075664, 74.790239, false],
+        ["2022-11-01", -1, 43.514545, 36.474545, 10.844405, 5.619756, 79.34035, false],
+        ["2022-12-01", 0, 39.796, 29.406, 10.523595, 5.252141, 81.876914, false],
+        ["2023-01-01", 1, 42.398571, 40.698571, 16.606333, 13.65467, 81.808459, false],
+        ["2023-02-01", 2, 27.445, 39.565, 10.276923, 7.857671, 82.051021, false],
+        ["2023-03-01", 3, 28.685652, 42.255652, 10.211158, 8.191214, 71.429921, false],
+        ["2023-04-01", 4, 16.471667, 44.831667, 3.722394, 1.744867, 75.185367, false],
+        ["2023-05-01", 5, 16.174, 47.384, 4.758599, 3.279842, 78.418645, false],
+        ["2023-06-01", 6, 21.630909, 49.070909, 7.031188, 5.517327, 78.681978, false]
+      ],
+      "weekly_rows": [
+        ["2022-07-01", 50.371767, 49.878022, null, null, "single_geometry_oldest"],
+        ["2022-07-08", 46.660188, 40.967394, null, null, "single_geometry_oldest"],
+        ["2022-07-15", 45.918663, 35.792542, null, null, "single_geometry_oldest"],
+        ["2022-07-22", 36.580821, 24.423025, null, null, "single_geometry_oldest"],
+        ["2022-07-29", 39.502652, 30.041323, null, null, "single_geometry_oldest"],
+        ["2022-08-05", 38.174547, 26.999705, null, null, "single_geometry_oldest"],
+        ["2022-08-12", 32.100528, 20.280731, null, null, "cross_checked"],
+        ["2022-08-19", 44.617706, 25.621953, null, null, "cross_checked"],
+        ["2022-08-26", 57.198227, 25.092652, null, null, "cross_checked"],
+        ["2022-09-02", 56.514194, 17.473658, null, null, "cross_checked"],
+        ["2022-09-09", 58.210144, 20.66582, null, null, "cross_checked"],
+        ["2022-09-16", 50.004917, 18.845219, null, null, "cross_checked"],
+        ["2022-09-23", 45.134217, 20.392602, null, null, "cross_checked"],
+        ["2022-09-30", 49.544668, 22.298774, null, null, "cross_checked"],
+        ["2022-10-07", 50.997152, 26.987569, null, null, "cross_checked"],
+        ["2022-10-14", 62.006817, 31.435147, null, null, "cross_checked"],
+        ["2022-10-21", 82.061062, 29.259302, null, null, "cross_checked"],
+        ["2022-10-28", 74.372766, 28.659604, null, null, "cross_checked"],
+        ["2022-11-04", 52.625812, 24.605095, null, null, "cross_checked"],
+        ["2022-11-11", 38.632606, 25.996281, null, null, "cross_checked"],
+        ["2022-11-18", 40.83346, 21.903223, null, null, "cross_checked"],
+        ["2022-11-25", 41.139147, 17.181551, null, null, "cross_checked"],
+        ["2022-12-02", 42.627592, 18.291313, null, null, "cross_checked"],
+        ["2022-12-09", 40.217787, 16.696655, null, null, "cross_checked"],
+        ["2022-12-16", 45.825353, 12.328442, null, null, "cross_checked"],
+        ["2022-12-23", 46.211278, 15.575816, null, null, "cross_checked"],
+        ["2022-12-30", 51.622024, 19.753059, null, null, "cross_checked"],
+        ["2023-01-06", 41.835513, 25.165618, null, null, "cross_checked"],
+        ["2023-01-13", 41.183785, 23.586707, null, null, "cross_checked"],
+        ["2023-01-20", 42.88065, 27.740321, null, null, "cross_checked"],
+        ["2023-01-27", 45.275741, 31.037246, null, null, "cross_checked"],
+        ["2023-02-03", 36.720878, 30.319295, null, null, "cross_checked"],
+        ["2023-02-10", 27.376919, 26.248317, null, null, "cross_checked"],
+        ["2023-02-17", 25.779694, 25.679666, null, null, "cross_checked"],
+        ["2023-02-24", 24.93934, 26.057541, null, null, "cross_checked"],
+        ["2023-03-03", 28.287099, 25.802828, null, null, "cross_checked"],
+        ["2023-03-10", 26.745214, 26.038964, null, null, "cross_checked"],
+        ["2023-03-17", 29.629276, 24.217112, null, null, "cross_checked"],
+        ["2023-03-24", 31.745498, 33.608904, null, null, "cross_checked"],
+        ["2023-03-31", 26.790677, 36.829992, null, null, "cross_checked"],
+        ["2023-04-07", 20.373448, 32.911094, null, null, "cross_checked"],
+        ["2023-04-14", 17.579489, 31.586476, null, null, "cross_checked"],
+        ["2023-04-21", 15.419345, 28.471902, null, null, "cross_checked"],
+        ["2023-04-28", 13.602516, 26.504189, null, null, "cross_checked"],
+        ["2023-05-05", 12.244898, 27.945006, null, null, "cross_checked"],
+        ["2023-05-12", 15.182991, 26.911517, null, null, "cross_checked"],
+        ["2023-05-19", 17.404566, 29.338002, null, null, "cross_checked"],
+        ["2023-05-26", 16.590724, 32.556888, null, null, "cross_checked"],
+        ["2023-06-02", 17.151177, 29.751775, null, null, "cross_checked"],
+        ["2023-06-09", 18.361469, 29.99799, null, null, "cross_checked"],
+        ["2023-06-16", 21.031264, 31.657267, null, null, "cross_checked"],
+        ["2023-06-23", 24.112606, 31.388008, null, null, "cross_checked"],
+        ["2023-06-30", 21.209667, 27.340744, null, null, "cross_checked"]
+      ],
+      "missing": [
+        {
+          "series": "weekly",
+          "segments": [
+            {"text": "This study's weekly reading of the ministry's chart"},
+            {"text": " starts on "},
+            {"field": "series_first", "value": "2022-07-01", "label": "1 July 2022"},
+            {"text": ", so the weeks of this window before it have none"},
+            {"text": ". Nothing fills them."}
+          ]
+        }
+      ],
+      "coverage_segments": [
+        {"text": "Missing in part or in whole: "},
+        {"field": "series_name", "value": "this study's weekly reading of the ministry's chart", "label": "this study's weekly reading of the ministry's chart"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "eu_embargo_russian_refined_products_2023_02_05",
+      "date": "2023-02-05",
+      "precision": "day",
+      "label": "5 February 2023",
+      "short": "Product embargo",
+      "name": "EU embargo on Russian refined products",
+      "kind": "policy",
+      "what": "The EU prohibition on the purchase, import and transfer of Russian refined petroleum products took effect, with price caps on discounted and premium products.",
+      "precision_segments": [
+        {"text": "Dated to the day by the source, "},
+        {"field": "date", "value": "2023-02-05", "label": "5 February 2023"},
+        {"text": ", and drawn as a rule at that day."}
+      ],
+      "source_url": "https://www.consilium.europa.eu/en/policies/sanctions-against-russia/sanctions-against-russia-explained/",
+      "source_title": "EU sanctions against Russia explained",
+      "source_publisher": "Council of the European Union",
+      "additional_sources": [
+        {"url": "https://eur-lex.europa.eu/eli/reg/2022/879/oj", "title": "Council Regulation (EU) 2022/879 of 3 June 2022, the sixth sanctions package", "publisher": "Official Journal of the European Union", "why": "The primary legal text, which sets the 5 February 2023 date for goods falling under CN 2710."}
+      ],
+      "window": {
+        "first": "2022-08-01",
+        "last": "2023-08-01",
+        "end": "2023-08-31",
+        "event_month": "2023-02-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2022-08-01", "label": "August 2022"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2023-08-01", "label": "August 2023"}
+        ]
+      },
+      "capacity_steps": [],
+      "rows": [
+        ["2022-08-01", -6, 42.553636, 37.003636, 11.168954, 0.92443, 82.143763, false],
+        ["2022-09-01", -5, 49.655238, 34.965238, 15.948064, 7.303698, 81.807042, false],
+        ["2022-10-01", -4, 69.568095, 43.688095, 24.782993, 19.075664, 74.790239, false],
+        ["2022-11-01", -3, 43.514545, 36.474545, 10.844405, 5.619756, 79.34035, false],
+        ["2022-12-01", -2, 39.796, 29.406, 10.523595, 5.252141, 81.876914, false],
+        ["2023-01-01", -1, 42.398571, 40.698571, 16.606333, 13.65467, 81.808459, false],
+        ["2023-02-01", 0, 27.445, 39.565, 10.276923, 7.857671, 82.051021, false],
+        ["2023-03-01", 1, 28.685652, 42.255652, 10.211158, 8.191214, 71.429921, false],
+        ["2023-04-01", 2, 16.471667, 44.831667, 3.722394, 1.744867, 75.185367, false],
+        ["2023-05-01", 3, 16.174, 47.384, 4.758599, 3.279842, 78.418645, false],
+        ["2023-06-01", 4, 21.630909, 49.070909, 7.031188, 5.517327, 78.681978, false],
+        ["2023-07-01", 5, 25.281905, 51.011905, 9.388036, 7.991189, 81.130987, false],
+        ["2023-08-01", 6, 36.532273, 56.452273, 17.562938, 15.926213, 83.576983, false]
+      ],
+      "weekly_rows": [
+        ["2022-08-05", 38.174547, 26.999705, null, null, "single_geometry_oldest"],
+        ["2022-08-12", 32.100528, 20.280731, null, null, "cross_checked"],
+        ["2022-08-19", 44.617706, 25.621953, null, null, "cross_checked"],
+        ["2022-08-26", 57.198227, 25.092652, null, null, "cross_checked"],
+        ["2022-09-02", 56.514194, 17.473658, null, null, "cross_checked"],
+        ["2022-09-09", 58.210144, 20.66582, null, null, "cross_checked"],
+        ["2022-09-16", 50.004917, 18.845219, null, null, "cross_checked"],
+        ["2022-09-23", 45.134217, 20.392602, null, null, "cross_checked"],
+        ["2022-09-30", 49.544668, 22.298774, null, null, "cross_checked"],
+        ["2022-10-07", 50.997152, 26.987569, null, null, "cross_checked"],
+        ["2022-10-14", 62.006817, 31.435147, null, null, "cross_checked"],
+        ["2022-10-21", 82.061062, 29.259302, null, null, "cross_checked"],
+        ["2022-10-28", 74.372766, 28.659604, null, null, "cross_checked"],
+        ["2022-11-04", 52.625812, 24.605095, null, null, "cross_checked"],
+        ["2022-11-11", 38.632606, 25.996281, null, null, "cross_checked"],
+        ["2022-11-18", 40.83346, 21.903223, null, null, "cross_checked"],
+        ["2022-11-25", 41.139147, 17.181551, null, null, "cross_checked"],
+        ["2022-12-02", 42.627592, 18.291313, null, null, "cross_checked"],
+        ["2022-12-09", 40.217787, 16.696655, null, null, "cross_checked"],
+        ["2022-12-16", 45.825353, 12.328442, null, null, "cross_checked"],
+        ["2022-12-23", 46.211278, 15.575816, null, null, "cross_checked"],
+        ["2022-12-30", 51.622024, 19.753059, null, null, "cross_checked"],
+        ["2023-01-06", 41.835513, 25.165618, null, null, "cross_checked"],
+        ["2023-01-13", 41.183785, 23.586707, null, null, "cross_checked"],
+        ["2023-01-20", 42.88065, 27.740321, null, null, "cross_checked"],
+        ["2023-01-27", 45.275741, 31.037246, null, null, "cross_checked"],
+        ["2023-02-03", 36.720878, 30.319295, null, null, "cross_checked"],
+        ["2023-02-10", 27.376919, 26.248317, null, null, "cross_checked"],
+        ["2023-02-17", 25.779694, 25.679666, null, null, "cross_checked"],
+        ["2023-02-24", 24.93934, 26.057541, null, null, "cross_checked"],
+        ["2023-03-03", 28.287099, 25.802828, null, null, "cross_checked"],
+        ["2023-03-10", 26.745214, 26.038964, null, null, "cross_checked"],
+        ["2023-03-17", 29.629276, 24.217112, null, null, "cross_checked"],
+        ["2023-03-24", 31.745498, 33.608904, null, null, "cross_checked"],
+        ["2023-03-31", 26.790677, 36.829992, null, null, "cross_checked"],
+        ["2023-04-07", 20.373448, 32.911094, null, null, "cross_checked"],
+        ["2023-04-14", 17.579489, 31.586476, null, null, "cross_checked"],
+        ["2023-04-21", 15.419345, 28.471902, null, null, "cross_checked"],
+        ["2023-04-28", 13.602516, 26.504189, null, null, "cross_checked"],
+        ["2023-05-05", 12.244898, 27.945006, null, null, "cross_checked"],
+        ["2023-05-12", 15.182991, 26.911517, null, null, "cross_checked"],
+        ["2023-05-19", 17.404566, 29.338002, null, null, "cross_checked"],
+        ["2023-05-26", 16.590724, 32.556888, null, null, "cross_checked"],
+        ["2023-06-02", 17.151177, 29.751775, null, null, "cross_checked"],
+        ["2023-06-09", 18.361469, 29.99799, null, null, "cross_checked"],
+        ["2023-06-16", 21.031264, 31.657267, null, null, "cross_checked"],
+        ["2023-06-23", 24.112606, 31.388008, null, null, "cross_checked"],
+        ["2023-06-30", 21.209667, 27.340744, null, null, "cross_checked"],
+        ["2023-07-07", 20.71413, 27.225839, null, null, "cross_checked"],
+        ["2023-07-14", 22.796905, 26.17883, null, null, "cross_checked"],
+        ["2023-07-21", 23.813932, 30.049649, null, null, "cross_checked"],
+        ["2023-07-28", 28.763206, 35.880216, null, null, "cross_checked"],
+        ["2023-08-04", 36.438804, 36.94929, null, null, "cross_checked"],
+        ["2023-08-11", 35.954118, 31.645314, null, null, "cross_checked"],
+        ["2023-08-18", 34.583447, 37.337171, null, null, "cross_checked"],
+        ["2023-08-25", 38.299108, 40.755933, null, null, "cross_checked"]
+      ],
+      "missing": [],
+      "coverage_segments": [
+        {"text": "Every series has a value in every month of this window."}
+      ]
+    },
+    {
+      "id": "strikes_on_iran_hormuz_2026_02_28",
+      "date": "2026-02-28",
+      "precision": "day",
+      "label": "28 February 2026",
+      "short": "Strikes on Iran",
+      "name": "US and Israeli strikes on Iran, Hormuz tanker traffic halts",
+      "kind": "market",
+      "what": "The United States and Israel launched joint air strikes on Iran on 28 February 2026. Crude and product flows through the Strait of Hormuz fell from around 20 mb/d before the war to a trickle.",
+      "precision_segments": [
+        {"text": "Dated to the day by the source, "},
+        {"field": "date", "value": "2026-02-28", "label": "28 February 2026"},
+        {"text": ", and drawn as a rule at that day."}
+      ],
+      "source_url": "https://www.iea.org/reports/oil-market-report-march-2026",
+      "source_title": "Oil Market Report, March 2026, published 12 March 2026",
+      "source_publisher": "International Energy Agency",
+      "additional_sources": [],
+      "window": {
+        "first": "2025-08-01",
+        "last": "2026-08-01",
+        "end": "2026-08-31",
+        "event_month": "2026-02-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2025-08-01", "label": "August 2025"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2026-08-01", "label": "August 2026"}
+        ]
+      },
+      "capacity_steps": ["2026-01-01"],
+      "rows": [
+        ["2025-08-01", -6, 22.36, 22.84, 9.232573, 7.601699, 81.390734, false],
+        ["2025-09-01", -5, 26.594545, 26.794545, 11.974403, 10.347916, 78.31452, false],
+        ["2025-10-01", -4, 26.796522, 24.636522, 11.449245, 9.8564, 79.093659, false],
+        ["2025-11-01", -3, 37.233, 30.813, 16.469831, 14.945731, 79.658954, false],
+        ["2025-12-01", -2, 23.705714, 22.915714, 9.125356, 7.738747, 81.299168, false],
+        ["2026-01-01", -1, 21.567619, 13.627619, 5.046946, 3.326849, 82.669703, false],
+        ["2026-02-01", 0, 23.733, 16.773, 6.501493, 4.857455, 82.344038, false],
+        ["2026-03-01", 1, null, null, 24.71577, 22.096133, 78.679628, false],
+        ["2026-04-01", 2, null, null, 18.683535, 16.429565, 81.145019, false],
+        ["2026-05-01", 3, null, null, 21.259919, 18.894785, 81.399846, false],
+        ["2026-06-01", 4, null, null, 20.303831, 18.084965, 82.512732, true],
+        ["2026-07-01", 5, null, null, 36.685406, 34.043829, null, null],
+        ["2026-08-01", 6, null, null, 38.050505, 34.962813, null, null]
+      ],
+      "weekly_rows": [
+        ["2025-08-01", 25.722339, 17.17895, null, null, "cross_checked"],
+        ["2025-08-08", 22.822565, 20.097473, null, null, "cross_checked"],
+        ["2025-08-15", 23.038513, 21.252976, null, null, "cross_checked"],
+        ["2025-08-22", 23.278279, 21.269367, null, null, "cross_checked"],
+        ["2025-08-29", 24.383258, 21.53674, null, null, "cross_checked"],
+        ["2025-09-05", 26.952088, 23.879724, null, null, "cross_checked"],
+        ["2025-09-12", 28.001439, 24.436656, null, null, "cross_checked"],
+        ["2025-09-19", 27.648695, 24.036665, null, null, "cross_checked"],
+        ["2025-09-26", 28.125222, 21.945211, null, null, "cross_checked"],
+        ["2025-10-03", 26.466294, 22.623241, null, null, "cross_checked"],
+        ["2025-10-10", 23.749812, 21.883711, null, null, "cross_checked"],
+        ["2025-10-17", 24.800376, 25.012134, null, null, "cross_checked"],
+        ["2025-10-24", 27.937728, 22.30346, null, null, "cross_checked"],
+        ["2025-10-31", 32.723278, 22.92798, null, null, "cross_checked"],
+        ["2025-11-07", 35.948974, 22.012846, null, null, "cross_checked"],
+        ["2025-11-14", 38.807104, 28.865401, null, null, "cross_checked"],
+        ["2025-11-21", 42.003583, 28.121161, null, null, "cross_checked"],
+        ["2025-11-28", 31.732586, 20.379113, null, null, "cross_checked"],
+        ["2025-12-05", 27.636009, 21.495658, null, null, "cross_checked"],
+        ["2025-12-12", 26.444919, 19.788788, 26.463535, 19.886515, "cross_checked"],
+        ["2025-12-19", 23.777108, 16.515848, 23.898881, 16.617687, "cross_checked"],
+        ["2025-12-26", 22.226015, 14.466317, null, null, "cross_checked"],
+        ["2026-01-02", 21.44839, 14.954827, null, null, "cross_checked"],
+        ["2026-01-09", 21.16107, 13.170454, null, null, "cross_checked"],
+        ["2026-01-16", 19.467766, 10.921205, null, null, "cross_checked"],
+        ["2026-01-23", 21.403678, 10.486744, null, null, "cross_checked"],
+        ["2026-01-30", 21.615338, 9.982473, null, null, "cross_checked"],
+        ["2026-02-06", 21.842221, 10.485799, null, null, "cross_checked"],
+        ["2026-02-13", 21.85734, 12.498232, null, null, "cross_checked"],
+        ["2026-02-20", 22.136614, 11.637577, null, null, "cross_checked"],
+        ["2026-02-27", 27.505163, 14.354021, null, null, "cross_checked"],
+        ["2026-03-06", 47.616705, 13.512103, null, null, "cross_checked"],
+        ["2026-03-13", 54.468339, 15.345089, 54.46085, 15.417367, "cross_checked"],
+        ["2026-03-20", 65.057412, 19.605159, 65.022819, 19.571188, "cross_checked"],
+        ["2026-03-27", 65.830225, 17.11582, 65.709172, 17.064426, "cross_checked"],
+        ["2026-04-03", 66.514196, 8.440402, 66.466219, 8.466106, "cross_checked"],
+        ["2026-04-10", 59.179932, 0.434401, null, null, "cross_checked"],
+        ["2026-04-17", 50.746099, 8.439974, 50.728412, 8.357423, "cross_checked"],
+        ["2026-04-24", 54.027899, 20.510355, 54.140492, 20.557663, "cross_checked"],
+        ["2026-05-01", 54.064486, 21.189281, null, null, "cross_checked"],
+        ["2026-05-08", 56.979413, 31.829045, null, null, "cross_checked"],
+        ["2026-05-15", 51.639555, 34.949354, null, null, "cross_checked"],
+        ["2026-05-22", 46.529263, 34.343795, null, null, "cross_checked"],
+        ["2026-05-29", 42.137567, 30.3941, null, null, "cross_checked"],
+        ["2026-06-05", 45.758323, 26.775282, null, null, "cross_checked"],
+        ["2026-06-12", 44.668255, 30.227408, null, null, "cross_checked"],
+        ["2026-06-19", 39.601968, 33.623957, null, null, "cross_checked"],
+        ["2026-06-26", 43.858466, 38.42994, null, null, "cross_checked"],
+        ["2026-07-03", 52.789692, 46.16227, null, null, "cross_checked"],
+        ["2026-07-10", 63.981972, 48.803347, null, null, "cross_checked"],
+        ["2026-07-17", 73.207073, 46.576663, null, null, "cross_checked"],
+        ["2026-07-24", 74.440107, 46.393749, null, null, "cross_checked"],
+        ["2026-07-31", 80.659047, 45.096888, null, null, "cross_checked"],
+        ["2026-08-07", 71.391259, 36.115373, null, null, "cross_checked"],
+        ["2026-08-14", 84.552428, 40.966718, null, null, "cross_checked"],
+        ["2026-08-21", 89.752349, 46.29648, null, null, "cross_checked"],
+        ["2026-08-28", 76.421565, 53.002997, 76.451007, 52.977671, "cross_checked"]
+      ],
+      "missing": [
+        {
+          "series": "monthly_cracks",
+          "segments": [
+            {"text": "OPEC's monthly gasoil and gasoline cracks: "},
+            {"text": "the series stops at "},
+            {"field": "series_last", "value": "2026-02-01", "label": "February 2026"},
+            {"text": ", so the "},
+            {"field": "months_after_series", "value": 6, "format": "count"},
+            {"text": " months from "},
+            {"field": "missing_first", "value": "2026-03-01", "label": "March 2026"},
+            {"text": " to "},
+            {"field": "missing_last", "value": "2026-08-01", "label": "August 2026"},
+            {"text": " have none, because the OPEC archive holds no later issue"},
+            {"text": ". Nothing fills them."}
+          ]
+        },
+        {
+          "series": "utilisation",
+          "segments": [
+            {"text": "Utilisation: "},
+            {"text": "the series stops at "},
+            {"field": "series_last", "value": "2026-06-01", "label": "June 2026"},
+            {"text": ", so the "},
+            {"field": "months_after_series", "value": 2, "format": "count"},
+            {"text": " months from "},
+            {"field": "missing_first", "value": "2026-07-01", "label": "July 2026"},
+            {"text": " to "},
+            {"field": "missing_last", "value": "2026-08-01", "label": "August 2026"},
+            {"text": " have none, because JODI has published no later month"},
+            {"text": ". Nothing fills them."}
+          ]
+        }
+      ],
+      "coverage_segments": [
+        {"text": "Missing in part or in whole: "},
+        {"field": "series_name", "value": "OPEC's monthly gasoil and gasoline cracks", "label": "OPEC's monthly gasoil and gasoline cracks"},
+        {"text": " and "},
+        {"field": "series_name", "value": "utilisation", "label": "utilisation"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "iea_collective_action_400_mb_2026_03_11",
+      "date": "2026-03-11",
+      "precision": "day",
+      "label": "11 March 2026",
+      "short": "Stock release",
+      "name": "IEA coordinated release of 400 million barrels",
+      "kind": "policy",
+      "what": "IEA member countries unanimously agreed to make 400 million barrels of emergency oil stocks available to the market, the largest release coordinated by the Agency and the sixth collective action in its history.",
+      "precision_segments": [
+        {"text": "Dated to the day by the source, "},
+        {"field": "date", "value": "2026-03-11", "label": "11 March 2026"},
+        {"text": ", and drawn as a rule at that day."}
+      ],
+      "source_url": "https://www.iea.org/reports/oil-market-report-march-2026",
+      "source_title": "Oil Market Report, March 2026, published 12 March 2026",
+      "source_publisher": "International Energy Agency",
+      "additional_sources": [
+        {"url": "https://www.iea.org/topics/the-middle-east-and-global-energy-markets", "title": "The Middle East and global energy markets", "publisher": "International Energy Agency", "why": "The second, independent IEA statement of the same date."},
+        {"url": "https://www.cnbc.com/2026/03/14/iran-war-iea-oil-stockpile-spr-strait-hormuz.html", "title": "Oil market coverage of the stock release, 14 March 2026", "publisher": "CNBC", "why": "The coverage SPEC.md section 5.6 lists. It corroborates the day indirectly rather than directly: published Saturday 14 March 2026, it says prices have surged since the IEA announced the release 'on Wednesday', and the Wednesday before that Saturday is 11 March 2026. The two IEA sources state the date outright, so this one is corroboration and not the citation."}
+      ],
+      "window": {
+        "first": "2025-09-01",
+        "last": "2026-09-01",
+        "end": "2026-09-30",
+        "event_month": "2026-03-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2025-09-01", "label": "September 2025"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2026-09-01", "label": "September 2026"}
+        ]
+      },
+      "capacity_steps": ["2026-01-01"],
+      "rows": [
+        ["2025-09-01", -6, 26.594545, 26.794545, 11.974403, 10.347916, 78.31452, false],
+        ["2025-10-01", -5, 26.796522, 24.636522, 11.449245, 9.8564, 79.093659, false],
+        ["2025-11-01", -4, 37.233, 30.813, 16.469831, 14.945731, 79.658954, false],
+        ["2025-12-01", -3, 23.705714, 22.915714, 9.125356, 7.738747, 81.299168, false],
+        ["2026-01-01", -2, 21.567619, 13.627619, 5.046946, 3.326849, 82.669703, false],
+        ["2026-02-01", -1, 23.733, 16.773, 6.501493, 4.857455, 82.344038, false],
+        ["2026-03-01", 0, null, null, 24.71577, 22.096133, 78.679628, false],
+        ["2026-04-01", 1, null, null, 18.683535, 16.429565, 81.145019, false],
+        ["2026-05-01", 2, null, null, 21.259919, 18.894785, 81.399846, false],
+        ["2026-06-01", 3, null, null, 20.303831, 18.084965, 82.512732, true],
+        ["2026-07-01", 4, null, null, 36.685406, 34.043829, null, null],
+        ["2026-08-01", 5, null, null, 38.050505, 34.962813, null, null],
+        ["2026-09-01", 6, null, null, null, null, null, null]
+      ],
+      "weekly_rows": [
+        ["2025-09-05", 26.952088, 23.879724, null, null, "cross_checked"],
+        ["2025-09-12", 28.001439, 24.436656, null, null, "cross_checked"],
+        ["2025-09-19", 27.648695, 24.036665, null, null, "cross_checked"],
+        ["2025-09-26", 28.125222, 21.945211, null, null, "cross_checked"],
+        ["2025-10-03", 26.466294, 22.623241, null, null, "cross_checked"],
+        ["2025-10-10", 23.749812, 21.883711, null, null, "cross_checked"],
+        ["2025-10-17", 24.800376, 25.012134, null, null, "cross_checked"],
+        ["2025-10-24", 27.937728, 22.30346, null, null, "cross_checked"],
+        ["2025-10-31", 32.723278, 22.92798, null, null, "cross_checked"],
+        ["2025-11-07", 35.948974, 22.012846, null, null, "cross_checked"],
+        ["2025-11-14", 38.807104, 28.865401, null, null, "cross_checked"],
+        ["2025-11-21", 42.003583, 28.121161, null, null, "cross_checked"],
+        ["2025-11-28", 31.732586, 20.379113, null, null, "cross_checked"],
+        ["2025-12-05", 27.636009, 21.495658, null, null, "cross_checked"],
+        ["2025-12-12", 26.444919, 19.788788, 26.463535, 19.886515, "cross_checked"],
+        ["2025-12-19", 23.777108, 16.515848, 23.898881, 16.617687, "cross_checked"],
+        ["2025-12-26", 22.226015, 14.466317, null, null, "cross_checked"],
+        ["2026-01-02", 21.44839, 14.954827, null, null, "cross_checked"],
+        ["2026-01-09", 21.16107, 13.170454, null, null, "cross_checked"],
+        ["2026-01-16", 19.467766, 10.921205, null, null, "cross_checked"],
+        ["2026-01-23", 21.403678, 10.486744, null, null, "cross_checked"],
+        ["2026-01-30", 21.615338, 9.982473, null, null, "cross_checked"],
+        ["2026-02-06", 21.842221, 10.485799, null, null, "cross_checked"],
+        ["2026-02-13", 21.85734, 12.498232, null, null, "cross_checked"],
+        ["2026-02-20", 22.136614, 11.637577, null, null, "cross_checked"],
+        ["2026-02-27", 27.505163, 14.354021, null, null, "cross_checked"],
+        ["2026-03-06", 47.616705, 13.512103, null, null, "cross_checked"],
+        ["2026-03-13", 54.468339, 15.345089, 54.46085, 15.417367, "cross_checked"],
+        ["2026-03-20", 65.057412, 19.605159, 65.022819, 19.571188, "cross_checked"],
+        ["2026-03-27", 65.830225, 17.11582, 65.709172, 17.064426, "cross_checked"],
+        ["2026-04-03", 66.514196, 8.440402, 66.466219, 8.466106, "cross_checked"],
+        ["2026-04-10", 59.179932, 0.434401, null, null, "cross_checked"],
+        ["2026-04-17", 50.746099, 8.439974, 50.728412, 8.357423, "cross_checked"],
+        ["2026-04-24", 54.027899, 20.510355, 54.140492, 20.557663, "cross_checked"],
+        ["2026-05-01", 54.064486, 21.189281, null, null, "cross_checked"],
+        ["2026-05-08", 56.979413, 31.829045, null, null, "cross_checked"],
+        ["2026-05-15", 51.639555, 34.949354, null, null, "cross_checked"],
+        ["2026-05-22", 46.529263, 34.343795, null, null, "cross_checked"],
+        ["2026-05-29", 42.137567, 30.3941, null, null, "cross_checked"],
+        ["2026-06-05", 45.758323, 26.775282, null, null, "cross_checked"],
+        ["2026-06-12", 44.668255, 30.227408, null, null, "cross_checked"],
+        ["2026-06-19", 39.601968, 33.623957, null, null, "cross_checked"],
+        ["2026-06-26", 43.858466, 38.42994, null, null, "cross_checked"],
+        ["2026-07-03", 52.789692, 46.16227, null, null, "cross_checked"],
+        ["2026-07-10", 63.981972, 48.803347, null, null, "cross_checked"],
+        ["2026-07-17", 73.207073, 46.576663, null, null, "cross_checked"],
+        ["2026-07-24", 74.440107, 46.393749, null, null, "cross_checked"],
+        ["2026-07-31", 80.659047, 45.096888, null, null, "cross_checked"],
+        ["2026-08-07", 71.391259, 36.115373, null, null, "cross_checked"],
+        ["2026-08-14", 84.552428, 40.966718, null, null, "cross_checked"],
+        ["2026-08-21", 89.752349, 46.29648, null, null, "cross_checked"],
+        ["2026-08-28", 76.421565, 53.002997, 76.451007, 52.977671, "cross_checked"],
+        ["2026-09-04", 91.104736, 65.918051, 91.114094, 65.944778, "cross_checked"],
+        ["2026-09-11", 87.558387, 49.403879, 87.574944, 49.436575, "cross_checked"],
+        ["2026-09-18", 81.866538, 39.624438, 81.770917, 39.518687, "single_geometry_newest"]
+      ],
+      "missing": [
+        {
+          "series": "monthly_cracks",
+          "segments": [
+            {"text": "OPEC's monthly gasoil and gasoline cracks: "},
+            {"text": "the series stops at "},
+            {"field": "series_last", "value": "2026-02-01", "label": "February 2026"},
+            {"text": ", so the "},
+            {"field": "months_after_series", "value": 7, "format": "count"},
+            {"text": " months from "},
+            {"field": "missing_first", "value": "2026-03-01", "label": "March 2026"},
+            {"text": " to "},
+            {"field": "missing_last", "value": "2026-09-01", "label": "September 2026"},
+            {"text": " have none, because the OPEC archive holds no later issue"},
+            {"text": ". Nothing fills them."}
+          ]
+        },
+        {
+          "series": "margin",
+          "segments": [
+            {"text": "The ministry's margin: "},
+            {"text": "the series stops at "},
+            {"field": "series_last", "value": "2026-08-01", "label": "August 2026"},
+            {"text": ", so "},
+            {"field": "missing_first", "value": "2026-09-01", "label": "September 2026"},
+            {"text": " has none, because the ministry has published no later month"},
+            {"text": ". Nothing fills them."}
+          ]
+        },
+        {
+          "series": "utilisation",
+          "segments": [
+            {"text": "Utilisation: "},
+            {"text": "the series stops at "},
+            {"field": "series_last", "value": "2026-06-01", "label": "June 2026"},
+            {"text": ", so the "},
+            {"field": "months_after_series", "value": 3, "format": "count"},
+            {"text": " months from "},
+            {"field": "missing_first", "value": "2026-07-01", "label": "July 2026"},
+            {"text": " to "},
+            {"field": "missing_last", "value": "2026-09-01", "label": "September 2026"},
+            {"text": " have none, because JODI has published no later month"},
+            {"text": ". Nothing fills them."}
+          ]
+        },
+        {
+          "series": "weekly",
+          "segments": [
+            {"text": "This study's weekly reading of the ministry's chart"},
+            {"text": " ends on "},
+            {"field": "series_last", "value": "2026-09-18", "label": "18 September 2026"},
+            {"text": ", so the weeks after it have none: no later note has been collected"},
+            {"text": ". Nothing fills them."}
+          ]
+        }
+      ],
+      "coverage_segments": [
+        {"text": "Missing in part or in whole: "},
+        {"field": "series_name", "value": "OPEC's monthly gasoil and gasoline cracks", "label": "OPEC's monthly gasoil and gasoline cracks"},
+        {"text": ", "},
+        {"field": "series_name", "value": "the ministry's margin", "label": "the ministry's margin"},
+        {"text": ", "},
+        {"field": "series_name", "value": "utilisation", "label": "utilisation"},
+        {"text": " and "},
+        {"field": "series_name", "value": "this study's weekly reading of the ministry's chart", "label": "this study's weekly reading of the ministry's chart"},
+        {"text": "."}
+      ]
+    },
+    {
+      "id": "us_iran_ceasefire_2026_04_07",
+      "date": "2026-04-07",
+      "precision": "day",
+      "label": "7 April 2026",
+      "short": "Ceasefire",
+      "name": "Two week US and Iran ceasefire",
+      "kind": "market",
+      "what": "A two week ceasefire in the Middle East conflict was announced on 7 April 2026. It did not become a lasting settlement: the IEA records an interim ceasefire in June and renewed hostilities in July and August 2026.",
+      "precision_segments": [
+        {"text": "Dated to the day by the source, "},
+        {"field": "date", "value": "2026-04-07", "label": "7 April 2026"},
+        {"text": ", and drawn as a rule at that day."}
+      ],
+      "source_url": "https://iea.blob.core.windows.net/assets/515f3128-df1a-4d6c-beb4-fd91d2434bef/-14APR2026_OilMarketReport_Free_version1.pdf",
+      "source_title": "Oil Market Report, April 2026, free version, 14 April 2026, page 3",
+      "source_publisher": "International Energy Agency",
+      "additional_sources": [],
+      "window": {
+        "first": "2025-10-01",
+        "last": "2026-10-01",
+        "end": "2026-10-31",
+        "event_month": "2026-04-01",
+        "label_segments": [
+          {"field": "window_first", "value": "2025-10-01", "label": "October 2025"},
+          {"text": " to "},
+          {"field": "window_last", "value": "2026-10-01", "label": "October 2026"}
+        ]
+      },
+      "capacity_steps": ["2026-01-01"],
+      "rows": [
+        ["2025-10-01", -6, 26.796522, 24.636522, 11.449245, 9.8564, 79.093659, false],
+        ["2025-11-01", -5, 37.233, 30.813, 16.469831, 14.945731, 79.658954, false],
+        ["2025-12-01", -4, 23.705714, 22.915714, 9.125356, 7.738747, 81.299168, false],
+        ["2026-01-01", -3, 21.567619, 13.627619, 5.046946, 3.326849, 82.669703, false],
+        ["2026-02-01", -2, 23.733, 16.773, 6.501493, 4.857455, 82.344038, false],
+        ["2026-03-01", -1, null, null, 24.71577, 22.096133, 78.679628, false],
+        ["2026-04-01", 0, null, null, 18.683535, 16.429565, 81.145019, false],
+        ["2026-05-01", 1, null, null, 21.259919, 18.894785, 81.399846, false],
+        ["2026-06-01", 2, null, null, 20.303831, 18.084965, 82.512732, true],
+        ["2026-07-01", 3, null, null, 36.685406, 34.043829, null, null],
+        ["2026-08-01", 4, null, null, 38.050505, 34.962813, null, null],
+        ["2026-09-01", 5, null, null, null, null, null, null],
+        ["2026-10-01", 6, null, null, null, null, null, null]
+      ],
+      "weekly_rows": [
+        ["2025-10-03", 26.466294, 22.623241, null, null, "cross_checked"],
+        ["2025-10-10", 23.749812, 21.883711, null, null, "cross_checked"],
+        ["2025-10-17", 24.800376, 25.012134, null, null, "cross_checked"],
+        ["2025-10-24", 27.937728, 22.30346, null, null, "cross_checked"],
+        ["2025-10-31", 32.723278, 22.92798, null, null, "cross_checked"],
+        ["2025-11-07", 35.948974, 22.012846, null, null, "cross_checked"],
+        ["2025-11-14", 38.807104, 28.865401, null, null, "cross_checked"],
+        ["2025-11-21", 42.003583, 28.121161, null, null, "cross_checked"],
+        ["2025-11-28", 31.732586, 20.379113, null, null, "cross_checked"],
+        ["2025-12-05", 27.636009, 21.495658, null, null, "cross_checked"],
+        ["2025-12-12", 26.444919, 19.788788, 26.463535, 19.886515, "cross_checked"],
+        ["2025-12-19", 23.777108, 16.515848, 23.898881, 16.617687, "cross_checked"],
+        ["2025-12-26", 22.226015, 14.466317, null, null, "cross_checked"],
+        ["2026-01-02", 21.44839, 14.954827, null, null, "cross_checked"],
+        ["2026-01-09", 21.16107, 13.170454, null, null, "cross_checked"],
+        ["2026-01-16", 19.467766, 10.921205, null, null, "cross_checked"],
+        ["2026-01-23", 21.403678, 10.486744, null, null, "cross_checked"],
+        ["2026-01-30", 21.615338, 9.982473, null, null, "cross_checked"],
+        ["2026-02-06", 21.842221, 10.485799, null, null, "cross_checked"],
+        ["2026-02-13", 21.85734, 12.498232, null, null, "cross_checked"],
+        ["2026-02-20", 22.136614, 11.637577, null, null, "cross_checked"],
+        ["2026-02-27", 27.505163, 14.354021, null, null, "cross_checked"],
+        ["2026-03-06", 47.616705, 13.512103, null, null, "cross_checked"],
+        ["2026-03-13", 54.468339, 15.345089, 54.46085, 15.417367, "cross_checked"],
+        ["2026-03-20", 65.057412, 19.605159, 65.022819, 19.571188, "cross_checked"],
+        ["2026-03-27", 65.830225, 17.11582, 65.709172, 17.064426, "cross_checked"],
+        ["2026-04-03", 66.514196, 8.440402, 66.466219, 8.466106, "cross_checked"],
+        ["2026-04-10", 59.179932, 0.434401, null, null, "cross_checked"],
+        ["2026-04-17", 50.746099, 8.439974, 50.728412, 8.357423, "cross_checked"],
+        ["2026-04-24", 54.027899, 20.510355, 54.140492, 20.557663, "cross_checked"],
+        ["2026-05-01", 54.064486, 21.189281, null, null, "cross_checked"],
+        ["2026-05-08", 56.979413, 31.829045, null, null, "cross_checked"],
+        ["2026-05-15", 51.639555, 34.949354, null, null, "cross_checked"],
+        ["2026-05-22", 46.529263, 34.343795, null, null, "cross_checked"],
+        ["2026-05-29", 42.137567, 30.3941, null, null, "cross_checked"],
+        ["2026-06-05", 45.758323, 26.775282, null, null, "cross_checked"],
+        ["2026-06-12", 44.668255, 30.227408, null, null, "cross_checked"],
+        ["2026-06-19", 39.601968, 33.623957, null, null, "cross_checked"],
+        ["2026-06-26", 43.858466, 38.42994, null, null, "cross_checked"],
+        ["2026-07-03", 52.789692, 46.16227, null, null, "cross_checked"],
+        ["2026-07-10", 63.981972, 48.803347, null, null, "cross_checked"],
+        ["2026-07-17", 73.207073, 46.576663, null, null, "cross_checked"],
+        ["2026-07-24", 74.440107, 46.393749, null, null, "cross_checked"],
+        ["2026-07-31", 80.659047, 45.096888, null, null, "cross_checked"],
+        ["2026-08-07", 71.391259, 36.115373, null, null, "cross_checked"],
+        ["2026-08-14", 84.552428, 40.966718, null, null, "cross_checked"],
+        ["2026-08-21", 89.752349, 46.29648, null, null, "cross_checked"],
+        ["2026-08-28", 76.421565, 53.002997, 76.451007, 52.977671, "cross_checked"],
+        ["2026-09-04", 91.104736, 65.918051, 91.114094, 65.944778, "cross_checked"],
+        ["2026-09-11", 87.558387, 49.403879, 87.574944, 49.436575, "cross_checked"],
+        ["2026-09-18", 81.866538, 39.624438, 81.770917, 39.518687, "single_geometry_newest"]
+      ],
+      "missing": [
+        {
+          "series": "monthly_cracks",
+          "segments": [
+            {"text": "OPEC's monthly gasoil and gasoline cracks: "},
+            {"text": "the series stops at "},
+            {"field": "series_last", "value": "2026-02-01", "label": "February 2026"},
+            {"text": ", so the "},
+            {"field": "months_after_series", "value": 7, "format": "count"},
+            {"text": " months from "},
+            {"field": "missing_first", "value": "2026-03-01", "label": "March 2026"},
+            {"text": " to "},
+            {"field": "missing_last", "value": "2026-09-01", "label": "September 2026"},
+            {"text": " have none, because the OPEC archive holds no later issue"},
+            {"text": "; and "},
+            {"field": "future_month", "value": "2026-10-01", "label": "October 2026"},
+            {"text": " is after the latest data this study holds"},
+            {"text": ". Nothing fills them."}
+          ]
+        },
+        {
+          "series": "margin",
+          "segments": [
+            {"text": "The ministry's margin: "},
+            {"text": "the series stops at "},
+            {"field": "series_last", "value": "2026-08-01", "label": "August 2026"},
+            {"text": ", so "},
+            {"field": "missing_first", "value": "2026-09-01", "label": "September 2026"},
+            {"text": " has none, because the ministry has published no later month"},
+            {"text": "; and "},
+            {"field": "future_month", "value": "2026-10-01", "label": "October 2026"},
+            {"text": " is after the latest data this study holds"},
+            {"text": ". Nothing fills them."}
+          ]
+        },
+        {
+          "series": "utilisation",
+          "segments": [
+            {"text": "Utilisation: "},
+            {"text": "the series stops at "},
+            {"field": "series_last", "value": "2026-06-01", "label": "June 2026"},
+            {"text": ", so the "},
+            {"field": "months_after_series", "value": 3, "format": "count"},
+            {"text": " months from "},
+            {"field": "missing_first", "value": "2026-07-01", "label": "July 2026"},
+            {"text": " to "},
+            {"field": "missing_last", "value": "2026-09-01", "label": "September 2026"},
+            {"text": " have none, because JODI has published no later month"},
+            {"text": "; and "},
+            {"field": "future_month", "value": "2026-10-01", "label": "October 2026"},
+            {"text": " is after the latest data this study holds"},
+            {"text": ". Nothing fills them."}
+          ]
+        },
+        {
+          "series": "weekly",
+          "segments": [
+            {"text": "This study's weekly reading of the ministry's chart"},
+            {"text": " ends on "},
+            {"field": "series_last", "value": "2026-09-18", "label": "18 September 2026"},
+            {"text": ", so the weeks after it have none: no later note has been collected"},
+            {"text": ". Nothing fills them."}
+          ]
+        }
+      ],
+      "coverage_segments": [
+        {"text": "Missing in part or in whole: "},
+        {"field": "series_name", "value": "OPEC's monthly gasoil and gasoline cracks", "label": "OPEC's monthly gasoil and gasoline cracks"},
+        {"text": ", "},
+        {"field": "series_name", "value": "the ministry's margin", "label": "the ministry's margin"},
+        {"text": ", "},
+        {"field": "series_name", "value": "utilisation", "label": "utilisation"},
+        {"text": " and "},
+        {"field": "series_name", "value": "this study's weekly reading of the ministry's chart", "label": "this study's weekly reading of the ministry's chart"},
+        {"text": "."}
+      ]
+    }
+  ],
+  "not_panels": [
+    {"id": "opec_gasoline_spec_2004_05", "date": "2004-05-01", "label": "May 2004", "name": "OPEC Rotterdam gasoline quotation respecified, unleaded to unleaded 95", "kind": "specification_break"},
+    {"id": "opec_gasoil_spec_2005_03", "date": "2005-03-01", "label": "March 2005", "name": "OPEC Rotterdam gasoil quotation respecified, 0.2% S to 50 ppm", "kind": "specification_break"},
+    {"id": "opec_gasoline_spec_2005_03", "date": "2005-03-01", "label": "March 2005", "name": "OPEC Rotterdam gasoline quotation respecified, unleaded 95 to unleaded 50 ppm", "kind": "specification_break"},
+    {"id": "opec_gasoil_spec_2008_06", "date": "2008-06-01", "label": "June 2008", "name": "OPEC Rotterdam gasoil quotation respecified, 50 ppm to 10 ppm", "kind": "specification_break"},
+    {"id": "opec_gasoline_spec_2008_06", "date": "2008-06-01", "label": "June 2008", "name": "OPEC Rotterdam gasoline quotation respecified, unleaded 50 ppm to unleaded 10 ppm", "kind": "specification_break"},
+    {"id": "worldbank_europe_gas_definition_2010_04", "date": "2010-04-01", "label": "April 2010", "name": "World Bank Europe gas series becomes an import border price including the UK", "kind": "definition_change"},
+    {"id": "opec_gasoline_spec_2013_07", "date": "2013-07-01", "label": "July 2013", "name": "OPEC Rotterdam gasoline quotation respecified, unleaded 10 ppm to unleaded 98", "kind": "specification_break"},
+    {"id": "ice_gasoil_10ppm_2015", "date": "2015-01-01", "label": "January 2015", "name": "ICE Gasoil moves to a 10 ppm specification", "kind": "specification_break"},
+    {"id": "worldbank_europe_gas_definition_2015_04", "date": "2015-04-01", "label": "April 2015", "name": "World Bank Europe gas series becomes TTF", "kind": "definition_change"},
+    {"id": "dgec_mbr_method_in_force_2016_01_01", "date": "2016-01-01", "label": "1 January 2016", "name": "DGEC gross refining margin method in force", "kind": "method_change"},
+    {"id": "ice_gasoil_russian_free_end_2022", "date": "2022-12-01", "label": "December 2022", "name": "ICE Low Sulphur Gasoil excludes Russian origin barrels", "kind": "specification_break"}
+  ],
+  "not_panels_segments": [
+    {"text": "The other "},
+    {"field": "not_panels", "value": 11, "format": "count"},
+    {"text": " entries of the events file are breaks in a series, not events in the market: specification changes, gas definition changes, the margin's method date and the two changes to the ICE gasoil contract. They have no window here; the Method view lists each with where it is drawn."}
+  ]
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Measure the rendered Now view in a real browser, and fail on what no grep sees.
+// Measure the rendered views in a real browser, and fail on what no grep sees.
 //
 //     python scripts/serve.py --port 8126            in another shell
 //     node tools/check-layout.mjs                    http://localhost:8126/crack-spread-study/
@@ -64,6 +64,18 @@
 //       every power strip, horse C a substitution; the lower bound sentence
 //       with the coefficients; 2026 untested with 2022 and the months after
 //       the break bracketed
+//   EV  Events, docs/design.md Part 8.4, at the list and three panels: one
+//       link per event, the open one aria-current; one accent rule per plot for
+//       an event dated to the day and none for one dated to the month, which
+//       gets a bracket; every plot spans the whole window, minus to plus six;
+//       no accent dot, no end label outside its chart; a missing sentence per
+//       series the window lacks; no word of cause; and a History marker opens
+//       its event here
+//   ME  Method, docs/design.md Part 8.5: a contents link per section, each
+//       opening its section by address with focus on its heading; the ICE
+//       factor citations, the printed $/t prices, R2 and the Newey-West lag on
+//       the page; no code block, no callout; the Figtree for Satoshi disclosure
+//   N   the header links exactly the views that exist, in order
 //   P   the page body never scrolls sideways, and the console logs no error
 //       and throws no exception (messages from browser extensions excepted)
 //   V   the deploy guard, docs: src/crack/versions.py. Every module, stylesheet
@@ -86,7 +98,12 @@ const HISTORY = ["#/history", "#/history?range=2022", "#/history?sub=season"];
 const MODEL = ["#/model", "#/model?preset=july_2026", "#/model?preset=average_2019"];
 /* The Runs and crude demand parts, Part 8.3. */
 const RUNS = ["#/runs", "#/runs?part=threshold", "#/runs?part=race", "#/runs?part=break"];
-const VIEWS = (argValue(argv, "--views") || "now,history,model,runs").split(",");
+/* The Events list and three panels, Part 8.4: day dated with the OPEC gap, month
+ * dated, and one the weekly series only partly covers. */
+const EVENTS = ["#/events", "#/events?event=strikes_on_iran_hormuz_2026_02_28", "#/events?event=covid_pandemic_and_european_lockdowns_2020_03", "#/events?event=russia_invades_ukraine_2022_02_24"];
+/* The Method document, whole and opened at a section, Part 8.5. */
+const METHOD = ["#/method", "#/method?section=assumptions"];
+const VIEWS = (argValue(argv, "--views") || "now,history,model,runs,events,method").split(",");
 
 /* Everything below PROBE runs inside the page. It returns
  * [{ check, width, theme, problem }]. */
@@ -468,6 +485,94 @@ const PROBE = String.raw`(async () => {
     }
   }
 
+  // EV: the Events view, docs/design.md Part 8.4.
+  if (document.querySelector(".events-body")) {
+    const view = document.getElementById("view");
+    const data = await (await fetch("data/events.json", { cache: "no-cache" })).json();
+    const links = view.querySelectorAll(".events-list__link");
+    if (links.length !== data.events.length) add("EV", links.length + " list links for " + data.events.length + " events");
+    const asked = new URLSearchParams(location.hash.split("?")[1] || "").get("event");
+    const current = view.querySelectorAll('.events-list__link[aria-current="true"]');
+    if (asked && current.length !== 1) add("EV", current.length + " list links are current for one open event");
+    if (!asked && current.length) add("EV", "a link is current with no event open");
+    const words = text(view);
+    if (/\bimpact|\bcaused\b/i.test(words)) add("EV", "a word of cause: " + /\bimpact\w*|\bcaused\b/i.exec(words)[0]);
+    const event = data.events.find((e) => e.id === asked);
+    if (event) {
+      const svgs = [...view.querySelectorAll(".events-panel svg.chart--event")];
+      if (!svgs.length) add("EV", "no plot for " + event.id);
+      for (const svg of svgs) {
+        const rules = svg.querySelectorAll("line.mark-event").length;
+        if (event.precision === "day" && rules !== 1) add("EV", "a plot of a day dated event has " + rules + " accent rules");
+        if (event.precision !== "day" && rules !== 0) add("EV", "a plot of a month dated event draws a day rule");
+        if (event.precision !== "day" && !/\b[A-Z][a-z]+ \d{4}\b/.test([...svg.querySelectorAll(".rail-label")].map(text).join(" "))) add("EV", "a month dated event is not bracketed with its month");
+        if (svg.querySelector(".mark-accent-dot")) add("EV", "an accent dot on an event plot");
+        const ticks = [...svg.querySelectorAll("text.tick")].map(text);
+        const first = String(-data.window.months_before);
+        const last = "+" + String(data.window.months_after);
+        const norm = (t) => t.replace("\u2212", "-");
+        if (!ticks.map(norm).includes("0")) add("EV", "the event month is not labelled 0 on the axis");
+        const xs = [...svg.querySelectorAll("text.tick")].filter((t) => /^[+\u2212-]?\d+$/.test(text(t)) && t.getAttribute("text-anchor") === "middle");
+        if (xs.length && !(ticks.map(norm).includes(first) || ticks.map(norm).includes("-" + String(data.window.months_before - 1)))) add("EV", "the axis does not start at the window's first months: " + ticks.join(" "));
+        const width = +svg.getAttribute("width");
+        for (const label of svg.querySelectorAll(".chart-end-label")) {
+          const b = label.getBBox();
+          if (b.x + b.width > width + 0.5) add("EV", "the end label " + JSON.stringify(text(label)) + " runs past its chart");
+        }
+        void last;
+      }
+      const said = view.querySelectorAll(".events-missing").length;
+      if (said !== event.missing.length) add("EV", said + " missing sentences for " + event.missing.length + " missing series");
+      if (!view.querySelector('.events-source a[href^="http"]')) add("EV", "the panel does not link its source");
+      if (!!view.querySelector('.events-block[data-series="weekly"] svg') !== event.weekly_rows.length > 0) add("EV", "the weekly plot is drawn when there are no weeks, or missing when there are");
+    }
+  }
+
+  // ME: the Method view, docs/design.md Part 8.5.
+  if (document.querySelector(".method-contents")) {
+    const view = document.getElementById("view");
+    const data = await (await fetch("data/method.json", { cache: "no-cache" })).json();
+    const links = [...view.querySelectorAll(".method-contents a")];
+    if (links.length !== data.sections.length) add("ME", links.length + " contents links for " + data.sections.length + " sections");
+    for (const section of data.sections) if (!document.getElementById("method-heading-" + section.id)) add("ME", "no heading for " + section.id);
+    if (view.querySelector("pre, code")) add("ME", "a code block");
+    if (!view.querySelector('a[href="https://www.ice.com/products/6753331"]') || !view.querySelector('a[href="https://www.ice.com/products/6753289"]')) add("ME", "the ICE factor citations are not linked");
+    if (!view.querySelector('td[data-field="price_usd_t"]')) add("ME", "the printed $/t prices are not on the page");
+    if (!view.querySelector('td[data-field="r2"]') || !view.querySelector('td[data-field="newey_west_lag"]')) add("ME", "R squared or the Newey-West lag is not on the page");
+    const words = text(view);
+    if (!/Figtree/.test(words) || !/Satoshi/.test(words)) add("ME", "the font disclosure is missing");
+    for (const needle of ["already net", "substitution", "leave one series out", "does not bound the oldest weeks", "Eurobob"]) if (!words.includes(needle)) add("ME", "the page does not say " + JSON.stringify(needle));
+    {
+      links[links.length - 1].click();
+      await frame();
+      await new Promise((r) => setTimeout(r, 100));
+      const target = data.sections[data.sections.length - 1].id;
+      if (!location.hash.includes("section=" + target)) add("ME", "a contents link does not put its section in the address");
+      if (document.activeElement !== document.getElementById("method-heading-" + target)) add("ME", "a contents link does not move focus to its section's heading");
+    }
+  }
+
+  // N: the header links exactly the views that exist.
+  {
+    const labels = [...document.querySelectorAll(".site-nav__link")].map(text);
+    const want = ["Now", "History", "Model", "Runs and crude demand", "Events", "Method"];
+    if (labels.join("|") !== want.join("|")) add("N", "the header links " + JSON.stringify(labels));
+    for (const link of document.querySelectorAll(".site-nav__link")) if (!/^#\/[a-z]+$/.test(link.getAttribute("href"))) add("N", "a nav link is not a view address: " + link.getAttribute("href"));
+  }
+
+  // EV, from History: a marker opens its event's panel.
+  if (document.querySelector(".history-body") && /#\/history$/.test(location.hash)) {
+    const marker = document.querySelector(".lane__marker[data-event]");
+    if (!marker) add("EV", "History draws no event marker");
+    else {
+      const id = marker.getAttribute("data-event");
+      marker.click();
+      await new Promise((r) => setTimeout(r, 1500));
+      if (!location.hash.includes("event=" + id)) add("EV", "a History marker does not open its event: " + location.hash);
+      else if (!document.querySelector('.events-panel[data-event="' + id + '"]')) add("EV", "a History marker opens the address and no panel is drawn");
+    }
+  }
+
   // P: the body never scrolls sideways.
   if (document.documentElement.scrollWidth > document.documentElement.clientWidth) add("P", "the page scrolls sideways, " + document.documentElement.scrollWidth + " in " + document.documentElement.clientWidth);
   return problems;
@@ -515,7 +620,7 @@ try {
   for (const theme of THEMES) {
     for (const width of WIDTHS) {
       page.errors.length = 0;
-      const states = [...(VIEWS.includes("now") ? [null] : []), ...(VIEWS.includes("history") ? HISTORY : []), ...(VIEWS.includes("model") ? MODEL : []), ...(VIEWS.includes("runs") ? RUNS : [])];
+      const states = [...(VIEWS.includes("now") ? [null] : []), ...(VIEWS.includes("history") ? HISTORY : []), ...(VIEWS.includes("model") ? MODEL : []), ...(VIEWS.includes("runs") ? RUNS : []), ...(VIEWS.includes("events") ? EVENTS : []), ...(VIEWS.includes("method") ? METHOD : [])];
       for (const hash of states) {
         page.errors.length = 0;
         if (hash === null) await openNow(page, BASE, { theme, open: ALL, width, height: width < 768 ? 812 : 900 });
@@ -544,7 +649,7 @@ for (const f of selected) {
   if (!byCheck.has(key)) byCheck.set(key, []);
   byCheck.get(key).push(f.theme + " " + f.width);
 }
-const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "H", "MV", "RV", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
+const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "H", "MV", "RV", "EV", "ME", "N", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
 for (const check of checks) {
   const lines = [...byCheck.entries()].filter(([key]) => key.startsWith(check + "  "));
   if (!lines.length) {

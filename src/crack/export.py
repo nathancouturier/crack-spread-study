@@ -74,6 +74,8 @@ __all__ = [
     "run_economics",
     "provenance",
     "runs",
+    "events",
+    "method",
     "run_verdict",
     "main",
 ]
@@ -120,6 +122,8 @@ DECIMALS: Mapping[str, int] = {
     "f_stat": 3,
     "gap_percent": 2,
     "slope": 2,
+    "mmbtu_per_bbl_5": 5,
+    "bbl_per_t_4": 4,
 }
 
 #: Formats whose values are whole numbers and are written as JSON integers.
@@ -3317,6 +3321,590 @@ def runs(inputs: Inputs) -> Mapping[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# events.json, docs/design.md Part 8.4
+# ---------------------------------------------------------------------------
+#
+# One panel per event of data/seed/events.json whose kind is an event rather
+# than a break: the cracks, the margin after gas and utilisation from
+# EVENT_MONTHS_BEFORE months before the event's month to EVENT_MONTHS_AFTER
+# after it, SPEC.md section 6.5. EVERY WINDOW IS THE FULL THIRTEEN MONTHS. A
+# month a series does not cover is null, never zero and never filled, and the
+# panel carries a sentence per series naming what is missing and why (E6).
+
+EVENT_MONTHS_BEFORE = 6
+EVENT_MONTHS_AFTER = 6
+
+#: Why a series has nothing after its last month, in words, per series id.
+EVENT_SERIES_STOPS: Mapping[str, str] = {
+    "monthly_cracks": "the OPEC archive holds no later issue",
+    "margin": "the ministry has published no later month",
+    "utilisation": "JODI has published no later month",
+    "weekly": "no later note has been collected",
+}
+
+
+def _event_month_span(first: pd.Timestamp, last: pd.Timestamp) -> int:
+    return (last.year - first.year) * 12 + last.month - first.month + 1
+
+
+def _event_missing_segments(
+    name: str, series_id: str, months: Sequence[pd.Timestamp], present: Sequence[bool],
+    first: str, last: str, data_last: pd.Timestamp,
+) -> list[Mapping[str, Any]] | None:
+    """The sentence naming what a monthly series lacks inside one window, or
+    None when every month has a value. Before the series, after it inside the
+    data, and after the latest month the study holds, each said separately."""
+    if all(present):
+        return None
+    s_first, s_last = pd.Timestamp(first), pd.Timestamp(last)
+    before = [m for m, ok in zip(months, present) if not ok and m < s_first]
+    after = [m for m, ok in zip(months, present) if not ok and s_last < m <= data_last]
+    future = [m for m, ok in zip(months, present) if not ok and m > data_last and m > s_last]
+    inside = [m for m, ok in zip(months, present) if not ok and s_first <= m <= s_last]
+    out: list[Mapping[str, Any]] = [T(name[:1].upper() + name[1:] + ": ")]
+    clauses: list[list[Mapping[str, Any]]] = []
+    if len(before) == len(months):
+        clauses.append([T("the series starts in "), D("series_first", first), T(", after this window ends")])
+    elif len(before) == 1:
+        clauses.append([T("the series starts in "), D("series_first", first), T(", so "), D("missing_first", _iso(before[0])), T(" has none")])
+    elif before:
+        clauses.append([T("the series starts in "), D("series_first", first), T(", so the "), N("months_before_series", len(before), "count"), T(" months of this window before it have none")])
+    if len(after) == 1:
+        clauses.append([T("the series stops at "), D("series_last", last), T(", so "), D("missing_first", _iso(after[0])), T(" has none, because %s" % EVENT_SERIES_STOPS[series_id])])
+    elif after:
+        clauses.append([T("the series stops at "), D("series_last", last), T(", so the "), N("months_after_series", len(after), "count"), T(" months from "), D("missing_first", _iso(after[0])), T(" to "), D("missing_last", _iso(after[-1])), T(" have none, because %s" % EVENT_SERIES_STOPS[series_id])])
+    if inside:
+        clauses.append([T("the series has no value in "), N("months_missing_inside", len(inside), "count"), T(" months inside its own span")])
+    if len(future) == 1:
+        clauses.append([D("future_month", _iso(future[0])), T(" is after the latest data this study holds")])
+    elif future:
+        clauses.append([T("the "), N("months_after_data", len(future), "count"), T(" months after "), D("data_last_month", _iso(data_last)), T(" are after the latest data this study holds")])
+    for i, clause in enumerate(clauses):
+        if i:
+            out.append(T("; and "))
+        out += clause
+    out.append(T(". Nothing fills them."))
+    return out
+
+
+def events(inputs: Inputs) -> Mapping[str, Any]:
+    """The Events view: one thirteen month panel per event, Part 8.4."""
+    events_file = events_anchors.load_events()
+    monthly = series.opec_monthly_cracks().sort_values("date").reset_index(drop=True)
+    monthly["date"] = pd.to_datetime(monthly["date"])
+    monthly = monthly.dropna(subset=[analysis.CRACK_GASOIL, analysis.CRACK_GASOLINE], how="all")
+    margin = inputs.margin.sort_values("date").reset_index(drop=True)
+    margin["date"] = pd.to_datetime(margin["date"])
+    margin = margin.dropna(subset=["mbr_usd_bbl"])
+    frame = inputs.frame.sort_values("date").reset_index(drop=True)
+    frame["date"] = pd.to_datetime(frame["date"])
+    frame = frame.dropna(subset=["utilisation_pct"])
+    weekly = inputs.weekly.sort_values("date").reset_index(drop=True)
+    intake_entry = inputs.entry(analysis.INTAKE_SERIES)
+
+    spans = {
+        "monthly_cracks": (_iso(monthly["date"].min()), _iso(monthly["date"].max())),
+        "margin": (_iso(margin["date"].min()), _iso(margin["date"].max())),
+        "utilisation": (_iso(frame["date"].min()), _iso(frame["date"].max())),
+        "weekly": (_iso(weekly["date"].min()), _iso(weekly["date"].max())),
+    }
+    data_last = max(pd.Timestamp(last) for _, last in spans.values())
+    data_last_month = data_last.to_period("M").to_timestamp()
+    names = {
+        "monthly_cracks": "OPEC's monthly gasoil and gasoline cracks",
+        "margin": "the ministry's margin",
+        "utilisation": "utilisation",
+        "weekly": "this study's weekly reading of the ministry's chart",
+    }
+    steps = sorted(
+        "%d-01-01" % (y + analysis.CAPACITY_SOURCE_LAG_YEARS)
+        for y in analysis.capacity_step_years()
+        if spans["utilisation"][0] < "%d-01-01" % (y + analysis.CAPACITY_SOURCE_LAG_YEARS) <= spans["utilisation"][1]
+    )
+    by_month = {
+        "monthly": monthly.set_index("date"),
+        "margin": margin.set_index("date"),
+        "frame": frame.set_index("date"),
+    }
+
+    payload = _header("events", _iso(data_last), "the Events view: for each event of data/seed/events.json, the cracks, the margin after gas and utilisation from six months before its month to six months after, with every missing month named")
+    payload["conventions"] = _conventions()
+    payload["title_segments"] = [
+        T("What the cracks, the margin after gas and utilisation did from "),
+        N("months_before", EVENT_MONTHS_BEFORE, "count"), T(" months before to "),
+        N("months_after", EVENT_MONTHS_AFTER, "count"), T(" months after each event."),
+    ]
+    payload["lead_segments"] = [
+        T("Each panel shows levels around a dated event, in the source's own units: what moved around the date, never an estimate of the event's effect, because other things happened in the same months. Every window runs the full "),
+        N("window_months", EVENT_MONTHS_BEFORE + EVENT_MONTHS_AFTER + 1, "count"),
+        T(" months; a month a series does not cover is left empty and named, never filled."),
+    ]
+    payload["window"] = {"months_before": EVENT_MONTHS_BEFORE, "months_after": EVENT_MONTHS_AFTER}
+    payload["series"] = [
+        {"id": sid, "name": names[sid], "first": first, "last": last}
+        for sid, (first, last) in spans.items()
+    ]
+    payload["data_last"] = _iso(data_last)
+    payload["capacity_steps"] = steps
+    payload["margin_segments"] = [
+        T("Both lines are after gas and nothing is subtracted twice: the ministry's margin is already net of its own "),
+        N("ministry_intensity", config.DGEC_EMBEDDED_GAS_INTENSITY_MMBTU_PER_BBL, "mmbtu_per_bbl"),
+        T(" MMBtu/bbl of gas, and the dotted line is the same margin at the average US refinery's "),
+        N("study_intensity", config.GAS_INTENSITY_MMBTU_PER_BBL, "mmbtu_per_bbl"),
+        T(" MMBtu/bbl, the extra gas priced at each month's European gas price."),
+    ]
+    payload["monthly_columns"] = [
+        "date", "offset_months", "gasoil_usd_bbl", "gasoline_usd_bbl", "mbr_usd_bbl",
+        "margin_us_gas_usd_bbl", "utilisation_percent", "utilisation_provisional",
+    ]
+    payload["weekly_columns"] = [
+        "date", "gasoil_usd_bbl", "gasoline_usd_bbl", "printed_gasoil_usd_bbl",
+        "printed_gasoline_usd_bbl", "evidence_class",
+    ]
+    payload["least_defended_class"] = "single_geometry_oldest"
+    payload["newest_class"] = "single_geometry_newest"
+
+    out_events = []
+    for event in events_file["events"]:
+        if event["kind"] not in HISTORY_EVENT_KINDS or event.get("layer") == "daily":
+            continue
+        day = _event_day(event)
+        precision = event.get("date_precision")
+        month = pd.Timestamp(day).to_period("M").to_timestamp()
+        months = [month + pd.DateOffset(months=k) for k in range(-EVENT_MONTHS_BEFORE, EVENT_MONTHS_AFTER + 1)]
+        window_first, window_last_month = months[0], months[-1]
+        window_end = window_last_month + pd.DateOffset(months=1) - pd.DateOffset(days=1)
+
+        def value(table: str, stamp: pd.Timestamp, column: str) -> float | None:
+            frame_ = by_month[table]
+            return _num(frame_.at[stamp, column]) if stamp in frame_.index else None
+
+        rows = []
+        for k, stamp in zip(range(-EVENT_MONTHS_BEFORE, EVENT_MONTHS_AFTER + 1), months):
+            iso = _iso(stamp)
+            util = value("frame", stamp, "utilisation_pct")
+            rows.append([
+                iso, k,
+                value("monthly", stamp, analysis.CRACK_GASOIL),
+                value("monthly", stamp, analysis.CRACK_GASOLINE),
+                value("margin", stamp, "mbr_usd_bbl"),
+                value("margin", stamp, "margin_study_intensity_usd_bbl"),
+                util,
+                None if util is None else _status_word(intake_entry, iso)[0],
+            ])
+        in_window = weekly[(weekly["date"] >= window_first) & (weekly["date"] <= window_end)]
+        weekly_rows = [
+            [_iso(r["date"]), _num(r[analysis.CRACK_GASOIL]), _num(r[analysis.CRACK_GASOLINE]),
+             _num(r["printed_gasoil_usd_bbl"]), _num(r["printed_gasoline_usd_bbl"]),
+             None if _is_missing(r["evidence_class"]) else str(r["evidence_class"])]
+            for _, r in in_window.iterrows()
+        ]
+
+        missing = []
+        for sid, columns in (("monthly_cracks", (2, 3)), ("margin", (4,)), ("utilisation", (6,))):
+            present = [any(row[c] is not None for c in columns) for row in rows]
+            segments = _event_missing_segments(names[sid], sid, months, present, spans[sid][0], spans[sid][1], data_last_month)
+            if segments:
+                missing.append({"series": sid, "segments": segments})
+        w_first, w_last = spans["weekly"]
+        if not weekly_rows:
+            if window_end < pd.Timestamp(w_first):
+                w_segments = [T("This study's weekly reading of the ministry's chart starts on "), D("series_first", w_first, kind="day"), T(", after this window ends, so this window has no weekly cracks.")]
+            else:
+                w_segments = [T("This study's weekly reading of the ministry's chart ends on "), D("series_last", w_last, kind="day"), T(", before this window starts.")]
+            missing.append({"series": "weekly", "segments": w_segments})
+        else:
+            parts = []
+            if window_first < pd.Timestamp(w_first):
+                parts.append([T(" starts on "), D("series_first", w_first, kind="day"), T(", so the weeks of this window before it have none")])
+            if window_end > pd.Timestamp(w_last):
+                parts.append([T(" ends on "), D("series_last", w_last, kind="day"), T(", so the weeks after it have none: %s" % EVENT_SERIES_STOPS["weekly"])])
+            if parts:
+                w_segments = [T("This study's weekly reading of the ministry's chart")]
+                for i, part in enumerate(parts):
+                    if i:
+                        w_segments.append(T(", and"))
+                    w_segments += part
+                w_segments.append(T(". Nothing fills them."))
+                missing.append({"series": "weekly", "segments": w_segments})
+
+        if missing:
+            listed = [m["series"] for m in missing]
+            coverage = [T("Missing in part or in whole: ")]
+            for i, sid in enumerate(listed):
+                if i:
+                    coverage.append(T(" and " if i == len(listed) - 1 else ", "))
+                coverage.append(W("series_name", names[sid]))
+            coverage.append(T("."))
+        else:
+            coverage = [T("Every series has a value in every month of this window.")]
+
+        if precision == "day":
+            precision_segments = [T("Dated to the day by the source, "), D("date", day, kind="day"), T(", and drawn as a rule at that day.")]
+        else:
+            precision_segments = [T("Dated to the month, "), D("date", day), T(": the source gives no single day, so the whole month is bracketed under the axis rather than a day being invented.")]
+
+        out_events.append({
+            "id": event["id"],
+            "date": day,
+            "precision": precision,
+            "label": D("date", day, kind="day" if precision == "day" else "month")["label"],
+            "short": EVENT_SHORT_NAMES[event["id"]],
+            "name": event["label"],
+            "kind": event["kind"],
+            "what": event.get("what"),
+            "precision_segments": precision_segments,
+            "source_url": event["source_url"],
+            "source_title": event.get("source_title"),
+            "source_publisher": event.get("source_publisher"),
+            "additional_sources": [
+                {"url": a["url"], "title": a.get("title"), "publisher": a.get("publisher"), "why": a.get("why")}
+                for a in (event.get("additional_sources") or [])
+            ],
+            "window": {
+                "first": _iso(window_first),
+                "last": _iso(window_last_month),
+                "end": _iso(window_end),
+                "event_month": _iso(month),
+                "label_segments": [D("window_first", _iso(window_first)), T(" to "), D("window_last", _iso(window_last_month))],
+            },
+            "capacity_steps": [s for s in steps if _iso(window_first) <= s <= _iso(window_end)],
+            "rows": rows,
+            "weekly_rows": weekly_rows,
+            "missing": missing,
+            "coverage_segments": coverage,
+        })
+    out_events.sort(key=lambda e: e["date"])
+    payload["events"] = out_events
+
+    # The entries of events.json that are breaks, not events: no panel, and the
+    # page says where they are instead of leaving them out silently.
+    payload["not_panels"] = [
+        {"id": e["id"], "date": _event_day(e), "label": D("date", _event_day(e), kind="day" if e.get("date_precision") == "day" else "month")["label"], "name": e["label"], "kind": e["kind"]}
+        for e in events_file["events"]
+        if e["kind"] not in HISTORY_EVENT_KINDS or e.get("layer") == "daily"
+    ]
+    payload["not_panels_segments"] = [
+        T("The other "), N("not_panels", len(payload["not_panels"]), "count"),
+        T(" entries of the events file are breaks in a series, not events in the market: specification changes, gas definition changes, the margin's method date and the two changes to the ICE gasoil contract. They have no window here; the Method view lists each with where it is drawn."),
+    ]
+    return payload
+
+
+# ---------------------------------------------------------------------------
+# method.json, docs/design.md Part 8.5
+# ---------------------------------------------------------------------------
+#
+# The Method view as a document: sections of blocks, every figure a value
+# segment or a value cell computed here from config, series, analysis or the
+# manifest, never typed. A block of type "ref" names a list of segments another
+# artifact already carries, so the Method view prints the sentence the view
+# that owns it prints and the two cannot drift. The fields the Gate 4 audit
+# found orphaned (the ICE factor citations and the printed $/t prices in
+# margin-stack.json, R2 and the Newey-West lag in run-economics.json) are read
+# by the Method view from those artifacts, blocks of type "reads", not copied.
+
+
+def _P(*segments: Mapping[str, Any]) -> Mapping[str, Any]:
+    return {"type": "p", "segments": list(segments)}
+
+
+def _ref(artifact: str, *path: Any) -> Mapping[str, Any]:
+    return {"type": "ref", "artifact": artifact, "path": list(path)}
+
+
+def _cell_text(text: str) -> Mapping[str, Any]:
+    return {"text": text}
+
+
+def _cell_value(field: str, value: Any, fmt: str, signed: bool = False) -> Mapping[str, Any]:
+    return dict(N(field, value, fmt, signed=signed))
+
+
+def _cell_link(text: str, url: str) -> Mapping[str, Any]:
+    return {"text": text, "url": url}
+
+
+def _cell_segments(*segments: Mapping[str, Any]) -> Mapping[str, Any]:
+    return {"segments": list(segments)}
+
+
+def _table(caption: str, columns: Sequence[tuple[str, str, bool]], rows: Sequence[Sequence[Mapping[str, Any]]]) -> Mapping[str, Any]:
+    return {
+        "type": "table",
+        "caption": caption,
+        "columns": [{"label": label, "short": short, "numeric": numeric} for label, short, numeric in columns],
+        "rows": [list(r) for r in rows],
+    }
+
+
+#: The inputs the ministry's method names and never publishes, in words.
+METHOD_UNPUBLISHED_WORDS: Mapping[str, tuple[str, str]] = {
+    "eurobob": ("quotation", "EuroBOB, the gasoline blendstock the method prices; the note prints Eurosuper, a finished grade"),
+    "essence_export": ("quotation", "export gasoline, which the method defines as half naphtha and half Eurosuper"),
+    "naphta": ("quotation", "naphtha"),
+    "propane": ("quotation", "propane"),
+    "butane": ("quotation", "butane"),
+    "peg_nord_gas_day_ahead": ("cost", "the PEG Nord day ahead gas price the refinery pays"),
+    "grtgaz_transport_tariff": ("cost", "the GRTgaz transport tariff on that gas"),
+    "aframax_freight_sullom_voe_le_havre": ("cost", "Aframax crude freight from Sullom Voe to Le Havre"),
+}
+
+#: SPEC.md section 5.4's Brent bound, the one this study widened; config holds
+#: the bound in force, and this is the specification's figure it departs from.
+METHOD_SPEC_BRENT_LOW_USD_BBL = 10.0
+
+#: The slate lines of the method's table 1 that are inputs or losses, not
+#: products, so the count of product quotations can be taken from the table.
+METHOD_NOT_PRODUCTS = ("brent", "gaz_naturel", "combustible_interne_et_pertes")
+
+METHOD_SECTIONS: Sequence[tuple[str, str]] = (
+    ("formulas", "Formulas"),
+    ("departures", "Where this study departs from its specification, and why"),
+    ("assumptions", "Assumptions, each with its source"),
+    ("checks", "Cross checks, measured"),
+    ("products", "What each product is"),
+    ("reconstruction", "The weekly series, and its measured error"),
+    ("breaks", "Structural breaks"),
+    ("limitations", "Limitations"),
+    ("reuse", "Reuse terms, per source"),
+)
+
+
+def _implied_factors() -> Mapping[str, Mapping[str, Any]]:
+    """Barrels per tonne implied by the weekly reconstruction's calendar month
+    mean in $/t over OPEC's monthly $/bbl, over every month both hold."""
+    quotes = series.load("dgec_note_reconstructed_weekly")
+    quotes["date"] = pd.to_datetime(quotes["date"])
+    quotes["month"] = quotes["date"].dt.to_period("M").dt.to_timestamp()
+    monthly = quotes.groupby("month")[["gazole_usd_t", "eurosuper_usd_t"]].mean().reset_index()
+    opec = series.load("opec_rotterdam_products_monthly")
+    opec["date"] = pd.to_datetime(opec["date"])
+    joined = monthly.merge(opec, left_on="month", right_on="date")
+    out = {}
+    for product, (usd_t, usd_bbl) in {"gasoil": ("gazole_usd_t", "gasoil_usd_bbl"), "gasoline": ("eurosuper_usd_t", "premium_gasoline_usd_bbl")}.items():
+        ratio = (joined[usd_t] / joined[usd_bbl]).dropna()
+        months = joined.loc[ratio.index, "month"]
+        out[product] = {
+            "months": int(len(ratio)),
+            "first": _iso(months.min()),
+            "last": _iso(months.max()),
+            "mean": float(ratio.mean()),
+            "min": float(ratio.min()),
+            "max": float(ratio.max()),
+        }
+    return out
+
+
+def _brent_low_prints(bound: float) -> list[Mapping[str, Any]]:
+    """The FRED Brent prints below `bound`, grouped by year."""
+    fred = series.load("fred_brent_daily")
+    fred["date"] = pd.to_datetime(fred["date"])
+    values = pd.to_numeric(fred["brent_usd_bbl"], errors="coerce")
+    low = fred[values < bound].assign(value=values[values < bound])
+    out = []
+    for year, block in low.groupby(low["date"].dt.year):
+        out.append({"year": int(year), "days": int(len(block)), "first": _iso(block["date"].min()), "last": _iso(block["date"].max()), "low": float(block["value"].min())})
+    return out
+
+
+def method(inputs: Inputs) -> Mapping[str, Any]:
+    """The Method view, Part 8.5."""
+    payload = _header("method", _iso(inputs.margin["date"].max()), "the Method view: the formulas, the departures from the specification with their evidence, the assumptions with a source per row, the measured cross checks, the product definitions, the weekly reconstruction and its error, the limitations and the reuse terms")
+    payload["conventions"] = _conventions()
+    payload["title_segments"] = [T("How every figure on this site is computed, what it rests on, and what it cannot show.")]
+    payload["lead_segments"] = [
+        T("This is where the study shows its work: the formulas, the places it departs from its own specification and the evidence for each, the constants with a source per row, the checks against independent data, and the limits of what the data can say. Every figure here is computed from the committed data by the same code that builds the other views."),
+    ]
+    payload["sections"] = [{"id": sid, "title": title} for sid, title in METHOD_SECTIONS]
+    blocks: dict[str, list[Mapping[str, Any]]] = {sid: [] for sid, _ in METHOD_SECTIONS}
+
+    gasoil_f, gasoline_f = config.BBL_PER_T_GASOIL, config.BBL_PER_T_GASOLINE
+    ministry = float(config.DGEC_EMBEDDED_GAS_INTENSITY_MMBTU_PER_BBL)
+    study = float(config.GAS_INTENSITY_MMBTU_PER_BBL)
+    threshold = inputs.threshold
+
+    # 1. Formulas, SPEC.md sections 4.1 to 4.5.
+    f = blocks["formulas"]
+    f.append({"type": "h", "text": "Cracks"})
+    f.append({"type": "formula", "segments": [T("gasoil crack = gasoil price in $/t / "), N("bbl_per_t_gasoil", gasoil_f, "bbl_per_t"), T(" minus Brent in $/bbl")]})
+    f.append({"type": "formula", "segments": [T("gasoline crack = gasoline price in $/t / "), N("bbl_per_t_gasoline", gasoline_f, "bbl_per_t"), T(" minus Brent in $/bbl")]})
+    f.append(_P(T("The divisors are the barrels per tonne the ICE crack contracts settle on, conventions and not densities. Both legs of a crack always share a date and an averaging window: weekly with weekly, a calendar month with the same calendar month, never a weekly product against a monthly crude.")))
+    f.append({"type": "h", "text": "The margin, in four layers"})
+    f.append(_P(T("The official margin is the ministry's monthly gross refining margin on Brent, published from "), D("margin_first", _iso(inputs.margin["date"].min())), T(". The replication recomputes it from the ministry's own quotations with its method, and cannot close, as the departures below say. The decomposition splits a month's margin by product:")))
+    f.append({"type": "formula", "segments": [T("contribution of a product = its volume yield x its crack")]})
+    f.append({"type": "formula", "segments": [T("residual = official margin minus the sum of the contributions")]})
+    f.append(_P(T("The residual carries every product the study cannot price and the ministry's own cost lines, and is always shown. The observed yields are JODI refinery output by product over refinery intake for Belgium, Germany, France, the Netherlands and the United Kingdom, rolling over "), N("rolling_yield_months", config.ROLLING_YIELD_WINDOW_MONTHS, "count"), T(" months.")))
+    f.append({"type": "h", "text": "Run economics"})
+    f.append({"type": "formula", "segments": [T("gas in $/MMBtu = TTF in EUR/MWh x EUR/USD / "), N("mmbtu_per_mwh", config.MMBTU_PER_MWH, "mmbtu_per_mwh")]})
+    f.append({"type": "formula", "segments": [T("gas cost = gas intensity in MMBtu/bbl x gas in $/MMBtu")]})
+    f.append({"type": "formula", "segments": [T("margin after gas = a margin gross of gas minus the gas cost minus other variable cost")]})
+    f.append({"type": "formula", "segments": [T("headroom = margin after gas minus the level at which runs get cut")]})
+    f.append(_P(T("The subtraction applies only to a margin built from cracks and yields, which is gross of gas. The ministry's margin is already net of the gas its method assumes, so on the ministry's margin the gas step is the wedge between two intensities, never a second subtraction. Headroom is not computed anywhere on this site, because the level at which runs get cut is unidentified; see the limitations.")))
+    f.append({"type": "h", "text": "Outputs"})
+    f.append({"type": "formula", "segments": [T("carrier = the product with the largest contribution")]})
+    f.append({"type": "formula", "segments": [T("breakeven TTF = the TTF at which the margin after gas equals the target, solved in closed form because the model is linear")]})
+    f.append({"type": "formula", "segments": [T("ten year rank = the rank of the month's margin among the trailing "), N("percentile_window_months", config.PERCENTILE_WINDOW_MONTHS, "count"), T(" months")]})
+    f.append(_P(T("The Model view solves its breakevens against a margin of zero, not against a run cut level, for the same reason headroom is not computed.")))
+    f.append({"type": "h", "text": "The response of runs to the margin"})
+    f.append({"type": "formula", "segments": [T("utilisation = a + the sum over one to three months back of b x the margin after gas + month terms + episode terms + error")]})
+    f.append(_P(T("Utilisation is NWE crude intake over refinery capacity. The response is the sum of the three lagged coefficients, with Newey-West standard errors; the lag of each equation, its R squared and its sample are in the table below, read from the run economics artifact the Now view uses.")))
+    f.append({"type": "reads", "what": "response_diagnostics"})
+
+    # 2. Departures.
+    d = blocks["departures"]
+    d.append({"type": "h", "text": "The ministry's margin is already net of gas, so the gas step is a wedge"})
+    d.append(_P(T("The specification writes the margin after gas as a gross margin less a gas cost. The ministry's own method note says its margin already has the purchased gas taken off:")))
+    d.append({"type": "quote", "lang": "fr", "text": "Pour calculer la marge de raffinage sur Brent, on soustrait aux recettes : les couts d'achat du Brent date FAB et du gaz naturel CAF ; le cout du fret petrolier ; les couts d'assurance et les pertes", "source_title": "Mode de calcul de la marge brute de raffinage sur Brent, DGEC", "source_url": config.DGEC_METHOD_URL})
+    d.append(_P(T("Its table of yields carries natural gas at "), N("ministry_gas_share_percent", 100 * config.DGEC_MASS_YIELDS["gaz_naturel"], "percent"), T(" percent of the tonne of crude as an input. In this study's units that is "), N("ministry_intensity", ministry, "mmbtu_per_bbl_5"), T(" MMBtu/bbl, against the "), N("study_intensity", study, "mmbtu_per_bbl_5"), T(" MMBtu/bbl this study derives for the average US refinery, "), N("intensity_ratio", study / ministry, "ratio"), T(" times as much. Subtracting a gas cost from the ministry's margin would charge the same barrel twice, so the engine refuses it, and what the site shows instead is the extra gas at the higher intensity, beside the margin and never taken from it.")))
+    d.append({"type": "h", "text": "The ministry's margin cannot be replicated within the bar"})
+    unpublished = list(config.DGEC_UNPUBLISHED_METHOD_INPUTS)
+    products = [k for k in config.DGEC_MASS_YIELDS if k not in METHOD_NOT_PRODUCTS]
+    quotes = [k for k in unpublished if METHOD_UNPUBLISHED_WORDS[k][0] == "quotation"]
+    d.append(_P(T("The specification's bar is agreement within "), N("replication_bar_usd_bbl", config.REPLICATION_BAR_USD_BBL, "usd_bbl"), T(" $/bbl in every complete month. It cannot be met, because "), N("unpublished_quotations", len(quotes), "count"), T(" of the "), N("method_products", len(products), "count"), T(" product quotations the method prices are never published, and neither are "), N("unpublished_costs", len(unpublished) - len(quotes), "count"), T(" of its cost inputs. Named, as the specification asks:")))
+    d.append({"type": "list", "items": [[T(METHOD_UNPUBLISHED_WORDS[k][1] + ".")] for k in unpublished]})
+    attempts = series.replication_attempts()
+    d.append(_P(T("So the site falls back to the official series and never overwrites it. The months where the ministry printed its own monthly prices, priced on the published lines alone, show how far short that falls:")))
+    d.append(_table(
+        "The method run on the published lines only, against the ministry's margin, $/bbl.",
+        [("Month", "month", False), ("Ministry's margin", "ministry's margin", True), ("Published lines only", "published lines only", True), ("Published lines less the margin", "published lines less the margin", True), ("Prices", "prices", False)],
+        [[_cell_text(month_label(_iso(r["date"]))), _cell_value("official_usd_bbl", r["official_usd_bbl"], "usd_bbl"), _cell_value("partial_usd_bbl", r["partial_usd_bbl"], "usd_bbl"), _cell_value("partial_error_usd_bbl", r["partial_error_usd_bbl"], "usd_bbl", signed=True), _cell_text("provisional" if bool(r["provisional"]) else "final")] for _, r in attempts.iterrows()],
+    ))
+    d.append({"type": "h", "text": "The third horse of the race is a substitution"})
+    d.append(_P(T("The specification races the raw gasoil crack, the official margin and the margin after gas. Once the official margin is known to be net of gas, the second and third are the same series, so the third horse is replaced and labelled wherever it appears:")))
+    d.append(_ref("runs", "race", "equations", 0, "horses", 2, "substitution_segments"))
+    d.append({"type": "h", "text": "The Brent validation bound is 5 $/bbl, not 10"})
+    lows = _brent_low_prints(METHOD_SPEC_BRENT_LOW_USD_BBL)
+    low_segments: list[Mapping[str, Any]] = [T("The specification bounds Brent at "), N("spec_brent_low", METHOD_SPEC_BRENT_LOW_USD_BBL, "count"), T(" to "), N("spec_brent_high", config.BOUNDS_BRENT_USD_BBL[1], "count"), T(" $/bbl. FRED publishes "), N("brent_prints_below_ten", sum(r["days"] for r in lows), "count"), T(" real daily prints below "), N("spec_brent_low", METHOD_SPEC_BRENT_LOW_USD_BBL, "count"), T(": ")]
+    for i, r in enumerate(lows):
+        if i:
+            low_segments.append(T(", and " if i == len(lows) - 1 else ", "))
+        low_segments += [N("days", r["days"], "count"), T(" in " if r["days"] > 1 else " day in "), N("year", r["year"], "year"), T(" with a low of "), N("low_usd_bbl", r["low"], "usd_bbl")]
+    low_segments += [T(". With the bound at "), N("spec_brent_low", METHOD_SPEC_BRENT_LOW_USD_BBL, "count"), T(" the whole download was refused. The bound exists to catch a file in cents or a slipped decimal point, which "), N("bound_brent_low", config.BOUNDS_BRENT_USD_BBL[0], "count"), T(" still catches, and cutting real prints to fit it would come closer to inventing data than widening it does.")]
+    d.append(_P(*low_segments))
+    d.append({"type": "h", "text": "History has named ranges, not a brush"})
+    d.append(_P(T("The specification asks for a range brush on History. The view offers the windows the analysis uses instead, each from six months before the event that opens it, so a reader cannot cut a window no finding refers to.")))
+    d.append({"type": "h", "text": "The stock release is dated to the day"})
+    iea = {e["id"]: e for e in events_anchors.load_events()["events"]}["iea_collective_action_400_mb_2026_03_11"]
+    d.append(_P(T("The specification lists the IEA release by its month alone, "), D("iea_release_month", _event_day(iea)), T(", and asks for the exact date from the source. Two IEA publications give it: "), D("iea_release_date", _event_day(iea), kind="day"), T(", and the Events view draws it at that day.")))
+
+    # 3. Assumptions.
+    a = blocks["assumptions"]
+    cite = FACTOR_CITATIONS
+    rows = [
+        [_cell_text("Barrels per tonne, gasoil"), _cell_value("bbl_per_t_gasoil", gasoil_f, "bbl_per_t"), _cell_text("every gasoil crack"), _cell_link(cite["gasoil"]["contract"], cite["gasoil"]["url"])],
+        [_cell_text("Barrels per tonne, gasoline"), _cell_value("bbl_per_t_gasoline", gasoline_f, "bbl_per_t"), _cell_text("every gasoline crack"), _cell_link(cite["gasoline"]["contract"], cite["gasoline"]["url"])],
+        [_cell_text("Barrels per tonne, jet"), _cell_value("bbl_per_t_jet", config.BBL_PER_T_JET, "bbl_per_t"), _cell_text("the jet line of the monthly decomposition"), _cell_link(cite["jet"]["contract"], cite["jet"]["url"])],
+        [_cell_text("Barrels per tonne, heating oil"), _cell_value("bbl_per_t_heating_oil", config.BBL_PER_T_HEATING_OIL, "bbl_per_t"), _cell_text("the heating oil line of the decomposition"), _cell_link(cite["heating_oil"]["contract"], cite["heating_oil"]["url"])],
+        [_cell_text("Barrels per tonne, fuel oil"), _cell_value("bbl_per_t_fuel_oil", config.BBL_PER_T_FUEL_OIL_1PCT, "bbl_per_t"), _cell_text("the fuel oil line of the decomposition"), _cell_link(cite["fuel_oil_1pct"]["contract"], cite["fuel_oil_1pct"]["url"])],
+        [_cell_text("Barrels per tonne of Brent, the ministry's weekly note"), _cell_value("bbl_per_t_brent_note", config.DGEC_BBL_PER_T_BRENT_NOTE, "bbl_per_t"), _cell_text("turning the note's Brent in $/t back into $/bbl, for the weekly cracks; measured on the ministry's own printed pairs, not stated"), _cell_link("DGEC weekly note of 28 August 2026", "https://www.ecologie.gouv.fr/sites/default/files/documents/NPG-2026.08.28_0.pdf")],
+        [_cell_text("Barrels per tonne of Brent, the ministry's margin"), _cell_value("bbl_per_t_brent_margin", config.DGEC_BBL_PER_T_BRENT_MARGIN, "bbl_per_t"), _cell_text("the replication and the ministry's embedded gas, nothing else; stated on page four of the method note"), _cell_link("Mode de calcul de la marge brute de raffinage sur Brent", config.DGEC_METHOD_URL)],
+        [_cell_text("MMBtu per MWh"), _cell_value("mmbtu_per_mwh", config.MMBTU_PER_MWH, "mmbtu_per_mwh"), _cell_text("TTF in EUR/MWh to $/MMBtu, on the daily TTF only"), _cell_text("a unit definition, a megawatt hour over a million British thermal units")],
+        [_cell_text("Gas intensity, the average US refinery"), _cell_value("study_intensity", study, "mmbtu_per_bbl_5"), _cell_text("the margin at the US gas use, the Model's default, horse C"), _cell_link("EIA Refinery Capacity Report, tables 10a and 10b", "https://www.eia.gov/petroleum/refinerycapacity/")],
+        [_cell_text("Gas intensity the ministry's margin embeds"), _cell_value("ministry_intensity", ministry, "mmbtu_per_bbl_5"), _cell_text("sizing the wedge; never subtracted"), _cell_link("Mode de calcul de la marge brute de raffinage sur Brent, table 1", config.DGEC_METHOD_URL)],
+        [_cell_text("Other variable cost"), _cell_value("other_variable_cost_usd_bbl", config.OTHER_VARIABLE_COST_USD_BBL, "usd_bbl"), _cell_text("the margin after gas; a labelled default, carbon costs out of scope"), _cell_text("the specification's default")],
+    ]
+    a.append(_table("The constants, each with where it is used and its source.", [("Constant", "constant", False), ("Value", "value", True), ("Used for", "used for", False), ("Source", "source", False)], rows))
+    a.append({"type": "h", "text": "The US gas intensity, derived rather than typed"})
+    a.append(_table("Four EIA figures for the United States in 2023.", [("Input", "input", False), ("Value", "value", True), ("Unit", "unit", False), ("Source", "source", False)], [
+        [_cell_text("Natural gas burned as refinery fuel"), _cell_value("eia_fuel_gas_mmcf", config.EIA_REFINERY_FUEL_GAS_MMCF_2023, "count"), _cell_text("million cubic feet"), _cell_link("EIA Refinery Capacity Report, table 10a", "https://www.eia.gov/petroleum/refinerycapacity/")],
+        [_cell_text("Natural gas used as hydrogen feedstock"), _cell_value("eia_hydrogen_gas_mmcf", config.EIA_HYDROGEN_FEEDSTOCK_GAS_MMCF_2023, "count"), _cell_text("million cubic feet"), _cell_link("EIA Refinery Capacity Report, table 10b", "https://www.eia.gov/petroleum/refinerycapacity/")],
+        [_cell_text("Heat content of natural gas consumed"), _cell_value("eia_heat_content_btu_cf", config.EIA_GAS_HEAT_CONTENT_BTU_PER_CF_2023, "count"), _cell_text("Btu per cubic foot, gross"), _cell_text("EIA Natural Gas Navigator, heat content of natural gas consumed, annual")],
+        [_cell_text("Refinery and blender net input of crude oil"), _cell_value("eia_crude_inputs_kbbl", config.EIA_CRUDE_INPUTS_THOUSAND_BBL_2023, "count"), _cell_text("thousand barrels"), _cell_link("EIA, refinery and blender net input", "https://www.eia.gov/dnav/pet/pet_pnp_inpt_dc_nus_mbbl_a.htm")],
+    ]))
+    a.append({"type": "formula", "segments": [T("intensity = (fuel gas + hydrogen gas) x heat content / crude input = "), N("study_intensity", study, "mmbtu_per_bbl_5"), T(" MMBtu/bbl")]})
+    a.append(_P(T("Inside the specification's band of "), N("band_low", config.GAS_INTENSITY_BAND[0], "mmbtu_per_bbl"), T(" to "), N("band_high", config.GAS_INTENSITY_BAND[1], "mmbtu_per_bbl"), T(". It is a US figure: European refiners burn more of their own still gas and buy less, so it is an upper end default, editable in the Model view. Fuel gas alone would give "), N("fuel_only_intensity", config.GAS_INTENSITY_FUEL_ONLY_MMBTU_PER_BBL, "mmbtu_per_bbl"), T(", and a denominator of distillation input "), N("gross_input_intensity", config.GAS_INTENSITY_GROSS_INPUT_MMBTU_PER_BBL, "mmbtu_per_bbl"), T("; neither is used.")))
+    a.append({"type": "h", "text": "The gas the ministry's margin already embeds"})
+    a.append({"type": "formula", "segments": [T("embedded intensity = "), N("ministry_gas_share_percent", 100 * config.DGEC_MASS_YIELDS["gaz_naturel"], "percent"), T(" percent of a tonne of crude / "), N("bbl_per_t_brent_margin", config.DGEC_BBL_PER_T_BRENT_MARGIN, "bbl_per_t"), T(" barrels per tonne x "), N("gas_mmbtu_per_tonne", config.GAS_MMBTU_PER_TONNE, "coef"), T(" MMBtu per tonne of gas = "), N("ministry_intensity", ministry, "mmbtu_per_bbl_5"), T(" MMBtu/bbl")]})
+    a.append(_P(T("The MMBtu per tonne of gas takes the volume from the Energy Institute's conversion table, "), N("ei_bcf_per_mt_lng", config.EI_BCF_NG_PER_MILLION_TONNES_LNG, "coef"), T(" billion cubic feet per million tonnes, and the heat content from the EIA figure above, so both intensities sit on the same gross basis.")))
+    a.append({"type": "h", "text": "The prices behind the latest month's split"})
+    a.append({"type": "reads", "what": "margin_stack_prices"})
+    a.append({"type": "h", "text": "Rules"})
+    a.append({"type": "list", "items": [
+        [T("A monthly mean is the mean of the days the source published a price: no day is filled or carried forward, and a month with fewer than "), N("monthly_mean_min_days", config.MONTHLY_MEAN_MIN_OBSERVATIONS, "count"), T(" published days has no mean.")],
+        [T("The ten year rank uses the trailing "), N("percentile_window_months", config.PERCENTILE_WINDOW_MONTHS, "count"), T(" months, counted in months so a leap year does not change its length.")],
+        [T("Newey-West standard errors use a lag of at least "), N("newey_west_min_lag", analysis.NEWEY_WEST_MIN_LAG, "count"), T(", as the specification asks; the lag each equation used is in the table under the formulas.")],
+        [T("Validation bounds are units checks, not views on the market: product prices "), N("bound_product_low", config.BOUNDS_PRODUCT_USD_T[0], "count"), T(" to "), N("bound_product_high", config.BOUNDS_PRODUCT_USD_T[1], "count"), T(" $/t, Brent "), N("bound_brent_low", config.BOUNDS_BRENT_USD_BBL[0], "count"), T(" to "), N("bound_brent_high", config.BOUNDS_BRENT_USD_BBL[1], "count"), T(" $/bbl, cracks "), N("bound_crack_low", config.BOUNDS_CRACK_USD_BBL[0], "count"), T(" to "), N("bound_crack_high", config.BOUNDS_CRACK_USD_BBL[1], "count"), T(" $/bbl. A failed check keeps the old cache and marks the series failed.")],
+        [T("A missing value is null in every artifact, never zero, never bridged by a line, and the page says why it is missing.")],
+    ]})
+
+    # 4. Cross checks.
+    c = blocks["checks"]
+    anchors = inputs.entry("anchors")
+    tri = series.october_2022_triangulation()
+    implied = _implied_factors()
+    join = analysis.seasonal_join()
+    c.append({**_table("Each check against data this study did not fit to, with what it shows.", [("Check", "check", False), ("Result", "result", False), ("What it means", "what it means", False)], [
+        [_cell_text("The ministry's Brent, converted with its own factor, against FRED's monthly mean"), _cell_segments(N("brent_months_within", anchors["brent_cross_check_within_tolerance"], "count"), T(" of "), N("brent_months", anchors["brent_cross_check_months"], "count"), T(" months within "), N("brent_tolerance_usd_bbl", config.BRENT_CROSS_CHECK_TOLERANCE_USD_BBL, "usd_bbl"), T(" $/bbl, worst "), N("brent_worst_usd_bbl", anchors["brent_cross_check_max_usd_bbl"], "usd_bbl"), T(" $/bbl")), _cell_text("the specification asks for 95 percent of months; every month passes")],
+        [_cell_text("The ministry's printed margins parsed from its notes"), _cell_segments(N("mbr_anchors_reproduced", anchors["mbr_anchors_reproduced"], "count"), T(" of "), N("mbr_anchors", anchors["mbr_anchors"], "count"), T(" reproduce exactly")), _cell_text("the specification's eight months and the final August 2026 figure")],
+        [_cell_text("October 2022 gas cost against a refinery fired on fuel oil, at this study's intensity"), _cell_segments(N("triangulation_gap_usd_bbl", tri["gap_usd_bbl"], "usd_bbl"), T(" $/bbl on the high sulphur fuel oil row, "), N("triangulation_variant_usd_bbl", tri["variant_gap_usd_bbl"], "usd_bbl"), T(" on the low sulphur row, against S&P Global's about "), N("sp_global_gap_usd_bbl", tri["sp_global_gap_usd_bbl"], "usd_bbl")), _cell_text("the same order of magnitude, which is all an order of magnitude check can say; nothing was tuned toward it")],
+        [_cell_text("Barrels per tonne implied by the ministry's Gazole against OPEC's gasoil"), _cell_segments(T("mean "), N("implied_gasoil_mean", implied["gasoil"]["mean"], "bbl_per_t_4"), T(", from "), N("implied_gasoil_min", implied["gasoil"]["min"], "bbl_per_t_4"), T(" to "), N("implied_gasoil_max", implied["gasoil"]["max"], "bbl_per_t_4"), T(", over "), N("implied_months", implied["gasoil"]["months"], "count"), T(" months")), _cell_segments(T("the contract's "), N("bbl_per_t_gasoil", gasoil_f, "bbl_per_t"), T(" sits inside the spread, near its middle"))],
+        [_cell_text("Barrels per tonne implied by the ministry's Eurosuper against OPEC's premium gasoline"), _cell_segments(T("mean "), N("implied_gasoline_mean", implied["gasoline"]["mean"], "bbl_per_t_4"), T(", from "), N("implied_gasoline_min", implied["gasoline"]["min"], "bbl_per_t_4"), T(" to "), N("implied_gasoline_max", implied["gasoline"]["max"], "bbl_per_t_4"), T(", over "), N("implied_months", implied["gasoline"]["months"], "count"), T(" months")), _cell_segments(T("the contract's "), N("bbl_per_t_gasoline", gasoline_f, "bbl_per_t"), T(" sits at the top of the spread, not the middle. It is kept: the two sources quote different grades, a finished premium gasoline against OPEC's premium unleaded, so the gap mixes a density with an octane spread, and choosing a factor to close it would be tuning"))],
+        [_cell_text("This study's weekly cracks, averaged by month, against OPEC's monthly ones"), _cell_segments(T("gasoil "), N("gasoil_mean_gap_usd_bbl", join["%s_mean_gap" % analysis.CRACK_GASOIL], "usd_bbl", signed=True), T(", gasoline "), N("gasoline_mean_gap_usd_bbl", join["%s_mean_gap" % analysis.CRACK_GASOLINE], "usd_bbl", signed=True), T(" $/bbl on average over "), N("overlap_months", join["overlap_months"], "count"), T(" months")), _cell_text("gasoil agrees across two independent sources; gasoline differs by a product, so the two series are never joined")],
+    ]), "prose": True})
+    c.append(_P(T("The implied factors are recomputed here from the committed data, calendar month means of the weekly reconstruction over OPEC's monthly $/bbl, "), D("implied_first", implied["gasoil"]["first"]), T(" to "), D("implied_last", implied["gasoil"]["last"]), T(".")))
+
+    # 5. Products.
+    p = blocks["products"]
+    p.append(_P(T("Every product keeps its source's own label. None of them is a futures contract, and none is relabelled as one: the ICE contracts supply only the barrels per tonne a crack is quoted on.")))
+    p.append(_table("The products, as each source names them.", [("Label", "label", False), ("Source", "source", False), ("What it is", "what it is", False)], [
+        [_cell_text("Gazole"), _cell_text("the ministry, Rotterdam, credited DGEC-Reuters"), _cell_text("road diesel quoted in Rotterdam; this study's gasoil in the weekly series and the latest month's split")],
+        [_cell_text("Eurosuper"), _cell_text("the ministry"), _cell_text("finished premium gasoline, not Eurobob blendstock; this study's gasoline in the weekly series")],
+        [_cell_text("Fioul domestique"), _cell_text("the ministry"), _cell_text("heating oil")],
+        [_cell_text("Jet"), _cell_text("the ministry"), _cell_text("jet fuel; printed in the monthly table, not on the weekly chart")],
+        [_cell_text("Fioul lourd TBTS (< 1%)"), _cell_text("the ministry"), _cell_text("low sulphur fuel oil; printed in the monthly table, not on the weekly chart")],
+        [_cell_text("Brent date"), _cell_text("the ministry"), _cell_text("dated Brent, in $/t in the note's table, converted with the note's own factor")],
+        [_cell_text("Gasoil 10 ppm"), _cell_text("OPEC Monthly Oil Market Report, Rotterdam barges, assessed by Argus"), _cell_text("this study's gasoil in the monthly series from 2000; its label changed with the specification, see the breaks")],
+        [_cell_text("Premium gasoline, unleaded 98"), _cell_text("OPEC Monthly Oil Market Report, assessed by Argus"), _cell_text("this study's gasoline in the monthly series; a different product from Eurosuper, relabelled four times since 2000")],
+    ]))
+
+    # 6. The weekly reconstruction.
+    r = blocks["reconstruction"]
+    weekly = inputs.weekly
+    error = dgec_note.RECONSTRUCTION_ERROR
+    import re as _re
+    tilt = _re.search(r"a (\d+) point tilt moved the oldest week by ([0-9.]+)", dgec_note.SMOOTH_TILT_IS_INVISIBLE)
+    oldest = weekly[weekly["evidence_class"] == "single_geometry_oldest"]
+    r.append(_P(T("The ministry prints two weeks of prices in each weekly note and deletes the note a week later, but each note also carries a chart of about two years of weekly prices. This study reads those charts: the curves are decoded from the vector drawing, calibrated against the figures the same note prints, and combined across every note collected. "), N("weeks", len(weekly), "count"), T(" weeks run from "), D("weekly_first", _iso(weekly["date"].min()), kind="day"), T(" to "), D("weekly_last", _iso(weekly["date"].max()), kind="day"), T("; "), N("printed_weeks", int(weekly["printed_gasoil_usd_bbl"].notna().sum()), "count"), T(" of them the ministry printed, and "), N("cross_checked_weeks", int((weekly["n_independent_geometries"] >= 2).sum()), "count"), T(" are read from two or more independent chart geometries. Nothing is interpolated between weeks and nothing is borrowed from another source.")))
+    r.append(_P(T("The measured error: refitted on three products and tested on the fourth, a note's reading misses its printed figures by "), N("error_low_usd_t", error["out_of_sample_mae_usd_t"][0], "usd_t_error"), T(" to "), N("error_high_usd_t", error["out_of_sample_mae_usd_t"][1], "usd_t_error"), T(" $/t on average, worst "), N("error_worst_usd_t", error["out_of_sample_worst_usd_t"], "usd_t_error"), T(" $/t. Where two notes plot the same week they agree to "), N("pair_mean_usd_t", error["note_pair_mean_absolute_usd_t"], "usd_t_error"), T(" $/t on average and "), N("pair_worst_usd_t", error["note_pair_worst_week_usd_t"], "usd_t_error"), T(" $/t at worst.")))
+    r.append(_P(T("That first error is leave one series out, not out of sample in time. Every calibration anchor sits in the last two weeks of a note's chart, so it measures the reading where the anchors are and does not bound the oldest weeks. A smooth bend in a chart anchored at its right hand end passes every check: bending one note's chart by "), N("tilt_points", int(tilt.group(1)) if tilt else None, "count"), T(" points moved its oldest week by "), N("tilt_usd_t", float(tilt.group(2)) if tilt else None, "usd_t_error"), T(" $/t. What defends a week against that is a second note plotting it at a different place on its chart. The "), N("oldest_weeks", len(oldest), "count"), T(" weeks from "), D("oldest_first", _iso(oldest["date"].min()), kind="day"), T(" have no second chart and sit where such a bend does most harm: they are the least defended data in the study, and every chart that draws them hatches them.")))
+
+    # 7. Breaks.
+    b = blocks["breaks"]
+    b.append(_P(T("A break is a change in what a series measures. It splits the line it applies to and no other; an event never splits a line. The list is the one History draws from.")))
+    b.append({"type": "reads", "what": "breaks"})
+    b.append(_ref("history", "margin", "no_break_segments"))
+    b.append(_ref("runs", "series", "capacity_segments"))
+
+    # 8. Limitations, the weakest first.
+    lim = blocks["limitations"]
+    lim.append({"type": "list", "items": [
+        {"ref": {"artifact": "run-economics", "path": ["threshold", "segments"]}},
+        {"ref": {"artifact": "runs", "path": ["race", "sentence_segments"]}},
+        {"ref": {"artifact": "runs", "path": ["endogeneity_segments"]}},
+        {"ref": {"artifact": "runs", "path": ["instrument", "diagnosis_segments"]}},
+        {"ref": {"artifact": "history", "path": ["monthly", "r2_segments"]}},
+        {"ref": {"artifact": "history", "path": ["seasonal_monthly", "panels", "gasoil", "variants", "all", "sentence_segments"]}},
+        {"ref": {"artifact": "run-economics", "path": ["utilisation", "segments"]}},
+        [T("Carbon costs are out of scope: other variable cost is zero and labelled, and no emissions price is in any margin.")],
+        [T("The gas intensity is a US average and an upper end for Europe; the ministry's own is "), N("ministry_intensity", ministry, "mmbtu_per_bbl"), T(" MMBtu/bbl, and the truth for a given refinery is somewhere this study cannot see.")],
+        {"ref": {"artifact": "history", "path": ["monthly", "end_segments"]}},
+        [T("The ministry printed monthly prices only for "), N("printed_months", len(attempts), "count"), T(" months (")] + [seg for i, x in enumerate(attempts["date"]) for seg in ([T(", ")] if i else []) + [D("printed_month", _iso(x))]] + [T("), so the margin can be split by the ministry's own prices only in those months.")],
+        {"ref": {"artifact": "runs", "path": ["series", "sample_segments"]}},
+        {"ref": {"artifact": "history", "path": ["weekly", "evidence_segments"]}},
+    ]})
+    lim.append({"type": "h", "text": "Two steps done by hand"})
+    lim.append({"type": "reads", "what": "manual_steps"})
+
+    # 9. Reuse.
+    blocks["reuse"].append({"type": "reads", "what": "reuse"})
+
+    for section in payload["sections"]:
+        section["blocks"] = blocks[section["id"]]
+    return payload
+
+
+# ---------------------------------------------------------------------------
 # Build, serialise, write, check
 # ---------------------------------------------------------------------------
 
@@ -3329,6 +3917,8 @@ ARTIFACTS: Mapping[str, Callable[[Inputs], Mapping[str, Any]]] = {
     "history": history,
     "model": model,
     "runs": runs,
+    "events": events,
+    "method": method,
 }
 
 

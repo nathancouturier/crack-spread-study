@@ -43,6 +43,8 @@ const ARTIFACTS = Object.freeze({
   history: { path: "data/history.json", artifact: "history", schema: SCHEMA_ONE, holds: "the monthly and weekly cracks, the ministry's margin, their events and breaks, and the monthly seasonality" },
   model: { path: "data/model.json", artifact: "model", schema: SCHEMA_ONE, holds: "the margin model's presets, the source of every input, and the ministry's slate yields" },
   runs: { path: "data/runs.json", artifact: "runs", schema: SCHEMA_ONE, holds: "the runs and crude imports series, the run cut threshold scatter, the horse race with its power, the instrument and the residuals after the strikes on Iran" },
+  method: { path: "data/method.json", artifact: "method", schema: SCHEMA_ONE, holds: "the formulas, the departures from the specification, the assumptions with their sources, the cross checks, the limitations and the reuse terms" },
+  events: { path: "data/events.json", artifact: "events", schema: SCHEMA_ONE, holds: "the thirteen months of cracks, margin after gas and utilisation around each event, with every missing month named" },
 });
 
 /** The artifact names this build of the page reads, for a validator. */

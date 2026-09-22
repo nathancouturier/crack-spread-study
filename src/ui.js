@@ -6,7 +6,7 @@
  *
  * THE ROUTE TABLE IS THE ONLY LIST OF VIEWS. The nav is built from it, the
  * router is told its names, and nothing else in the site names a view. At Gate
- * 5 it holds Now, History, Model and Runs and crude demand. A view that is not built is not linked, because a
+ * 5 it holds Now, History, Model, Runs and crude demand, Events and Method. A view that is not built is not linked, because a
  * link to a view with no data behind it is an orphan UI state, SPEC.md section
  * 11 point 8. A view is added by adding one entry below and one module;
  * router.js does not change.
@@ -22,6 +22,8 @@ import * as now from "./now.js";
 import * as historyView from "./history.js";
 import * as modelView from "./model.js";
 import * as runsView from "./runs.js";
+import * as eventsView from "./events.js";
+import * as methodView from "./method.js";
 
 const SITE_NAME = "NWE crack spread study";
 const DEFAULT_VIEW = "now";
@@ -34,6 +36,8 @@ const ROUTES = [
   { name: "history", label: "History", loading: "the monthly and weekly cracks and the ministry's margin since the start of the data", module: historyView },
   { name: "model", label: "Model", loading: "the margin model's presets and the source of every input", module: modelView },
   { name: "runs", label: "Runs and crude demand", loading: "the response of crude runs to the margin, the run cut threshold, the horse race, the instrument and the residuals after the strikes on Iran", module: runsView },
+  { name: "events", label: "Events", loading: "the thirteen months around each event", module: eventsView },
+  { name: "method", label: "Method", loading: "the formulas, the assumptions and their sources, the cross checks and the limitations", module: methodView },
 ];
 
 /* The views SPEC.md section 7.2 names, in nav order, for the unknown address

@@ -32,7 +32,9 @@
       "power": 3,
       "f_stat": 3,
       "gap_percent": 2,
-      "slope": 2
+      "slope": 2,
+      "mmbtu_per_bbl_5": 5,
+      "bbl_per_t_4": 4
     },
     "rounding": "Floats are stored to 6 places. The page prints the decimals of the format a value names.",
     "segments": "A sentence is a list of segments. A text segment holds words only. A value segment names its field and holds a value with a format, or an ISO date or a word with its label."

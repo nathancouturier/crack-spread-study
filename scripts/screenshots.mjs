@@ -72,6 +72,18 @@ const SHOTS = [
   { name: "runs-desktop-light-break", ...DESKTOP, theme: "light", hash: "#/runs?part=break" },
   { name: "runs-mobile-light-threshold", ...MOBILE, theme: "light", hash: "#/runs?part=threshold" },
   { name: "runs-mobile-dark-race", ...MOBILE, theme: "dark", hash: "#/runs?part=race" },
+  // Events, docs/design.md Part 8.4: the list alone, a day dated event with the
+  // weekly series and the OPEC gap, the month dated lockdowns, and two at mobile.
+  { name: "events-desktop-light", ...DESKTOP, theme: "light", hash: "#/events" },
+  { name: "events-desktop-light-strikes-on-iran", ...DESKTOP, theme: "light", hash: "#/events?event=strikes_on_iran_hormuz_2026_02_28" },
+  { name: "events-desktop-dark-lockdowns", ...DESKTOP, theme: "dark", hash: "#/events?event=covid_pandemic_and_european_lockdowns_2020_03" },
+  { name: "events-mobile-light-invasion", ...MOBILE, theme: "light", hash: "#/events?event=russia_invades_ukraine_2022_02_24" },
+  { name: "events-mobile-dark-stock-release", ...MOBILE, theme: "dark", hash: "#/events?event=iea_collective_action_400_mb_2026_03_11" },
+  // Method, docs/design.md Part 8.5: the whole document at both widths in both
+  // themes, and opened at a section by its address.
+  { name: "method-desktop-light", ...DESKTOP, theme: "light", hash: "#/method" },
+  { name: "method-desktop-dark", ...DESKTOP, theme: "dark", hash: "#/method" },
+  { name: "method-mobile-light-assumptions", ...MOBILE, theme: "light", hash: "#/method?section=assumptions" },
 ];
 const ONLY = (argValue(argv, "--only") || "").split(",").filter(Boolean);
 

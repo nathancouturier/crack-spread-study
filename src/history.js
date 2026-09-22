@@ -211,19 +211,21 @@ function markersFor(panelId, range, first, last) {
 
 /* The lane above a plot: a button per event, a plain label per break, placed at
  * their x. Short names while they fit, numbers for all of them when any two
- * collide, Part 3 section 2. A marker opens a sentence under the plot. */
-function fillLane(lane, markers, panel, detail) {
+ * collide, Part 3 section 2. A marker opens its event in the Events view,
+ * Part 8.4 E11. */
+function fillLane(lane, markers, panel) {
   clear(lane);
   lane.style.width = String(panel.svg.getAttribute("width")) + "px";
   const nodes = markers.map((marker, index) => {
     const x = panel.xOf(charts.timeOf(marker.item.date));
     const number = String(index + 1);
     const node = marker.kind === "event"
-      ? el("button", { class: "lane__marker", text: marker.item.short, attrs: { type: "button", "data-number": number, "aria-label": number + ", " + marker.item.name + ", " + marker.item.label } })
+      ? el("button", { class: "lane__marker", text: marker.item.short, attrs: { type: "button", "data-number": number, "data-event": marker.item.id, "aria-label": number + ", " + marker.item.name + ", " + marker.item.label + ", opens the months around it in Events" } })
       : el("span", { class: "lane__break", text: marker.item.short, attrs: { "data-number": number } });
     node.style.left = charts.px(x) + "px";
     if (marker.kind === "event") {
-      node.addEventListener("click", () => showDetail(detail, marker, number));
+      // Part 8.4 E11: a marker opens its event's window in the Events view.
+      node.addEventListener("click", () => router.go("events", { event: marker.item.id }));
     }
     lane.appendChild(node);
     return node;
@@ -262,16 +264,6 @@ function fillLane(lane, markers, panel, detail) {
   }
 }
 
-function showDetail(detail, marker, number) {
-  clear(detail);
-  const event = marker.item;
-  detail.appendChild(el("p", { class: "event-detail" }, [
-    number + ". " + event.label + ": " + event.name + ". Source: ",
-    el("a", { class: "text-link", text: event.source_title || event.source_publisher || "the source", attrs: { href: event.source_url, rel: "noopener" } }),
-    ".",
-  ]));
-}
-
 /* The numbered list under a plot: every marker drawn, with its source. */
 function markerList(markers) {
   if (!markers.length) return null;
@@ -283,13 +275,15 @@ function markerList(markers) {
       el("span", { class: "marker-list__number", text: String(index + 1) + ". " }),
       item.label + ", " + what + ". ",
       el("a", { class: "text-link", text: item.source_title || "Source", attrs: { href: item.source_url, rel: "noopener" } }),
+      marker.kind === "event" ? ". " : null,
+      marker.kind === "event" ? el("a", { class: "text-link", text: "The months around it", attrs: { href: router.href("events", { event: item.id }) } }) : null,
     ]));
   });
   return list;
 }
 
 /* One interactive plot: the lane, the chart group with its readout and cursor,
- * the detail sentence and the marker list. `build(width)` returns the time
+ * and the marker list. `build(width)` returns the time
  * panel; `readout(index)` the sentence for the observation at index. */
 function interactivePlot({ heading, headingSegments, decimals, rows, times, build, readout, markers, className }) {
   const section = el("section", { class: "history-panel " + (className || "") });
@@ -299,11 +293,9 @@ function interactivePlot({ heading, headingSegments, decimals, rows, times, buil
   const lane = el("div", { class: "lane", attrs: { "aria-label": "Events and breaks on " + heading } });
   const frame = el("div", { class: "chart-frame history-chart", attrs: { role: "group", "aria-describedby": readoutId, "aria-label": heading + ". Left and right arrow keys step through the observations." } });
   frame.tabIndex = 0; // the plot group takes focus for the arrow keys, Part 3 section 9
-  const detail = el("div", { class: "event-detail-region", attrs: { "aria-live": "polite" } });
   section.appendChild(said);
   section.appendChild(lane);
   section.appendChild(frame);
-  section.appendChild(detail);
   const list = markerList(markers);
 
   let index = rows.length - 1;
@@ -319,7 +311,7 @@ function interactivePlot({ heading, headingSegments, decimals, rows, times, buil
     frame.replaceChildren(panel.svg);
     charts.plateRailLabels(panel.svg);
     cursor = charts.cursorLine(panel);
-    fillLane(lane, markers, panel, detail);
+    fillLane(lane, markers, panel);
     said.textContent = readout(index);
   });
   frame.addEventListener("pointermove", (ev) => {

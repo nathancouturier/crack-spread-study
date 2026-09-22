@@ -1413,10 +1413,10 @@
    "edit": null,
    "inputs": {
     "cracks": {
-     "gasoil": 69.011225,
-     "gasoline": 46.613791,
+     "gasoil": 69.015578,
+     "gasoline": 46.606583,
      "jet": null,
-     "heating_oil": 65.003021,
+     "heating_oil": 64.983829,
      "fuel_oil_1pct": null
     },
     "yields": {
@@ -1444,23 +1444,23 @@
     ],
     "blocked_by": [],
     "contributions": {
-     "gasoil": 23.153058953825,
-     "gasoline": 6.171526087026999,
-     "heating_oil": 5.259654441194001
+     "gasoil": 23.154519372266,
+     "gasoline": 6.170571769451,
+     "heating_oil": 5.258101539706
     },
-    "attributed_usd_bbl": 34.584239482046,
-    "gross_margin_usd_bbl": 34.584239482046,
+    "attributed_usd_bbl": 34.583192681423,
+    "gross_margin_usd_bbl": 34.583192681423,
     "carrier": "gasoil",
     "gas_usd_mmbtu": 18.06000431850521,
     "gas_cost_usd_bbl": 3.8317911162572504,
     "other_variable_cost_usd_bbl": 0.0,
-    "margin_after_gas_usd_bbl": 30.75244836578875,
-    "breakeven_ttf_eur_mwh": 486.9130769879939,
-    "breakeven_gas_usd_mmbtu": 163.00249555566762,
-    "breakeven_gasoil_usd_bbl": -22.651139688175302,
+    "margin_after_gas_usd_bbl": 30.75140156516575,
+    "breakeven_ttf_eur_mwh": 486.8983390345223,
+    "breakeven_gas_usd_mmbtu": 162.99756177321487,
+    "breakeven_gasoil_usd_bbl": -22.643666539193344,
     "threshold_identified": false,
     "headroom_usd_bbl": null,
-    "residual_usd_bbl": 2.101166517953999,
+    "residual_usd_bbl": 2.1022133185770002,
     "covered_volume_yield": 0.548808
    }
   },
@@ -1470,10 +1470,10 @@
    "edit": "ttf_doubled",
    "inputs": {
     "cracks": {
-     "gasoil": 69.011225,
-     "gasoline": 46.613791,
+     "gasoil": 69.015578,
+     "gasoline": 46.606583,
      "jet": null,
-     "heating_oil": 65.003021,
+     "heating_oil": 64.983829,
      "fuel_oil_1pct": null
     },
     "yields": {
@@ -1501,23 +1501,23 @@
     ],
     "blocked_by": [],
     "contributions": {
-     "gasoil": 23.153058953825,
-     "gasoline": 6.171526087026999,
-     "heating_oil": 5.259654441194001
+     "gasoil": 23.154519372266,
+     "gasoline": 6.170571769451,
+     "heating_oil": 5.258101539706
     },
-    "attributed_usd_bbl": 34.584239482046,
-    "gross_margin_usd_bbl": 34.584239482046,
+    "attributed_usd_bbl": 34.583192681423,
+    "gross_margin_usd_bbl": 34.583192681423,
     "carrier": "gasoil",
     "gas_usd_mmbtu": 36.12000863701042,
     "gas_cost_usd_bbl": 7.663582232514501,
     "other_variable_cost_usd_bbl": 0.0,
-    "margin_after_gas_usd_bbl": 26.9206572495315,
-    "breakeven_ttf_eur_mwh": 486.9130769879939,
-    "breakeven_gas_usd_mmbtu": 163.00249555566762,
-    "breakeven_gasoil_usd_bbl": -11.229901595860762,
+    "margin_after_gas_usd_bbl": 26.9196104489085,
+    "breakeven_ttf_eur_mwh": 486.8983390345223,
+    "breakeven_gas_usd_mmbtu": 162.99756177321487,
+    "breakeven_gasoil_usd_bbl": -11.222428446878803,
     "threshold_identified": false,
     "headroom_usd_bbl": null,
-    "residual_usd_bbl": 2.101166517953999,
+    "residual_usd_bbl": 2.1022133185770002,
     "covered_volume_yield": 0.548808
    }
   },
@@ -1527,10 +1527,10 @@
    "edit": "gasoline_crack_cleared",
    "inputs": {
     "cracks": {
-     "gasoil": 69.011225,
+     "gasoil": 69.015578,
      "gasoline": null,
      "jet": null,
-     "heating_oil": 65.003021,
+     "heating_oil": 64.983829,
      "fuel_oil_1pct": null
     },
     "yields": {
@@ -1558,22 +1558,22 @@
     ],
     "blocked_by": [],
     "contributions": {
-     "gasoil": 23.153058953825,
-     "heating_oil": 5.259654441194001
+     "gasoil": 23.154519372266,
+     "heating_oil": 5.258101539706
     },
-    "attributed_usd_bbl": 28.412713395019,
-    "gross_margin_usd_bbl": 28.412713395019,
+    "attributed_usd_bbl": 28.412620911972002,
+    "gross_margin_usd_bbl": 28.412620911972002,
     "carrier": "gasoil",
     "gas_usd_mmbtu": 18.06000431850521,
     "gas_cost_usd_bbl": 3.8317911162572504,
     "other_variable_cost_usd_bbl": 0.0,
-    "margin_after_gas_usd_bbl": 24.58092227876175,
-    "breakeven_ttf_eur_mwh": 400.0238811649659,
-    "breakeven_gas_usd_mmbtu": 133.9148484470896,
-    "breakeven_gasoil_usd_bbl": -4.255964509181156,
+    "margin_after_gas_usd_bbl": 24.580829795714752,
+    "breakeven_ttf_eur_mwh": 400.02257909195066,
+    "breakeven_gas_usd_mmbtu": 133.91441255583732,
+    "breakeven_gasoil_usd_bbl": -4.25133584934813,
     "threshold_identified": false,
     "headroom_usd_bbl": null,
-    "residual_usd_bbl": 8.272692604981,
+    "residual_usd_bbl": 8.272785088027998,
     "covered_volume_yield": 0.416411
    }
   },
@@ -1583,10 +1583,10 @@
    "edit": "ttf_cleared",
    "inputs": {
     "cracks": {
-     "gasoil": 69.011225,
-     "gasoline": 46.613791,
+     "gasoil": 69.015578,
+     "gasoline": 46.606583,
      "jet": null,
-     "heating_oil": 65.003021,
+     "heating_oil": 64.983829,
      "fuel_oil_1pct": null
     },
     "yields": {
@@ -1616,12 +1616,12 @@
      "ttf_eur_mwh"
     ],
     "contributions": {
-     "gasoil": 23.153058953825,
-     "gasoline": 6.171526087026999,
-     "heating_oil": 5.259654441194001
+     "gasoil": 23.154519372266,
+     "gasoline": 6.170571769451,
+     "heating_oil": 5.258101539706
     },
-    "attributed_usd_bbl": 34.584239482046,
-    "gross_margin_usd_bbl": 34.584239482046,
+    "attributed_usd_bbl": 34.583192681423,
+    "gross_margin_usd_bbl": 34.583192681423,
     "carrier": "gasoil",
     "gas_usd_mmbtu": null,
     "gas_cost_usd_bbl": null,
@@ -1632,7 +1632,7 @@
     "breakeven_gasoil_usd_bbl": null,
     "threshold_identified": false,
     "headroom_usd_bbl": null,
-    "residual_usd_bbl": 2.101166517953999,
+    "residual_usd_bbl": 2.1022133185770002,
     "covered_volume_yield": 0.548808
    }
   },
@@ -1642,10 +1642,10 @@
    "edit": "yields_above_one_barrel",
    "inputs": {
     "cracks": {
-     "gasoil": 69.011225,
-     "gasoline": 46.613791,
+     "gasoil": 69.015578,
+     "gasoline": 46.606583,
      "jet": null,
-     "heating_oil": 65.003021,
+     "heating_oil": 64.983829,
      "fuel_oil_1pct": null
     },
     "yields": {
@@ -1673,23 +1673,23 @@
     ],
     "blocked_by": [],
     "contributions": {
-     "gasoil": 46.30611790765,
-     "gasoline": 12.343052174053998,
-     "heating_oil": 10.519308882388001
+     "gasoil": 46.309038744532,
+     "gasoline": 12.341143538902,
+     "heating_oil": 10.516203079412
     },
-    "attributed_usd_bbl": 69.168478964092,
-    "gross_margin_usd_bbl": 69.168478964092,
+    "attributed_usd_bbl": 69.166385362846,
+    "gross_margin_usd_bbl": 69.166385362846,
     "carrier": "gasoil",
     "gas_usd_mmbtu": 18.06000431850521,
     "gas_cost_usd_bbl": 3.8317911162572504,
     "other_variable_cost_usd_bbl": 0.0,
-    "margin_after_gas_usd_bbl": 65.33668784783475,
-    "breakeven_ttf_eur_mwh": 973.8261539759878,
-    "breakeven_gas_usd_mmbtu": 326.00499111133524,
-    "breakeven_gasoil_usd_bbl": -28.361758734332568,
+    "margin_after_gas_usd_bbl": 65.33459424658875,
+    "breakeven_ttf_eur_mwh": 973.7966780690446,
+    "breakeven_gas_usd_mmbtu": 325.99512354642974,
+    "breakeven_gasoil_usd_bbl": -28.35428558535061,
     "threshold_identified": false,
     "headroom_usd_bbl": null,
-    "residual_usd_bbl": -32.483072964092,
+    "residual_usd_bbl": -32.480979362846,
     "covered_volume_yield": 1.097616
    }
   },
@@ -1699,10 +1699,10 @@
    "edit": "negative_gas_intensity",
    "inputs": {
     "cracks": {
-     "gasoil": 69.011225,
-     "gasoline": 46.613791,
+     "gasoil": 69.015578,
+     "gasoline": 46.606583,
      "jet": null,
-     "heating_oil": 65.003021,
+     "heating_oil": 64.983829,
      "fuel_oil_1pct": null
     },
     "yields": {
@@ -1730,23 +1730,23 @@
     ],
     "blocked_by": [],
     "contributions": {
-     "gasoil": 23.153058953825,
-     "gasoline": 6.171526087026999,
-     "heating_oil": 5.259654441194001
+     "gasoil": 23.154519372266,
+     "gasoline": 6.170571769451,
+     "heating_oil": 5.258101539706
     },
-    "attributed_usd_bbl": 34.584239482046,
-    "gross_margin_usd_bbl": 34.584239482046,
+    "attributed_usd_bbl": 34.583192681423,
+    "gross_margin_usd_bbl": 34.583192681423,
     "carrier": "gasoil",
     "gas_usd_mmbtu": 18.06000431850521,
     "gas_cost_usd_bbl": -3.8317911162572504,
     "other_variable_cost_usd_bbl": 0.0,
-    "margin_after_gas_usd_bbl": 38.41603059830325,
-    "breakeven_ttf_eur_mwh": -486.9130769879939,
-    "breakeven_gas_usd_mmbtu": -163.00249555566762,
-    "breakeven_gasoil_usd_bbl": -45.49361587280438,
+    "margin_after_gas_usd_bbl": 38.41498379768025,
+    "breakeven_ttf_eur_mwh": -486.8983390345223,
+    "breakeven_gas_usd_mmbtu": -162.99756177321487,
+    "breakeven_gasoil_usd_bbl": -45.48614272382242,
     "threshold_identified": false,
     "headroom_usd_bbl": null,
-    "residual_usd_bbl": 2.101166517953999,
+    "residual_usd_bbl": 2.1022133185770002,
     "covered_volume_yield": 0.548808
    }
   },
@@ -1756,10 +1756,10 @@
    "edit": "eurusd_zero",
    "inputs": {
     "cracks": {
-     "gasoil": 69.011225,
-     "gasoline": 46.613791,
+     "gasoil": 69.015578,
+     "gasoline": 46.606583,
      "jet": null,
-     "heating_oil": 65.003021,
+     "heating_oil": 64.983829,
      "fuel_oil_1pct": null
     },
     "yields": {
@@ -1787,23 +1787,23 @@
     ],
     "blocked_by": [],
     "contributions": {
-     "gasoil": 23.153058953825,
-     "gasoline": 6.171526087026999,
-     "heating_oil": 5.259654441194001
+     "gasoil": 23.154519372266,
+     "gasoline": 6.170571769451,
+     "heating_oil": 5.258101539706
     },
-    "attributed_usd_bbl": 34.584239482046,
-    "gross_margin_usd_bbl": 34.584239482046,
+    "attributed_usd_bbl": 34.583192681423,
+    "gross_margin_usd_bbl": 34.583192681423,
     "carrier": "gasoil",
     "gas_usd_mmbtu": 0.0,
     "gas_cost_usd_bbl": 0.0,
     "other_variable_cost_usd_bbl": 0.0,
-    "margin_after_gas_usd_bbl": 34.584239482046,
+    "margin_after_gas_usd_bbl": 34.583192681423,
     "breakeven_ttf_eur_mwh": null,
-    "breakeven_gas_usd_mmbtu": 163.00249555566762,
-    "breakeven_gasoil_usd_bbl": -34.07237778048984,
+    "breakeven_gas_usd_mmbtu": 162.99756177321487,
+    "breakeven_gasoil_usd_bbl": -34.06490463150788,
     "threshold_identified": false,
     "headroom_usd_bbl": null,
-    "residual_usd_bbl": 2.101166517953999,
+    "residual_usd_bbl": 2.1022133185770002,
     "covered_volume_yield": 0.548808
    }
   },
@@ -1814,9 +1814,9 @@
    "inputs": {
     "cracks": {
      "gasoil": null,
-     "gasoline": 46.613791,
+     "gasoline": 46.606583,
      "jet": null,
-     "heating_oil": 65.003021,
+     "heating_oil": 64.983829,
      "fuel_oil_1pct": null
     },
     "yields": {
@@ -1844,22 +1844,22 @@
     ],
     "blocked_by": [],
     "contributions": {
-     "gasoline": 6.171526087026999,
-     "heating_oil": 5.259654441194001
+     "gasoline": 6.170571769451,
+     "heating_oil": 5.258101539706
     },
-    "attributed_usd_bbl": 11.431180528220999,
-    "gross_margin_usd_bbl": 11.431180528220999,
+    "attributed_usd_bbl": 11.428673309156999,
+    "gross_margin_usd_bbl": 11.428673309156999,
     "carrier": "gasoline",
     "gas_usd_mmbtu": 18.06000431850521,
     "gas_cost_usd_bbl": 3.8317911162572504,
     "other_variable_cost_usd_bbl": 0.0,
-    "margin_after_gas_usd_bbl": 7.599389411963749,
-    "breakeven_ttf_eur_mwh": 160.9401093666046,
-    "breakeven_gas_usd_mmbtu": 53.87745924598671,
+    "margin_after_gas_usd_bbl": 7.5968821928997485,
+    "breakeven_ttf_eur_mwh": 160.9048101156331,
+    "breakeven_gas_usd_mmbtu": 53.865642216887395,
     "breakeven_gasoil_usd_bbl": null,
     "threshold_identified": false,
     "headroom_usd_bbl": null,
-    "residual_usd_bbl": 25.254225471779,
+    "residual_usd_bbl": 25.256732690843002,
     "covered_volume_yield": 0.21331099999999997
    }
   }

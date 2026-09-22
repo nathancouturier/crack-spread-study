@@ -65,7 +65,7 @@ def _segment_lists(value, where=""):
 
 
 def test_the_artifact_set_is_the_five_the_now_view_reads_and_history(built):
-    assert list(built) == ["now", "cracks", "margin-stack", "run-economics", "provenance", "history", "model", "runs"]
+    assert list(built) == ["now", "cracks", "margin-stack", "run-economics", "provenance", "history", "model", "runs", "events", "method"]
     for name, payload in built.items():
         assert payload["schema_version"] == export.SCHEMA_VERSION
         assert payload["artifact"] == name
@@ -726,3 +726,123 @@ def test_runs_break_is_not_tested_and_never_joined(built, inputs):
     assert len(b["pre_rows"]) == inputs.break_result.n_pre
     assert [x["id"] for x in b["brackets"]] == ["episode_2022", "after_break"]
     assert b["brackets"][0]["start"] == "2022-02-01" and b["brackets"][0]["end"] == "2023-01-01"
+
+
+# ---------------------------------------------------------------------------
+# events.json, docs/design.md Part 8.4
+# ---------------------------------------------------------------------------
+
+
+def test_events_are_the_market_policy_and_reference_entries_each_with_a_source(built):
+    e = built["events"]
+    ids = [ev["id"] for ev in e["events"]]
+    assert len(ids) == 10
+    assert ids == sorted(ids, key=lambda i: next(ev["date"] for ev in e["events"] if ev["id"] == i))
+    for ev in e["events"]:
+        assert ev["kind"] in ("market", "policy", "reference")
+        assert ev["source_url"].startswith("https://")
+    assert len(e["not_panels"]) == 11
+
+
+def test_the_stock_release_keeps_the_day_the_source_pins(built):
+    ev = next(ev for ev in built["events"]["events"] if ev["id"] == "iea_collective_action_400_mb_2026_03_11")
+    assert ev["date"] == "2026-03-11" and ev["precision"] == "day" and ev["label"] == "11 March 2026"
+    lock = next(ev for ev in built["events"]["events"] if ev["id"].startswith("covid"))
+    assert lock["precision"] == "month" and lock["label"] == "March 2020"
+
+
+def test_every_window_is_thirteen_months_and_never_filled(built, inputs):
+    e = built["events"]
+    cols = e["monthly_columns"]
+    margin = inputs.margin.set_index("date")
+    for ev in e["events"]:
+        assert [row[cols.index("offset_months")] for row in ev["rows"]] == list(range(-6, 7))
+        for row in ev["rows"]:
+            stamp = pd.Timestamp(row[0])
+            mbr = row[cols.index("mbr_usd_bbl")]
+            if stamp in margin.index:
+                assert mbr == pytest.approx(margin.at[stamp, "mbr_usd_bbl"], abs=1e-6)
+            else:
+                assert mbr is None
+            if row[cols.index("utilisation_percent")] is None:
+                assert row[cols.index("utilisation_provisional")] is None
+
+
+def test_a_window_past_the_data_names_every_missing_series(built):
+    ev = next(ev for ev in built["events"]["events"] if ev["id"] == "us_iran_ceasefire_2026_04_07")
+    missing = {m["series"]: "".join(s.get("text", s.get("label", "")) for s in m["segments"]) for m in ev["missing"]}
+    assert set(missing) == {"monthly_cracks", "margin", "utilisation", "weekly"}
+    assert "stops at February 2026" in missing["monthly_cracks"]
+    assert "after the latest data" in missing["margin"]
+    lock = next(ev for ev in built["events"]["events"] if ev["id"].startswith("covid"))
+    assert [m["series"] for m in lock["missing"]] == ["weekly"] and lock["weekly_rows"] == []
+
+
+def test_events_margin_is_never_net_of_gas_twice(built, inputs):
+    e = built["events"]
+    cols = e["monthly_columns"]
+    frame = inputs.margin.set_index("date")
+    ev = next(ev for ev in e["events"] if ev["id"].startswith("strikes_on_iran"))
+    for row in ev["rows"]:
+        stamp = pd.Timestamp(row[0])
+        if stamp in frame.index:
+            assert row[cols.index("margin_us_gas_usd_bbl")] == pytest.approx(frame.at[stamp, "mbr_usd_bbl"] - frame.at[stamp, "gas_wedge_usd_bbl"], abs=1e-5)
+    assert ev["capacity_steps"] == ["2026-01-01"]
+
+
+# ---------------------------------------------------------------------------
+# method.json, docs/design.md Part 8.5
+# ---------------------------------------------------------------------------
+
+
+def _method_values(built):
+    out = {}
+    def walk(value):
+        if isinstance(value, dict):
+            if "field" in value and "value" in value:
+                out.setdefault(value["field"], value["value"])
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+    walk(built["method"])
+    return out
+
+
+def test_method_carries_the_measured_cross_checks(built):
+    v = _method_values(built)
+    assert v["brent_months_within"] == v["brent_months"] == 140
+    assert v["mbr_anchors_reproduced"] == v["mbr_anchors"] == 9
+    assert v["triangulation_gap_usd_bbl"] == pytest.approx(6.23, abs=0.005)
+    assert v["triangulation_variant_usd_bbl"] == pytest.approx(5.51, abs=0.005)
+    assert v["implied_gasoil_mean"] == pytest.approx(7.528, abs=0.001)
+    assert v["implied_gasoline_mean"] == pytest.approx(7.718, abs=0.001)
+    assert v["implied_months"] == 44
+    assert v["brent_prints_below_ten"] == 25
+    assert v["study_intensity"] == config.GAS_INTENSITY_MMBTU_PER_BBL
+    assert v["ministry_intensity"] == pytest.approx(0.0659, abs=5e-5)
+
+
+def test_method_names_every_unpublished_input(built):
+    text = json.dumps(built["method"])
+    for key in config.DGEC_UNPUBLISHED_METHOD_INPUTS:
+        assert export.METHOD_UNPUBLISHED_WORDS[key][1] in text
+    v = _method_values(built)
+    assert v["unpublished_quotations"] == 5 and v["method_products"] == 10
+
+
+def test_method_cites_every_factor_and_reads_the_orphans(built):
+    assumptions = next(s for s in built["method"]["sections"] if s["id"] == "assumptions")
+    table = assumptions["blocks"][0]
+    urls = {cell["url"] for row in table["rows"] for cell in row if "url" in cell}
+    for citation in export.FACTOR_CITATIONS.values():
+        assert citation["url"] in urls
+    reads = {b["what"] for s in built["method"]["sections"] for b in s["blocks"] if b["type"] == "reads"}
+    assert {"margin_stack_prices", "response_diagnostics", "reuse"} <= reads
+    for row in built["margin-stack"]["rows"]:
+        if "price_usd_t" in row:
+            assert row["factor_citation"]["url"].startswith("https://www.ice.com/")
+    for model in built["run-economics"]["response"]["models"]:
+        assert model["newey_west_lag"] >= analysis.NEWEY_WEST_MIN_LAG and 0 <= model["r2"] <= 1
+

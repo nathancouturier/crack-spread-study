@@ -1,0 +1,1056 @@
+{
+  "schema_version": 1,
+  "artifact": "method",
+  "generated_by": "src/crack/export.py",
+  "data_date": "2026-08-01",
+  "describes": "the Method view: the formulas, the departures from the specification with their evidence, the assumptions with a source per row, the measured cross checks, the product definitions, the weekly reconstruction and its error, the limitations and the reuse terms",
+  "source": "the committed caches in data/cache and data/seed, the manifest, and data/private/ei_refinery_capacity_annual for utilisation only; no network",
+  "conventions": {
+    "missing": "A missing value is JSON null. null never means zero and is never drawn as zero or bridged; the page shows a gap and says why.",
+    "decimals": {
+      "usd_bbl": 2,
+      "usd_t": 0,
+      "usd_t_error": 2,
+      "usd_mmbtu": 2,
+      "eur_mwh": 2,
+      "eurusd": 4,
+      "mmbtu_per_mwh": 6,
+      "mmbtu_per_bbl": 3,
+      "kb_d": 1,
+      "t": 2,
+      "r2": 3,
+      "pp": 1,
+      "pp_per_usd_bbl": 3,
+      "percent": 1,
+      "ratio": 1,
+      "yield_percent": 1,
+      "bbl_per_t": 2,
+      "count": 0,
+      "year": 0,
+      "coef": 5,
+      "rmse": 3,
+      "power": 3,
+      "f_stat": 3,
+      "gap_percent": 2,
+      "slope": 2,
+      "mmbtu_per_bbl_5": 5,
+      "bbl_per_t_4": 4
+    },
+    "rounding": "Floats are stored to 6 places. The page prints the decimals of the format a value names.",
+    "segments": "A sentence is a list of segments. A text segment holds words only. A value segment names its field and holds a value with a format, or an ISO date or a word with its label."
+  },
+  "title_segments": [
+    {"text": "How every figure on this site is computed, what it rests on, and what it cannot show."}
+  ],
+  "lead_segments": [
+    {"text": "This is where the study shows its work: the formulas, the places it departs from its own specification and the evidence for each, the constants with a source per row, the checks against independent data, and the limits of what the data can say. Every figure here is computed from the committed data by the same code that builds the other views."}
+  ],
+  "sections": [
+    {
+      "id": "formulas",
+      "title": "Formulas",
+      "blocks": [
+        {
+          "type": "h",
+          "text": "Cracks"
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "gasoil crack = gasoil price in $/t / "},
+            {"field": "bbl_per_t_gasoil", "value": 7.45, "format": "bbl_per_t"},
+            {"text": " minus Brent in $/bbl"}
+          ]
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "gasoline crack = gasoline price in $/t / "},
+            {"field": "bbl_per_t_gasoline", "value": 8.33, "format": "bbl_per_t"},
+            {"text": " minus Brent in $/bbl"}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The divisors are the barrels per tonne the ICE crack contracts settle on, conventions and not densities. Both legs of a crack always share a date and an averaging window: weekly with weekly, a calendar month with the same calendar month, never a weekly product against a monthly crude."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "The margin, in four layers"
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The official margin is the ministry's monthly gross refining margin on Brent, published from "},
+            {"field": "margin_first", "value": "2015-01-01", "label": "January 2015"},
+            {"text": ". The replication recomputes it from the ministry's own quotations with its method, and cannot close, as the departures below say. The decomposition splits a month's margin by product:"}
+          ]
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "contribution of a product = its volume yield x its crack"}
+          ]
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "residual = official margin minus the sum of the contributions"}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The residual carries every product the study cannot price and the ministry's own cost lines, and is always shown. The observed yields are JODI refinery output by product over refinery intake for Belgium, Germany, France, the Netherlands and the United Kingdom, rolling over "},
+            {"field": "rolling_yield_months", "value": 12, "format": "count"},
+            {"text": " months."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "Run economics"
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "gas in $/MMBtu = TTF in EUR/MWh x EUR/USD / "},
+            {"field": "mmbtu_per_mwh", "value": 3.412142, "format": "mmbtu_per_mwh"}
+          ]
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "gas cost = gas intensity in MMBtu/bbl x gas in $/MMBtu"}
+          ]
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "margin after gas = a margin gross of gas minus the gas cost minus other variable cost"}
+          ]
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "headroom = margin after gas minus the level at which runs get cut"}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The subtraction applies only to a margin built from cracks and yields, which is gross of gas. The ministry's margin is already net of the gas its method assumes, so on the ministry's margin the gas step is the wedge between two intensities, never a second subtraction. Headroom is not computed anywhere on this site, because the level at which runs get cut is unidentified; see the limitations."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "Outputs"
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "carrier = the product with the largest contribution"}
+          ]
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "breakeven TTF = the TTF at which the margin after gas equals the target, solved in closed form because the model is linear"}
+          ]
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "ten year rank = the rank of the month's margin among the trailing "},
+            {"field": "percentile_window_months", "value": 120, "format": "count"},
+            {"text": " months"}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The Model view solves its breakevens against a margin of zero, not against a run cut level, for the same reason headroom is not computed."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "The response of runs to the margin"
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "utilisation = a + the sum over one to three months back of b x the margin after gas + month terms + episode terms + error"}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "Utilisation is NWE crude intake over refinery capacity. The response is the sum of the three lagged coefficients, with Newey-West standard errors; the lag of each equation, its R squared and its sample are in the table below, read from the run economics artifact the Now view uses."}
+          ]
+        },
+        {
+          "type": "reads",
+          "what": "response_diagnostics"
+        }
+      ]
+    },
+    {
+      "id": "departures",
+      "title": "Where this study departs from its specification, and why",
+      "blocks": [
+        {
+          "type": "h",
+          "text": "The ministry's margin is already net of gas, so the gas step is a wedge"
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The specification writes the margin after gas as a gross margin less a gas cost. The ministry's own method note says its margin already has the purchased gas taken off:"}
+          ]
+        },
+        {
+          "type": "quote",
+          "lang": "fr",
+          "text": "Pour calculer la marge de raffinage sur Brent, on soustrait aux recettes : les couts d'achat du Brent date FAB et du gaz naturel CAF ; le cout du fret petrolier ; les couts d'assurance et les pertes",
+          "source_title": "Mode de calcul de la marge brute de raffinage sur Brent, DGEC",
+          "source_url": "https://www.ecologie.gouv.fr/sites/default/files/documents/Mode%20de%20calcul%20de%20la%20marge%20brute%20de%20raffinage%20sur%20brent.pdf"
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "Its table of yields carries natural gas at "},
+            {"field": "ministry_gas_share_percent", "value": 1.0, "format": "percent"},
+            {"text": " percent of the tonne of crude as an input. In this study's units that is "},
+            {"field": "ministry_intensity", "value": 0.065903, "format": "mmbtu_per_bbl_5"},
+            {"text": " MMBtu/bbl, against the "},
+            {"field": "study_intensity", "value": 0.21217, "format": "mmbtu_per_bbl_5"},
+            {"text": " MMBtu/bbl this study derives for the average US refinery, "},
+            {"field": "intensity_ratio", "value": 3.219417, "format": "ratio"},
+            {"text": " times as much. Subtracting a gas cost from the ministry's margin would charge the same barrel twice, so the engine refuses it, and what the site shows instead is the extra gas at the higher intensity, beside the margin and never taken from it."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "The ministry's margin cannot be replicated within the bar"
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The specification's bar is agreement within "},
+            {"field": "replication_bar_usd_bbl", "value": 0.5, "format": "usd_bbl"},
+            {"text": " $/bbl in every complete month. It cannot be met, because "},
+            {"field": "unpublished_quotations", "value": 5, "format": "count"},
+            {"text": " of the "},
+            {"field": "method_products", "value": 10, "format": "count"},
+            {"text": " product quotations the method prices are never published, and neither are "},
+            {"field": "unpublished_costs", "value": 3, "format": "count"},
+            {"text": " of its cost inputs. Named, as the specification asks:"}
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            [
+              {"text": "EuroBOB, the gasoline blendstock the method prices; the note prints Eurosuper, a finished grade."}
+            ],
+            [
+              {"text": "export gasoline, which the method defines as half naphtha and half Eurosuper."}
+            ],
+            [
+              {"text": "naphtha."}
+            ],
+            [
+              {"text": "propane."}
+            ],
+            [
+              {"text": "butane."}
+            ],
+            [
+              {"text": "the PEG Nord day ahead gas price the refinery pays."}
+            ],
+            [
+              {"text": "the GRTgaz transport tariff on that gas."}
+            ],
+            [
+              {"text": "Aframax crude freight from Sullom Voe to Le Havre."}
+            ]
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "So the site falls back to the official series and never overwrites it. The months where the ministry printed its own monthly prices, priced on the published lines alone, show how far short that falls:"}
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "The method run on the published lines only, against the ministry's margin, $/bbl.",
+          "columns": [
+            {"label": "Month", "short": "month", "numeric": false},
+            {"label": "Ministry's margin", "short": "ministry's margin", "numeric": true},
+            {"label": "Published lines only", "short": "published lines only", "numeric": true},
+            {"label": "Published lines less the margin", "short": "published lines less the margin", "numeric": true},
+            {"label": "Prices", "short": "prices", "numeric": false}
+          ],
+          "rows": [
+            [
+              {"text": "November 2025"},
+              {"field": "official_usd_bbl", "value": 16.469831, "format": "usd_bbl"},
+              {"field": "partial_usd_bbl", "value": -8.752715, "format": "usd_bbl"},
+              {"field": "partial_error_usd_bbl", "value": -25.222546, "format": "usd_bbl", "signed": true},
+              {"text": "final"}
+            ],
+            [
+              {"text": "December 2025"},
+              {"field": "official_usd_bbl", "value": 9.125356, "format": "usd_bbl"},
+              {"field": "partial_usd_bbl", "value": -13.597219, "format": "usd_bbl"},
+              {"field": "partial_error_usd_bbl", "value": -22.722574, "format": "usd_bbl", "signed": true},
+              {"text": "provisional"}
+            ],
+            [
+              {"text": "February 2026"},
+              {"field": "official_usd_bbl", "value": 6.501493, "format": "usd_bbl"},
+              {"field": "partial_usd_bbl", "value": -18.100397, "format": "usd_bbl"},
+              {"field": "partial_error_usd_bbl", "value": -24.601891, "format": "usd_bbl", "signed": true},
+              {"text": "final"}
+            ],
+            [
+              {"text": "March 2026"},
+              {"field": "official_usd_bbl", "value": 24.71577, "format": "usd_bbl"},
+              {"field": "partial_usd_bbl", "value": -11.512848, "format": "usd_bbl"},
+              {"field": "partial_error_usd_bbl", "value": -36.228618, "format": "usd_bbl", "signed": true},
+              {"text": "final"}
+            ],
+            [
+              {"text": "April 2026"},
+              {"field": "official_usd_bbl", "value": 18.683535, "format": "usd_bbl"},
+              {"field": "partial_usd_bbl", "value": -20.660397, "format": "usd_bbl"},
+              {"field": "partial_error_usd_bbl", "value": -39.343933, "format": "usd_bbl", "signed": true},
+              {"text": "provisional"}
+            ],
+            [
+              {"text": "August 2026"},
+              {"field": "official_usd_bbl", "value": 38.050505, "format": "usd_bbl"},
+              {"field": "partial_usd_bbl", "value": 0.418146, "format": "usd_bbl"},
+              {"field": "partial_error_usd_bbl", "value": -37.632359, "format": "usd_bbl", "signed": true},
+              {"text": "final"}
+            ],
+            [
+              {"text": "September 2026"},
+              {"field": "official_usd_bbl", "value": null, "format": "usd_bbl"},
+              {"field": "partial_usd_bbl", "value": -5.569669, "format": "usd_bbl"},
+              {"field": "partial_error_usd_bbl", "value": null, "format": "usd_bbl", "signed": true},
+              {"text": "provisional"}
+            ]
+          ]
+        },
+        {
+          "type": "h",
+          "text": "The third horse of the race is a substitution"
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The specification races the raw gasoil crack, the official margin and the margin after gas. Once the official margin is known to be net of gas, the second and third are the same series, so the third horse is replaced and labelled wherever it appears:"}
+          ]
+        },
+        {
+          "type": "ref",
+          "artifact": "runs",
+          "path": ["race", "equations", 0, "horses", 2, "substitution_segments"]
+        },
+        {
+          "type": "h",
+          "text": "The Brent validation bound is 5 $/bbl, not 10"
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The specification bounds Brent at "},
+            {"field": "spec_brent_low", "value": 10, "format": "count"},
+            {"text": " to "},
+            {"field": "spec_brent_high", "value": 250, "format": "count"},
+            {"text": " $/bbl. FRED publishes "},
+            {"field": "brent_prints_below_ten", "value": 25, "format": "count"},
+            {"text": " real daily prints below "},
+            {"field": "spec_brent_low", "value": 10, "format": "count"},
+            {"text": ": "},
+            {"field": "days", "value": 17, "format": "count"},
+            {"text": " in "},
+            {"field": "year", "value": 1998, "format": "year"},
+            {"text": " with a low of "},
+            {"field": "low_usd_bbl", "value": 9.1, "format": "usd_bbl"},
+            {"text": ", "},
+            {"field": "days", "value": 7, "format": "count"},
+            {"text": " in "},
+            {"field": "year", "value": 1999, "format": "year"},
+            {"text": " with a low of "},
+            {"field": "low_usd_bbl", "value": 9.77, "format": "usd_bbl"},
+            {"text": ", and "},
+            {"field": "days", "value": 1, "format": "count"},
+            {"text": " day in "},
+            {"field": "year", "value": 2020, "format": "year"},
+            {"text": " with a low of "},
+            {"field": "low_usd_bbl", "value": 9.12, "format": "usd_bbl"},
+            {"text": ". With the bound at "},
+            {"field": "spec_brent_low", "value": 10, "format": "count"},
+            {"text": " the whole download was refused. The bound exists to catch a file in cents or a slipped decimal point, which "},
+            {"field": "bound_brent_low", "value": 5, "format": "count"},
+            {"text": " still catches, and cutting real prints to fit it would come closer to inventing data than widening it does."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "History has named ranges, not a brush"
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The specification asks for a range brush on History. The view offers the windows the analysis uses instead, each from six months before the event that opens it, so a reader cannot cut a window no finding refers to."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "The stock release is dated to the day"
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The specification lists the IEA release by its month alone, "},
+            {"field": "iea_release_month", "value": "2026-03-11", "label": "March 2026"},
+            {"text": ", and asks for the exact date from the source. Two IEA publications give it: "},
+            {"field": "iea_release_date", "value": "2026-03-11", "label": "11 March 2026"},
+            {"text": ", and the Events view draws it at that day."}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "assumptions",
+      "title": "Assumptions, each with its source",
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "The constants, each with where it is used and its source.",
+          "columns": [
+            {"label": "Constant", "short": "constant", "numeric": false},
+            {"label": "Value", "short": "value", "numeric": true},
+            {"label": "Used for", "short": "used for", "numeric": false},
+            {"label": "Source", "short": "source", "numeric": false}
+          ],
+          "rows": [
+            [
+              {"text": "Barrels per tonne, gasoil"},
+              {"field": "bbl_per_t_gasoil", "value": 7.45, "format": "bbl_per_t"},
+              {"text": "every gasoil crack"},
+              {"text": "ICE Gasoil Crack, Low Sulphur Gasoil 1st Line vs Brent 1st Line Future", "url": "https://www.ice.com/products/6753331"}
+            ],
+            [
+              {"text": "Barrels per tonne, gasoline"},
+              {"field": "bbl_per_t_gasoline", "value": 8.33, "format": "bbl_per_t"},
+              {"text": "every gasoline crack"},
+              {"text": "ICE Gasoline Crack, Argus Eurobob Oxy FOB Rotterdam Barges vs Brent 1st Line Future", "url": "https://www.ice.com/products/6753285"}
+            ],
+            [
+              {"text": "Barrels per tonne, jet"},
+              {"field": "bbl_per_t_jet", "value": 7.88, "format": "bbl_per_t"},
+              {"text": "the jet line of the monthly decomposition"},
+              {"text": "ICE Jet Fuel Crack, Jet CIF NWE Cargoes vs Brent 1st Line Future", "url": "https://www.ice.com/products/6753303"}
+            ],
+            [
+              {"text": "Barrels per tonne, heating oil"},
+              {"field": "bbl_per_t_heating_oil", "value": 7.45, "format": "bbl_per_t"},
+              {"text": "the heating oil line of the decomposition"},
+              {"text": "ICE Gasoil Crack, Gasoil 0.1% FOB ARA Barges (Platts) vs Brent 1st Line Future (in MTs)", "url": "https://www.ice.com/products/6753295"}
+            ],
+            [
+              {"text": "Barrels per tonne, fuel oil"},
+              {"field": "bbl_per_t_fuel_oil", "value": 6.35, "format": "bbl_per_t"},
+              {"text": "the fuel oil line of the decomposition"},
+              {"text": "ICE Fuel Oil Crack, Fuel Oil 1% FOB NWE Cargoes vs Brent 1st Line Future", "url": "https://www.ice.com/products/6753289"}
+            ],
+            [
+              {"text": "Barrels per tonne of Brent, the ministry's weekly note"},
+              {"field": "bbl_per_t_brent_note", "value": 7.5, "format": "bbl_per_t"},
+              {"text": "turning the note's Brent in $/t back into $/bbl, for the weekly cracks; measured on the ministry's own printed pairs, not stated"},
+              {"text": "DGEC weekly note of 28 August 2026", "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/NPG-2026.08.28_0.pdf"}
+            ],
+            [
+              {"text": "Barrels per tonne of Brent, the ministry's margin"},
+              {"field": "bbl_per_t_brent_margin", "value": 7.55, "format": "bbl_per_t"},
+              {"text": "the replication and the ministry's embedded gas, nothing else; stated on page four of the method note"},
+              {"text": "Mode de calcul de la marge brute de raffinage sur Brent", "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/Mode%20de%20calcul%20de%20la%20marge%20brute%20de%20raffinage%20sur%20brent.pdf"}
+            ],
+            [
+              {"text": "MMBtu per MWh"},
+              {"field": "mmbtu_per_mwh", "value": 3.412142, "format": "mmbtu_per_mwh"},
+              {"text": "TTF in EUR/MWh to $/MMBtu, on the daily TTF only"},
+              {"text": "a unit definition, a megawatt hour over a million British thermal units"}
+            ],
+            [
+              {"text": "Gas intensity, the average US refinery"},
+              {"field": "study_intensity", "value": 0.21217, "format": "mmbtu_per_bbl_5"},
+              {"text": "the margin at the US gas use, the Model's default, horse C"},
+              {"text": "EIA Refinery Capacity Report, tables 10a and 10b", "url": "https://www.eia.gov/petroleum/refinerycapacity/"}
+            ],
+            [
+              {"text": "Gas intensity the ministry's margin embeds"},
+              {"field": "ministry_intensity", "value": 0.065903, "format": "mmbtu_per_bbl_5"},
+              {"text": "sizing the wedge; never subtracted"},
+              {"text": "Mode de calcul de la marge brute de raffinage sur Brent, table 1", "url": "https://www.ecologie.gouv.fr/sites/default/files/documents/Mode%20de%20calcul%20de%20la%20marge%20brute%20de%20raffinage%20sur%20brent.pdf"}
+            ],
+            [
+              {"text": "Other variable cost"},
+              {"field": "other_variable_cost_usd_bbl", "value": 0.0, "format": "usd_bbl"},
+              {"text": "the margin after gas; a labelled default, carbon costs out of scope"},
+              {"text": "the specification's default"}
+            ]
+          ]
+        },
+        {
+          "type": "h",
+          "text": "The US gas intensity, derived rather than typed"
+        },
+        {
+          "type": "table",
+          "caption": "Four EIA figures for the United States in 2023.",
+          "columns": [
+            {"label": "Input", "short": "input", "numeric": false},
+            {"label": "Value", "short": "value", "numeric": true},
+            {"label": "Unit", "short": "unit", "numeric": false},
+            {"label": "Source", "short": "source", "numeric": false}
+          ],
+          "rows": [
+            [
+              {"text": "Natural gas burned as refinery fuel"},
+              {"field": "eia_fuel_gas_mmcf", "value": 1021246, "format": "count"},
+              {"text": "million cubic feet"},
+              {"text": "EIA Refinery Capacity Report, table 10a", "url": "https://www.eia.gov/petroleum/refinerycapacity/"}
+            ],
+            [
+              {"text": "Natural gas used as hydrogen feedstock"},
+              {"field": "eia_hydrogen_gas_mmcf", "value": 172313, "format": "count"},
+              {"text": "million cubic feet"},
+              {"text": "EIA Refinery Capacity Report, table 10b", "url": "https://www.eia.gov/petroleum/refinerycapacity/"}
+            ],
+            [
+              {"text": "Heat content of natural gas consumed"},
+              {"field": "eia_heat_content_btu_cf", "value": 1036, "format": "count"},
+              {"text": "Btu per cubic foot, gross"},
+              {"text": "EIA Natural Gas Navigator, heat content of natural gas consumed, annual"}
+            ],
+            [
+              {"text": "Refinery and blender net input of crude oil"},
+              {"field": "eia_crude_inputs_kbbl", "value": 5827889, "format": "count"},
+              {"text": "thousand barrels"},
+              {"text": "EIA, refinery and blender net input", "url": "https://www.eia.gov/dnav/pet/pet_pnp_inpt_dc_nus_mbbl_a.htm"}
+            ]
+          ]
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "intensity = (fuel gas + hydrogen gas) x heat content / crude input = "},
+            {"field": "study_intensity", "value": 0.21217, "format": "mmbtu_per_bbl_5"},
+            {"text": " MMBtu/bbl"}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "Inside the specification's band of "},
+            {"field": "band_low", "value": 0.12, "format": "mmbtu_per_bbl"},
+            {"text": " to "},
+            {"field": "band_high", "value": 0.3, "format": "mmbtu_per_bbl"},
+            {"text": ". It is a US figure: European refiners burn more of their own still gas and buy less, so it is an upper end default, editable in the Model view. Fuel gas alone would give "},
+            {"field": "fuel_only_intensity", "value": 0.1815, "format": "mmbtu_per_bbl"},
+            {"text": ", and a denominator of distillation input "},
+            {"field": "gross_input_intensity", "value": 0.2053, "format": "mmbtu_per_bbl"},
+            {"text": "; neither is used."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "The gas the ministry's margin already embeds"
+        },
+        {
+          "type": "formula",
+          "segments": [
+            {"text": "embedded intensity = "},
+            {"field": "ministry_gas_share_percent", "value": 1.0, "format": "percent"},
+            {"text": " percent of a tonne of crude / "},
+            {"field": "bbl_per_t_brent_margin", "value": 7.55, "format": "bbl_per_t"},
+            {"text": " barrels per tonne x "},
+            {"field": "gas_mmbtu_per_tonne", "value": 49.756947, "format": "coef"},
+            {"text": " MMBtu per tonne of gas = "},
+            {"field": "ministry_intensity", "value": 0.065903, "format": "mmbtu_per_bbl_5"},
+            {"text": " MMBtu/bbl"}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The MMBtu per tonne of gas takes the volume from the Energy Institute's conversion table, "},
+            {"field": "ei_bcf_per_mt_lng", "value": 48.027941, "format": "coef"},
+            {"text": " billion cubic feet per million tonnes, and the heat content from the EIA figure above, so both intensities sit on the same gross basis."}
+          ]
+        },
+        {
+          "type": "h",
+          "text": "The prices behind the latest month's split"
+        },
+        {
+          "type": "reads",
+          "what": "margin_stack_prices"
+        },
+        {
+          "type": "h",
+          "text": "Rules"
+        },
+        {
+          "type": "list",
+          "items": [
+            [
+              {"text": "A monthly mean is the mean of the days the source published a price: no day is filled or carried forward, and a month with fewer than "},
+              {"field": "monthly_mean_min_days", "value": 15, "format": "count"},
+              {"text": " published days has no mean."}
+            ],
+            [
+              {"text": "The ten year rank uses the trailing "},
+              {"field": "percentile_window_months", "value": 120, "format": "count"},
+              {"text": " months, counted in months so a leap year does not change its length."}
+            ],
+            [
+              {"text": "Newey-West standard errors use a lag of at least "},
+              {"field": "newey_west_min_lag", "value": 3, "format": "count"},
+              {"text": ", as the specification asks; the lag each equation used is in the table under the formulas."}
+            ],
+            [
+              {"text": "Validation bounds are units checks, not views on the market: product prices "},
+              {"field": "bound_product_low", "value": 100, "format": "count"},
+              {"text": " to "},
+              {"field": "bound_product_high", "value": 3000, "format": "count"},
+              {"text": " $/t, Brent "},
+              {"field": "bound_brent_low", "value": 5, "format": "count"},
+              {"text": " to "},
+              {"field": "bound_brent_high", "value": 250, "format": "count"},
+              {"text": " $/bbl, cracks "},
+              {"field": "bound_crack_low", "value": -30, "format": "count"},
+              {"text": " to "},
+              {"field": "bound_crack_high", "value": 150, "format": "count"},
+              {"text": " $/bbl. A failed check keeps the old cache and marks the series failed."}
+            ],
+            [
+              {"text": "A missing value is null in every artifact, never zero, never bridged by a line, and the page says why it is missing."}
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "checks",
+      "title": "Cross checks, measured",
+      "blocks": [
+        {
+          "type": "table",
+          "caption": "Each check against data this study did not fit to, with what it shows.",
+          "columns": [
+            {"label": "Check", "short": "check", "numeric": false},
+            {"label": "Result", "short": "result", "numeric": false},
+            {"label": "What it means", "short": "what it means", "numeric": false}
+          ],
+          "rows": [
+            [
+              {
+                "text": "The ministry's Brent, converted with its own factor, against FRED's monthly mean"
+              },
+              {
+                "segments": [
+                  {"field": "brent_months_within", "value": 140, "format": "count"},
+                  {"text": " of "},
+                  {"field": "brent_months", "value": 140, "format": "count"},
+                  {"text": " months within "},
+                  {"field": "brent_tolerance_usd_bbl", "value": 1.5, "format": "usd_bbl"},
+                  {"text": " $/bbl, worst "},
+                  {"field": "brent_worst_usd_bbl", "value": 0.264861, "format": "usd_bbl"},
+                  {"text": " $/bbl"}
+                ]
+              },
+              {
+                "text": "the specification asks for 95 percent of months; every month passes"
+              }
+            ],
+            [
+              {
+                "text": "The ministry's printed margins parsed from its notes"
+              },
+              {
+                "segments": [
+                  {"field": "mbr_anchors_reproduced", "value": 9, "format": "count"},
+                  {"text": " of "},
+                  {"field": "mbr_anchors", "value": 9, "format": "count"},
+                  {"text": " reproduce exactly"}
+                ]
+              },
+              {
+                "text": "the specification's eight months and the final August 2026 figure"
+              }
+            ],
+            [
+              {
+                "text": "October 2022 gas cost against a refinery fired on fuel oil, at this study's intensity"
+              },
+              {
+                "segments": [
+                  {"field": "triangulation_gap_usd_bbl", "value": 6.228718, "format": "usd_bbl"},
+                  {"text": " $/bbl on the high sulphur fuel oil row, "},
+                  {"field": "triangulation_variant_usd_bbl", "value": 5.509561, "format": "usd_bbl"},
+                  {"text": " on the low sulphur row, against S&P Global's about "},
+                  {"field": "sp_global_gap_usd_bbl", "value": 7.0, "format": "usd_bbl"}
+                ]
+              },
+              {
+                "text": "the same order of magnitude, which is all an order of magnitude check can say; nothing was tuned toward it"
+              }
+            ],
+            [
+              {
+                "text": "Barrels per tonne implied by the ministry's Gazole against OPEC's gasoil"
+              },
+              {
+                "segments": [
+                  {"text": "mean "},
+                  {"field": "implied_gasoil_mean", "value": 7.52833, "format": "bbl_per_t_4"},
+                  {"text": ", from "},
+                  {"field": "implied_gasoil_min", "value": 7.307977, "format": "bbl_per_t_4"},
+                  {"text": " to "},
+                  {"field": "implied_gasoil_max", "value": 7.819115, "format": "bbl_per_t_4"},
+                  {"text": ", over "},
+                  {"field": "implied_months", "value": 44, "format": "count"},
+                  {"text": " months"}
+                ]
+              },
+              {
+                "segments": [
+                  {"text": "the contract's "},
+                  {"field": "bbl_per_t_gasoil", "value": 7.45, "format": "bbl_per_t"},
+                  {"text": " sits inside the spread, near its middle"}
+                ]
+              }
+            ],
+            [
+              {
+                "text": "Barrels per tonne implied by the ministry's Eurosuper against OPEC's premium gasoline"
+              },
+              {
+                "segments": [
+                  {"text": "mean "},
+                  {"field": "implied_gasoline_mean", "value": 7.718379, "format": "bbl_per_t_4"},
+                  {"text": ", from "},
+                  {"field": "implied_gasoline_min", "value": 6.936954, "format": "bbl_per_t_4"},
+                  {"text": " to "},
+                  {"field": "implied_gasoline_max", "value": 8.333341, "format": "bbl_per_t_4"},
+                  {"text": ", over "},
+                  {"field": "implied_months", "value": 44, "format": "count"},
+                  {"text": " months"}
+                ]
+              },
+              {
+                "segments": [
+                  {"text": "the contract's "},
+                  {"field": "bbl_per_t_gasoline", "value": 8.33, "format": "bbl_per_t"},
+                  {"text": " sits at the top of the spread, not the middle. It is kept: the two sources quote different grades, a finished premium gasoline against OPEC's premium unleaded, so the gap mixes a density with an octane spread, and choosing a factor to close it would be tuning"}
+                ]
+              }
+            ],
+            [
+              {
+                "text": "This study's weekly cracks, averaged by month, against OPEC's monthly ones"
+              },
+              {
+                "segments": [
+                  {"text": "gasoil "},
+                  {"field": "gasoil_mean_gap_usd_bbl", "value": 0.917682, "format": "usd_bbl", "signed": true},
+                  {"text": ", gasoline "},
+                  {"field": "gasoline_mean_gap_usd_bbl", "value": -9.005703, "format": "usd_bbl", "signed": true},
+                  {"text": " $/bbl on average over "},
+                  {"field": "overlap_months", "value": 44, "format": "count"},
+                  {"text": " months"}
+                ]
+              },
+              {
+                "text": "gasoil agrees across two independent sources; gasoline differs by a product, so the two series are never joined"
+              }
+            ]
+          ],
+          "prose": true
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The implied factors are recomputed here from the committed data, calendar month means of the weekly reconstruction over OPEC's monthly $/bbl, "},
+            {"field": "implied_first", "value": "2022-07-01", "label": "July 2022"},
+            {"text": " to "},
+            {"field": "implied_last", "value": "2026-02-01", "label": "February 2026"},
+            {"text": "."}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "title": "What each product is",
+      "blocks": [
+        {
+          "type": "p",
+          "segments": [
+            {"text": "Every product keeps its source's own label. None of them is a futures contract, and none is relabelled as one: the ICE contracts supply only the barrels per tonne a crack is quoted on."}
+          ]
+        },
+        {
+          "type": "table",
+          "caption": "The products, as each source names them.",
+          "columns": [
+            {"label": "Label", "short": "label", "numeric": false},
+            {"label": "Source", "short": "source", "numeric": false},
+            {"label": "What it is", "short": "what it is", "numeric": false}
+          ],
+          "rows": [
+            [
+              {"text": "Gazole"},
+              {"text": "the ministry, Rotterdam, credited DGEC-Reuters"},
+              {"text": "road diesel quoted in Rotterdam; this study's gasoil in the weekly series and the latest month's split"}
+            ],
+            [
+              {"text": "Eurosuper"},
+              {"text": "the ministry"},
+              {"text": "finished premium gasoline, not Eurobob blendstock; this study's gasoline in the weekly series"}
+            ],
+            [
+              {"text": "Fioul domestique"},
+              {"text": "the ministry"},
+              {"text": "heating oil"}
+            ],
+            [
+              {"text": "Jet"},
+              {"text": "the ministry"},
+              {"text": "jet fuel; printed in the monthly table, not on the weekly chart"}
+            ],
+            [
+              {"text": "Fioul lourd TBTS (< 1%)"},
+              {"text": "the ministry"},
+              {"text": "low sulphur fuel oil; printed in the monthly table, not on the weekly chart"}
+            ],
+            [
+              {"text": "Brent date"},
+              {"text": "the ministry"},
+              {"text": "dated Brent, in $/t in the note's table, converted with the note's own factor"}
+            ],
+            [
+              {"text": "Gasoil 10 ppm"},
+              {"text": "OPEC Monthly Oil Market Report, Rotterdam barges, assessed by Argus"},
+              {"text": "this study's gasoil in the monthly series from 2000; its label changed with the specification, see the breaks"}
+            ],
+            [
+              {"text": "Premium gasoline, unleaded 98"},
+              {"text": "OPEC Monthly Oil Market Report, assessed by Argus"},
+              {"text": "this study's gasoline in the monthly series; a different product from Eurosuper, relabelled four times since 2000"}
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reconstruction",
+      "title": "The weekly series, and its measured error",
+      "blocks": [
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The ministry prints two weeks of prices in each weekly note and deletes the note a week later, but each note also carries a chart of about two years of weekly prices. This study reads those charts: the curves are decoded from the vector drawing, calibrated against the figures the same note prints, and combined across every note collected. "},
+            {"field": "weeks", "value": 221, "format": "count"},
+            {"text": " weeks run from "},
+            {"field": "weekly_first", "value": "2022-07-01", "label": "1 July 2022"},
+            {"text": " to "},
+            {"field": "weekly_last", "value": "2026-09-18", "label": "18 September 2026"},
+            {"text": "; "},
+            {"field": "printed_weeks", "value": 20, "format": "count"},
+            {"text": " of them the ministry printed, and "},
+            {"field": "cross_checked_weeks", "value": 214, "format": "count"},
+            {"text": " are read from two or more independent chart geometries. Nothing is interpolated between weeks and nothing is borrowed from another source."}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "The measured error: refitted on three products and tested on the fourth, a note's reading misses its printed figures by "},
+            {"field": "error_low_usd_t", "value": 0.17, "format": "usd_t_error"},
+            {"text": " to "},
+            {"field": "error_high_usd_t", "value": 0.44, "format": "usd_t_error"},
+            {"text": " $/t on average, worst "},
+            {"field": "error_worst_usd_t", "value": 0.87, "format": "usd_t_error"},
+            {"text": " $/t. Where two notes plot the same week they agree to "},
+            {"field": "pair_mean_usd_t", "value": 0.3, "format": "usd_t_error"},
+            {"text": " $/t on average and "},
+            {"field": "pair_worst_usd_t", "value": 1.68, "format": "usd_t_error"},
+            {"text": " $/t at worst."}
+          ]
+        },
+        {
+          "type": "p",
+          "segments": [
+            {"text": "That first error is leave one series out, not out of sample in time. Every calibration anchor sits in the last two weeks of a note's chart, so it measures the reading where the anchors are and does not bound the oldest weeks. A smooth bend in a chart anchored at its right hand end passes every check: bending one note's chart by "},
+            {"field": "tilt_points", "value": 10, "format": "count"},
+            {"text": " points moved its oldest week by "},
+            {"field": "tilt_usd_t", "value": 73.49, "format": "usd_t_error"},
+            {"text": " $/t. What defends a week against that is a second note plotting it at a different place on its chart. The "},
+            {"field": "oldest_weeks", "value": 6, "format": "count"},
+            {"text": " weeks from "},
+            {"field": "oldest_first", "value": "2022-07-01", "label": "1 July 2022"},
+            {"text": " have no second chart and sit where such a bend does most harm: they are the least defended data in the study, and every chart that draws them hatches them."}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "breaks",
+      "title": "Structural breaks",
+      "blocks": [
+        {
+          "type": "p",
+          "segments": [
+            {"text": "A break is a change in what a series measures. It splits the line it applies to and no other; an event never splits a line. The list is the one History draws from."}
+          ]
+        },
+        {
+          "type": "reads",
+          "what": "breaks"
+        },
+        {
+          "type": "ref",
+          "artifact": "history",
+          "path": ["margin", "no_break_segments"]
+        },
+        {
+          "type": "ref",
+          "artifact": "runs",
+          "path": ["series", "capacity_segments"]
+        }
+      ]
+    },
+    {
+      "id": "limitations",
+      "title": "Limitations",
+      "blocks": [
+        {
+          "type": "list",
+          "items": [
+            {
+              "ref": {
+                "artifact": "run-economics",
+                "path": ["threshold", "segments"]
+              }
+            },
+            {
+              "ref": {
+                "artifact": "runs",
+                "path": ["race", "sentence_segments"]
+              }
+            },
+            {
+              "ref": {
+                "artifact": "runs",
+                "path": ["endogeneity_segments"]
+              }
+            },
+            {
+              "ref": {
+                "artifact": "runs",
+                "path": ["instrument", "diagnosis_segments"]
+              }
+            },
+            {
+              "ref": {
+                "artifact": "history",
+                "path": ["monthly", "r2_segments"]
+              }
+            },
+            {
+              "ref": {
+                "artifact": "history",
+                "path": ["seasonal_monthly", "panels", "gasoil", "variants", "all", "sentence_segments"]
+              }
+            },
+            {
+              "ref": {
+                "artifact": "run-economics",
+                "path": ["utilisation", "segments"]
+              }
+            },
+            [
+              {"text": "Carbon costs are out of scope: other variable cost is zero and labelled, and no emissions price is in any margin."}
+            ],
+            [
+              {"text": "The gas intensity is a US average and an upper end for Europe; the ministry's own is "},
+              {"field": "ministry_intensity", "value": 0.065903, "format": "mmbtu_per_bbl"},
+              {"text": " MMBtu/bbl, and the truth for a given refinery is somewhere this study cannot see."}
+            ],
+            {
+              "ref": {
+                "artifact": "history",
+                "path": ["monthly", "end_segments"]
+              }
+            },
+            [
+              {"text": "The ministry printed monthly prices only for "},
+              {"field": "printed_months", "value": 7, "format": "count"},
+              {"text": " months ("},
+              {"field": "printed_month", "value": "2025-11-01", "label": "November 2025"},
+              {"text": ", "},
+              {"field": "printed_month", "value": "2025-12-01", "label": "December 2025"},
+              {"text": ", "},
+              {"field": "printed_month", "value": "2026-02-01", "label": "February 2026"},
+              {"text": ", "},
+              {"field": "printed_month", "value": "2026-03-01", "label": "March 2026"},
+              {"text": ", "},
+              {"field": "printed_month", "value": "2026-04-01", "label": "April 2026"},
+              {"text": ", "},
+              {"field": "printed_month", "value": "2026-08-01", "label": "August 2026"},
+              {"text": ", "},
+              {"field": "printed_month", "value": "2026-09-01", "label": "September 2026"},
+              {"text": "), so the margin can be split by the ministry's own prices only in those months."}
+            ],
+            {
+              "ref": {
+                "artifact": "runs",
+                "path": ["series", "sample_segments"]
+              }
+            },
+            {
+              "ref": {
+                "artifact": "history",
+                "path": ["weekly", "evidence_segments"]
+              }
+            }
+          ]
+        },
+        {
+          "type": "h",
+          "text": "Two steps done by hand"
+        },
+        {
+          "type": "reads",
+          "what": "manual_steps"
+        }
+      ]
+    },
+    {
+      "id": "reuse",
+      "title": "Reuse terms, per source",
+      "blocks": [
+        {"type": "reads", "what": "reuse"}
+      ]
+    }
+  ]
+}
