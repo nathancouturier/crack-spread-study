@@ -226,6 +226,25 @@ export async function launch(argv = process.argv) {
       await page.send("Page.enable");
       await page.send("Runtime.enable");
       await page.send("Log.enable");
+      // THE PAGE IS TOLD IT HAS FOCUS. A headless browser with no window manager
+      // can hold a page that is never the focused document: element.focus() then
+      // moves document.activeElement and nothing else happens. No focus or
+      // focusin event fires, so no listener that reveals a focused control runs,
+      // the browser's own scroll into view does not run either, and
+      // :focus-visible does not match, so the ring a check measures is the user
+      // agent's 3px hairline rather than the site's 2px at 4px offset. That was
+      // measured on a GitHub runner: 70 controls reported with their ring
+      // outside a scroll box whose scrollLeft had not moved a pixel, while the
+      // same commit passed on a desktop where the window had focus. Focus
+      // emulation removes the difference by putting the page in the only state a
+      // reader is ever in, one where a focus ring exists at all. It is not
+      // supported before Chrome 80; a browser that refuses the command is used
+      // as it is, and a focus check there measures an unfocused document.
+      try {
+        await page.send("Emulation.setFocusEmulationEnabled", { enabled: true });
+      } catch {
+        // An older Chromium. Nothing else in this file depends on it.
+      }
       page.errors = [];
       page.on("Runtime.exceptionThrown", (p) => page.errors.push("exception: " + (p.exceptionDetails.exception ? p.exceptionDetails.exception.description : p.exceptionDetails.text)));
       page.on("Runtime.consoleAPICalled", (p) => {

@@ -738,6 +738,19 @@ p.block,
 .history-breaks__source { min-width: 10rem; font-size: var(--fs-meta); }
 .history-table th,
 .history-table td { white-space: nowrap; }
+/* B1 of the Gate 4 audit, again. The two row sensitivity table under a seasonal
+ * panel is a history-table, so the nowrap above reached its row labels, which
+ * are sentences rather than figures: "The other row OPEC printed" set on one
+ * line took 202px of a 335px box, at 375px and again inside the two column
+ * panel grid at 768px, leaving the figures less than half the box. The label
+ * wraps and is capped, so the width of the sticky column is a number this
+ * stylesheet chose rather than one the text happened to measure. */
+.history-sensitivity .table th:first-child {
+  white-space: normal;
+  min-width: 8rem;
+  width: 8rem;
+  max-width: 8rem;
+}
 /* Numbered markers that still collide stack in rows, each 28px, the lane
  * growing to hold them. src/history.js sets --rows and --row. */
 .lane[data-rows] { height: calc(var(--rows) * 28px + 4px); }
