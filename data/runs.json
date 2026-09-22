@@ -654,8 +654,8 @@
           "in_the_race": false
         },
         "pairs": [
-          {"first": "A", "second": "B", "observed_gap_percent": 0.819317, "detectable_gap_percent": 7.417147, "power": 0.054373, "forecasts_for_target_power": 24575.369422, "t": -0.195119, "distinguishable": false},
-          {"first": "A", "second": "C", "observed_gap_percent": 0.284428, "detectable_gap_percent": 12.284996, "power": 0.05016, "forecasts_for_target_power": 670407.9133, "t": -0.037358, "distinguishable": false},
+          {"first": "A", "second": "B", "observed_gap_percent": 0.819317, "detectable_gap_percent": 7.417147, "power": 0.054373, "forecasts_for_target_power": 24575.369421, "t": -0.195119, "distinguishable": false},
+          {"first": "A", "second": "C", "observed_gap_percent": 0.284428, "detectable_gap_percent": 12.284996, "power": 0.05016, "forecasts_for_target_power": 670407.913298, "t": -0.037358, "distinguishable": false},
           {"first": "B", "second": "C", "observed_gap_percent": 0.536415, "detectable_gap_percent": 8.314369, "power": 0.051433, "forecasts_for_target_power": 74845.150611, "t": 0.111807, "distinguishable": false}
         ],
         "caption_segments": [

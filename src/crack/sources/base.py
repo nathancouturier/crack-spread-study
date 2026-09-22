@@ -414,11 +414,22 @@ def read_cache(
     The date column is parsed to datetime64. Everything else is left as pandas
     read it, so a column that failed to fetch stays NaN rather than becoming a
     zero.
+
+    float_precision="round_trip" IS NOT OPTIONAL AND IT IS NOT A STYLE CHOICE.
+    pandas' default C parser is fast and is not round trip exact: it reads
+    1201.7159025169021, which is what write_cache wrote, back as
+    1201.715902516902, which is the adjacent double. Everything downstream then
+    computes on a number that is not the number in the file, and a rebuild of a
+    cache from a cache is not byte idempotent. That is how it was found: a clean
+    checkout rebuilt the committed decode of the DGEC notes from the committed
+    decode of the DGEC notes and produced a 212 line diff of last digits. The
+    parser this asks for is slower and is exactly the one whose output equals
+    what write_cache wrote.
     """
     path = _cache_path(name, directory=directory)
     if not path.exists():
         return None
-    frame = pd.read_csv(path, encoding="utf-8")
+    frame = pd.read_csv(path, encoding="utf-8", float_precision="round_trip")
     if date_col in frame.columns:
         frame[date_col] = pd.to_datetime(frame[date_col], errors="coerce")
     return frame
