@@ -84,7 +84,37 @@ check("text segment", format.segmentText({ text: "refiners' gross margin was " }
 check("label segment", format.segmentText({ field: "margin_month", value: "2026-08-01", label: "August 2026" }, dec), { text: "August 2026", kind: "label", field: "margin_month", missing: false });
 check("signed number segment", format.segmentText({ field: "capacity_kb_d", value: -12.34, format: "kb_d", signed: true }, dec), { text: MINUS + "12.3", kind: "number", field: "capacity_kb_d", missing: false });
 check("missing number segment keeps its field", format.segmentText({ field: "headroom_usd_bbl", value: null, format: "usd_bbl" }, dec), { text: null, kind: "number", field: "headroom_usd_bbl", missing: true });
-check("missing figure words", format.missingFigureText("headroom_usd_bbl"), "no figure for headroom usd bbl");
+// Gate 5 finding 2. missingFigureText used to be handed the artifact's column
+// identifier and printed it, which is how "no figure for margin us gas usd bbl"
+// reached 110 live table cells and one chart description. Three checks: the
+// words a caller supplies are used as they are, nothing supplied says the plain
+// true thing, and anything SHAPED like a field is refused even if a caller
+// passes one by mistake. Every field name in every artifact is tried below.
+check("missing figure words are the caller's", format.missingFigureText("after this series ends"), "after this series ends");
+check("no words means the plain sentence", format.missingFigureText(null), "no figure");
+check("empty words mean the plain sentence", format.missingFigureText("   "), "no figure");
+check("a field identifier is never printed", format.missingFigureText("headroom_usd_bbl"), "no figure");
+check("a field with its underscores swapped for spaces is never printed", format.missingFigureText("margin us gas usd bbl"), "no figure");
+{
+  const fields = new Set();
+  const walk = (value) => {
+    if (Array.isArray(value)) value.forEach(walk);
+    else if (value && typeof value === "object") {
+      if (typeof value.field === "string") fields.add(value.field);
+      Object.values(value).forEach(walk);
+    }
+  };
+  for (const artifact of ["now", "cracks", "history", "events", "runs", "method", "model", "margin-stack", "run-economics"]) {
+    walk(JSON.parse(readFileSync(path.join(ROOT, "data", artifact + ".json"), "utf8")));
+  }
+  // Every field as the artifact writes it, which is what a caller would have
+  // to hand, plus the spaced form of every field that ends in a unit, which is
+  // the shape the finding was made of.
+  const printed = [...fields].filter((field) => format.missingFigureText(field) !== "no figure");
+  check("no artifact field name survives as words, " + fields.size + " tried", printed, []);
+  const spaced = [...fields].map((field) => field.replace(/_/g, " ")).filter((words) => /\b(usd bbl|usd t|usd mmbtu|kb d|percent|count|year)$/.test(words));
+  check("no spaced field name ending in a unit survives, " + spaced.length + " tried", spaced.filter((words) => format.missingFigureText(words) !== "no figure"), []);
+}
 
 // --------------------------------------------------------------- time ---
 check("instant", format.formatInstant("2026-09-13T18:11:38Z"), "13 September 2026 at 18:11 UTC");

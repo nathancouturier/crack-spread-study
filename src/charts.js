@@ -99,6 +99,14 @@ export const GEOMETRY = Object.freeze({
   WEDGE_HEIGHT: 120,
   /* Room right of a time plot for a two line end label. */
   TIME_PAD_RIGHT: 64,
+  /* The same, for a panel whose series need more than one word to be named.
+   * The yield comparison of SPEC.md section 4.3 layer 4 carries three lines
+   * whose names are phrases, not products, and 64 px is a product's worth of
+   * room: "Ministry's slate" alone overran it by 32 px at every width. The
+   * panel that needs the room asks for it, rather than every panel paying for
+   * it, and the labels still sit at the ends of their own lines, so SPEC.md
+   * section 0.2's direct label and no legend still holds. */
+  TIME_PAD_RIGHT_WIDE: 112,
   /* Year labels closer than this take every second, fifth or tenth year. */
   YEAR_SPACING: 48,
   /* The monthly seasonal profile plot, Part 8.1 H8. */
@@ -937,14 +945,15 @@ function splitAtBreaks(points, breaks) {
  *                       edge, so a line that stops early is not drawn on to
  *                       the edge by its leader, Part 8.4 E6
  *  Returns { svg, xOf, yOf, left, right, top, bottom }. */
-export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, lines, squares, events, breaks, rails, className, xTicks, marker, labelAtEnd }) {
+export function timePanel({ width, height, xDomain, yDomain, unit, title, desc, lines, squares, events, breaks, rails, className, xTicks, marker, labelAtEnd, padRight }) {
   const g = GEOMETRY;
+  const rightPad = padRight || g.TIME_PAD_RIGHT;
   const least = rails ? rails.least.filter(([t0, t1]) => t1 >= xDomain[0] && t0 <= xDomain[1]) : [];
   const newest = rails ? rails.newest.filter(([t0, t1]) => t1 >= xDomain[0] && t0 <= xDomain[1]) : [];
   const brackets = rails && rails.brackets ? rails.brackets.filter((b) => b.end >= xDomain[0] && b.start <= xDomain[1]) : [];
   const railCount = (least.length ? 1 : 0) + (newest.length ? 1 : 0) + (brackets.length ? 1 : 0);
   const left = g.PAD_LEFT;
-  const right = Math.max(width - g.TIME_PAD_RIGHT, left + g.TIME_PAD_RIGHT);
+  const right = Math.max(width - rightPad, left + g.TIME_PAD_RIGHT);
   const top = g.PAD_TOP;
   const bottom = top + height;
   const railTop = bottom + g.AXIS_GAP + g.AXIS_BELOW;

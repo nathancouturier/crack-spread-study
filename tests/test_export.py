@@ -846,3 +846,108 @@ def test_method_cites_every_factor_and_reads_the_orphans(built):
     for model in built["run-economics"]["response"]["models"]:
         assert model["newey_west_lag"] >= analysis.NEWEY_WEST_MIN_LAG and 0 <= model["r2"] <= 1
 
+
+# ---------------------------------------------------------------------------
+# SPEC.md section 4.3 layer 4, observed yields. Gate 5 finding 3.
+# ---------------------------------------------------------------------------
+#
+# The layer was computed in crack.engine and crack.series, defined in words on
+# the Method view, exported by no artifact and drawn by no view: a layer the
+# specification requires "visible on the site" and that a reader could not
+# reach. These three tests hold the arithmetic, the artifact and the view, and
+# the third is the one that would have caught the finding.
+
+
+def test_the_observed_yield_margins_are_the_same_cracks_weighted_twice():
+    """Layer 4 against layer 3: only the yields differ between the columns.
+
+    Recomputed here from the cracks and the yields by hand, so the test fails
+    if crack.series stops using the yields it says it uses, or weights a crack
+    from another month.
+    """
+    frame = series.observed_yield_margins()
+    fixed = series.DGEC_VOLUME_YIELDS
+    row = frame[frame["crude_intake_usd_bbl"].notna()].iloc[-1]
+    by_hand = (
+        fixed["gasoil"] * row["crack_gasoil_usd_bbl"]
+        + fixed["gasoline"] * row["crack_gasoline_usd_bbl"]
+    )
+    assert row["fixed_usd_bbl"] == pytest.approx(by_hand, abs=1e-9)
+    for basis in (config.YIELD_BASIS_CRUDE_INTAKE, config.YIELD_BASIS_TOTAL_FEED):
+        observed = (
+            row["%s_gasoil" % basis] * row["crack_gasoil_usd_bbl"]
+            + row["%s_gasoline" % basis] * row["crack_gasoline_usd_bbl"]
+        )
+        assert row["%s_usd_bbl" % basis] == pytest.approx(observed, abs=1e-9)
+        # The yields are the ones crack.series.jodi_yields publishes for that
+        # month, not a second rolling window computed here.
+        published = series.jodi_yields(basis)
+        published = published[published["date"] == row["date"]].iloc[0]
+        assert row["%s_gasoil" % basis] == pytest.approx(published["gasoil"], abs=1e-12)
+        assert row["%s_gasoline" % basis] == pytest.approx(published["gasoline"], abs=1e-12)
+    # The denominator is a choice and both answers exist, with the coverage
+    # each one costs: crude intake reaches back further, total feed starts
+    # where JODI's TOTCRUDE does.
+    crude = frame[frame["crude_intake_usd_bbl"].notna()]["date"]
+    feed = frame[frame["total_feed_usd_bbl"].notna()]["date"]
+    assert crude.min() < feed.min()
+    assert str(feed.min().date()) == "2009-12-01"
+
+
+def test_the_observed_yield_layer_is_exported_with_both_denominators(built):
+    """The artifact carries the layer, and says which barrel each yield is of.
+
+    SPEC.md section 4.3 layer 4 names both the computation and the comparison,
+    so the block has to hold the fixed slate, both observed bases and a row per
+    month; and config says both bases are shown rather than one chosen.
+    """
+    block = built["history"]["yields"]
+    frame = series.observed_yield_margins()
+    assert [b["id"] for b in block["bases"]] == [
+        config.YIELD_BASIS_CRUDE_INTAKE,
+        config.YIELD_BASIS_TOTAL_FEED,
+    ]
+    assert block["fixed"]["fixed_gasoil_percent"] == pytest.approx(
+        100 * series.DGEC_VOLUME_YIELDS["gasoil"], abs=1e-6
+    )
+    assert len(block["rows"]) == len(frame)
+    column = block["columns"].index
+    for row, (_, ref) in zip(block["rows"], frame.iterrows()):
+        assert row[column("fixed_usd_bbl")] == pytest.approx(ref["fixed_usd_bbl"], abs=1e-6)
+        for basis in (config.YIELD_BASIS_CRUDE_INTAKE, config.YIELD_BASIS_TOTAL_FEED):
+            exported = row[column("%s_usd_bbl" % basis)]
+            reference = ref["%s_usd_bbl" % basis]
+            if exported is None:
+                assert math.isnan(reference)
+            else:
+                assert exported == pytest.approx(reference, abs=1e-6)
+    # The observed yields are higher than the slate's on both bases, which is
+    # the finding this panel reports, and it is reported whatever it is.
+    for basis in block["bases"]:
+        assert basis["gasoil_low_percent"] > block["fixed"]["fixed_gasoil_percent"]
+        assert basis["mean_gap_usd_bbl"] > 0
+
+
+def test_every_layer_of_section_4_3_reaches_a_view(built):
+    """The Gate 5 finding, as a test: computed is not the same as shown.
+
+    Each of the four layers has to be reachable by a reader, so each is checked
+    the way a reader meets it: a figure in an artifact AND a module that reads
+    the block it sits in. The fourth failed both halves until Gate 5.
+    """
+    src = REPO_ROOT / "src"
+    modules = {path.name: path.read_text(encoding="utf-8") for path in src.glob("*.js")}
+    layers = {
+        "1 official margin": ("history", "margin", "history.js"),
+        "2 replication": ("method", "sections", "method.js"),
+        "3 decomposition": ("margin-stack", "rows", "section-margin.js"),
+        "4 observed yields": ("history", "yields", "history.js"),
+    }
+    for layer, (artifact, key, module) in layers.items():
+        assert key in built[artifact], "%s is in no artifact" % layer
+        assert key in modules[module], "%s is in no view: %s never reads it" % (layer, module)
+    # And the fourth layer's own comparison, which is what SPEC.md asks for:
+    # the margin at observed yields beside the margin at the fixed slate.
+    yields = built["history"]["yields"]
+    assert "fixed_usd_bbl" in yields["columns"]
+    assert any(b["id"] + "_usd_bbl" in yields["columns"] for b in yields["bases"])

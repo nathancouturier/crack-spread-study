@@ -3115,3 +3115,653 @@ official margin row. All five trace.
 7. S6 and S7: stop the strip rule above the labels; give focus rings room
    inside `.section__inner`.
 8. M1: words out of mono cells.
+
+---
+
+# Self audit, Gate 5, the full build on the live site
+
+Run on 2026-09-23 against `https://nathancouturier.github.io/crack-spread-study/`
+by an auditor who did not build it. The live site is what was audited, not the
+working tree: `curl` of the deployed `index.html` is md5 `c9b3805640c7eddb1f6db4a52bce28b9`,
+byte identical to the file at `1fcf235`, which is HEAD. CI run 35771217771 is
+green on `cf525d4`; run 35786501047 is green on `1fcf235` and is the one that
+deployed what I measured.
+
+Everything below was measured on this machine, by running the code or driving
+headless Edge 153.0.4234.32 through `tools/browser.mjs` at the live URL, a fresh
+profile per launch. Where a check was not run it is not reported. Where a number
+is quoted it was produced here.
+
+**Verdict in one line.** Every blocker and every serious finding of Gate 4 is
+closed, `tools/check-layout.mjs` passes all nineteen checks at five widths in
+both themes against the live subpath, the engine parity holds to 1e-9 on 8,278
+comparisons, and the definition of done walks end to end. Three things are wrong
+that no validator in this repository can see: the README understates the study's
+weakest data by a factor of seven in the section it tells you to read first, 110
+table cells on a single live view print an artifact column id as English prose,
+and one of the four layers SPEC.md section 4.3 says must be visible on the site
+is computed in the pipeline and rendered nowhere.
+
+---
+
+## What I ran, with real exit codes
+
+```
+python -m pytest tests -o addopts=""       1076 passed, 5 skipped in 95.62s   exit 0
+python scripts/refresh.py --offline        25 of 25 series ok, manifest byte identical   exit 0
+python scripts/export.py --check           10 artifacts rebuild byte for byte   exit 0
+node tools/validate-data.mjs               16 of 16 checks passed, 25 series   exit 0
+node tools/validate-engine.mjs             4 of 4 checks passed                exit 0
+node tools/validate-artifacts.mjs          49 passed, 0 failed                 exit 0
+node tools/validate-format.mjs             PASS                                exit 0
+node tools/check-dashes.mjs                PASS                                exit 0
+node tools/check-literals.mjs              PASS                                exit 0
+node tools/check-paths.mjs                 PASS                                exit 0
+node tools/check-styles.mjs                PASS                                exit 0
+node tools/check-layout.mjs --base https://nathancouturier.github.io/crack-spread-study/
+                                           PASS, every layout check, 375, 768,
+                                           1024, 1280, 1440 px, light and dark
+```
+
+The five skips are the July 2026 product anchors. Their message is now
+conditional and true: it opens `data/cache/dgec_note_printed_monthly.csv`, names
+the seven months it holds, and says why no reachable document carries a July 2026
+monthly column. Gate 1's finding f is closed on both the mechanism and the stated
+reason.
+
+---
+
+## SPEC.md section 11, the ten points
+
+### 1. Series fetched, stale or failed, with vintages and provisional ranges
+
+25 series, 25 `ok`, 0 `stale`, 0 `failed`, read out of `data/manifest.json` after
+running the offline refresh myself rather than from the summary line. Every entry
+carries a specific vintage. The newest `fetched_at` is `2026-09-22T12:11:04Z`,
+the oldest `2026-09-11T00:00:00Z`.
+
+Four series declare a `provisional_from`: the three JODI series at `2026-06-01`
+and `dgec_note_printed_monthly` at `2025-12-01`. The Provenance panel now carries
+a **Provisional** column and prints per month rather than per range, for example
+"provisional: December 2025, April 2026 and September 2026". Gate 4's S8 is
+closed.
+
+### 2. Date ranges and gaps per series, recomputed by me
+
+I regenerated the expected index per series at its own declared frequency and
+differenced it against the committed file. **Every declared `first_date`,
+`last_date` and row count reproduces: zero mismatches across 25 series.** Every
+declared gap count reproduces except the two annual capacity series, where my
+year start index is wrong and the files are year end, and the two FRED series,
+which express a gap as a blank on a present row and whose 283 and 279 are counts
+of blanks, as the manifest notes say.
+
+The weekly reconstruction is 221 rows, 2022-07-01 to 2026-09-18, every one a
+Friday, zero missing against a generated 7 day index.
+
+### 3. Any number in the codebase without a matching source or config entry
+
+`check-literals` passes on the frontend and it is a real check, not a grep: it
+lexes the source, scans digit runs inside strings as well as code, self tests by
+planting market values in synthetic files first, and allows nothing but 0, 1,
+named unit constants at their declaration, named layout constants, exact declared
+snippets, citation numbers after words like "section" and "Gate", and the content
+hashes in the import map.
+
+On the Python side I walked the AST of every file under `src/` and read every
+float literal with two or more decimals outside `config.py`. The result is clean
+of market values with two exceptions worth naming, both of them transcriptions
+rather than inventions, and both covered by findings 5 and 7 below.
+
+### 4. Anchor results against SPEC 5.5, run by me
+
+I read `data/cache/dgec_mbr_monthly.csv` directly.
+
+```
+2025-10  spec 11.45  cache 11.4492449  round2 11.45  match
+2025-11  spec 16.47  cache 16.4698305  round2 16.47  match
+2026-02  spec  6.50  cache  6.5014935  round2  6.50  match
+2026-03  spec 24.72  cache 24.7157702  round2 24.72  match
+2026-04  spec 18.68  cache 18.6835354  round2 18.68  match
+2026-05  spec 21.26  cache 21.2599188  round2 21.26  match
+2026-06  spec 20.30  cache 20.3038313  round2 20.30  match
+2026-07  spec 36.69  cache 36.6854064  round2 36.69  match
+```
+
+**Eight of eight.** August 2026 carries 38.0505047 and rounds to the 38.05 the
+spec gives as provisional on 28 August.
+
+### 5. Test and validator output
+
+Above, with exit codes.
+
+### 6. Python to JavaScript parity, run by me
+
+```
+fixture      data/fixtures/engine-cases.json
+cases        408
+comparisons  8278
+exact        8216
+parity       largest difference 0.000e+0, 0 of 8169 comparisons inexact
+identity     largest 1.088e-14, javascript inverting its own arithmetic
+bar          1e-9 on both channels
+4 of 4 checks passed
+```
+
+The fourth check is new since Gate 2 and is the one that matters at Gate 5: the
+Model view's own compute agrees with `crack.engine` on every preset and every
+edit.
+
+### 7. Relative paths on the live subpath
+
+I loaded all six views in a fresh profile against the live URL and recorded every
+request through the DevTools protocol. **343 requests over the six views, every
+one of them under `https://nathancouturier.github.io/crack-spread-study/`, no
+request to another host, no request to the origin root, no console error and no
+exception on any view.** Thirty six distinct URLs: the page, three fonts, three
+stylesheets, nineteen modules and ten artifacts. The favicon is `data:,` so
+nothing is asked of the origin root. I fetched each vendored font directly and
+all three answered 200: Fraunces 67,304 bytes, Figtree 20,156, JetBrains Mono
+40,404.
+
+Cache headers, which the Gate 4 audit flagged as taken from platform knowledge
+rather than measured: I measured them. Every resource returns
+`Cache-Control: max-age=600` with an ETag. Because every module, stylesheet and
+artifact URL now carries a content hash written by `make build`, an `index.html`
+cached for those ten minutes names the hashes of its own generation, so the
+mixed graph Gate 4 worried about cannot occur: a visitor gets the previous
+version whole or the new version whole. `export.py --check` verifies the hashes
+in `index.html` against the bytes on disk.
+
+### 8. Orphan data and orphan UI states
+
+I harvested the rendered text of **thirty view states** on the live site, every
+view, every range window, every Model preset, every Runs part, all ten event
+panels, both Method states, with every disclosure opened, 453,197 characters.
+Then I walked every leaf of every `data/*.json` and looked for its value in that
+text at every decimal count the site uses.
+
+**Of 7,722 numeric leaves, 33 are never rendered anywhere, and all 33 are in
+`provenance.json`:** `rows`, `observations` and `file_rows` for six series, four
+JODI assessment code counts, one workbook `content_length`, two OPEC issue
+counts, and one TTF roll candidate close. These are supporting provenance fields
+and none of them is a market number. Every field Gate 4 listed as an orphan is
+now rendered, including `provisional_from` and the ICE factor citations: the
+Method view prints each product's printed price, its barrels per tonne and the
+named ICE contract it comes from.
+
+That test is a substring search, so it can call a value rendered when another
+number happens to contain its digits. It bounds the orphan count from below, not
+above.
+
+**Orphan UI states: none found.** The header links exactly the six views that
+exist, every route resolves, and `check-layout`'s N and P checks agree. One
+deployed file is unreachable: see finding 6.
+
+### 9. Accessibility, measured on the live site
+
+**Keyboard order and visible focus.** I enumerated every tabbable element in
+every view in both themes, focused each one, and confirmed the browser agreed,
+with focus emulation on so `:focus-visible` matches. Six views, two themes:
+**13, 115, 28, 14, 20 and 50 stops, and zero problems in all 12 runs.** No stop
+failed to take focus, no stop had `outline-style: none`, no ring contrast fell
+below 3.0 against its own computed ground, no ring was clipped by an ancestor
+with `overflow` other than visible, and no stop was off screen. Gate 4's S1 and
+S7 are closed, measured rather than inferred.
+
+**Charts.** Every `svg[role="img"]` on Now, History, Runs and an Events panel
+carries a `title` and a `desc`, both named by `aria-labelledby`, and every one
+sits in a container that also holds a disclosure opening a table of the same
+data. The bars in the Model and the two interval strips in the Runs response
+table are `aria-hidden` and backed by the figures in their own rows.
+
+**Reduced motion.** With `prefers-reduced-motion: reduce` emulated and
+`matchMedia` confirming it matched, **zero elements on the Now view had a
+transition or animation duration above 0.01 s.**
+
+**Colour blindness.** I read the computed stroke of every series mark on the
+History panels in both themes. Every one is the ink token, `#17181C` in light and
+`#FBFAF8` in dark. Nothing in a series carries meaning in colour. The monthly
+panel draws three series in three dash patterns, solid 2px for gasoil, 6px on 4px
+for gasoline and 1px on 4px for the disputed unleaded 95 row, each with a direct
+end label reading "Gasoil 23.73", "Unleaded 95 17.81" and "Gasoline 16.77". With
+colour removed the two named cracks are still told apart by dash and by label.
+The weekly panel carries a hatch under the axis with the labels "Least defended
+weeks" and "No second chart yet".
+
+### 10. What I am quietly unsure about
+
+Below, after the findings.
+
+---
+
+## The definition of done, SPEC.md section 12, walked on the live site
+
+| Clause | Met | What I saw |
+|---|---|---|
+| Land on one sentence: what a Rotterdam refiner earns per barrel after gas | yes, with a caveat | The `h1` is the sentence: "On the ministry's Rotterdam measure, refiners' gross margin after the ministry's gas allowance was 38.05 $/bbl in August 2026 ...". It is the ministry's 0.066 MMBtu/bbl allowance, not this study's 0.212. See finding 9 |
+| How that compares with ten years of history | yes | "the most in 120 months". I recomputed the rank on both measures: 120 of 120, 119 months below, either way |
+| Which crack is carrying it | yes | "gasoil carried 27.00 of it", traced to `margin-stack.json` row `gasoil` 26.996621 |
+| Whether runs have room to move | yes | "this sample cannot say whether runs have room to rise" |
+| Open Cracks, see gasoil and gasoline against their seasonal range | yes | Two seasonal panels, each product against the same week of four prior years, with a week by week table and a rail reading "3 prior years", "4 prior years", "none" |
+| Open the Model, raise TTF, watch the margin after gas fall in place | yes | I doubled TTF from 62.13 to 124.26 in the field. Five figures moved and nothing else: gas 21.11 to 42.22 $/MMBtu, gas cost 4.48 to 8.96, margin after gas 40.07 to 35.59, breakeven gasoil -38.98 to -25.63. The arithmetic checks: 0.212 times 21.11 is the 4.48 the margin lost. **85 of 91 figure nodes were the same DOM nodes before and after**, so it updates in place rather than redrawing. Headroom did not move because it reads "unidentified", which is the honest answer |
+| Open Runs, read kb/d per 10 $/bbl with its interval | yes | "+59.3 kb/d ... interval -290.1 to +408.8, and +230.4 kb/d on crude intake with a trend, interval +5.1 to +455.6" |
+| An honest sentence on the margin against the raw gasoil crack | yes | "It did not beat it and was not beaten by it ... those 4 tests had power of only 0.050 to 0.121. The reason is power, not equality." No winner, no tie |
+| Open History, see 2022 and 2026 for what they were | yes | Event markers on all three panels, the 2022 and 2026 range windows, the breaks table naming every break and where it is drawn or why it is not |
+| Nothing on screen I did not ask for | yes | At 1440 by 900 and 1280 by 800 the whole landing view fits with no scroll, four closed sections, no card, no badge |
+| Every number traceable to a source | mostly | 7,689 of 7,722 artifact values are rendered somewhere; `check-literals` passes; but see finding 3, a spec layer the pipeline computes and the site never shows |
+
+---
+
+## SPEC.md section 1, the CV line
+
+Each clause, timed against the landing view at 1440 by 900, where the page does
+not scroll:
+
+| Clause | Where I found it |
+|---|---|
+| tracked | Three dated lines under the verdict, including "last fetched on 22 September 2026 at 12:11 UTC", and `refresh.yml` in the workflows |
+| NWE refining margins | The verdict names the ministry's Rotterdam measure; the "Refining margin and gas" section holds the waterfall and the residual at full size |
+| across gasoil and gasoline cracks | The "Gasoil and gasoline cracks" section, named second line of the page |
+| run economics | The "Run economics and crude demand" section: "No level at which runs get cut can be identified" |
+| linked to crude demand | The same section: "+59.3 kb/d per 10 $/bbl of margin ... t +0.33, and +230.4 on a model with a trend, t +2.00". The interval itself is one click away or on the Runs view |
+
+**Does the site claim more than the line?** I grepped the rendered text of all
+thirty view states for `sharpe`, `backtest`, `back-test`, `signal`, `strateg`,
+`forecast`, `alpha`, `P&L`, `profit`, `position siz`, `predict`, `recommend` and
+`trade idea`. **Two hits, both of them the word "forecast" inside "forecast
+errors", which is the expanding window out of sample RMSE SPEC.md section 6.3
+asks for.** No Sharpe ratio, no backtest, no signal, no strategy, no price
+forecast, no simulated P&L anywhere on the site.
+
+---
+
+## The honesty of the negatives, checked one by one on the live site
+
+| What should be there | Found |
+|---|---|
+| "unidentified" where the headroom would be | Yes, on Now, on Runs, on the Model's breakeven table as a row reading "The level at which runs get cut, unidentified, No breakeven is taken against it", and in Method |
+| The race described as underpowered, never as a tie or a winner | Yes. "It did not beat it and was not beaten by it ... The reason is power, not equality." `check-layout`'s RV check enforces the absence of winner, wins, best, tie and dead heat, and passes |
+| The interval that nearly touches zero, visibly close to zero | Yes, and I measured it. At 1440 px the zero rule sits at x 714.8 and the trend model's interval begins at x 716.1: **1.3 px to the right of zero, on a 113.6 px span, 1.1 percent of its width**, which is exactly what the row's own words say. At 375 px the two in-row strips are replaced by one `role="img"` strip figure titled "Crude runs per 10 $/bbl of margin, each model with its interval, zero marked" |
+| The reconstruction labelled with its measured error, oldest weeks flagged | The error is on the panel: "misses its printed figures by 0.17 to 0.44 $/t on average, but that test sits where the notes print figures and does not bound the oldest weeks". The oldest weeks are hatched under the axis and labelled "Least defended weeks", and every week of the seasonal table reads either "checked against a second chart" or "least defended week". But see finding 1: the README does not agree with the site |
+| The disputed 2012 and 2013 gasoline rows both drawn | Yes, and I measured the marks: three distinct dash patterns on one panel, the dotted third being the other row, with its own end label "Unleaded 95 17.81". The page also says OPEC's own Annual Statistical Bulletin "follows neither row consistently and settles nothing", and gives the driving season premium on both rows, +4.78 and +4.87, so the seasonal claim does not turn on the choice |
+| The 2026 question untested | Yes: "Whether the relation held after 28 February 2026 is not tested: 4 months have runs data, against a bar of 12 set before looking. The rows describe those months and are not a test." The residual plot's own legend reads "After the break, not a test" |
+
+---
+
+## The README against SPEC.md section 8
+
+Every item the spec lists is present and in the order section 1 requires: the CV
+bullet first, "What the study cannot do" second and first on purpose,
+"What it does" third, then the screenshot, the local run instructions, the
+refresh procedure, a thirteen row provenance table with reuse terms per source,
+and ten numbered known limitations. All four screenshots it links exist in
+`assets/`. Two things are wrong with it, finding 1 and a smaller one in finding 6.
+
+---
+
+## Findings
+
+### 1, serious. The README understates the study's weakest data by a factor of seven, in the section it tells you to read first
+
+`README.md` line 50, inside "What the study cannot do":
+
+> "It is labelled a reconstruction everywhere it appears, its error travels in
+> the data, and 1 of its 221 weeks has no independent cross check at all."
+
+The committed cache says otherwise. `data/cache/dgec_note_reconstructed_weekly.csv`:
+
+```
+cross_checked            True 214,  False 7
+n_independent_geometries    1 on 7 rows
+evidence_class           cross_checked 214, single_geometry_oldest 6, single_geometry_newest 1
+the seven rows           2022-07-01, 2022-07-08, 2022-07-15, 2022-07-22,
+                         2022-07-29, 2022-08-05, 2026-09-18
+```
+
+**Seven of 221 weeks have no independent cross check, not one.** The six the
+README leaves out are the six every earlier audit and the site itself single out
+as the worst data in the project: uncorroborated and at the extreme unanchored
+left of the only note that draws them. The live History panel says so in plain
+words, "the 6 weeks from 1 July 2022, hatched under the axis, are the least
+defended data in the study", and the seasonal table labels each of those six
+"least defended week" where every other week reads "checked against a second
+chart".
+
+So the repository contains both the true statement and the false one, and the
+false one is in the file a reader opens first and in the section that exists to
+be pessimistic. This is the Gate 1 pattern exactly: `config.py` read more settled
+than `open-questions.md`. Here the README reads more settled than the page.
+
+### 2, serious. 110 table cells on one live view print an artifact column id as English prose
+
+`src/format.js` line 229:
+
+```js
+export function missingFigureText(field) {
+  return "no figure for " + String(field).replace(/_/g, " ");
+}
+```
+
+`field` is the artifact's column identifier. On the live site, with the tables
+open on `#/events?event=strikes_on_iran_hormuz_2026_02_28`, I counted **110
+elements with class `is-missing`**, each reading text of this shape. Across the
+thirty view states I harvested, the distinct strings and their counts:
+
+```
+no figure for gasoil usd bbl          21
+no figure for gasoline usd bbl        21
+no figure for utilisation percent      9
+no figure for mbr usd bbl              3
+no figure for margin us gas usd bbl    3
+no figure for partial error usd bbl    2
+no figure for official usd bbl         2
+```
+
+They appear in the Events monthly and weekly tables, the Runs month by month
+table and the Method replication table. `src/dom.js` line 234 puts the string in
+a `td`, and `segmentsText` in the same file as the offender puts it in SVG
+`title` and `desc`, so a screen reader hears "no figure for margin us gas usd
+bbl" as part of a chart's description.
+
+Three things make this a finding rather than a nit.
+
+First, **the correct sentence already exists eight lines above it.**
+`emptySeriesText` in the same file writes "Nothing is drawn for {series}: it was
+last fetched at {when} and holds no values for this range. The gap is left empty
+rather than filled." That is what SPEC.md section 7.3 asks for.
+
+Second, **the correct names already exist in the artifact being rendered.**
+`data/events.json` carries `series` entries named "OPEC's monthly gasoil and
+gasoline cracks", "the ministry's margin", "utilisation" and "this study's weekly
+reading of the ministry's chart", and the Events list column "What its window
+lacks" uses them correctly, one table above the cells that do not.
+
+Third, this is the same class of defect as Gate 4's S3, which was found on the
+Provenance panel and fixed there. `check-layout`'s S3 check enforces "no
+snake_case identifier" against the Provenance section only, and these strings
+have had their underscores replaced by spaces before they reach the DOM, so the
+check could not see them anywhere.
+
+The font is correct, Figtree at 13px, so Gate 4's M1 has not regressed.
+
+### 3, serious. SPEC.md section 4.3 layer 4, observed yields, is computed in the pipeline and shown nowhere on the site
+
+SPEC.md section 4.3: "Four layers, each visible on the site ... 4. Observed
+yields. Compute NWE yields from JODI refinery output by product over refinery
+intake (12-month rolling, BE, DE, FR, NL, UK) and **show how the margin moves
+with observed NWE yields instead of the official fixed structure.**"
+
+The computation exists: `engine.observed_yields` at `src/crack/engine.py:636`,
+listed in that module's own four layer docstring at line 39, and
+`series.latest_observed_yields` at `src/crack/series.py:468`.
+
+Nothing exports it and nothing draws it. No `data/*.json` carries an observed
+yield or a margin on observed yields; the only artifact that mentions the phrase
+is `method.json`, in a sentence. Across 453,197 characters of rendered text from
+thirty view states, the only occurrence of "observed yield" is the Method view's
+formulas block:
+
+> "The observed yields are JODI refinery output by product over refinery intake
+> for Belgium, Germany, France, the Netherlands and the United Kingdom, rolling
+> over 12 months."
+
+which defines a thing the site does not show. The Model view's five yield fields
+are the ministry's fixed slate; a reader could type observed yields in by hand,
+but the site never computes them and never puts the two margins side by side.
+
+The Method view has an excellent "declared differences" section that names four
+deviations from the spec: the range brush replaced by named windows, the Brent
+bound at 5 rather than 10, the third horse as a substitution, and the stock
+release dated to the day. **This deviation is not among them.** Either the layer
+belongs on the site or the difference belongs in that list.
+
+### 4, minor. "the 1 weeks from 18 September 2026 have no second chart yet"
+
+Live, on `#/history` and on `#/method`, in the caption under the weekly panel. A
+count segment with no singular form, on a page whose whole argument is care about
+words. The same sentence gets "the 6 weeks from 1 July 2022" right because six is
+plural. The Now view's provenance summary gets it right in the other direction,
+"1 manual step is outstanding", so a singular aware helper exists somewhere.
+
+### 5, minor. Two published docs cite a source that is not in the repository
+
+`docs/methodology.md` and `docs/open-questions.md` cite "recon 02 section 4.3",
+"recon 03 section 2.3", "recon 05 section 12" and others as the authority for
+constants and measurements. `git ls-files | grep -i recon` returns two
+reconstructed CSV files and no document. `docs/` holds five files and none of
+them is a recon.
+
+Gate 4 found these references leaking onto the rendered page and they are gone
+from it: `check-layout`'s S3 check passes and I found none in the rendered text.
+They remain in the two documents the README sends a reader to when they want to
+check a number. A reader following a constant back to its source is handed a
+citation they cannot open.
+
+### 6, minor. `data/manifest.json` is deployed, mapped in the import map, and fetched by nothing
+
+`index.html` line 53 maps `./data/manifest.json` to `./data/manifest.json?v=2eab568bf731`,
+and the file is 169,214 bytes on the live site, served 200. Across 343 requests
+over the six views **it is never requested.** No module in `src/` names it:
+grepping `src/`, `index.html` and `tools/` for `manifest.json` returns the import
+map line, a comment in `check-dashes.mjs` and a match inside `validate-data.mjs`.
+The Provenance panel reads `provenance.json`, which carries its own copy of the
+manifest.
+
+SPEC.md section 5.3 says the manifest is "exported to the site and rendered on
+the provenance panel", and it is, through a copy. The mapped original is data
+present in the deployment and unreachable in the UI, which is the definition
+SPEC.md section 11 point 8 uses. The `README.md` layout block describes
+`data/manifest.json` as "the first class provenance artifact", which reads as
+though the page loads it.
+
+### 7, minor. Eleven figures in `analysis.py` are transcribed from a document not in the repository, and nothing fails if they disagree
+
+`RECON_ANNUAL_UTILISATION` at `src/crack/analysis.py:591` holds eleven year keyed
+utilisation figures, 2015 through 2025, sourced in its own comment to "recon 03
+section 2.3". `utilisation_sanity_check` compares the study's own annual
+utilisation against them and sets `agrees_to_3dp`. Its docstring is candid that
+"it is a check, not a target: `utilisation_sanity_check` reports the gap whatever
+the gap is."
+
+I ran it. **All eleven agree to three decimals**, the largest difference being
+0.000469 in 2015. So nothing is wrong today. Two things are worth saying anyway.
+The transcription is checked against the data rather than the data against the
+transcription, which is Gate 1's finding 3.3 in a new place. And nothing in
+`make gate` fails if `agrees_to_3dp` goes false, so the check reports into a void.
+
+### 8, nit. The Now view carries two different "last" times
+
+The provenance summary says "None of the 25 series failed or went stale at the
+last fetch, 22 September 2026 at 12:11 UTC", which is the newest `fetched_at` in
+the manifest and is right. The Provenance table's own caption says "as the
+manifest recorded it at 22 September 2026 at 12:40 UTC", which is
+`manifest.generated_at`. The manifest's `run.mode` for that timestamp is
+`offline`: it fetched nothing. Two "last" times twenty nine minutes apart on one
+page, the later one belonging to a run that touched no network, is a small thing
+to make a reader resolve.
+
+### 9, minor judgement. The landing sentence answers "after gas" on the ministry's allowance, not the study's
+
+`now.json` sets `margin_after_gas_usd_bbl` equal to `mbr_usd_bbl`, 38.050505, with
+`margin_basis: "net_of_gas"` and `net_of.embedded_gas_intensity_mmbtu_per_bbl`
+0.065903. The study's own figure, `margin_study_intensity_usd_bbl`, is 34.962813,
+and the `README.md` argues at length that 0.212 is the right intensity "because
+the question is what a refiner who buys their energy earns". Every equation on
+the Runs view uses the 0.212 basis. The landing sentence uses the 0.066 one.
+
+The site is not hiding this: the sentence says "after **the ministry's** gas
+allowance", the margin section one click down prints "At that gas use 34.96" and
+"the gap is the extra gas, -3.09 $/bbl", and the History view draws the wedge as
+its own panel. Gate 4's S4 asked for exactly this wording and got it.
+
+What I checked, because Gate 4 listed it as open and did not: the fallback
+sentence "38.05 is the most in the 120 months to August 2026" is on the
+ministry's measure, and I recomputed the rank on the study's measure from
+`history.json`, 120 months from 2016-09 to 2026-08. **Latest is highest on both: rank 120 of 120,
+119 months below it, on either measure.** So nothing turns on the choice and the
+open question is closed. It remains true that the one sentence a trader reads out
+loud is 3.09 $/bbl more favourable than the number the rest of the study defends,
+and that the 34.96 is behind a click.
+
+### 10, nit. "the 4 years the weekly series covers"
+
+The Now cracks summary reads "both above the same week in each of the 4 years the
+weekly series covers." The series covers five calendar years, 2022 through 2026.
+Four of them are prior years, which is what the rail says: "4 prior years".
+
+---
+
+## Earlier audits: what they left open, checked one by one
+
+### Gate 4, the eight to fix first
+
+| # | Item | Now |
+|---|---|---|
+| 1 | B1, B2, the 44 px manifest window and the clipped captions | Closed. `check-layout` B1 and B2 pass at 375, 768, 1024, 1280 and 1440 in both themes against the live site |
+| 2 | S1, S2, say what is to the right | Closed. S1 passes, and no focus ring on any of the 12 keyboard walks was clipped or off screen |
+| 3 | S3, the Provenance engineering log | Closed. S3 passes, which includes French names with their accents; the live Method view prints "Direction generale" with its accents restored |
+| 4 | S4, "kept" and "its own" | Closed. The verdict reads "refiners' gross margin after the ministry's gas allowance **was** 38.05" |
+| 5 | S8, a provisional column | Closed. The Provenance table has one and names the months |
+| 6 | S5, lead with the printed figure | Closed. "Gasoil 81.77 and gasoline 39.52 ... as the ministry's note printed them, and 81.87 and 39.62 read off its weekly chart" |
+| 7 | S6, S7, the strip rule and focus ring room | Closed. S6 and S7 pass; zero clipped rings measured |
+| 8 | M1, words out of mono | Closed. M1 passes, and the 110 missing cells of finding 2 are set in Figtree |
+
+**What is not closed is the record.** Gates 1, 2 and 3 each carry a "what was
+done about this audit" section in this file. Gate 4 does not: the document ends
+at "The eight to fix first". All eight were fixed, and I had to prove it from the
+live site rather than read it here.
+
+### Gate 4, what it was quietly unsure about
+
+| Item | Now |
+|---|---|
+| The fold at 375 measured only in Edge | Still true, and still true of me. See the unsure list below |
+| The Pages `Cache-Control` value was not measured | **Measured: `max-age=600` on every resource.** With content hashes on every module and artifact, the mixed graph risk is closed |
+| Focus into partially visible cells is Chromium behaviour | No longer reachable: no ring was clipped or off screen on any of the 12 walks |
+| The threshold search stops at 11.28 while the margin sits at 38.05 | Unchanged, and the page still says "runs to the edge of the range searched". A Gate 3 choice, flagged again, not re-tested |
+| "Cross checked" may read as independent verification | Improved. The tables now say "checked against a second chart", which is precise |
+| Whether the 120 month rank survives on the study's own intensity | **Closed by me: 120 of 120 on both measures.** See finding 9 |
+| The accent stripped French | Closed; `check-layout` S3 now requires the accents |
+| History, Model, Runs and Method not audited, nor `engine.js` parity | Audited here; parity run here |
+
+### Gate 1 and Gate 2, the items labelled rather than fixed
+
+Each one is still labelled, and each label is still in place and still honest. The
+error bar's axis, the smooth tilt the gates cannot see, the six oldest weeks and
+the pixel quantisation are all in `docs/methodology.md` and in the manifest. The
+six oldest weeks are additionally in the data as `evidence_class`, drawn on the
+live weekly panel as a hatch labelled "Least defended weeks", and labelled per
+week in the seasonal table. That is better than Gate 1 asked for. The one place
+it has not reached is the README, which is finding 1.
+
+Gate 2's item 3, that `percentile_10y` of 100.0 would read as a placeholder and
+the sentence should say "highest of the 120 months", is closed: the sentence says
+"the most in 120 months". Gate 2's item 4, the US gas intensity used with no
+sensitivity shown, is closed for the Model, which makes it editable, and for the
+Method, which prints 0.182 on fuel gas alone and 0.205 on distillation input and
+says neither is used. Gate 2's finding 1, the gas charged twice, is closed
+structurally and said out loud on the Method view: "Subtracting a gas cost from
+the ministry's margin would charge the same barrel twice, so the engine refuses
+it."
+
+---
+
+## What I am quietly unsure about
+
+SPEC.md section 11 point 10, which is not optional.
+
+1. **One browser engine.** Everything rendered was measured in headless Edge
+   153.0.4234.32 with focus emulation on. I did not test Firefox or Safari at
+   all. Gate 4 raised this and it is still open. The things most likely to differ
+   are the 375 px fold, which I measured at 1029 px of content against an 812 px
+   viewport, and scroll into view behaviour inside the tables.
+
+2. **No real assistive technology.** I measured roles, names, descriptions,
+   `aria-expanded`, `inert`, focus order and ring contrast. I did not run a
+   screen reader. The 110 cells of finding 2 are the sort of thing that reads far
+   worse aloud than it looks, and I am inferring that rather than having heard
+   it.
+
+3. **My orphan test is a substring search.** It searches the rendered text for a
+   value's digits at every decimal count the site uses, so a value can be counted
+   as rendered because a different number contains its digits. The 33 unrendered
+   leaves are a floor, not a ceiling. The honest statement is that I found no
+   market number that is exported and never shown, not that none exists.
+
+4. **I did not re-run the Gate 3 analysis.** I verified that every artifact
+   rebuilds byte for byte from the committed caches, which is a different claim
+   from the statistics being right. The regressions, the block bootstrap, the
+   power calculations and the first stage F were taken as Gate 3 approved them.
+
+5. **I did not open a single primary source.** No DGEC note, no EIA table, no
+   OPEC issue, no IEA report. Every page number, every quoted licence, every
+   transcribed figure was taken as given, exactly as Gate 1 said of itself. If a
+   transcription is wrong, everything downstream is wrong and nothing in this
+   audit would have caught it.
+
+6. **The reconstruction's one real vulnerability is unchanged in kind.** Gate 1
+   proved a smooth tilt anchored at the right end moves the oldest week by 73 $/t
+   while the headline gate reads 0.711 of 1.50. More notes have since been
+   collected, so the uncorroborated set has fallen from 25 weeks to 7. I did not
+   re-attack it, and the six oldest weeks still have neither defence.
+
+7. **The 11 March 2026 date for the IEA release.** Gate 1 could not verify it
+   offline. The Method view now says "Two IEA publications give it: 11 March
+   2026". I did not open either.
+
+8. **`RECON_ANNUAL_UTILISATION` agrees, which proves less than it looks.** The
+   study reproduces eleven transcribed figures to three decimals. If the
+   transcription is wrong the agreement is a coincidence I cannot distinguish
+   from a confirmation.
+
+9. **The interval to zero distance was measured at 1440 only.** At 375 the two
+   in-row strips become one figure and I confirmed it exists, has a role, a title
+   and the sentence beside it, but I did not measure its pixels.
+
+10. **One machine, one network, one moment.** Every asset returned 200 from here.
+    I did not test a cold edge elsewhere, and the live site could differ for a
+    visitor served by another Pages node during a deploy.
+
+11. **I did not diff the committed screenshots against the live site.** The
+    screenshots in `assets/` were committed as "taken from the live site" at
+    `1fcf235`, which means they were taken while the live site served `cf525d4`.
+    That commit changed only assets, so they should be current, and I checked
+    that the four the README links exist. I did not compare a pixel of them.
+
+---
+
+## Is this Gate 5 ready?
+
+Yes, once findings 1, 2 and 3 are dealt with, and I would deal with them in that
+order.
+
+Finding 1 first, because it is the only thing here that tells a reader something
+untrue, it is in the README, and it is in the paragraph whose whole purpose is to
+be harder on the study than anyone else will be. Finding 2 second, because 110
+cells of machine language on one view is the single thing on this site that most
+reads as unfinished, and both the right sentence and the right names are already
+in the files that produce it. Finding 3 third, because a spec layer that is
+computed and never shown is either a missing view or a missing line in the
+declared differences table, and the Method view has earned the right to be
+trusted on that table.
+
+Everything else in this audit is in good order, and some of it is better than the
+spec asked for. The engine agrees with itself to 1e-9 across 8,278 comparisons in
+two languages. Every asset on the live subpath resolves, and the content hash on
+every module closes the one caching risk Gate 4 could only describe. The keyboard
+walks clean in six views and two themes with no clipped ring, which is the finding
+Gate 4 called not acceptable. The negatives are all still negative, in public,
+with their reasons: unidentified where a threshold would be, underpowered where a
+winner would be, an interval drawn 1.3 px from the zero it nearly touches, six
+weeks hatched and named as the worst data in the study, two disputed rows both
+drawn and neither chosen, and 2026 described as untested against a bar set before
+anyone looked.
+
+---
+
+*Gate 5 audit performed 2026-09-23 against the deployed site at `1fcf235`.
+Nothing in the repository was modified other than the appending of this section.
+1076 passed and 5 skipped, 25 of 25 series ok, 16 of 16 data checks, 49 of 49
+artifact checks, 4 of 4 parity checks, and every layout check at five widths in
+both themes against the live subpath.*

@@ -149,7 +149,10 @@ function renderBlock(block, decimals) {
 function cellFor(cell, decimals) {
   if (cell.url) return el("td", { class: "method-cell" }, [el("a", { class: "text-link", text: cell.text, attrs: { href: cell.url, rel: "noopener" } })]);
   if (cell.segments) return appendSegments(el("td", { class: "method-cell" }), cell.segments, decimals);
-  if (cell.format) return figureCell(formatCell(cell.value, cell.format, decimals, cell.signed === true), cell.field);
+  // `missing` is the artifact's own words for an empty cell, written where the
+  // export knows why the figure is absent. Without it the cell says "no figure"
+  // and never the column id: Gate 5 finding 2, src/format.js.
+  if (cell.format) return figureCell(formatCell(cell.value, cell.format, decimals, cell.signed === true), cell.field, { missing: cell.missing });
   return el("td", { class: "method-cell", text: cell.text });
 }
 

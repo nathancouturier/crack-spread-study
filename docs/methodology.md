@@ -4,6 +4,19 @@ What this study computes, from what, and how far each number can be trusted.
 Every figure below is a measurement made in this repository and reproducible from
 it. Where a number is an expectation rather than a measurement, it says so.
 
+**What "recon NN" means in this document.** The five source reconnaissance notes
+written before Gate 1, `01-conventions`, `02-dgec`, `03-physical`, `04-market` and
+`05-crack-sources`, are the working record of what was fetched, from where, with
+what status and on what terms. THEY ARE NOT IN THE REPOSITORY: they live in
+`data/private/recon/`, which `.gitignore` excludes, because they quote source
+material and log an individual machine's requests. A citation to one is a
+citation to that record, not to a public document, and nothing in this study
+rests on a recon note alone: every figure a recon note is cited for is either
+recomputed here from a committed cache, asserted in `tests/`, or carried in
+`data/manifest.json` with its own source. Where the note and the data disagree,
+the data wins and this document says so, as it does of recon 05 section 12 in
+section 1.6.
+
 ---
 
 ## 1. The weekly crack layer, and the reconstruction it rests on
@@ -192,10 +205,10 @@ once: they are covered by exactly one chart geometry, so nothing can contradict
 them, **and** they sit at the far left of that one note's chart, 105 weeks from
 its nearest calibration anchor, where the only evidence about the fit is the tick
 residual. Every other uncorroborated week has at most one of the two problems:
-the nineteen newest are uncorroborated but sit **on** the anchored end.
+the newest ones are uncorroborated but sit **on** the anchored end.
 
-`evidence_class` carries this per row, with values `cross_checked` (194 weeks),
-`single_geometry_newest` (19) and `single_geometry_oldest` (6), and it travels
+`evidence_class` carries this per row, with values `cross_checked` (214 weeks
+today), `single_geometry_newest` (1) and `single_geometry_oldest` (6), and it travels
 into `dgec_note_reconstructed_cracks_weekly` as well, so the crack a reader plots
 carries the flag rather than needing a join to find it. The Gate 1 self audit's
 point was that a compounding weakness described only in prose is a weakness

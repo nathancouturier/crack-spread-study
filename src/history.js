@@ -169,6 +169,7 @@ function drawTime(body) {
 
   body.appendChild(monthlyPanel(decimals));
   body.appendChild(marginPanel(decimals));
+  body.appendChild(yieldsPanel(decimals));
   body.appendChild(weeklyPanel(decimals));
   body.appendChild(breaksBlock());
 }
@@ -669,6 +670,127 @@ function marginPanel(decimals) {
     return scrollTable(["The ministry's margin and, beside it, the extra gas at the US refinery average, " + monthWords(rows[0][0]) + " to " + monthWords(rows[rows.length - 1][0]) + "."], el("table", { class: "table history-table" }, [el("thead", {}, [head]), tbody]));
   });
   return finishPanel(section, list, [sentence("p", margin.no_break_segments, decimals, "note"), ...gasNotes], alternative);
+}
+
+/* SPEC.md section 4.3 layer 4: the same cracks at observed NWE yields.
+ *
+ * WHY IT IS HERE. The layer was computed in the pipeline and drawn nowhere, so
+ * the Method view defined a thing the site did not show: Gate 5 finding 3. It
+ * sits under the margin panel because it is the margin's weighting, and it is
+ * three lines of one chart because that is the comparison the specification
+ * asks for: "how the margin moves with observed NWE yields instead of the
+ * official fixed structure".
+ *
+ * WHAT IS DRAWN. One line per weighting of the same two cracks: the ministry's
+ * fixed slate, and the observed yields on each of the two JODI denominators.
+ * Both denominators, because the choice between them is real and the artifact
+ * carries the sum that gives each one away; nothing here picks one.
+ *
+ * Every figure is a field of history.yields. The line names and the column
+ * headings are copy; the basis labels are the artifact's own words. */
+function yieldsPanel(decimals) {
+  const { history, state } = held;
+  const yields = history.yields;
+  const c = (name) => yields.columns.indexOf(name);
+  const rows = rowsIn(yields.rows, state.range);
+  const notes = [
+    sentence("p", yields.what_segments, decimals, "note"),
+    sentence("p", yields.choice_segments, decimals, "note"),
+    // One sentence per denominator, each carrying its own measured figures.
+    ...yields.bases.map((basis) => sentence("p", basis.segments, decimals, "note")),
+    sentence("p", yields.residual_segments, decimals, "note"),
+  ];
+  if (!rows.length) {
+    const empty = el("section", { class: "history-panel" }, [sentence("h2", yields.heading_segments, decimals, "history-panel__heading")]);
+    empty.appendChild(outOfRange("the yield comparison", yields.first, yields.last, state.range, true));
+    for (const note of notes) empty.appendChild(note);
+    return empty;
+  }
+  const times = rows.map((row) => charts.timeOf(row[0]));
+  const xDomain = [times[0], times[times.length - 1]];
+  const heading = segmentsText(yields.heading_segments, decimals);
+  // The end label carries a short name and the readout carries the full one.
+  // Part 8.1: a label sits at the end of its own line with no legend, so it has
+  // to fit beside the plot, and "Observed, over total refinery feed" does not:
+  // it overran the chart by 142 px at every width. The sentence under the
+  // chart, its description and the table all keep the full wording, so nothing
+  // is hidden, and the panel asks for TIME_PAD_RIGHT_WIDE besides.
+  const lines = [
+    { column: "fixed_usd_bbl", name: "Ministry's slate", full: "the ministry's slate", style: "solid" },
+    ...yields.bases.map((basis, i) => ({
+      column: basis.id + "_usd_bbl",
+      name: basis.label.replace(/^over /, "").replace(/^crude intake$/, "Crude intake").replace(/^total refinery feed$/, "Total feed"),
+      full: "observed " + basis.label,
+      style: i === 0 ? "dashed" : "dotted",
+      first: basis.first,
+    })),
+  ];
+  const yDomain = domainOf(rows.flatMap((row) => lines.map((line) => row[c(line.column)])));
+  const lastPresent = (column) => {
+    for (let i = rows.length - 1; i >= 0; i -= 1) if (charts.present(rows[i][c(column)])) return rows[i][c(column)];
+    return null;
+  };
+
+  const { section, list } = interactivePlot({
+    heading,
+    headingSegments: yields.heading_segments,
+    decimals,
+    rows,
+    times,
+    markers: markersFor("yields", state.range, yields.first, yields.last),
+    className: "history-panel--yields",
+    build: (width) => charts.timePanel({
+      width,
+      height: plotHeight(width),
+      xDomain,
+      yDomain,
+      unit: UNITS.usd_bbl,
+      title: heading,
+      desc: "What the gasoil and gasoline cracks are worth per barrel of crude under three weightings, " + monthWords(rows[0][0]) + " to " + monthWords(rows[rows.length - 1][0]) + ": the ministry's fixed slate as a solid line, the observed NWE yields over crude intake dashed, and the same over total refinery feed dotted. The observed lines start where JODI's twelve month window first closes, and nothing is drawn before it. Every value is in the table under the chart.",
+      lines: lines.map((line) => ({
+        name: line.name,
+        style: line.style,
+        points: rows.map((row) => [charts.timeOf(row[0]), row[c(line.column)]]),
+        lastText: formatNumber(lastPresent(line.column), "usd_bbl", decimals) || "no value",
+        breaks: [],
+        accent: false,
+      })),
+      events: [],
+      breaks: [],
+      rails: null,
+      labelAtEnd: true,
+      padRight: charts.GEOMETRY.TIME_PAD_RIGHT_WIDE,
+    }),
+    readout: (i) => {
+      const row = rows[i];
+      const said = lines.map((line) => line.full + " " + (formatNumber(row[c(line.column)], "usd_bbl", decimals) || "no figure"));
+      return monthWords(row[0]) + ": the two cracks are worth " + said.join(", ") + " $/bbl of crude run.";
+    },
+  });
+
+  const alternative = disclosure("Every month on this panel, both weightings and the yields behind them", () => {
+    const head = el("tr", {}, [
+      el("th", { text: "Month", attrs: { scope: "col" } }),
+      el("th", { class: "col-num", text: "Ministry's slate, $/bbl", attrs: { scope: "col", "data-short": "ministry's slate" } }),
+      ...yields.bases.map((basis) => el("th", { class: "col-num", text: "Observed " + basis.label + ", $/bbl", attrs: { scope: "col", "data-short": "observed " + basis.label } })),
+      ...yields.bases.flatMap((basis) => yields.priced_products.map((product) => el("th", { class: "col-num", text: productName(product) + " yield " + basis.label + ", percent", attrs: { scope: "col", "data-short": product + " yield " + basis.label } }))),
+      el("th", { class: "col-num", text: "Ministry's margin, $/bbl", attrs: { scope: "col", "data-short": "ministry's margin" } }),
+    ]);
+    const tbody = el("tbody");
+    const beforeBasis = (basis, month) => (month < basis.first ? "before this basis starts" : "");
+    for (const row of rows) {
+      const month = row[0];
+      tbody.appendChild(el("tr", {}, [
+        el("th", { class: "num", text: month.slice(0, month.lastIndexOf("-")), attrs: { scope: "row" } }),
+        figureCell(formatCell(row[c("fixed_usd_bbl")], "usd_bbl", decimals), "fixed_usd_bbl"),
+        ...yields.bases.map((basis) => figureCell(formatCell(row[c(basis.id + "_usd_bbl")], "usd_bbl", decimals), basis.id + "_usd_bbl", { missing: beforeBasis(basis, month) })),
+        ...yields.bases.flatMap((basis) => yields.priced_products.map((product) => figureCell(formatCell(row[c(basis.id + "_" + product + "_percent")], "percent", decimals), basis.id + "_" + product + "_percent", { missing: beforeBasis(basis, month) }))),
+        figureCell(formatCell(row[c("published_margin_usd_bbl")], "usd_bbl", decimals), "published_margin_usd_bbl", { missing: "the ministry published no margin then" }),
+      ]));
+    }
+    return scrollTable(["The two cracks weighted by the ministry's fixed slate and by the observed NWE yields on each denominator, with those yields beside them and the published margin last, " + monthWords(rows[0][0]) + " to " + monthWords(rows[rows.length - 1][0]) + "."], el("table", { class: "table history-table" }, [el("thead", {}, [head]), tbody]));
+  });
+  return finishPanel(section, list, notes, alternative);
 }
 
 /* This study's weekly reading of the ministry's chart. */

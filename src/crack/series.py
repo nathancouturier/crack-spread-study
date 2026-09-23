@@ -485,6 +485,125 @@ def latest_observed_yields(
     )
 
 
+#: The two products this study prices as first class cracks, and the only two
+#: the JODI output table and the OPEC Rotterdam table both carry under a name
+#: this project is willing to treat as the same product. Layer 4 re-weights
+#: these and nothing else: the rest of the ministry's slate is unpriced under
+#: both yield vectors and sits on the residual either way, so the comparison is
+#: of two weightings of the same two cracks and of nothing else.
+OBSERVED_YIELD_PRODUCTS: Sequence[str] = ("gasoil", "gasoline")
+
+
+def observed_yield_margins(
+    bases: Sequence[str] = (
+        config.YIELD_BASIS_CRUDE_INTAKE,
+        config.YIELD_BASIS_TOTAL_FEED,
+    ),
+    window: int = config.ROLLING_YIELD_WINDOW_MONTHS,
+) -> pd.DataFrame:
+    """SPEC.md section 4.3 layer 4, against layer 3, month by month.
+
+    "Show how the margin moves with observed NWE yields instead of the official
+    fixed structure." So this takes ONE set of cracks, OPEC's monthly Rotterdam
+    gasoil and gasoline against FRED Brent, and weights it twice: once at the
+    ministry's fixed volume yields, DGEC_VOLUME_YIELDS, which is what the
+    decomposition on the site uses, and once at the observed NWE yields of
+    jodi_yields, which are JODI refinery output by product over a JODI
+    denominator, twelve month rolling, over BE, DE, FR, NL and GB. Nothing else
+    differs between the two columns: same month, same cracks, same engine call.
+
+    THE DENOMINATOR IS A CHOICE AND IT IS SHOWN, NOT MADE. Recon 03 section 1.8
+    measured that gross output over crude intake sums to 1.13 to 1.16, because
+    the numerator is output from all feed and the denominator is crude alone,
+    while output over total refinery feed sums to 1.01 to 1.03 and is physically
+    right but starts only in 2009. Both bases are computed here, both are
+    returned, and the site draws both: config.YIELD_BASES says the same. The
+    ratio that gives the inflation away, JODI's own total product output over
+    the same denominator, travels in the frame as <basis>_totprods_ratio so that
+    a reader sees the denominator's effect rather than being told about it.
+
+    The margin is NOT the published MBR under either weighting. It is the part
+    of a barrel these two cracks account for, which is what a decomposition
+    attributes; the published margin is carried beside it, untouched, where it
+    exists, and the residual is official minus attributed exactly as in
+    decomposition_for_month.
+
+    Returns:
+        date, official_usd_bbl (NaN before the ministry's series starts),
+        crack_gasoil_usd_bbl, crack_gasoline_usd_bbl, fixed_usd_bbl,
+        fixed_residual_usd_bbl, and per basis: <basis>_usd_bbl,
+        <basis>_residual_usd_bbl, <basis>_gasoil, <basis>_gasoline,
+        <basis>_lines_total, <basis>_totprods_ratio, <basis>_denominator_kbd.
+    """
+    for basis in bases:
+        if basis not in JODI_DENOMINATOR_COLUMNS:
+            raise ValueError(
+                "observed_yield_margins compares yields on a JODI denominator, "
+                "so each basis is %s, not %r"
+                % (" or ".join(sorted(JODI_DENOMINATOR_COLUMNS)), basis)
+            )
+
+    cracks = opec_monthly_cracks().sort_values("date").reset_index(drop=True)
+    cracks["date"] = pd.to_datetime(cracks["date"])
+    wanted = ["crack_%s_usd_bbl" % product for product in OBSERVED_YIELD_PRODUCTS]
+    frame = cracks[["date"] + wanted].dropna(subset=wanted)
+
+    margin = margin_after_gas_monthly()[["date", "mbr_usd_bbl"]].rename(
+        columns={"mbr_usd_bbl": "official_usd_bbl"}
+    )
+    margin["date"] = pd.to_datetime(margin["date"])
+    frame = frame.merge(margin, on="date", how="left")
+
+    def weigh(yields: Mapping[str, float], row: pd.Series) -> engine.Decomposition:
+        official = float(row["official_usd_bbl"])
+        return engine.decompose_official(
+            0.0 if math.isnan(official) else official,
+            {product: float(yields[product]) for product in OBSERVED_YIELD_PRODUCTS},
+            {
+                product: float(row["crack_%s_usd_bbl" % product])
+                for product in OBSERVED_YIELD_PRODUCTS
+            },
+            unattributed_products=DGEC_UNATTRIBUTED_SLATE_LINES,
+        )
+
+    fixed = [weigh(DGEC_VOLUME_YIELDS, row) for _, row in frame.iterrows()]
+    frame["fixed_usd_bbl"] = [d.attributed_usd_bbl for d in fixed]
+    frame["fixed_residual_usd_bbl"] = [
+        float(official) - d.attributed_usd_bbl
+        for official, d in zip(frame["official_usd_bbl"], fixed)
+    ]
+
+    for basis in bases:
+        observed = jodi_yields(basis, window)
+        # The two priced lines, not the five line sum: JODI's naphtha column
+        # starts in 2009 with TOTCRUDE, and dropping the seven years before it
+        # would cost the crude intake basis the coverage that is its whole
+        # advantage. <basis>_lines_total is NaN over those months and says so.
+        observed = observed.dropna(subset=list(OBSERVED_YIELD_PRODUCTS))
+        keep = ["date", "total", "totprods_ratio", "denominator_kbd"] + list(
+            OBSERVED_YIELD_PRODUCTS
+        )
+        merged = frame.merge(observed[keep], on="date", how="left")
+        values, residuals = [], []
+        for _, row in merged.iterrows():
+            if any(pd.isna(row[product]) for product in OBSERVED_YIELD_PRODUCTS):
+                values.append(math.nan)
+                residuals.append(math.nan)
+                continue
+            result = weigh({p: row[p] for p in OBSERVED_YIELD_PRODUCTS}, row)
+            values.append(result.attributed_usd_bbl)
+            residuals.append(float(row["official_usd_bbl"]) - result.attributed_usd_bbl)
+        frame["%s_usd_bbl" % basis] = values
+        frame["%s_residual_usd_bbl" % basis] = residuals
+        for product in OBSERVED_YIELD_PRODUCTS:
+            frame["%s_%s" % (basis, product)] = merged[product].to_numpy()
+        frame["%s_lines_total" % basis] = merged["total"].to_numpy()
+        frame["%s_totprods_ratio" % basis] = merged["totprods_ratio"].to_numpy()
+        frame["%s_denominator_kbd" % basis] = merged["denominator_kbd"].to_numpy()
+
+    return frame.reset_index(drop=True)
+
+
 # ---------------------------------------------------------------------------
 # SPEC.md section 4.4, the margin after gas
 # ---------------------------------------------------------------------------

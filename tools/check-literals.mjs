@@ -125,6 +125,7 @@ const LAYOUT_CONSTANTS = {
     { name: "NARROW_WIDTH", value: "768", why: "the width below which a time plot is shorter" },
     { name: "WEDGE_HEIGHT", value: "120", why: "the extra gas plot under the margin, Part 8.1 H2" },
     { name: "TIME_PAD_RIGHT", value: "64", why: "room for a two line end label" },
+    { name: "TIME_PAD_RIGHT_WIDE", value: "112", why: "room for an end label naming a weighting rather than a product, the yield comparison panel" },
     { name: "YEAR_SPACING", value: "48", why: "year labels at least this far apart, Part 3 section 2" },
     { name: "PROFILE_HEIGHT", value: "240", why: "the monthly seasonal profile plot, Part 8.1 H8" },
     { name: "SCATTER_PAD_RIGHT", value: "24", why: "room right of the scatter for its last x tick, Part 8.3 R2" },

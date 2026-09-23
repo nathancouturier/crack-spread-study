@@ -115,10 +115,14 @@ weeks 27 to 52 have 4 (2022 starts on 2022-07-01), week 53 has 0. Week 36 of
 2026: gasoil 91.14 against a prior range of 15.44 to 58.21; gasoline 65.91
 against 12.07 to 30.28. The current line sits a full range width above the band.
 
-**0.4 The weekly evidence classes.** 219 weeks: `cross_checked` 194,
-`single_geometry_newest` 19 (2026-05-01 to 2026-09-04, the end a reader looks at
-first), `single_geometry_oldest` 6 (2022-07-01 to 2022-08-05, the least defended
-data in the study). 18 weeks carry figures the ministry printed.
+**0.4 The weekly evidence classes.** 221 weeks today: `cross_checked` 214,
+`single_geometry_newest` 1 (2026-09-18, the end a reader looks at first),
+`single_geometry_oldest` 6 (2022-07-01 to 2022-08-05, the least defended data in
+the study). 20 weeks carry figures the ministry printed. Every one of these
+counts moves when a note is collected, so the site counts them from
+`data/cache/dgec_note_reconstructed_weekly.csv` at build time and never types
+one into copy; at Gate 4 they read 219, 194, 19 and 18. `docs/methodology.md`
+section 1.12.
 
 **0.5 The response of runs, two models.**
 
@@ -316,8 +320,8 @@ or arrow keys. Every value also in the table.
 weeks by a footnote.** Wrong for this content. The Gate 1 self audit's point was
 that a weakness described only in prose is a weakness nobody meets.
 *Revision:* printed weeks as square marks on the line; the six oldest weeks
-under a hatch, the only hatch on the site; the nineteen newest under an axis
-bracket. Part 3 section 2.
+under a hatch, the only hatch on the site; the newest weeks with no second
+chart yet under an axis bracket. Part 3 section 2.
 
 **K12. A structural break drawn on the MBR.** Wrong. There is none (Part 0.9).
 The first pass would have invented one to satisfy SPEC.md section 4.3.
@@ -753,7 +757,8 @@ on a chart where the weight of evidence is drawn. Rows come from the
   checks them; a bend the checks cannot see would move them by about
   {oldest_tilt_usd_bbl} $/bbl." Today about 10 (`docs/methodology.md`, the tilt
   test at 10 points).
-- `single_geometry_newest`, the nineteen weeks from 2026-05-01: a 1px
+- `single_geometry_newest`, the weeks with no second chart yet, one of them
+  today, from 2026-09-18: a 1px
   `--text-muted` bracket, "No second chart yet". The newest end is where the
   calibration anchors sit, so it is marked but not hatched: hatching it would
   make the best anchored weeks look like the worst.
@@ -1292,7 +1297,7 @@ on a hatch.
 
 **Text alternative buttons name their content** (S7). Not "Show the numbers"
 under every chart, which is any dashboard's data table toggle, but what the
-table holds for this chart: "The 219 weeks, with how each was read", "The same
+table holds for this chart: "Every week, with how each was read", "The same
 week in each prior year", "Every month on the scatter, with its episode".
 
 **Other.** `lang="en"`. Touch targets 44px minimum. Brush has range input

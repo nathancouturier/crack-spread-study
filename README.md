@@ -47,7 +47,14 @@ this one.
   printed figures on the same page. Measured error, out of sample by leave one
   series out: 0.17 to 0.44 $/t, about 0.02 to 0.06 $/bbl on the gasoil crack. It
   is labelled a reconstruction everywhere it appears, its error travels in the
-  data, and 1 of its 221 weeks has no independent cross check at all.
+  data, and 7 of its 221 weeks have no independent cross check at all. Six of
+  those seven are the weeks of 1 July to 5 August 2022, and they are the least
+  defended data in the study: read from one chart, so nothing can contradict
+  them, and at the far left of that chart, 105 weeks from its nearest
+  calibration anchor, which is where a smooth bend in a chart anchored at its
+  right hand end does most harm. The seventh is the newest week, 18 September
+  2026, which is uncorroborated but sits on the anchored end. The data says so
+  itself, in `evidence_class`, and every chart that draws the six hatches them.
 - **The gasoline leg does not reconcile with the contract factor.** OPEC's
   Rotterdam premium unleaded and the ministry's Eurosuper imply 6.94 to 8.33
   barrels per tonne, mean 7.72, over the 44 months where both exist, against the
@@ -93,6 +100,15 @@ it.
   never overwritten. Beside it, the same barrel attributed to products as
   `yield * crack`, with the unattributable part on a visible residual line rather
   than spread silently across products.
+- **The barrel the ministry assumes, against the barrel NWE refineries made.**
+  The method's slate is fixed at 33.5 percent gasoil and 13.2 percent gasoline
+  of every barrel. JODI's own output over the same countries' refinery intake,
+  rolling over twelve months, runs 39.7 to 46.5 percent gasoil and 21.8 to 28.0
+  percent gasoline. The History view weighs one set of cracks both ways and
+  draws the two lines: re-weighting is worth +3.12 $/bbl on average and moves
+  the level rather than the shape, correlation 0.996. Which barrel a yield is a
+  share of is a real choice, so both JODI denominators are drawn and neither is
+  picked.
 - **Run economics.** The margin after gas, at the average US refinery's gas use
   of 0.212 MMBtu/bbl rather than the ministry's own 0.066, because the question
   is what a refiner who buys their energy earns. The wedge between the two ran
@@ -327,8 +343,11 @@ number it affects appears, not only here.
    polylines of 12 preserved notes, calibrated on the 20 printed weeks in the
    same documents. Measured error 0.17 to 0.44 $/t out of sample, worst single
    anchor and worst single week both carried in the data, Brent the least
-   accurate of the four series. Jet and heavy fuel oil are not on the charts and
-   are deliberately absent rather than modelled.
+   accurate of the four series. 7 of the 221 weeks are read from one chart only
+   and have no independent cross check; the six of 1 July to 5 August 2022 are
+   uncorroborated and unanchored at once and are the least defended data in the
+   study. Jet and heavy fuel oil are not on the charts and are deliberately
+   absent rather than modelled.
 4. **The gasoline leg does not reconcile.** 6.94 to 8.33 implied barrels per
    tonne against the contract's 8.33 over 44 overlapping months, mean 7.72. Two
    different grades, so the gap mixes density with octane. Published, not closed.
@@ -377,7 +396,10 @@ data/
   cache/                committed, machine fetched, the site builds from these
   private/              gitignored: what may not be redistributed
   fixtures/             engine-cases.json, and text fixtures for the parsers
-  manifest.json         the first class provenance artifact
+  manifest.json         the first class provenance artifact, linked from the
+                        Provenance panel; the panel's table is read from the
+                        reader layer of data/provenance.json, which carries a
+                        copy of it
   *.json                the ten site facing artifacts
 vendor/                 pinned fonts with their licences. No CDN
 tools/                  the validators, plain node, no dependencies

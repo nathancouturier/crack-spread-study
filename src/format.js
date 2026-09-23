@@ -133,13 +133,15 @@ export function segmentText(segment, decimals) {
 }
 
 /** A whole sentence of segments as plain text, for an SVG title or desc,
- *  where no span can carry the field. A missing number reads as the words
- *  "no figure for {field}". */
+ *  where no span can carry the field. A missing number reads as the segment's
+ *  own `missing` words when the export wrote any, and as "no figure" when it
+ *  did not. The field identifier is never read out: Gate 5 finding 2 heard
+ *  "no figure for margin us gas usd bbl" inside a chart's description. */
 export function segmentsText(segments, decimals) {
   return segments
     .map((segment) => {
       const piece = segmentText(segment, decimals);
-      return piece.missing ? missingFigureText(piece.field) : piece.text;
+      return piece.missing ? missingFigureText(segment.missing) : piece.text;
     })
     .join("");
 }
@@ -224,7 +226,51 @@ export function emptySeriesSentence({ series, fetchedAt, status, reason }) {
   return "Nothing is drawn for " + series + ": " + fetch + "." + because + " The gap is left empty rather than filled.";
 }
 
-/** The sentence for a single figure that is missing inside a sentence. */
-export function missingFigureText(field) {
-  return "no figure for " + String(field).replace(/_/g, " ");
+/* The words for one missing figure, and the one rule they obey.
+ *
+ * THE GATE 5 FINDING. This function used to take the artifact's column
+ * identifier and print it: `String(field).replace(/_/g, " ")`, which put "no
+ * figure for margin us gas usd bbl" into 110 table cells on a live view, and
+ * into the `desc` of a chart, where a screen reader read it aloud. An
+ * identifier is what the code calls a column; it is not what the thing is
+ * called, and a reader has no way to turn one back into the other.
+ *
+ * So the words a cell shows are now the caller's, taken from the artifact being
+ * rendered, which is where the series and the reason for the gap are named. The
+ * caller that has nothing to say gets the plain true sentence and nothing else,
+ * and an identifier handed to this function is DROPPED rather than printed:
+ * silence about the series beats machine language about it, and a cell that
+ * only says "no figure" is still true.
+ *
+ * Every empty cell's reason is also said once, in words, in the caption or the
+ * note beside its table, which is where there is room for it. */
+
+/** What a cell with no figure says when nothing else can be said about it. */
+export const NO_FIGURE = "no figure";
+
+/* The shape of an artifact column id. Two tests, because the string arrives
+ * both ways: `margin_us_gas_usd_bbl` as it is written in the artifact, and
+ * "margin us gas usd bbl" once something has swapped the underscores for
+ * spaces, which is the form that got past check-literals, check-styles and
+ * validate-format and onto the page. The second test is the unit tail every
+ * field in this project ends with. */
+const HAS_UNDERSCORE = /_/;
+const ENDS_LIKE_A_FIELD = /\b(usd\s+(bbl|t|mmbtu)|kb\s+d|eur\s+mwh|mmbtu\s+per\s+bbl|pp\s+per\s+usd\s+bbl|percent|count|year|months|r2|se|t)$/i;
+/* One word is a name for a thing, not something said to a reader. Every field
+ * in every artifact is either one word or underscored, and every phrase this
+ * function is meant to print is at least two: "no figure yet", "after this
+ * series ends". tools/validate-format.mjs tries all 328 field names. */
+const IS_ONE_WORD = /^\S+$/;
+
+/** The words for a figure that is missing, given what the caller can name.
+ *
+ *    words   the plain English name of what is missing, or of why it is, as the
+ *            artifact gives it. Absent, empty, or shaped like an identifier:
+ *            the cell says "no figure" and claims nothing more.
+ */
+export function missingFigureText(words) {
+  const name = typeof words === "string" ? words.trim() : "";
+  if (!name) return NO_FIGURE;
+  if (HAS_UNDERSCORE.test(name) || IS_ONE_WORD.test(name) || ENDS_LIKE_A_FIELD.test(name)) return NO_FIGURE;
+  return name;
 }

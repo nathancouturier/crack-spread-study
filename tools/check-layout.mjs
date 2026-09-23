@@ -35,6 +35,9 @@
 //   S6  no text in a strip figure is crossed by the accent zero rule
 //   S7  no focus ring anywhere in an open section is clipped by an ancestor
 //   S8  every series the manifest flags provisional says so in its row
+//   S9  no view prints an identifier to a reader: no snake_case anywhere in
+//       the rendered text, and no field name with its underscores swapped for
+//       spaces, in a cell, in prose or in an SVG title or description
 //   M1  JetBrains Mono holds no letters
 //   M2  a rail label either sits inside its bracket with 8px of line showing
 //       at each end, or outside it, never over an end tick
@@ -239,7 +242,7 @@ const PROBE = String.raw`(async () => {
       const m = pattern.exec(prose);
       if (m) add("S3", why + ": " + JSON.stringify(prose.slice(Math.max(0, m.index - 30), m.index + 40)));
     }
-    const NAMES = new Set(["JODI", "OPEC", "DGEC", "FRED", "MOMR", "NWE", "MBR", "EIA", "ICE", "TTF", "RBRTE", "REUTERS", "DCOILBRENTEU", "DEXUSEU", "USD", "EUR", "CC", "BY", "SIL", "OFL", "UTC", "US", "UK", "BE", "DE", "FR", "NL", "PDF", "PDFS", "MMBTU", "L.P", "IEA", "ARA", "CIF", "FOB", "TBTS", "LOCF", "ISO", "ICIS"]);
+    const NAMES = new Set(["JODI", "OPEC", "DGEC", "FRED", "MOMR", "NWE", "MBR", "EIA", "ICE", "TTF", "RBRTE", "REUTERS", "DCOILBRENTEU", "DEXUSEU", "USD", "EUR", "CC", "BY", "SIL", "OFL", "UTC", "US", "UK", "BE", "DE", "FR", "NL", "PDF", "PDFS", "MMBTU", "L.P", "IEA", "ARA", "CIF", "FOB", "TBTS", "LOCF", "ISO", "ICIS", "JSON"]);
     for (const m of prose.matchAll(/\b[A-Z][A-Z]{3,}\b/g)) if (!NAMES.has(m[0])) add("S3", "a word in capitals: " + m[0]);
     for (const heading of provenance.querySelectorAll("h3")) {
       const next = heading.nextElementSibling;
@@ -252,6 +255,50 @@ const PROBE = String.raw`(async () => {
         if (s.length > 12 && seen.has(s)) add("S3", "a credit says the same thing twice: " + JSON.stringify(s));
         seen.add(s);
       }
+    }
+  }
+
+  // S9: no identifier is printed to a reader, anywhere on this view.
+  //
+  // GATE 5 FINDING 2. 110 table cells on the Events view read "no figure for
+  // margin us gas usd bbl", which is data/events.json's column id with its
+  // underscores swapped for spaces, and the same string went into an SVG desc,
+  // where a screen reader read it out. Every static validator passed: the S3
+  // check above looks at the Provenance section alone, and check-literals,
+  // check-styles and validate-format do not render anything.
+  //
+  // So this one reads every word the page actually shows, on every view state
+  // this tool opens, and fails on the two shapes an identifier arrives in. A
+  // URL is skipped, because a source's own address may carry an underscore and
+  // it is a location rather than a sentence.
+  {
+    const shown = [];
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const parent = node.parentElement;
+      if (!parent || parent.closest("script, style")) continue;
+      if (parent.closest("[hidden], [aria-hidden=true]")) continue;
+      const value = (node.nodeValue || "").replace(/\s+/g, " ").trim();
+      if (value) shown.push([value, parent]);
+    }
+    // SVG titles and descriptions are read aloud and are not laid out, so they
+    // are collected whatever their visibility.
+    for (const node of document.querySelectorAll("svg title, svg desc, [aria-label]")) {
+      const value = (node.getAttribute("aria-label") || node.textContent || "").replace(/\s+/g, " ").trim();
+      if (value) shown.push([value, node]);
+    }
+    const SNAKE = /\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/;
+    const SPACED_FIELD = /\b(?:usd (?:bbl|t|mmbtu)|kb d|eur mwh|mmbtu per bbl|pp per usd bbl)\b/;
+    const seen = new Set();
+    for (const [value, node] of shown) {
+      if (/https?:\/\//.test(value)) continue;
+      const hit = SNAKE.exec(value) || SPACED_FIELD.exec(value);
+      if (!hit) continue;
+      const where = node.tagName ? node.tagName.toLowerCase() : "text";
+      const key = where + " " + hit[0];
+      if (seen.has(key)) continue;
+      seen.add(key);
+      add("S9", "an identifier printed to a reader in a " + where + ": " + JSON.stringify(hit[0]) + " in " + JSON.stringify(value.slice(0, 80)));
     }
   }
 
@@ -649,7 +696,7 @@ for (const f of selected) {
   if (!byCheck.has(key)) byCheck.set(key, []);
   byCheck.get(key).push(f.theme + " " + f.width);
 }
-const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "M1", "M2", "M3", "M4", "H", "MV", "RV", "EV", "ME", "N", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
+const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "S9", "M1", "M2", "M3", "M4", "H", "MV", "RV", "EV", "ME", "N", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
 for (const check of checks) {
   const lines = [...byCheck.entries()].filter(([key]) => key.startsWith(check + "  "));
   if (!lines.length) {

@@ -205,7 +205,7 @@
         {"text": " read off its weekly chart; "},
         {"text": "both above the same week in each of the "},
         {"field": "n_years", "value": 4, "format": "count"},
-        {"text": " years the weekly series covers."}
+        {"text": " earlier years the weekly series reaches."}
       ]
     },
     {

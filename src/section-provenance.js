@@ -24,6 +24,7 @@
 
 import { el, sentence, scrollTable } from "./dom.js";
 import { formatCell, formatInstant } from "./format.js";
+import { artifactUrl } from "./state.js";
 
 export const artifact = "provenance";
 export const loading = "the manifest of every series, its source and its last fetch";
@@ -62,8 +63,18 @@ export function render(inner, data) {
     body.appendChild(el("tr", { attrs: { "data-series": entry.series, "data-status": entry.status } }, columns.map((column) => cellFor(column, entry, words, decimals))));
   }
   const table = el("table", { class: "table manifest-table" }, [el("thead", {}, [head]), body]);
+  /* GATE 5 FINDING 8. This caption and the summary sentence above it both said
+   * "last", twenty nine minutes apart, and the later one belonged to a run that
+   * opened no socket. The two are different things and the caption now says
+   * which this one is: when the manifest was last written, and whether that run
+   * fetched anything. The time of the last fetch of a series stays where it
+   * belongs, in the summary sentence and in the Last fetch column. */
+  const run = manifest.run || {};
+  const wrote = run.mode === "offline"
+    ? ", a run that reread the committed files and fetched nothing"
+    : (run.mode ? ", a run that fetched from the sources" : "");
   inner.appendChild(el("div", { class: "block" }, [scrollTable([
-    "Every series the study reads, as the manifest recorded it at " + (formatInstant(manifest.generated_at) || "a time it did not record") + "; failed and stale series first.",
+    "Every series the study reads, as the manifest recorded it at " + (formatInstant(manifest.generated_at) || "a time it did not record") + wrote + "; failed and stale series first. Each series' own last fetch is in its row.",
   ], table)]));
 
   // The work done by hand, in the reader layer's words.
@@ -104,6 +115,22 @@ export function render(inner, data) {
   }
   credits.appendChild(list);
   inner.appendChild(credits);
+
+  /* GATE 5 FINDING 6. data/manifest.json is deployed, versioned in the import
+   * map and described in the README as the first class provenance artifact, and
+   * before this line nothing on the site ever requested it: the page reads the
+   * copy inside data/provenance.json. It is data present in the deployment and
+   * unreachable in the UI, which is what SPEC.md section 11 point 8 calls an
+   * orphan. The link makes it reachable, through the same content hashed URL
+   * every other artifact is fetched at, and says what it is so that nobody
+   * opens it expecting this table. */
+  inner.appendChild(el("div", { class: "block" }, [
+    el("p", { class: "prose" }, [
+      "This table is the reader's view of the pipeline's own record. That record is published whole beside the site, as it was written, for anyone who wants to check it or to machine read it: ",
+      el("a", { class: "text-link", text: "the manifest of every series, as JSON", attrs: { href: artifactUrl("data/manifest.json"), rel: "noopener" } }),
+      ".",
+    ]),
+  ]));
 
   // Typefaces and the one substitution.
   if (data.fonts) {

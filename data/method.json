@@ -105,7 +105,7 @@
           "segments": [
             {"text": "The residual carries every product the study cannot price and the ministry's own cost lines, and is always shown. The observed yields are JODI refinery output by product over refinery intake for Belgium, Germany, France, the Netherlands and the United Kingdom, rolling over "},
             {"field": "rolling_yield_months", "value": 12, "format": "count"},
-            {"text": " months."}
+            {"text": " months. They are drawn against the fixed slate on the History view, as a third panel over time, with both JODI denominators on it and the figures for each: the fourth layer is a chart on this site and not only a definition on this page."}
           ]
         },
         {
@@ -296,51 +296,51 @@
           "rows": [
             [
               {"text": "November 2025"},
-              {"field": "official_usd_bbl", "value": 16.469831, "format": "usd_bbl"},
+              {"field": "official_usd_bbl", "value": 16.469831, "format": "usd_bbl", "missing": "the ministry has not published this month"},
               {"field": "partial_usd_bbl", "value": -8.752715, "format": "usd_bbl"},
-              {"field": "partial_error_usd_bbl", "value": -25.222546, "format": "usd_bbl", "signed": true},
+              {"field": "partial_error_usd_bbl", "value": -25.222546, "format": "usd_bbl", "signed": true, "missing": "no published margin to compare"},
               {"text": "final"}
             ],
             [
               {"text": "December 2025"},
-              {"field": "official_usd_bbl", "value": 9.125356, "format": "usd_bbl"},
+              {"field": "official_usd_bbl", "value": 9.125356, "format": "usd_bbl", "missing": "the ministry has not published this month"},
               {"field": "partial_usd_bbl", "value": -13.597219, "format": "usd_bbl"},
-              {"field": "partial_error_usd_bbl", "value": -22.722574, "format": "usd_bbl", "signed": true},
+              {"field": "partial_error_usd_bbl", "value": -22.722574, "format": "usd_bbl", "signed": true, "missing": "no published margin to compare"},
               {"text": "provisional"}
             ],
             [
               {"text": "February 2026"},
-              {"field": "official_usd_bbl", "value": 6.501493, "format": "usd_bbl"},
+              {"field": "official_usd_bbl", "value": 6.501493, "format": "usd_bbl", "missing": "the ministry has not published this month"},
               {"field": "partial_usd_bbl", "value": -18.100397, "format": "usd_bbl"},
-              {"field": "partial_error_usd_bbl", "value": -24.601891, "format": "usd_bbl", "signed": true},
+              {"field": "partial_error_usd_bbl", "value": -24.601891, "format": "usd_bbl", "signed": true, "missing": "no published margin to compare"},
               {"text": "final"}
             ],
             [
               {"text": "March 2026"},
-              {"field": "official_usd_bbl", "value": 24.71577, "format": "usd_bbl"},
+              {"field": "official_usd_bbl", "value": 24.71577, "format": "usd_bbl", "missing": "the ministry has not published this month"},
               {"field": "partial_usd_bbl", "value": -11.512848, "format": "usd_bbl"},
-              {"field": "partial_error_usd_bbl", "value": -36.228618, "format": "usd_bbl", "signed": true},
+              {"field": "partial_error_usd_bbl", "value": -36.228618, "format": "usd_bbl", "signed": true, "missing": "no published margin to compare"},
               {"text": "final"}
             ],
             [
               {"text": "April 2026"},
-              {"field": "official_usd_bbl", "value": 18.683535, "format": "usd_bbl"},
+              {"field": "official_usd_bbl", "value": 18.683535, "format": "usd_bbl", "missing": "the ministry has not published this month"},
               {"field": "partial_usd_bbl", "value": -20.660397, "format": "usd_bbl"},
-              {"field": "partial_error_usd_bbl", "value": -39.343933, "format": "usd_bbl", "signed": true},
+              {"field": "partial_error_usd_bbl", "value": -39.343933, "format": "usd_bbl", "signed": true, "missing": "no published margin to compare"},
               {"text": "provisional"}
             ],
             [
               {"text": "August 2026"},
-              {"field": "official_usd_bbl", "value": 38.050505, "format": "usd_bbl"},
+              {"field": "official_usd_bbl", "value": 38.050505, "format": "usd_bbl", "missing": "the ministry has not published this month"},
               {"field": "partial_usd_bbl", "value": 0.418146, "format": "usd_bbl"},
-              {"field": "partial_error_usd_bbl", "value": -37.632359, "format": "usd_bbl", "signed": true},
+              {"field": "partial_error_usd_bbl", "value": -37.632359, "format": "usd_bbl", "signed": true, "missing": "no published margin to compare"},
               {"text": "final"}
             ],
             [
               {"text": "September 2026"},
-              {"field": "official_usd_bbl", "value": null, "format": "usd_bbl"},
+              {"field": "official_usd_bbl", "value": null, "format": "usd_bbl", "missing": "the ministry has not published this month"},
               {"field": "partial_usd_bbl", "value": -5.569669, "format": "usd_bbl"},
-              {"field": "partial_error_usd_bbl", "value": null, "format": "usd_bbl", "signed": true},
+              {"field": "partial_error_usd_bbl", "value": null, "format": "usd_bbl", "signed": true, "missing": "no published margin to compare"},
               {"text": "provisional"}
             ]
           ]

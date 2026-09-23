@@ -182,6 +182,15 @@ SLATE_LINE_NAMES: Mapping[str, str] = {
     "soufre": "sulphur",
 }
 
+#: SPEC.md section 4.3 layer 4. What each JODI denominator is called on the
+#: page. The identifiers are config.YIELD_BASES; these are the words, and they
+#: are what the History panel's lines and the table's columns are labelled with,
+#: so no reader meets "crude_intake".
+YIELD_BASIS_LABELS: Mapping[str, str] = {
+    config.YIELD_BASIS_CRUDE_INTAKE: "over crude intake",
+    config.YIELD_BASIS_TOTAL_FEED: "over total refinery feed",
+}
+
 
 # ---------------------------------------------------------------------------
 # Leaves
@@ -276,6 +285,18 @@ def D(field: str, iso: str, kind: str = "month") -> Mapping[str, Any]:
 def W(field: str, word: str) -> Mapping[str, Any]:
     """A word that is data: a status, a verdict, a product name."""
     return {"field": field, "value": word, "label": word}
+
+
+def _plural(count: Any, one: str, many: str) -> str:
+    """The noun after a count, in the number the count actually is.
+
+    GATE 5 FINDING 4. The weekly caption read "the 1 weeks from 18 September
+    2026" for a fortnight, on a site whose whole argument is care about words,
+    because the sentence was written when the count was nineteen and the count
+    is data. Every count in this file that a collection can move to one goes
+    through here.
+    """
+    return one if count == 1 else many
 
 
 def _header(artifact: str, data_date: str, describes: str) -> dict[str, Any]:
@@ -910,8 +931,13 @@ def section_summaries(inputs: Inputs, values: Mapping[str, Any], run: Mapping[st
             T("gasoil " + words[positions["gasoil"]] + " and gasoline " + words[positions["gasoline"]] + " the same week in each of the "),
         ]
     crack_segments += [
+        # GATE 5 FINDING 10. n_years is the number of PRIOR years the same week
+        # exists in, which is what the seasonal rail says and what the comparison
+        # is against; the weekly series itself covers one calendar year more than
+        # that. "the 4 years the weekly series covers" said the wrong thing about
+        # the right number.
         N("n_years", latest["n_years"], "count"),
-        T(" years the weekly series covers."),
+        T(_plural(latest["n_years"], " earlier year the weekly series reaches.", " earlier years the weekly series reaches.")),
     ]
 
     margin_segments = [
@@ -2344,6 +2370,131 @@ def history(inputs: Inputs) -> Mapping[str, Any]:
         "no_break_source_url": by_id["dgec_mbr_method_in_force_2016_01_01"]["source_url"],
     }
 
+    # SPEC.md section 4.3 layer 4, observed yields, drawn rather than defined.
+    #
+    # THE GATE 5 FINDING. The computation existed in crack.engine and
+    # crack.series, the Method view stated its definition, and no artifact
+    # carried a number of it and no view drew one: a layer the specification
+    # says is "visible on the site" and was not. It is the History panel this
+    # block feeds.
+    #
+    # WHAT IS COMPARED. One set of cracks, weighted twice. The ministry's fixed
+    # slate is the volume yield its method assumes, the same in every month; the
+    # observed yields are what the five countries' refineries made per barrel
+    # they ran, twelve month rolling. Same month, same quotations, same engine
+    # call, so the gap between the lines is the weighting and nothing else.
+    #
+    # THE DENOMINATOR IS SHOWN, NOT CHOSEN. Both JODI bases are exported and
+    # both are drawn, each with the sum of its five product lines and with
+    # JODI's own total output over the same denominator beside it, which is
+    # where the inflation recon 03 section 1.8 measured becomes a figure on the
+    # page rather than an assertion in a docstring.
+    yields = series.observed_yield_margins()
+    y_first, y_last = _iso(yields["date"].min()), _iso(yields["date"].max())
+    fixed_yields = series.DGEC_VOLUME_YIELDS
+    priced = list(series.OBSERVED_YIELD_PRODUCTS)
+    fixed_months = yields[yields["official_usd_bbl"].notna()]
+    basis_blocks = []
+    for basis in (config.YIELD_BASIS_CRUDE_INTAKE, config.YIELD_BASIS_TOTAL_FEED):
+        have = yields[yields["%s_usd_bbl" % basis].notna()]
+        gaps = have["%s_usd_bbl" % basis] - have["fixed_usd_bbl"]
+        with_official = have[have["official_usd_bbl"].notna()]
+        lines = have["%s_lines_total" % basis].dropna()
+        block = {
+            "id": basis,
+            "label": YIELD_BASIS_LABELS[basis],
+            "first": _iso(have["date"].min()),
+            "last": _iso(have["date"].max()),
+            "months": int(len(have)),
+            "gasoil_low_percent": _num(100 * have["%s_gasoil" % basis].min()),
+            "gasoil_high_percent": _num(100 * have["%s_gasoil" % basis].max()),
+            "gasoline_low_percent": _num(100 * have["%s_gasoline" % basis].min()),
+            "gasoline_high_percent": _num(100 * have["%s_gasoline" % basis].max()),
+            "gasoil_latest_percent": _num(100 * have["%s_gasoil" % basis].iloc[-1]),
+            "gasoline_latest_percent": _num(100 * have["%s_gasoline" % basis].iloc[-1]),
+            "lines_total_low_percent": _num(100 * lines.min()),
+            "lines_total_high_percent": _num(100 * lines.max()),
+            "totprods_low": _num(have["%s_totprods_ratio" % basis].min()),
+            "totprods_high": _num(have["%s_totprods_ratio" % basis].max()),
+            "mean_gap_usd_bbl": _num(gaps.mean()),
+            "max_gap_usd_bbl": _num(gaps.abs().max()),
+            "max_gap_month": _iso(have["date"].iloc[int(gaps.abs().to_numpy().argmax())]),
+            "correlation": _num(float(np.corrcoef(have["fixed_usd_bbl"], have["%s_usd_bbl" % basis])[0, 1])),
+            "official_months": int(len(with_official)),
+            "mean_residual_usd_bbl": _num(with_official["%s_residual_usd_bbl" % basis].mean()),
+        }
+        # One sentence per basis, carrying every figure this basis exports, so
+        # nothing here is a number the page holds and does not show.
+        block["segments"] = [
+            T("Observed yields "), T(block["label"]), T(", "), N("months", block["months"], "count"),
+            T(" months from "), D("first", block["first"]), T(" to "), D("last", block["last"]),
+            T(". Gasoil ran "), N("gasoil_low_percent", block["gasoil_low_percent"], "percent"),
+            T(" to "), N("gasoil_high_percent", block["gasoil_high_percent"], "percent"),
+            T(" percent of that barrel and gasoline "), N("gasoline_low_percent", block["gasoline_low_percent"], "percent"),
+            T(" to "), N("gasoline_high_percent", block["gasoline_high_percent"], "percent"),
+            T(" percent, against the slate's fixed pair; in the twelve months to "),
+            D("latest_month", block["last"]), T(" they were "), N("gasoil_latest_percent", block["gasoil_latest_percent"], "percent"),
+            T(" and "), N("gasoline_latest_percent", block["gasoline_latest_percent"], "percent"),
+            T(" percent. The five JODI product lines sum to "), N("lines_total_low_percent", block["lines_total_low_percent"], "percent"),
+            T(" to "), N("lines_total_high_percent", block["lines_total_high_percent"], "percent"),
+            T(" percent on this denominator and JODI's own total output over it runs "),
+            N("totprods_low", block["totprods_low"], "ratio"), T(" to "), N("totprods_high", block["totprods_high"], "ratio"),
+            T(" times. Weighting the two cracks this way is worth "),
+            N("mean_gap_usd_bbl", block["mean_gap_usd_bbl"], "usd_bbl", signed=True),
+            T(" $/bbl against the ministry's slate on average and "), N("max_gap_usd_bbl", block["max_gap_usd_bbl"], "usd_bbl"),
+            T(" at its widest, in "), D("max_gap_month", block["max_gap_month"]),
+            T(", while the two lines keep the same shape: correlation "), N("correlation", block["correlation"], "r2"),
+            T(". Over the "), N("official_months", block["official_months"], "count"),
+            T(" months the published margin also exists, it sits "),
+            N("mean_residual_usd_bbl", abs(float(block["mean_residual_usd_bbl"])), "usd_bbl"),
+            T(" $/bbl below these two contributions on average."),
+        ]
+        basis_blocks.append(block)
+    crude, feed = basis_blocks[0], basis_blocks[1]
+    payload["yields"] = {
+        "heading_segments": [
+            T("The same two cracks weighted twice: at the ministry's fixed slate, and at the yields NWE refineries actually made, "),
+            D("first", y_first), T(" to "), D("last", y_last), T("."),
+        ],
+        "first": y_first,
+        "last": y_last,
+        "priced_products": priced,
+        "fixed": {
+            "fixed_gasoil_percent": _num(100 * fixed_yields["gasoil"]),
+            "fixed_gasoline_percent": _num(100 * fixed_yields["gasoline"]),
+            "fixed_months": int(len(fixed_months)),
+            "fixed_residual_usd_bbl": _num(fixed_months["fixed_residual_usd_bbl"].mean()),
+        },
+        "bases": basis_blocks,
+        "columns": ["date", "published_margin_usd_bbl", "fixed_usd_bbl"]
+            + ["%s_usd_bbl" % b["id"] for b in basis_blocks]
+            + ["%s_%s_percent" % (b["id"], product) for b in basis_blocks for product in priced],
+        "rows": [
+            [_iso(r["date"]), _num(r["official_usd_bbl"]), _num(r["fixed_usd_bbl"])]
+            + [_num(r["%s_usd_bbl" % b["id"]]) for b in basis_blocks]
+            + [_num(100 * r["%s_%s" % (b["id"], product)]) for b in basis_blocks for product in priced]
+            for _, r in yields.iterrows()
+        ],
+        "what_segments": [
+            T("The ministry's method fixes the barrel: gasoil "), N("fixed_gasoil_percent", 100 * fixed_yields["gasoil"], "percent"),
+            T(" percent of it and gasoline "), N("fixed_gasoline_percent", 100 * fixed_yields["gasoline"], "percent"),
+            T(" percent, the same in every month the method has been in force. JODI reports what the refineries of Belgium, Germany, France, the Netherlands and the United Kingdom made instead, rolling over "),
+            N("rolling_months", config.ROLLING_YIELD_WINDOW_MONTHS, "count"),
+            T(" months. This panel weighs one set of cracks both ways: same month, same quotations, same arithmetic, and only the yields differ. It is not the ministry's margin under either weighting, and neither line is published as one."),
+        ],
+        "choice_segments": [
+            T("Which barrel a yield is a share of is a real choice, and both answers are drawn rather than one being taken quietly. Output over crude intake counts output made from all feed against crude alone, so its lines do not sum to a whole barrel and JODI's own total output over it runs above one. Output over total refinery feed is volume gain and is physically right, and it costs the years before "),
+            D("feed_first", feed["first"]), T(", where the crude intake basis reaches back to "), D("crude_first", crude["first"]),
+            T(". The study picks neither: both are lines on this chart and columns of its table, with the figures for each below."),
+        ],
+        "residual_segments": [
+            T("What neither weighting reaches is everything neither prices: the slate this study cannot quote, the ministry's own cost lines and its gas. Over the "),
+            N("fixed_months", len(fixed_months), "count"), T(" months the published margin exists it sits "),
+            N("fixed_residual_usd_bbl", abs(float(fixed_months["fixed_residual_usd_bbl"].mean())), "usd_bbl"),
+            T(" $/bbl below the fixed slate's two contributions, and further below them at observed yields, because the observed yields are the larger pair. The residual is shown, as it is on the waterfall, and is never spread across the products."),
+        ],
+    }
+
     # The weekly panel.
     join = analysis.seasonal_join()
     error = dgec_note.RECONSTRUCTION_ERROR
@@ -2366,10 +2517,10 @@ def history(inputs: Inputs) -> Mapping[str, Any]:
             T(" weeks the ministry printed. Refitted on three products and tested on the fourth, a note's reading misses its printed figures by "),
             N("error_low_usd_t", error["out_of_sample_mae_usd_t"][0], "usd_t_error"), T(" to "), N("error_high_usd_t", error["out_of_sample_mae_usd_t"][1], "usd_t_error"),
             T(" $/t on average, but that test sits where the notes print figures and does not bound the oldest weeks: the "),
-            N("oldest_weeks", len(oldest), "count"), T(" weeks from "), D("oldest_first", _iso(oldest["date"].min()), kind="day"),
+            N("oldest_weeks", len(oldest), "count"), T(_plural(len(oldest), " week from ", " weeks from ")), D("oldest_first", _iso(oldest["date"].min()), kind="day"),
             T(", hatched under the axis, are the least defended data in the study, and the "),
-            N("newest_weeks", len(newest), "count"), T(" weeks from "), D("newest_first", _iso(newest["date"].min()), kind="day"),
-            T(" have no second chart yet."),
+            N("newest_weeks", len(newest), "count"), T(_plural(len(newest), " week from ", " weeks from ")), D("newest_first", _iso(newest["date"].min()), kind="day"),
+            T(_plural(len(newest), " has no second chart yet.", " have no second chart yet.")),
         ],
         "join": {
             "overlap_months": int(join["overlap_months"]),
@@ -3882,8 +4033,21 @@ def _cell_text(text: str) -> Mapping[str, Any]:
     return {"text": text}
 
 
-def _cell_value(field: str, value: Any, fmt: str, signed: bool = False) -> Mapping[str, Any]:
-    return dict(N(field, value, fmt, signed=signed))
+def _cell_value(
+    field: str, value: Any, fmt: str, signed: bool = False, missing: str | None = None
+) -> Mapping[str, Any]:
+    """One numeric cell of a document table.
+
+    `missing` is what the cell says when the value is None, in the words of
+    whoever knows why it is absent, which is here. Without it the view prints
+    "no figure" and nothing else: Gate 5 finding 2 found the column identifier
+    being printed instead, so src/format.js now refuses to print one and the
+    words have to come from the artifact.
+    """
+    cell = dict(N(field, value, fmt, signed=signed))
+    if missing is not None:
+        cell["missing"] = missing
+    return cell
 
 
 def _cell_link(text: str, url: str) -> Mapping[str, Any]:
@@ -4000,7 +4164,7 @@ def method(inputs: Inputs) -> Mapping[str, Any]:
     f.append(_P(T("The official margin is the ministry's monthly gross refining margin on Brent, published from "), D("margin_first", _iso(inputs.margin["date"].min())), T(". The replication recomputes it from the ministry's own quotations with its method, and cannot close, as the departures below say. The decomposition splits a month's margin by product:")))
     f.append({"type": "formula", "segments": [T("contribution of a product = its volume yield x its crack")]})
     f.append({"type": "formula", "segments": [T("residual = official margin minus the sum of the contributions")]})
-    f.append(_P(T("The residual carries every product the study cannot price and the ministry's own cost lines, and is always shown. The observed yields are JODI refinery output by product over refinery intake for Belgium, Germany, France, the Netherlands and the United Kingdom, rolling over "), N("rolling_yield_months", config.ROLLING_YIELD_WINDOW_MONTHS, "count"), T(" months.")))
+    f.append(_P(T("The residual carries every product the study cannot price and the ministry's own cost lines, and is always shown. The observed yields are JODI refinery output by product over refinery intake for Belgium, Germany, France, the Netherlands and the United Kingdom, rolling over "), N("rolling_yield_months", config.ROLLING_YIELD_WINDOW_MONTHS, "count"), T(" months. They are drawn against the fixed slate on the History view, as a third panel over time, with both JODI denominators on it and the figures for each: the fourth layer is a chart on this site and not only a definition on this page.")))
     f.append({"type": "h", "text": "Run economics"})
     f.append({"type": "formula", "segments": [T("gas in $/MMBtu = TTF in EUR/MWh x EUR/USD / "), N("mmbtu_per_mwh", config.MMBTU_PER_MWH, "mmbtu_per_mwh")]})
     f.append({"type": "formula", "segments": [T("gas cost = gas intensity in MMBtu/bbl x gas in $/MMBtu")]})
@@ -4034,7 +4198,7 @@ def method(inputs: Inputs) -> Mapping[str, Any]:
     d.append(_table(
         "The method run on the published lines only, against the ministry's margin, $/bbl.",
         [("Month", "month", False), ("Ministry's margin", "ministry's margin", True), ("Published lines only", "published lines only", True), ("Published lines less the margin", "published lines less the margin", True), ("Prices", "prices", False)],
-        [[_cell_text(month_label(_iso(r["date"]))), _cell_value("official_usd_bbl", r["official_usd_bbl"], "usd_bbl"), _cell_value("partial_usd_bbl", r["partial_usd_bbl"], "usd_bbl"), _cell_value("partial_error_usd_bbl", r["partial_error_usd_bbl"], "usd_bbl", signed=True), _cell_text("provisional" if bool(r["provisional"]) else "final")] for _, r in attempts.iterrows()],
+        [[_cell_text(month_label(_iso(r["date"]))), _cell_value("official_usd_bbl", r["official_usd_bbl"], "usd_bbl", missing="the ministry has not published this month"), _cell_value("partial_usd_bbl", r["partial_usd_bbl"], "usd_bbl"), _cell_value("partial_error_usd_bbl", r["partial_error_usd_bbl"], "usd_bbl", signed=True, missing="no published margin to compare"), _cell_text("provisional" if bool(r["provisional"]) else "final")] for _, r in attempts.iterrows()],
     ))
     d.append({"type": "h", "text": "The third horse of the race is a substitution"})
     d.append(_P(T("The specification races the raw gasoil crack, the official margin and the margin after gas. Once the official margin is known to be net of gas, the second and third are the same series, so the third horse is replaced and labelled wherever it appears:")))
@@ -4184,7 +4348,7 @@ def method(inputs: Inputs) -> Mapping[str, Any]:
     r.append(_P(T("Each note plots about "), N("chart_weeks", dgec_note.CHART_WEEKS, "count"), T(" weeks, so most weeks are drawn by several notes, and the value here is the median across the chart geometries that cover the week. One more note therefore does not only add a week at the right hand end: it restitches the series behind it. Collecting the note of "), D("restitch_note", _iso(inputs.weekly["date"].max()), kind="day"), T(" moved "), N("weeks_moved", restitch["weeks_moved"], "count"), T(" of the "), N("weeks_before", restitch["weeks_before"], "count"), T(" weeks already in the series, by at most "), N("worst_price_move_usd_t", restitch["worst_price_move_usd_t"], "usd_t_error"), T(" $/t on a price column, "), N("worst_spread_move_usd_t", restitch["worst_spread_move_usd_t"], "usd_t_error"), T(" $/t on a spread column and "), N("worst_crack_move_usd_bbl", restitch["worst_crack_move_usd_bbl"], "usd_bbl"), T(" $/bbl on a crack.")))
     r.append(_P(T("Those moves sit inside the reading's own measured error, and the same collection took the weeks read from two or more independent chart geometries from "), N("cross_checked_before", restitch["cross_checked_before"], "count"), T(" to "), N("cross_checked_after", restitch["cross_checked_after"], "count"), T(". So this is the method working, more evidence giving a better estimate, and not a correction of a mistake. It is also a reproducibility fact worth stating plainly: a weekly figure quoted from this site today can differ slightly from the same figure next month, and anyone checking the study against an earlier reading of it should expect that on every week rather than on the newest one.")))
     r.append(_P(T("The comparison above is between two vintages of the committed file, so it cannot be recomputed from the file as it stands; it is recorded in the collector with the collection it was measured on.")))
-    r.append(_P(T("That first error is leave one series out, not out of sample in time. Every calibration anchor sits in the last two weeks of a note's chart, so it measures the reading where the anchors are and does not bound the oldest weeks. A smooth bend in a chart anchored at its right hand end passes every check: bending one note's chart by "), N("tilt_points", int(tilt.group(1)) if tilt else None, "count"), T(" points moved its oldest week by "), N("tilt_usd_t", float(tilt.group(2)) if tilt else None, "usd_t_error"), T(" $/t. What defends a week against that is a second note plotting it at a different place on its chart. The "), N("oldest_weeks", len(oldest), "count"), T(" weeks from "), D("oldest_first", _iso(oldest["date"].min()), kind="day"), T(" have no second chart and sit where such a bend does most harm: they are the least defended data in the study, and every chart that draws them hatches them.")))
+    r.append(_P(T("That first error is leave one series out, not out of sample in time. Every calibration anchor sits in the last two weeks of a note's chart, so it measures the reading where the anchors are and does not bound the oldest weeks. A smooth bend in a chart anchored at its right hand end passes every check: bending one note's chart by "), N("tilt_points", int(tilt.group(1)) if tilt else None, "count"), T(" points moved its oldest week by "), N("tilt_usd_t", float(tilt.group(2)) if tilt else None, "usd_t_error"), T(" $/t. What defends a week against that is a second note plotting it at a different place on its chart. The "), N("oldest_weeks", len(oldest), "count"), T(_plural(len(oldest), " week from ", " weeks from ")), D("oldest_first", _iso(oldest["date"].min()), kind="day"), T(_plural(len(oldest), " has no second chart and sits", " have no second chart and sit") + " where such a bend does most harm: they are the least defended data in the study, and every chart that draws them hatches them.")))
 
     # 7. Breaks.
     b = blocks["breaks"]

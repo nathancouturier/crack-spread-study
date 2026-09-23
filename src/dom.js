@@ -43,7 +43,8 @@ export function clear(node) {
  *  page back to a field. A date or a word with a label becomes a span with its
  *  ISO value in data-value; a field ending in status_word is set in
  *  span.status-word, weight 500, Part 3 section 1. A missing number is not
- *  printed as a number: it becomes the words "no figure for {field}". */
+ *  printed as a number: it becomes the segment's own `missing` words, or "no
+ *  figure" when the export wrote none. Never the field: Gate 5 finding 2. */
 export function appendSegments(parent, segments, decimals) {
   for (const segment of segments) {
     const piece = segmentText(segment, decimals);
@@ -52,7 +53,7 @@ export function appendSegments(parent, segments, decimals) {
     } else if (piece.kind === "number") {
       parent.appendChild(el("span", {
         class: piece.missing ? "fig is-missing" : "fig",
-        text: piece.missing ? missingFigureText(piece.field) : piece.text,
+        text: piece.missing ? missingFigureText(segment.missing) : piece.text,
         attrs: { "data-field": piece.field },
       }));
     } else {
@@ -228,10 +229,21 @@ function columnsSentence(names, where) {
   return " The " + list + (names.length === 1 ? " column is " : " columns are ") + where + ".";
 }
 
-/** A table cell holding a figure, or the words for a missing one. */
-export function figureCell(text, field, className) {
+/** A table cell holding a figure, or the words for a missing one.
+ *
+ *    text       the formatted figure, or null when there is none
+ *    field      the artifact column the figure came from. It labels the cell
+ *               for a test walking figures back to their fields, and it is
+ *               NEVER printed: Gate 5 finding 2, format.js.
+ *    options    { missing, className }. `missing` is what an empty cell says,
+ *               in words, from the artifact or the table's own copy. A table
+ *               that does not supply it gets "no figure", and the reason
+ *               belongs in the caption either way.
+ */
+export function figureCell(text, field, options) {
+  const { missing, className } = typeof options === "string" ? { className: options } : (options || {});
   if (text === null) {
-    return el("td", { class: "num is-missing", text: missingFigureText(field) });
+    return el("td", { class: "num is-missing", text: missingFigureText(missing), attrs: { "data-missing": field } });
   }
   return el("td", { class: className ? "num " + className : "num", text, attrs: { "data-field": field } });
 }

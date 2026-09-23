@@ -6,6 +6,19 @@ it. SPEC.md section 2 rule 8: an honest gap beats a plausible fabrication.
 
 Started at Gate 1 with the market data layer. Later gates append.
 
+**What "recon NN" means in this document.** The five source reconnaissance notes
+written before Gate 1, `01-conventions`, `02-dgec`, `03-physical`, `04-market` and
+`05-crack-sources`, are the working record of what was fetched, from where, with
+what status and on what terms. THEY ARE NOT IN THE REPOSITORY: they live in
+`data/private/recon/`, which `.gitignore` excludes, because they quote source
+material and log an individual machine's requests. A citation to one is a
+citation to that record, not to a public document, and nothing in this study
+rests on a recon note alone: every figure a recon note is cited for is either
+recomputed here from a committed cache, asserted in `tests/`, or carried in
+`data/manifest.json` with its own source. Where the note and the data disagree,
+the data wins and this document says so, as it does of recon 05 section 12 in
+section 1.6.
+
 ---
 
 ## 1. Does FRED's no mirroring clause bite on a committed cache?
@@ -958,11 +971,19 @@ a different horizontal position in each note that draws it, and 194 of 219 weeks
 have two or more independent geometries with a mean spread under 0.65 $/t. **The
 25 that do not have no defence against it.**
 
+*(Those two counts are the series as it stood when this question was written. The
+note collected on 18 September 2026 reached back over the whole run: the figures
+today are 214 of 221 cross checked and 7 uncorroborated, six of them the oldest.
+`docs/methodology.md` sections 1.6 and 1.12. The count is read from
+`data/cache/dgec_note_reconstructed_weekly.csv` everywhere it is published, and
+`tests/test_sources_dgec_note.py` fails if a published copy of it goes stale.)*
+
 **Labelled rather than closed, in four places:** `docs/methodology.md` sections 1.5
 and 1.6 in those words; the `reconstruction` block of the manifest entry, under
 `error_bar_axis`, `gates_are_blind_to` and `least_defended_weeks`; the series note
 the provenance panel prints; and the new `evidence_class` column, which separates
-the six weeks that are weak twice over from the nineteen that are weak once.
+the six weeks that are weak twice over from those that are weak once, nineteen of
+them then and one of them now.
 
 ---
 

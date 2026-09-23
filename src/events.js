@@ -38,6 +38,31 @@ const monthWords = (iso) => MONTH_FORMAT.format(new Date(charts.timeOf(iso)));
 const dayWords = (iso) => DAY_FORMAT.format(new Date(charts.timeOf(iso)));
 const monthCell = (iso) => iso.slice(0, iso.lastIndexOf("-"));
 
+/* Which series each figure column of the month table comes from, by the id the
+ * artifact's own series list uses. A window is always the full thirteen months
+ * (E2), so a month outside a series' span has no figure, and the cell has to
+ * say which side of that span it fell on rather than print the column id:
+ * Gate 5 finding 2. The sentence under the plot, from the artifact's `missing`
+ * list, names the series and the reason in full. */
+const CELL_SERIES = Object.freeze({
+  gasoil_usd_bbl: "monthly_cracks",
+  gasoline_usd_bbl: "monthly_cracks",
+  mbr_usd_bbl: "margin",
+  margin_us_gas_usd_bbl: "margin",
+  utilisation_percent: "utilisation",
+});
+
+/* The words for one empty cell of the month table, from the series' own first
+ * and last month. "" when the gap is inside the span, where the honest answer
+ * is that the series simply has no value and the cell says only that. */
+function outsideWords(column, month) {
+  const series = held.events.series.find((s) => s.id === CELL_SERIES[column]);
+  if (!series) return "";
+  if (month > series.last) return "after this series ends";
+  if (month < series.first) return "before this series starts";
+  return "";
+}
+
 /* How a week was read, the words History and the Now view use. */
 const EVIDENCE_WORDS = Object.freeze({
   cross_checked: "checked against a second chart",
@@ -369,18 +394,20 @@ function monthTable(event, decimals) {
   const tbody = el("tbody");
   for (const row of event.rows) {
     const provisional = row[c("utilisation_provisional")];
-    tbody.appendChild(el("tr", { attrs: { "data-month": row[c("date")] } }, [
-      el("th", { class: "num", text: monthCell(row[c("date")]), attrs: { scope: "row" } }),
+    const month = row[c("date")];
+    const gap = (column) => ({ missing: outsideWords(column, month) });
+    tbody.appendChild(el("tr", { attrs: { "data-month": month } }, [
+      el("th", { class: "num", text: monthCell(month), attrs: { scope: "row" } }),
       figureCell(formatCell(row[c("offset_months")], "count", decimals, true) || formatCell(row[c("offset_months")], "count", decimals), "offset_months"),
-      figureCell(formatCell(row[c("gasoil_usd_bbl")], "usd_bbl", decimals), "gasoil_usd_bbl"),
-      figureCell(formatCell(row[c("gasoline_usd_bbl")], "usd_bbl", decimals), "gasoline_usd_bbl"),
-      figureCell(formatCell(row[c("mbr_usd_bbl")], "usd_bbl", decimals), "mbr_usd_bbl"),
-      figureCell(formatCell(row[c("margin_us_gas_usd_bbl")], "usd_bbl", decimals), "margin_us_gas_usd_bbl"),
-      figureCell(formatCell(row[c("utilisation_percent")], "percent", decimals), "utilisation_percent"),
+      figureCell(formatCell(row[c("gasoil_usd_bbl")], "usd_bbl", decimals), "gasoil_usd_bbl", gap("gasoil_usd_bbl")),
+      figureCell(formatCell(row[c("gasoline_usd_bbl")], "usd_bbl", decimals), "gasoline_usd_bbl", gap("gasoline_usd_bbl")),
+      figureCell(formatCell(row[c("mbr_usd_bbl")], "usd_bbl", decimals), "mbr_usd_bbl", gap("mbr_usd_bbl")),
+      figureCell(formatCell(row[c("margin_us_gas_usd_bbl")], "usd_bbl", decimals), "margin_us_gas_usd_bbl", gap("margin_us_gas_usd_bbl")),
+      figureCell(formatCell(row[c("utilisation_percent")], "percent", decimals), "utilisation_percent", gap("utilisation_percent")),
       el("td", { text: provisional === null ? "none published" : provisional ? "provisional" : "final" }),
     ]));
   }
-  return scrollTable(["The thirteen months around " + event.label + ", " + event.short + ". A missing month says so in its cell and is never a zero."], el("table", { class: "table events-table" }, [el("thead", {}, [head]), tbody]));
+  return scrollTable(["The thirteen months around " + event.label + ", " + event.short + ". A month a series does not reach says so in its own cell, in words, and is never a zero; the sentence under each plot names the series and why it stops where it does."], el("table", { class: "table events-table" }, [el("thead", {}, [head]), tbody]));
 }
 
 function weekTable(event, decimals) {

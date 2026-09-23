@@ -266,7 +266,10 @@ function seriesBlock(decimals) {
       tbody.appendChild(el("tr", {}, [
         el("th", { class: "num", text: monthCell(row[c("date")]), attrs: { scope: "row" } }),
         figureCell(formatCell(row[c("utilisation_percent")], "percent", decimals), "utilisation_percent"),
-        figureCell(formatCell(row[c("margin_lagged_usd_bbl")], "usd_bbl", decimals), "margin_lagged_usd_bbl"),
+        // The only gap this table can have: the first months of the sample have
+        // no margin three months behind them to lag. The caption says it once in
+        // full; the cell says it in its own words rather than in a column id.
+        figureCell(formatCell(row[c("margin_lagged_usd_bbl")], "usd_bbl", decimals), "margin_lagged_usd_bbl", { missing: "no margin that far back" }),
         figureCell(formatCell(row[c("intake_kb_d")], "kb_d", decimals), "intake_kb_d"),
         figureCell(formatCell(row[c("imports_kb_d")], "kb_d", decimals), "imports_kb_d"),
         figureCell(formatCell(row[c("capacity_kb_d")], "kb_d", decimals), "capacity_kb_d"),
