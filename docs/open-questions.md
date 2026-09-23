@@ -10,14 +10,17 @@ Started at Gate 1 with the market data layer. Later gates append.
 written before Gate 1, `01-conventions`, `02-dgec`, `03-physical`, `04-market` and
 `05-crack-sources`, are the working record of what was fetched, from where, with
 what status and on what terms. THEY ARE NOT IN THE REPOSITORY: they live in
-`data/private/recon/`, which `.gitignore` excludes, because they quote source
-material and log an individual machine's requests. A citation to one is a
+`data/private/recon/`, which `.gitignore` excludes, because recon 03
+reproduces the Energy Institute capacity table that may not be redistributed,
+and because they log an individual machine's requests. A citation to one is a
 citation to that record, not to a public document, and nothing in this study
 rests on a recon note alone: every figure a recon note is cited for is either
 recomputed here from a committed cache, asserted in `tests/`, or carried in
 `data/manifest.json` with its own source. Where the note and the data disagree,
 the data wins and this document says so, as it does of recon 05 section 12 in
-section 1.6.
+section 1.6. **`docs/sources.md` section 6 lists all five reports, what each
+covers and the public primary source to fetch instead**, and a test fails if a
+report is cited and not listed there.
 
 ---
 
@@ -985,6 +988,18 @@ the provenance panel prints; and the new `evidence_class` column, which separate
 the six weeks that are weak twice over from those that are weak once, nineteen of
 them then and one of them now.
 
+**Unchanged in kind at Gate 5, and not re-attacked.** More notes have been
+collected since this was written, so the uncorroborated set has fallen from 25
+weeks to 7, and every one of them is drawn hatched and named. That is a smaller
+target, not a defended one: the six oldest weeks still have neither an
+independent geometry nor an anchor near them, the 10 point bend still moves the
+oldest week by 73.49 $/t, and nobody has tried a different attack on it since
+Gate 1. The honest statement is that this is the reconstruction's one real
+vulnerability, that it is labelled everywhere it is drawn, and that the only
+thing that would close it is a second note plotting those six weeks at a
+different place on its chart, which would have to be found rather than
+computed.
+
 ---
 
 ## 30. Pixel quantisation in the reconstruction cannot be told apart from a flat week
@@ -1688,3 +1703,144 @@ view carries the issue evidence and the bulletin comparison.
 **To close it:** ask OPEC or Argus which row the published series is, or find one
 month of an independent Rotterdam premium gasoline quotation in $/bbl from a
 third source inside the window. Until then it stays open and the site shows both.
+
+---
+
+## 47. The one figure recon 03 prints that its own columns do not give
+
+**Status: settled as arithmetic, recorded because that figure is an anchor this
+study is measured against.**
+
+`src/crack/analysis.py` carries eleven annual NWE utilisation figures transcribed
+from recon 03 section 2.3, and `utilisation_sanity_check` measures this study's
+own annual utilisation against them. The Gate 5 audit is right that a
+transcription from a document nobody else can open deserves more than a comment,
+and checking it turned one thing up.
+
+**The report's table prints 0.869 for 2015. Its own columns for that year do not
+give 0.869.** The same row carries 5,936.5 kb/d of crude intake and 6,835.6 kb/d
+of capacity, and 5,936.5 / 6,835.6 = 0.86844, which rounds to 0.868. This study
+computes 0.868469 on its own committed caches. So the transcription in
+`analysis.py` is 0.868: the report's arithmetic, not the report's third decimal.
+The other ten years agree with both.
+
+**What follows.** The anchor is the division, not the printed digit, and one cell
+of a working note has a rounding slip in it. Nothing downstream moves: 0.868 is
+what was always transcribed and what the study always reproduced, and the
+difference the check reports for 2015, 0.000469, is the largest of the eleven
+precisely because the printed digit was rounded the other way.
+
+**What holds it now.** `tests/test_analysis.py`
+`TestUtilisation::test_it_reproduces_what_the_physical_recon_measured` fails the
+gate if this study stops reproducing one of the eleven to three decimals, and
+`::test_the_transcribed_figures_are_the_ones_that_were_transcribed` fails if one
+of the transcribed digits is edited. Before Gate 5 only the first existed, so the
+study was checked against the transcription and the transcription against
+nothing.
+
+**To close it:** open the two primary sources for 2015, JODI's monthly crude
+intake for the five countries and the Energy Institute capacity sheet, and
+recompute. Nobody on this project has opened either, which is question 50.
+
+---
+
+## 48. Everything rendered has been measured in one browser engine, and never by a screen reader
+
+**Status: open, and it cannot be closed by anything in this repository.**
+
+Every layout, focus and contrast measurement in this project, at Gate 4 and at
+Gate 5, was made in headless Edge 153, which is Chromium. `tools/check-layout.mjs`
+runs there, `tools/browser.mjs` launches it, and the twenty checks at five widths
+in both themes are all Chromium measurements. **No Firefox. No Safari. No screen
+reader.**
+
+**What was measured, so the gap is the right size.** Roles, accessible names,
+descriptions, `aria-expanded`, `inert`, focus order, visible focus and its
+contrast, reduced motion, and the rendered text of thirty view states. That is
+the structure a screen reader reads from, and it is checked; what is not checked
+is how any of it sounds. The Gate 5 audit says this of itself in its own words:
+"I did not run a screen reader ... I am inferring that rather than having heard
+it."
+
+**Where the risk is concentrated.** The 375 px fold, measured at 1029 px of
+content against an 812 px viewport, which depends on font metrics and wrapping;
+scroll-into-view inside the horizontally scrolling tables, which is where Gate 4
+found clipped focus rings; and `inert` on a closed section, which is the newest
+of the three platform features the page relies on.
+
+**Why it is not simply fixed.** Installing a second engine and a screen reader is
+not a change to this repository, and a green check written by somebody who has
+run neither would be worse than the sentence. So it is a sentence, and it is on
+the Method view where a visitor meets it, not only here.
+
+**To close it:** run `tools/check-layout.mjs` against a Firefox and a WebKit
+build, and one keyboard pass of each view with NVDA or VoiceOver, and write down
+what was heard.
+
+---
+
+## 49. `.github/workflows/refresh.yml` has never fired on its schedule
+
+**Status: open until a Friday passes.**
+
+The weekly collection job was committed on 2026-09-22, in `7eabe41`. Its cron is
+`10 7 * * 5`, 07:10 UTC on Fridays, so **its first scheduled Friday is 25
+September 2026 and it has not arrived.** `gh run list` shows no run of it at all:
+every run in this repository's history is `build.yml` on a push.
+
+**What has been exercised and what has not.** The work the job does is exercised
+on every gate: `python scripts/refresh.py --offline` reads the committed caches
+and rewrites a byte identical manifest, and the same script with the network is
+how every cache in the tree was fetched. What has never been exercised is the
+trigger, the runner's network reaching the ministry, the `contents: write` commit
+of a refreshed cache and the `issues: write` path that is supposed to open an
+issue when a validator fails.
+
+**The failure modes worth naming.** GitHub disables scheduled workflows in a
+repository with no pushes for sixty days, and this repository will go quiet.
+A scheduled run can be delayed or dropped under load, which is why the job
+collects first and publishes second. And the note the job is for is deleted from
+the ministry's site a week after it appears, so a missed Friday is a week of
+weekly prices that no later run can recover.
+
+**What the site already says.** The README's refresh procedure says a missed week
+can be collected by hand the moment somebody notices, and the workflow carries
+`workflow_dispatch` for exactly that. That is the repair, and it is the only one
+available.
+
+**To close it:** read the run of 25 September 2026. Dispatching it by hand before
+then would test everything except the thing in question.
+
+---
+
+## 50. No primary source was opened at any gate of this project
+
+**Status: open, oldest in the project, and said by every audit of itself.**
+
+Gate 1 said it: no DGEC note, no EIA table, no OPEC issue, no IEA report was
+opened by the person writing the adapters. Gate 5 said it again, in the same
+words, of itself. Between them the project has grown eleven transcribed
+utilisation figures, four transcribed EIA figures, a set of quoted licences and a
+publication date for the IEA stock release, **and every one of them is still a
+figure somebody wrote down from a document, checked against other figures written
+down from the same kind of document.**
+
+**What that does and does not mean.** It does not mean nothing is checked: the
+EIA seed was re-read from the source PDF's text layer on 2026-09-13 rather than
+copied from the recon report, the eleven utilisation figures are reproduced to
+three decimals from JODI and capacity data fetched by machine, the eight MBR
+anchors of SPEC.md section 5.5 reproduce exactly from the committed workbook, and
+the ministry's own printed weekly figures are what the reconstruction is
+calibrated against. It means that if a transcription is wrong at the root,
+everything downstream is consistently wrong and no check in this repository would
+notice.
+
+**Where it bites hardest.** The 11 March 2026 date for the IEA stock release,
+which is one sentence in one event and is carried by a quotation rather than by a
+`source_url` (question 28); the quoted reuse terms in `docs/sources.md`, which are
+the basis of every committable decision in `data/manifest.json`; and the eleven
+figures of question 47.
+
+**To close it:** open them. One afternoon with the five documents named in
+`docs/sources.md` section 6 closes more of this project's remaining doubt than
+any further code.

@@ -79,6 +79,10 @@
 //       factor citations, the printed $/t prices, R2 and the Newey-West lag on
 //       the page; no code block, no callout; the Figtree for Satoshi disclosure
 //   N   the header links exactly the views that exist, in order
+//   PM  the Provenance panel links data/manifest.json, the deployed manifest
+//       answers and parses with its series and its own generated_at, and no
+//       caption on that panel prints a second clock beside the Last fetch
+//       column (Gate 5 findings 6 and 8)
 //   P   the page body never scrolls sideways, and the console logs no error
 //       and throws no exception (messages from browser extensions excepted)
 //   V   the deploy guard, docs: src/crack/versions.py. Every module, stylesheet
@@ -255,6 +259,40 @@ const PROBE = String.raw`(async () => {
         if (s.length > 12 && seen.has(s)) add("S3", "a credit says the same thing twice: " + JSON.stringify(s));
         seen.add(s);
       }
+    }
+
+    // PM: the published manifest, and one clock on this panel.
+    //
+    // GATE 5 FINDING 6. data/manifest.json is deployed and versioned in the
+    // import map, the README calls it the first class provenance artifact, and
+    // nothing on the site ever requested it: the page reads the copy inside
+    // data/provenance.json. The choice taken is to keep publishing it and to
+    // make it reachable, so this check fetches what the panel links and reads
+    // it, and the link cannot rot without the gate saying so.
+    //
+    // GATE 5 FINDING 8. The panel printed two "last" times twenty nine minutes
+    // apart, the later one from a run that opened no socket. The clock a reader
+    // needs is when a series was last fetched, so the caption carries none.
+    {
+      const link = [...provenance.querySelectorAll("a[href]")].find((a) => /data\/manifest\.json/.test(a.getAttribute("href") || ""));
+      if (!link) add("PM", "the Provenance panel does not link the published manifest");
+      else {
+        const href = new URL(link.getAttribute("href"), location.href).href;
+        let body = null;
+        try {
+          const response = await fetch(href, { cache: "no-store" });
+          if (!response.ok) add("PM", "the published manifest answered " + response.status + " at " + href);
+          else body = await response.json();
+        } catch (error) {
+          add("PM", "the published manifest could not be fetched: " + String(error && error.message));
+        }
+        if (body && !(Array.isArray(body.series) && body.series.length)) add("PM", "the published manifest carries no series");
+        if (body && !body.generated_at) add("PM", "the published manifest carries no time of its own");
+      }
+      const captions = [...provenance.querySelectorAll(".table-caption")].filter((c) => /UTC/.test(text(c)));
+      for (const caption of captions) add("PM", "a caption on this panel prints a second clock: " + JSON.stringify(text(caption).slice(0, 80)));
+      const fetchColumn = [...provenance.querySelectorAll("th[data-short]")].some((th) => th.getAttribute("data-short") === "last fetch");
+      if (!fetchColumn) add("PM", "the manifest table has no last fetch column, so the panel's one clock is gone");
     }
   }
 
@@ -589,6 +627,9 @@ const PROBE = String.raw`(async () => {
     const words = text(view);
     if (!/Figtree/.test(words) || !/Satoshi/.test(words)) add("ME", "the font disclosure is missing");
     for (const needle of ["already net", "substitution", "leave one series out", "does not bound the oldest weeks", "Eurobob"]) if (!words.includes(needle)) add("ME", "the page does not say " + JSON.stringify(needle));
+    // GATE 5. The two limits no validator can see, kept where a visitor meets
+    // them: docs/open-questions.md sections 48 and 50.
+    for (const needle of ["has opened a primary source", "one browser engine", "never by a screen reader"]) if (!words.includes(needle)) add("ME", "the limitations no longer say " + JSON.stringify(needle));
     {
       links[links.length - 1].click();
       await frame();
@@ -696,7 +737,7 @@ for (const f of selected) {
   if (!byCheck.has(key)) byCheck.set(key, []);
   byCheck.get(key).push(f.theme + " " + f.width);
 }
-const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "S9", "M1", "M2", "M3", "M4", "H", "MV", "RV", "EV", "ME", "N", "P", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
+const checks = ["B1", "B2", "S1", "S3", "S6", "S7", "S8", "S9", "M1", "M2", "M3", "M4", "H", "MV", "RV", "EV", "ME", "N", "P", "PM", "V"].filter((c) => !ONLY.length || ONLY.includes(c));
 for (const check of checks) {
   const lines = [...byCheck.entries()].filter(([key]) => key.startsWith(check + "  "));
   if (!lines.length) {

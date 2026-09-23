@@ -1232,7 +1232,13 @@
                 "artifact": "history",
                 "path": ["weekly", "evidence_segments"]
               }
-            }
+            },
+            [
+              {"text": "No audit of this study has opened a primary source. A figure transcribed from a document is re-read against that document where the document is held, which is how the EIA refinery fuel figures above were checked, and taken as given where it is not, which covers the annual utilisation anchors, the reuse terms quoted from each publisher and the date of the stock release. If one of those transcriptions is wrong at the root, everything built on it is consistently wrong and nothing on this site would catch it."}
+            ],
+            [
+              {"text": "Everything rendered here has been measured in one browser engine, Chromium, and never by a screen reader. Roles, names, descriptions, focus order, visible focus and its contrast are checked at five widths in both themes, which is the structure a screen reader reads from; how it sounds is not checked, and neither is how the narrowest layout behaves in another engine."}
+            ]
           ]
         },
         {

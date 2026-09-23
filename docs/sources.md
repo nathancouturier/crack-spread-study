@@ -561,3 +561,61 @@ every entry, and the validator fails the build if a non committable file ever
 appears in what git would commit. The words in this document are for a reader;
 the boolean in the manifest is what the code acts on; and the validator is what
 makes sure the two agree.
+
+---
+
+## 6. The Gate 1 reconnaissance reports, and what to read instead
+
+`docs/methodology.md`, `docs/open-questions.md` and `src/crack/analysis.py` cite
+"recon 02 section 4.3", "recon 03 section 2.3", "recon 05 section 12" and about
+thirty others. The Gate 5 audit is right that a reader following one of those
+citations is handed something they cannot open: the five reports are this
+study's own reconnaissance of its sources, written on 11 and 12 September 2026
+before any code, and they live in `data/private/recon/`, which `.gitignore`
+excludes.
+
+**Why they are not committed.** Two reasons, and the first is the binding one.
+Recon 03 section 2.2 reproduces the Energy Institute refining capacity table
+country by country, and that sheet is footnoted "Source: Includes data from ICIS
+and S&P Global Energy"; section 2.7 above quotes the Energy Institute's own
+prohibition on reproducing its tables and S&P Global's on redistribution. The
+same report is the one that told this project to keep the capacity numbers out
+of the repository in the first place, which is why `data/private/` exists.
+Committing the report would publish the table the report says not to publish.
+Second, the reports log one machine's requests and its local paths, which
+belongs in a working note and not in a published document.
+
+**What each one covers, and the primary sources it probed.** A citation to a
+recon section is a citation to this record. The primary source behind it is
+public in every case, and the column on the right is what to fetch to check the
+claim yourself.
+
+| Report | Date | Scope | Go to the primary source |
+|---|---|---|---|
+| recon 01, conventions | 2026-09-11 | the sibling repositories' conventions and the design system question; no market data | nothing to fetch: it is about this repository's own shape |
+| recon 02, DGEC | 2026-09-11 | the ministry's petroleum price publications: the two historical workbooks, the weekly NPG note, the absence of an archive, the note's own Brent factor of 7.5 recovered in section 4.3 | [prix des produits petroliers](https://www.ecologie.gouv.fr/politiques-publiques/prix-produits-petroliers) and the [method note](https://www.ecologie.gouv.fr/sites/default/files/documents/Mode%20de%20calcul%20de%20la%20marge%20brute%20de%20raffinage.pdf); the Internet Archive holds nine older notes |
+| recon 03, physical | 2026-09-11 | JODI intake, output by product and crude imports; the Energy Institute capacity sheet and its licence; the EIA refinery fuel tables; the derived gas intensity; the annual utilisation of section 2.3 | [JODI-Oil World Database](https://www.jodidata.org/oil/), [Statistical Review of World Energy](https://www.energyinst.org/statistical-review) sheet "Oil refinery - capacity", [EIA Refinery Capacity Report](https://www.eia.gov/petroleum/refinerycapacity/) tables 10a and 10b |
+| recon 04, market | 2026-09-11 | FRED Brent and EUR/USD, Yahoo TTF and its roll, the World Bank pink sheet fallback, the Brent cross check | [FRED DCOILBRENTEU](https://fred.stlouisfed.org/series/DCOILBRENTEU), [FRED DEXUSEU](https://fred.stlouisfed.org/series/DEXUSEU), [World Bank pink sheet](https://www.worldbank.org/en/research/commodity-markets) |
+| recon 05, crack sources | 2026-09-11 and 2026-09-12 | every free source of NWE product prices that was tried and rejected, and the price of reading the ministry's weekly chart instead | [OPEC Monthly Oil Market Report](https://www.opec.org/monthly-oil-market-report.html), and the rejections are rejections: there is nothing to fetch |
+
+**Nothing in this study rests on a recon report alone.** Every figure one is
+cited for is recomputed here from a committed cache, asserted in `tests/`, or
+carried in `data/manifest.json` with its own source. The two places where a
+recon figure is transcribed rather than recomputed are named and held down:
+
+- `src/crack/config.py`'s EIA inputs to the gas intensity, which
+  `data/seed/eia_refinery_fuel_2023.json` carries with the table, the URL, the
+  line as printed and the licence, all re-read from the source document on
+  2026-09-13 rather than copied from the report.
+- `src/crack/analysis.py`'s `RECON_ANNUAL_UTILISATION`, eleven annual
+  utilisation figures from recon 03 section 2.3. Two tests hold them:
+  `TestUtilisation::test_it_reproduces_what_the_physical_recon_measured` fails
+  the gate if this study stops reproducing one of them to three decimals, and
+  `::test_the_transcribed_figures_are_the_ones_that_were_transcribed` fails if
+  one of the digits is edited. `tests/test_sources_docs.py` fails if a report
+  is cited anywhere and is not in the table above.
+
+**Where the report and the data disagree, the data wins and it is written
+down**: recon 05 section 12's count of the single note weeks, in
+`docs/methodology.md` section 1.6, and recon 03 section 2.3's printed 2015
+utilisation, in `docs/open-questions.md`.

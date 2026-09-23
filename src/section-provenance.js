@@ -65,16 +65,18 @@ export function render(inner, data) {
   const table = el("table", { class: "table manifest-table" }, [el("thead", {}, [head]), body]);
   /* GATE 5 FINDING 8. This caption and the summary sentence above it both said
    * "last", twenty nine minutes apart, and the later one belonged to a run that
-   * opened no socket. The two are different things and the caption now says
-   * which this one is: when the manifest was last written, and whether that run
-   * fetched anything. The time of the last fetch of a series stays where it
-   * belongs, in the summary sentence and in the Last fetch column. */
-  const run = manifest.run || {};
-  const wrote = run.mode === "offline"
-    ? ", a run that reread the committed files and fetched nothing"
-    : (run.mode ? ", a run that fetched from the sources" : "");
+   * opened no socket, so a reader had to work out which "last" was which.
+   *
+   * ONE CLOCK ON THIS PANEL, and it is the one a reader needs: when a series
+   * was last fetched. It is in the Last fetch column, per series, and the
+   * newest of them is the time the summary sentence above the panel gives.
+   * The manifest's own generated_at is when the record was last written, which
+   * says nothing about how fresh the data is: an offline run rewrites it
+   * without opening a socket. It is not printed here. It travels in the
+   * published manifest, linked at the foot of this panel, and the sentence
+   * there says what kind of run wrote it. */
   inner.appendChild(el("div", { class: "block" }, [scrollTable([
-    "Every series the study reads, as the manifest recorded it at " + (formatInstant(manifest.generated_at) || "a time it did not record") + wrote + "; failed and stale series first. Each series' own last fetch is in its row.",
+    "Every series the study reads, as the manifest recorded it; failed and stale series first. The time in each row is when that series was last fetched, and the newest of them is the one the sentence above this panel gives.",
   ], table)]));
 
   // The work done by hand, in the reader layer's words.
@@ -124,11 +126,15 @@ export function render(inner, data) {
    * orphan. The link makes it reachable, through the same content hashed URL
    * every other artifact is fetched at, and says what it is so that nobody
    * opens it expecting this table. */
+  const run = manifest.run || {};
+  const wrote = run.mode === "offline"
+    ? " It was last written by a run that reread the committed files and fetched nothing, so the time it carries is the record's own and not a fetch."
+    : (run.mode ? " It was last written by a run that fetched from the sources." : "");
   inner.appendChild(el("div", { class: "block" }, [
     el("p", { class: "prose" }, [
       "This table is the reader's view of the pipeline's own record. That record is published whole beside the site, as it was written, for anyone who wants to check it or to machine read it: ",
       el("a", { class: "text-link", text: "the manifest of every series, as JSON", attrs: { href: artifactUrl("data/manifest.json"), rel: "noopener" } }),
-      ".",
+      "." + wrote,
     ]),
   ]));
 

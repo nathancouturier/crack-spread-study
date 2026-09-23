@@ -24,7 +24,7 @@
  */
 
 import { el, clear, sentence, disclosure, scrollTable, figureCell, uniqueId } from "./dom.js";
-import { formatNumber, formatCell, segmentsText, UNITS } from "./format.js";
+import { formatNumber, formatCell, segmentsText, countWords, UNITS } from "./format.js";
 import * as charts from "./charts.js";
 import * as router from "./router.js";
 import * as cracksSection from "./section-cracks.js";
@@ -391,7 +391,7 @@ function disputeBlock(dispute, decimals) {
       ]));
     }
     block.appendChild(scrollTable(
-      ["The months of the overlap, " + monthWords(dispute.overlap_first) + " to " + monthWords(dispute.overlap_last) + ", where the octane graded row prints above the sulphur graded one. " + dispute.months + " months, " + dispute.negative_months + " of them with a negative crack on the line this panel draws; the longest run is " + dispute.longest_window.months + " months from " + monthWords(dispute.longest_window.first) + "."],
+      ["The months of the overlap, " + monthWords(dispute.overlap_first) + " to " + monthWords(dispute.overlap_last) + ", where the octane graded row prints above the sulphur graded one. " + dispute.months + countWords(dispute.months, " {month|months}, ") + dispute.negative_months + " of them with a negative crack on the line this panel draws; the longest run is " + dispute.longest_window.months + countWords(dispute.longest_window.months, " {month|months} from ") + monthWords(dispute.longest_window.first) + "."],
       el("table", { class: "table history-table" }, [el("thead", {}, [monthsHead]), monthsBody]),
     ));
 
@@ -957,7 +957,7 @@ function rowSensitivity(sensitivity, decimals) {
     ]));
   }
   wrap.appendChild(scrollTable(
-    ["The same season on each of the two rows OPEC printed, substituting the " + sensitivity.substituted_months + " months from " + monthWords(sensitivity.first_month) + " to " + monthWords(sensitivity.last_month) + " where they swap."],
+    ["The same season on each of the two rows OPEC printed, substituting the " + sensitivity.substituted_months + countWords(sensitivity.substituted_months, " {month|months} from ") + monthWords(sensitivity.first_month) + " to " + monthWords(sensitivity.last_month) + " where they swap."],
     el("table", { class: "table history-table" }, [el("thead", {}, [head]), tbody]),
   ));
   return wrap;

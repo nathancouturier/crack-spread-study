@@ -3118,6 +3118,122 @@ official margin row. All five trace.
 
 ---
 
+# Gate 4 self audit, what was done about it
+
+Gates 1, 2 and 3 each carry a section under this name and Gate 4 did not. That
+is the one thing the Gate 5 audit found still open about Gate 4: every one of
+the eight was fixed, and an auditor had to prove it from the live site rather
+than read it here. Written at Gate 5, from the commits, not from memory: every
+entry names the commit that closed the finding and the check that keeps it
+closed. The audit itself was appended in `8fed1a1`.
+
+## The two blockers. FIXED
+
+**B1, the 44 px manifest window at 375 px.** `ecfff6b`. The manifest and
+response sticky columns wrap at 9.5rem at 600 px and below, and the response
+equations move under the table at that width, so the sticky column is no longer
+87 percent of the scroll box. `check-layout`'s B1 check measures the sticky
+column's share of its box at every width and theme.
+
+**B2, the caption clipped by the table's own scroll box.** `ecfff6b`. Wide
+tables go through `dom.js` `scrollTable`: the caption is a paragraph ABOVE the
+scroll box, not a `caption` inside it, so it takes the column's width and not
+the table's. `check-layout`'s B2 check fails on a caption clipped by its own
+scroller.
+
+## The serious findings. All FIXED
+
+**S1, the Source column off screen at every desktop width with no affordance,
+and focus that did not bring it into view.** `ecfff6b`. The caption ends with
+the columns measured off screen at that width and scroll position, the box takes
+focus while it overflows, and focus inside it scrolls the whole ring into view.
+`check-layout`'s S1 check names any cut column the caption does not name, and
+any caption that names a column fully in view.
+
+**S2, the response table hiding Zero, Share, t and Months between 601 and about
+1100 px.** `ecfff6b`, the same mechanism, and the same S1 check covers it.
+
+**S3, the Provenance prose as an engineering log.** `3462147` and `ecfff6b`.
+`provenance.json` gained a reader layer: a label and a source for every manifest
+series, the months each source flags provisional, and the two manual steps in
+sentences, with a `KeyError` for any series or step that has none, so a new
+series cannot arrive unwritten. The credits are said once and the DGEC credit
+keeps its accents. `check-layout`'s S3 check fails on a recon reference, an HTTP
+code, "this machine", a snake_case identifier, a word in capitals that is not a
+name, a heading repeated as the next sentence, a credit said twice, or a French
+name with its accents stripped.
+
+**S4, "kept" and "its own".** `3462147`. The verdict reads "refiners' gross
+margin after the ministry's gas allowance". `tests/test_export.py` fails on
+" kept " or "its own gas" in any exported sentence, and
+`tools/validate-format.mjs` reads the verdict for the same through `format.js`.
+Recorded in `docs/design.md` Part 7, C10, with the argument that was wrong.
+
+**S5, the headline quoting the chart reading over the printed figure.**
+`3462147`. When the note printed the latest week, the Cracks summary and both
+panel headings lead with the printed figures and give the chart reading second.
+`tests/test_export.py`
+`test_the_weekly_headline_leads_with_the_figure_the_ministry_printed` pins the
+order of the fields.
+
+**S6, the accent zero rule crossing the model label at 375 px.** `ecfff6b` and
+`96f6671`. The rule runs through each interval row and stops at the label line
+above the next, so it never crosses a label. `check-layout`'s S6 check measures
+the rule against every text bbox in the strip figure.
+
+**S7, focus rings clipped by `.section__inner { overflow: hidden }`.**
+`ecfff6b`. The section body clips 8 px outside the column and is padded back by
+8 px, so nothing moves and no ring is cut; the seasonal panel's grid column may
+shrink. `check-layout`'s S7 check walks every focusable element in every open
+section and fails on a ring clipped by any ancestor.
+
+**S8, the Provenance table never saying what is provisional.** `3462147` and
+`ecfff6b`. The table has a Provisional column, written from the manifest's own
+`provisional_from` and printed per month rather than per range.
+`check-layout`'s S8 check fails if a series the manifest flags does not say so
+in its row.
+
+## The minor findings. All FIXED
+
+| # | What it was | Commit | What holds it |
+|---|---|---|---|
+| M1 | words set in JetBrains Mono | `ecfff6b` | `check-layout` M1: JetBrains Mono holds no letters |
+| M2 | the depth rail's "none" reading as the end of "4 prior years" | `ecfff6b` | `check-layout` M2: a rail label sits inside its bracket with 8 px of line at each end, or outside it, never over an end tick |
+| M3 | the zero rule crossing an ink interval line with no paper ring | `ecfff6b`, `96f6671` | `check-layout` M3 |
+| M4 | a scale said to the cent, and signed totals | `3462147`, `ecfff6b` | `check-layout` M4 |
+| M5 | the run kink named without its value | `3462147` | the unidentified paragraph names both kinks; `validate-artifacts` checks the run verdict across two artifacts |
+| M6 | "283 dates" of market holidays read as missing data | `3462147` | `export.SERIES_READER` carries a `gaps_reason` on each series whose gaps are holidays, printed in the cell after the count |
+| M7 | two nearly identical Brent rows with nothing saying why both exist | `3462147` | the same table: one is labelled "Brent spot, daily, from the EIA" and the other "the same EIA series through FRED, which the analysis reads". `export.series_reader` raises a `KeyError` naming any manifest series with no reader entry, so a new series cannot arrive unlabelled |
+
+The tool that keeps all of it closed is `tools/check-layout.mjs`, added in
+`9e6674e` with one check per finding, and the design record is `docs/design.md`
+Part 7, C10 to C15, added in `fbb2cb5`.
+
+## What Gate 4 was quietly unsure about
+
+Gate 5 walked this list on the live site and its findings are in the Gate 5
+section below, under "Gate 4, what it was quietly unsure about". In summary:
+the Pages `Cache-Control` value was measured at `max-age=600` and the mixed
+graph risk is closed by the content hashes; focus into partially visible cells
+is no longer reachable; the accent stripped French is closed by the S3 check;
+the 120 month rank was checked on this study's own intensity and is 120 of 120
+on both measures; History, Model, Runs, Method and the `engine.js` parity were
+audited at Gate 5. Two are still open and are now in `docs/open-questions.md`
+section 48 rather than only here: one browser engine, and no real assistive
+technology. The threshold search stopping at 11.28 while the margin sits at
+38.05 is a Gate 3 choice, flagged again at Gate 4, again at Gate 5, and still
+not re-tested.
+
+## What this record cannot do
+
+It is written from the commits by the session that also wrote most of them. It
+proves what was changed and what now fails if it is changed back; it does not
+prove the change was the right one. That judgement is the Gate 5 audit's, made
+against the live site by someone who did not build it, and it is the section
+immediately below.
+
+---
+
 # Self audit, Gate 5, the full build on the live site
 
 Run on 2026-09-23 against `https://nathancouturier.github.io/crack-spread-study/`
@@ -3765,3 +3881,177 @@ Nothing in the repository was modified other than the appending of this section.
 1076 passed and 5 skipped, 25 of 25 series ok, 16 of 16 data checks, 49 of 49
 artifact checks, 4 of 4 parity checks, and every layout check at five widths in
 both themes against the live subpath.*
+
+---
+
+# Gate 5 self audit, what was done about it
+
+Written from the commits, in the order the work was done. `dd40322` took the
+three serious findings and, while it was in those files, four of the smaller
+ones; the rest are this section's own commits. Every entry says what changed and
+what now fails if it changes back, and one of them says where the audit was
+wrong.
+
+## Finding 1, serious. The README understating the weakest data sevenfold. FIXED
+
+`dd40322`. "1 of its 221 weeks has no independent cross check" became the seven
+the cache holds, with the six uncorroborated and unanchored weeks of July and
+August 2022 named as the least defended data in the study, which is what the
+live History panel and the seasonal table already said.
+`tests/test_published_counts.py` now reads the counts out of
+`data/cache/dgec_note_reconstructed_weekly.csv` and fails when a published copy
+of one drifts, so the README cannot part from the cache again.
+
+## Finding 2, serious. 110 cells printing a column id as prose. FIXED
+
+`dd40322`. `format.missingFigureText` no longer takes a field name. It takes the
+words the artifact gives, drops anything shaped like an identifier, and says
+"no figure" when the caller has nothing to say; every empty cell's reason is said
+once in the caption beside its table. `check-layout`'s S9 check now reads every
+word the page shows, on every view state it opens, including SVG `title` and
+`desc` and `aria-label`, and fails on a snake_case identifier or a field name
+with its underscores swapped for spaces. That is the check whose absence let
+three static validators pass while the string was on the page.
+
+## Finding 3, serious. SPEC 4.3 layer 4 computed and shown nowhere. FIXED
+
+`dd40322`. Observed yields are a panel on the History view: the ministry's fixed
+slate against NWE yields observed over crude intake and over total refinery
+feed, both denominators drawn, with the figures for each.
+`tests/test_export.py` fails if the layer is computed and not exported.
+
+## Finding 4, minor. "the 1 weeks from 18 September 2026". FIXED, then generalised
+
+`dd40322` put the weekly caption and the oldest weeks sentence through a plural
+helper. That fixed the two sentences the audit could see. A count in a sentence
+is data, so the same shape is latent wherever a count meets a noun, and this
+gate went through every one of them: `crack.export._plural` now takes one string
+with `{singular|plural}` alternatives, 54 more sentences in `export.py` go
+through it, and `format.countWords` does the same job, with the same syntax, for
+the five sentences the views compose themselves.
+
+Three checks hold it. `test_no_exported_sentence_reads_one_of_a_plural` fails on
+"1 weeks", "1 months", "1 years", "1 notes" and their kin in any artifact.
+`test_every_count_in_the_export_is_followed_by_a_noun_that_can_be_singular`
+reads the syntax tree of `export.py` and fails when a count segment is followed
+by a literal beginning with a plural noun, whether or not today's data makes
+that count one. `tools/validate-format.mjs` scans `src/` for a count glued to a
+plural noun in a view. Every artifact is byte identical after the change, which
+is the point: nothing today says one.
+
+## Finding 5, minor. Two published docs citing a source not in the repository. FIXED as a citation
+
+The five reconnaissance reports cannot be committed, and the reason is in one of
+them: recon 03 section 2.2 reproduces the Energy Institute capacity table, whose
+sheet is footnoted as containing ICIS and S&P Global data and whose terms forbid
+redistribution. That report is why `data/private/` exists; committing it would
+publish the table it says not to publish.
+
+So they are cited the way this study cites any document it may not redistribute.
+`docs/sources.md` section 6 is a register: the five reports, their dates, what
+each covers, why they are not committed, and **the public primary source to
+fetch instead for each one**. `docs/methodology.md` and `docs/open-questions.md`
+point at it from their opening paragraphs. `tests/test_sources_docs.py` fails if
+a report is cited anywhere and is not in the register, if a row of the register
+stops saying where to go, or if either document stops explaining what a recon
+citation is.
+
+## Finding 6, minor. `data/manifest.json` deployed and fetched by nothing. FIXED by making it reachable
+
+`dd40322` chose to keep publishing it and to link it: the Provenance panel ends
+with a sentence saying the pipeline's own record is published whole beside the
+site, and links it at the same content hashed URL every other artifact is
+fetched at. That is the choice SPEC.md section 5.3 implies, and it costs a
+reader nothing, where a second 169 KB download on a panel that already holds the
+same data in a reader's form would.
+
+What was missing was the enforcement the audit asked for, and it is now
+`check-layout`'s PM check: it finds the link on the rendered panel, fetches what
+the link points at, and fails if it does not answer, does not parse, or carries
+no series. A link that rots fails the gate.
+
+## Finding 7, minor. Eleven transcribed figures, checked but never enforced. HALF OF IT WAS WRONG
+
+The audit says "nothing in `make gate` fails if `agrees_to_3dp` goes false, so
+the check reports into a void". That is not so, and it was not so when the audit
+ran: `tests/test_analysis.py`
+`TestUtilisation::test_it_reproduces_what_the_physical_recon_measured` asserts
+that no row fails, and `python -m pytest tests` is the second command of
+`make gate`. The audit is left above as it was written, and this is the
+correction.
+
+The other half stands and was the better half. The study was checked against the
+transcription and the transcription against nothing, so
+`test_the_transcribed_figures_are_the_ones_that_were_transcribed` now holds the
+eleven digits themselves, and the constant carries where a reader goes instead:
+the JODI database and the Energy Institute workbook, by URL.
+
+**Checking it turned up a disagreement worth having.** Recon 03's own table
+prints 0.869 for 2015. Its own columns for that year, 5,936.5 over 6,835.6,
+divide to 0.86844, which rounds to 0.868, and 0.868 is what was transcribed and
+what this study reproduces at 0.868469. The printed third decimal is a rounding
+slip in the report; the arithmetic is the anchor. `docs/open-questions.md`
+section 47.
+
+## Finding 8, nit. Two "last" times on one page. FIXED
+
+`dd40322` labelled the second one. This gate removed it. The panel prints one
+clock, and it is the one a reader needs: when a series was last fetched, per
+series, in the Last fetch column, with the newest of them in the summary
+sentence above the panel. The manifest's own `generated_at` is when the record
+was written, which says nothing about how fresh the data is, and it is no longer
+on the page: it travels in the published manifest, and the sentence that links
+it says what kind of run wrote it. `check-layout`'s PM check fails if a caption
+on that panel prints a clock, or if the Last fetch column disappears.
+
+## Finding 9, minor judgement. The landing sentence on the ministry's gas only. FIXED
+
+The owner's call, taken. The verdict carries both figures: "refiners' gross
+margin after the ministry's gas allowance was 38.05 $/bbl in August 2026, or
+34.96 at this study's gas use, the most in 120 months; gasoil carried 27.00 of
+it, and this sample cannot say whether runs have room to rise." Forty seven
+words, one sentence, the month once, no digit in any text segment, and the ratio
+of the two intensities stays in the margin section where the wedge is drawn.
+
+The rank clause now sits behind two figures, so it has to be true of both. The
+export ranks the same 120 month window a second time on this study's own
+intensity and exports both ranks with a flag; today both are 120 of 120, which
+is what the audit found by hand and what every build now recomputes. If they
+ever part, the clause says "on the ministry's measure".
+`tools/validate-artifacts.mjs` recomputes both ranks from the rows the History
+view draws and fails if the flag and the sentence disagree.
+`docs/design.md` Part 7, C16.
+
+## Finding 10, nit. "the 4 years the weekly series covers". FIXED
+
+`dd40322`. `n_years` is the number of PRIOR years the same week exists in, which
+is what the seasonal rail says; the series covers one calendar year more. The
+sentence reads "the 4 earlier years the weekly series reaches", checked here
+against the data: the latest week is 18 September 2026, ISO week 38, and week 38
+exists in 2022, 2023, 2024 and 2025.
+
+## What the audit was quietly unsure about
+
+| # | Item | What was done |
+|---|---|---|
+| 1 | One browser engine | Still true of this gate too. Recorded in `docs/open-questions.md` section 48, in the README's limitation 12, and on the Method view where a visitor meets it |
+| 2 | No real assistive technology | Same entry, same three places. Finding 2's 110 cells are gone, which was the specific worry |
+| 3 | The orphan test is a substring search | Unchanged and still true. It bounds the orphan count from below, not above |
+| 4 | Gate 3's analysis not re-run | Unchanged. This gate did not re-run it either |
+| 5 | No primary source opened | Still true of this gate. Recorded in `docs/open-questions.md` section 50, the README's limitation 11, and the Method view's limitations |
+| 6 | The reconstruction's smooth tilt | Unchanged in kind and not re-attacked. Written into `docs/open-questions.md` section 29 as a Gate 5 paragraph rather than left implied |
+| 7 | The 11 March 2026 IEA date | Unchanged, and already `docs/open-questions.md` section 28 |
+| 8 | `RECON_ANNUAL_UTILISATION` agreeing proves less than it looks | Right, and it is finding 7 above. The transcription now has its own test and its one disagreement with the document is written down |
+| 9 | The interval to zero distance measured at 1440 only | Unchanged. `check-layout` measures the ring at every width; the 1.3 px figure itself is a 1440 measurement |
+| 10 | One machine, one network, one moment | Unchanged, and unfixable from here |
+| 11 | The committed screenshots not diffed against the live site | Unchanged. They were refreshed from the live site at `2c58928`, which is what the commit says, and nobody has compared a pixel |
+
+## What this gate found that the audit did not
+
+`.github/workflows/refresh.yml` has never fired on its schedule. It was
+committed on 2026-09-22 and its first scheduled Friday is 2026-09-25, so every
+run in this repository's history is `build.yml` on a push. The work it does is
+exercised offline on every gate; its trigger, the runner's network, the commit
+of a refreshed cache and the issue it opens on failure are not.
+`docs/open-questions.md` section 49, and the README says it where it promises
+that the weekly job runs the refresh for you.

@@ -588,6 +588,27 @@ def utilisation_annual(
 #: What recon 03 section 2.3 measured, to three decimals, for 2015 to 2025. The
 #: sanity check of this gate is against these and it is a check, not a target:
 #: utilisation_sanity_check reports the gap whatever the gap is.
+#:
+#: WHERE A READER CAN GO INSTEAD. recon 03 is the study's own Gate 1
+#: reconnaissance report and is not in the repository, because it quotes the
+#: Energy Institute capacity sheet, which is footnoted as containing ICIS and
+#: S&P Global data and may not be redistributed. docs/sources.md section 6
+#: lists the five reports, what each covers and the primary sources each one
+#: probed. These eleven figures are the calendar year mean of JODI's monthly
+#: crude intake for Belgium, Germany, France, the Netherlands and the United
+#: Kingdom over the same five countries' Energy Institute refining capacity for
+#: the same year, and both primaries are public: the JODI-Oil World Database at
+#: https://www.jodidata.org/oil/ and the Statistical Review of World Energy
+#: workbook at https://www.energyinst.org/statistical-review , sheet
+#: "Oil refinery - capacity".
+#:
+#: TWO TESTS HOLD THEM. tests/test_analysis.py
+#: TestUtilisation::test_it_reproduces_what_the_physical_recon_measured fails
+#: the gate when this study stops reproducing one of them to three decimals,
+#: and ::test_the_transcribed_figures_are_the_ones_that_were_transcribed fails
+#: when one of the digits below is edited. The second exists because the first
+#: checks the study against the transcription and nothing checked the
+#: transcription: Gate 5 finding 7.
 RECON_ANNUAL_UTILISATION: Mapping[int, float] = {
     2015: 0.868,
     2016: 0.889,

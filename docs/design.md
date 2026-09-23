@@ -503,21 +503,24 @@ assert every figure in the sentence came from one. Clauses, in order:
 | Clause | Field(s) | Template when | Wording |
 |---|---|---|---|
 | margin | `margin_month`, `mbr_usd_bbl` | always | "On the ministry's Rotterdam measure, refiners' gross margin after the ministry's gas allowance was {mbr} $/bbl in {margin_month}," (Part 7, C10) |
+| gas use | `margin_study_intensity_usd_bbl` | always | "or {margin at this study's intensity} at this study's gas use," (Part 7, C16) |
 | rank | `percentile_rank`, `percentile_observations` | rank equals n | "the most in {n} months;" |
 | | | rank equals 1 | "the least in {n} months;" |
 | | | otherwise | "more than in {rank minus 1} of {n} months;" |
+| | `percentile_ranks_agree` | the two measures rank the month differently | the same clause, then "on the ministry's measure" (Part 7, C16) |
 | carrier | `carrier_name`, `carrier_contribution_usd_bbl`, `crack_month` | carrier present | "{carrier} carried {contribution} of it," (and "on the prices of {crack_month}" only if that month is not the margin month) |
 | | | carrier absent | "no product split of that month says which crack carried it," |
 | runs | `threshold_identified`, `headroom_usd_bbl` | unidentified | "and this sample cannot say whether runs have room to rise." |
 | | | identified | "and runs sit {headroom} $/bbl above the level at which they get cut." |
 
-Today it reads (Part 7, C1, C9 and C10, `data/now.json`): "On the ministry's
-Rotterdam measure, refiners' gross margin after the ministry's gas allowance was
-38.05 $/bbl in August 2026, the most in 120 months; gasoil carried 27.00 of it,
-and this sample cannot say whether runs have room to rise." Forty words, four
-clauses, the month once. The trailing window ends at the margin month, so "the most in
-120 months" needs no second date, and the carrier is split on the same month's
-printed prices, so it needs none either.
+Today it reads (Part 7, C1, C9, C10 and C16, `data/now.json`): "On the
+ministry's Rotterdam measure, refiners' gross margin after the ministry's gas
+allowance was 38.05 $/bbl in August 2026, or 34.96 at this study's gas use, the
+most in 120 months; gasoil carried 27.00 of it, and this sample cannot say
+whether runs have room to rise." Forty seven words, the month once. The trailing
+window ends at the margin month, so "the most in 120 months" needs no second
+date, and the carrier is split on the same month's printed prices, so it needs
+none either.
 
 **Corrected at Gate 4, Part 7, C9.** The sentence first carried a fifth clause,
 "or 34.96 at the average US refinery's gas use, 3.2 times the ministry's", and
@@ -528,6 +531,11 @@ section, where the wedge that produces them is drawn: `margin-stack.json`
 ministry's, the same barrel would have kept 34.96 $/bbl in August 2026 rather
 than 38.05; the gap is the extra gas, −3.09 $/bbl", and the wedge row's second
 line now carries the ratio too.
+
+**Corrected again at Gate 5, Part 7, C16.** Moving the figure out moved it too
+far. The 34.96 came back as a clause of seven words, without the ratio and
+without a second month, and the rank clause behind it is now checked on both
+measures before it is allowed to stay silent about which one it ranks.
 
 **Corrected at Gate 4, Part 7, C10.** The paragraph below defended "kept" and
 "its own", and both were wrong: "kept" claims earnings on a margin that nets out
@@ -645,7 +653,7 @@ three lines at 28px about 110, padding 56, dates four rows 80, four headers 4 x
 | tracked | the dates list, "Weekly cracks run to the week of 4 September 2026 ... last fetched"; the cracks header |
 | NWE refining margins | the verdict's first clause; the "Refining margin and gas" section name and its "NWE refining margin" summary |
 | across gasoil and gasoline cracks | the "Gasoil and gasoline cracks" section name with both values; the verdict's carrier clause |
-| run economics | the "Run economics and crude demand" section name; its first sentence "No level at which runs get cut can be identified"; "gross margin after the ministry's gas allowance" and "runs have room to rise" in the verdict (C10); the 34.96 at the US gas use in the margin section (C9) |
+| run economics | the "Run economics and crude demand" section name; its first sentence "No level at which runs get cut can be identified"; "gross margin after the ministry's gas allowance" and "runs have room to rise" in the verdict (C10); the 34.96 at this study's gas use in the verdict itself (C16) and the ratio behind it in the margin section (C9) |
 | linked to crude demand | the same section name; kb/d per 10 $/bbl for both models with t in its summary; the nav's "Runs and crude demand" |
 
 **375 x 812** (about 700px of viewport), re-estimated (S21). At 480px and below
@@ -1358,7 +1366,9 @@ Written as requirements on the export step, so SPEC.md section 2 rule 2 holds:
 1. `now.json`: the verdict as segments with field names; `margin_month`,
    `crack_month`, `runs_month`, `weekly_date`; each date's status and vintage from
    the manifest; `percentile_rank` and `percentile_observations` (the rank, not
-   only the percentile); `mbr_usd_bbl`, `margin_study_intensity_usd_bbl`,
+   only the percentile), and the same pair on this study's own gas intensity
+   with `percentile_ranks_agree` (Part 7, C16); `mbr_usd_bbl`,
+   `margin_study_intensity_usd_bbl`,
    `carrier`, `threshold_identified`, `headroom_usd_bbl` (null today).
 2. The decomposition for `margin_month` (Part 7, C1: one month, from the
    ministry's printed quotations; `crack_month` equals it), with contributions,
@@ -1932,8 +1942,9 @@ to exclude, and then finds the US gas use 3.2 times higher two sections down.
 Rotterdam measure, refiners' gross margin after the ministry's gas allowance was
 38.05 $/bbl in August 2026, the most in 120 months; gasoil carried 27.00 of it,
 and this sample cannot say whether runs have room to rise." Forty words, within
-the 40 `tests/test_export.py` allows; "a refiner's" became "refiners'" to stay
-inside it. `study_margin_segments` says "the same barrel's gross margin would
+the 40 `tests/test_export.py` allowed at Gate 4; "a refiner's" became
+"refiners'" to stay inside it. C16 added seven words and raised that bound to
+47. `study_margin_segments` says "the same barrel's gross margin would
 have been 34.96" instead of "would have kept", and the waterfall caption says
 "its gross margin at the average US refinery's gas use". `tests/test_export.py`
 fails on " kept " or "its own gas" in any exported sentence;
@@ -2073,6 +2084,42 @@ headless Chromium at 375, 768, 1024, 1280 and 1440 px in both themes, with every
 section and text alternative open, and fails naming the finding. It is not in
 `make gate`, because the gate runs without a browser or a server; `make layout`
 runs it.
+
+### C16. The landing sentence carries both gas figures
+
+**What C9 said.** The 34.96 at this study's gas intensity, and the ratio 3.2
+between the two intensities, both left the verdict for the "Refining margin and
+gas" section, on the argument that a second margin at a second gas intensity is
+a paragraph read off a table.
+
+**Why that was half right.** The Gate 5 audit, finding 9. The ratio does belong
+where the wedge is drawn. The figure does not. The ministry's allowance is
+0.0659 MMBtu/bbl, this study's EIA derived intensity is 0.21217, and every
+equation on the Runs view is on the second one, so the one sentence a trader
+reads out loud was 3.09 $/bbl more favourable than the number the rest of the
+study defends, and the number it defends was behind a click. The site was never
+hiding it: the first clause says "the ministry's gas allowance", and the margin
+section prints "At that gas use 34.96" and the gap. But a sentence that answers
+"what does a refiner earn" should not answer it only on the more flattering of
+the two assumptions the same page holds.
+
+**What was built.** A clause of seven words between the month and the rank,
+"or 34.96 at this study's gas use". Forty seven words, still one sentence, still
+the month once, still no digit in any text segment: the figure is
+`margin_study_intensity_usd_bbl`, the same field `margin-stack.json` prints, so
+the two cannot disagree. The ratio stays out.
+
+**The rank clause the new figure sits in front of.** "The most in 120 months"
+now follows two figures, so it has to be true of both.
+`crack.export._trailing_rank` ranks the same 120 month window a second time on
+`analysis.MARGIN_STUDY_INTENSITY` and exports `percentile_rank_study_intensity`,
+`percentile_observations_study_intensity` and `percentile_ranks_agree`. Today
+both are 120 of 120, which is what the Gate 5 audit found by hand and what this
+build recomputes on every run. If they ever differ, `_verdict_rank_clause` adds
+"on the ministry's measure" to the clause; `tools/validate-artifacts.mjs`
+recomputes both ranks from the rows the History view draws and fails if the flag
+and the sentence disagree, and `tests/test_export.py` fails if the two ranks
+part without the sentence saying so.
 
 ---
 

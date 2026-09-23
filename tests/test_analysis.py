@@ -613,6 +613,49 @@ class TestUtilisation:
         assert check["study_less_same_year"].abs().max() > 0.01
         assert check["utilisation_study"].notna().all()
 
+    def test_the_transcribed_figures_are_the_ones_that_were_transcribed(self):
+        """Gate 5 finding 7. Eleven figures in analysis.py are transcribed from
+        a document that is not in the repository and cannot be put in it: recon
+        03 section 2.3 quotes the Energy Institute capacity sheet, which carries
+        ICIS and S&P Global data and may not be redistributed (docs/sources.md
+        section 2.7 and section 6). The test above checks the study against the
+        transcription; this one checks the transcription itself, against a
+        second reading of the same table recorded here, so that an edit to one
+        of the eleven digits fails rather than moving the anchor the study is
+        measured against.
+
+        THE ONE DISAGREEMENT WITH THE DOCUMENT, recorded rather than smoothed.
+        The report's own table prints 0.869 for 2015. Its own columns for that
+        year, 5,936.5 kb/d of intake over 6,835.6 kb/d of capacity, divide to
+        0.86844, which rounds to 0.868, and 0.868 is what is transcribed here
+        and what this study reproduces (0.868469). The printed third decimal is
+        a rounding slip in the report; the arithmetic is what was taken. See
+        docs/open-questions.md, "The one figure recon 03 prints that its own
+        columns do not give".
+        """
+        as_read = {
+            2015: 0.868,  # the report prints 0.869; see the docstring
+            2016: 0.889,
+            2017: 0.895,
+            2018: 0.857,
+            2019: 0.851,
+            2020: 0.724,
+            2021: 0.742,
+            2022: 0.798,
+            2023: 0.791,
+            2024: 0.794,
+            2025: 0.831,
+        }
+        assert dict(analysis.RECON_ANNUAL_UTILISATION) == as_read
+        # Every one is a utilisation: a ratio inside the unit interval, given to
+        # exactly the three decimals the report gives, and one per year with no
+        # year skipped.
+        years = sorted(as_read)
+        assert years == list(range(years[0], years[-1] + 1))
+        for year, value in as_read.items():
+            assert 0.0 < value < 1.0, year
+            assert round(value, 3) == value, year
+
     def test_no_capacity_figure_is_applied_before_the_date_it_describes(self):
         """Gate 3 self audit, finding 1.1. THE LOOK AHEAD TEST.
 

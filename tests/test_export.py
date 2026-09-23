@@ -19,8 +19,10 @@ What these hold down:
 
 from __future__ import annotations
 
+import ast
 import json
 import math
+import re
 import shutil
 import subprocess
 from dataclasses import replace
@@ -366,17 +368,20 @@ def test_the_verdict_reads_as_the_design_says(built):
     )
     assert words == (
         "On the ministry's Rotterdam measure, refiners' gross margin after the ministry's gas allowance "
-        "was 38.050505 $/bbl in August 2026, the most in 120 months; gasoil carried 26.996621 of it, "
+        "was 38.050505 $/bbl in August 2026, or 34.962813 at this study's gas use, "
+        "the most in 120 months; gasoil carried 26.996621 of it, "
         "and this sample cannot say whether runs have room to rise."
     )
-    # SPEC.md section 7.2, said out loud: four clauses, the month once, and the
-    # US intensity figure is not in it (docs/design.md Part 7, C9).
+    # SPEC.md section 7.2, said out loud: the month once, and still short enough
+    # to say. Gate 5 finding 9: both gas figures, the ministry's allowance and
+    # this study's intensity, are in the sentence a trader reads out loud, and
+    # the ratio between them is not (docs/design.md Part 7, C9 and C16).
     assert words.count("August 2026") == 1
     fields = [s["field"] for s in built["now"]["verdict"]["segments"] if "field" in s]
-    assert "margin_study_intensity_usd_bbl" not in fields
+    assert "margin_study_intensity_usd_bbl" in fields
     assert "intensity_ratio" not in fields
-    assert len(words.split()) <= 40
-    # The figure moved to the section where the wedge is drawn.
+    assert len(words.split()) <= 47
+    # The ratio and the wedge stay in the section where the wedge is drawn.
     moved = {s["field"] for s in built["margin-stack"]["study_margin_segments"] if "field" in s}
     assert {"margin_study_intensity_usd_bbl", "intensity_ratio", "gas_wedge_usd_bbl"} <= moved
     for banned in ("clears zero", "a coin", "SPEC", "product prices", "Rotterdam refiners made", "winner"):
@@ -384,6 +389,152 @@ def test_the_verdict_reads_as_the_design_says(built):
             for _, segments in _segment_lists(payload):
                 for s in segments:
                     assert banned not in s.get("text", ""), banned
+
+
+# ---------------------------------------------------------------------------
+# Gate 5 finding 4, generalised: a count and the noun after it
+# ---------------------------------------------------------------------------
+
+#: Words that end in "s" and are not plural nouns, so a count may sit in front
+#: of them. Verbs agree with the count through their own {singular|plural}
+#: alternative where they need to; these are the ones that never move.
+_NOT_A_PLURAL_NOUN = frozenset(
+    """is was has as less plus minus across this its thus always perhaps
+    uses sits runs says holds does goes stops reads carries means gives
+    leaves falls leads""".split()
+)
+#: "Series" is the same word in both numbers, so "1 series" is already right.
+_INVARIANT_NOUNS = frozenset({"series"})
+#: "1 weeks", "1 months", "1 years", "1 notes" and their kin.
+_COUNT_THEN_PLURAL = re.compile(r"\b1 ([a-z]+s)\b")
+
+
+def _looks_plural(word: str) -> bool:
+    word = word.lower()
+    return word.endswith("s") and word not in _NOT_A_PLURAL_NOUN and word not in _INVARIANT_NOUNS
+
+
+def test_plural_puts_the_words_after_a_count_in_the_count_s_number():
+    assert export._plural(1, " {week|weeks} from ") == " week from "
+    assert export._plural(2, " {week|weeks} from ") == " weeks from "
+    assert export._plural(0, " {week|weeks} from ") == " weeks from "
+    assert export._plural(1, " {month has|months have} runs data") == " month has runs data"
+    assert export._plural(7, " {month has|months have} runs data") == " months have runs data"
+    assert export._plural(1, " no alternative here") == " no alternative here"
+
+
+def test_no_exported_sentence_reads_one_of_a_plural(built):
+    """Gate 5 finding 4. The weekly caption read "the 1 weeks from 18 September
+    2026". This fails on that and on "1 months", "1 years", "1 notes" and their
+    kin, wherever a sentence in any artifact is assembled."""
+    problems = []
+    for name, payload in built.items():
+        for where, segments in _segment_lists(payload):
+            words = _words(segments)
+            for match in _COUNT_THEN_PLURAL.finditer(words):
+                if _looks_plural(match.group(1)):
+                    problems.append((name, where, match.group(0)))
+    assert problems == []
+
+
+def test_every_count_in_the_export_is_followed_by_a_noun_that_can_be_singular():
+    """The same finding held at the cause rather than at today's data.
+
+    A count is data: it moves, and a sentence written while it was nineteen
+    reads "the 1 weeks" the week it becomes one. This reads the syntax tree of
+    src/crack/export.py and fails when a count segment is followed by a literal
+    text segment whose first word is a plural noun, whether or not today's
+    build happens to make that count one. The fix is _plural, whose
+    {singular|plural} alternatives are not literals and so pass here.
+    """
+    source = (REPO_ROOT / "src" / "crack" / "export.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    def called(node):
+        return node.func.id if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) else None
+
+    problems = []
+    for node in ast.walk(tree):
+        sequences = []
+        if isinstance(node, (ast.List, ast.Tuple)):
+            sequences.append(node.elts)
+        if isinstance(node, ast.Call):
+            sequences.append(node.args)
+        for sequence in sequences:
+            for first, second in zip(sequence, sequence[1:]):
+                if called(first) != "N" or len(first.args) < 3:
+                    continue
+                fmt = first.args[2]
+                if not (isinstance(fmt, ast.Constant) and fmt.value in export.INTEGER_FORMATS):
+                    continue
+                if called(second) != "T" or len(second.args) != 1:
+                    continue
+                text = second.args[0]
+                if not (isinstance(text, ast.Constant) and isinstance(text.value, str)):
+                    continue  # _plural, or anything else computed: not a literal
+                word = re.match(r"\s*([A-Za-z]+)", text.value)
+                if word and _looks_plural(word.group(1)):
+                    problems.append("line %d: %r" % (text.lineno, text.value[:60]))
+    assert problems == [], (
+        "a count is pasted in front of a plural noun; wrap the words in "
+        "_plural(count, \" {singular|plural} ...\"):\n" + "\n".join(problems)
+    )
+
+
+def test_the_verdict_carries_both_gas_figures_and_a_rank_true_of_both(built):
+    """Gate 5 finding 9. The landing sentence used to answer "after gas" on the
+    ministry's 0.0659 MMBtu/bbl allowance only, which is 3.09 $/bbl more
+    favourable than the figure every equation on the Runs view uses. Both are
+    now in the sentence, and the rank clause that follows them is true of both
+    or says whose measure it ranks."""
+    values = built["now"]["verdict"]["values"]
+    segments = built["now"]["verdict"]["segments"]
+    spoken = _words(segments)
+
+    # The two figures in the sentence are the two the study defines, and the
+    # study's is the lower one: it buys more gas per barrel.
+    assert values["margin_study_intensity_usd_bbl"] < values["mbr_usd_bbl"]
+    assert values["study_gas_intensity_mmbtu_per_bbl"] > values["net_of"]["embedded_gas_intensity_mmbtu_per_bbl"]
+    numbers = [s for s in segments if s.get("format") == "usd_bbl"]
+    assert [s["field"] for s in numbers][:2] == ["mbr_usd_bbl", "margin_study_intensity_usd_bbl"]
+    assert "at this study's gas use" in spoken
+    # The gap between them is the wedge, and it is said where the wedge is drawn.
+    gap = values["mbr_usd_bbl"] - values["margin_study_intensity_usd_bbl"]
+    # Both sides are stored to six places, so the tolerance is on that rounding.
+    assert abs(gap - values["gas_wedge_usd_bbl"]) < 1e-5
+
+    # The rank clause sits after both figures, so it has to hold on both.
+    assert values["percentile_rank_study_intensity"] == values["percentile_rank"], (
+        "the two measures rank the latest month differently, so the verdict's "
+        "rank clause must name whose measure it ranks"
+    )
+    assert values["percentile_observations_study_intensity"] == values["percentile_observations"]
+    assert values["percentile_ranks_agree"] is True
+    assert "on the ministry's measure" not in spoken
+
+    # And the rank is what it claims to be, recomputed here from the rows the
+    # History view draws rather than from the exporter's own helper.
+    margin = built["history"]["margin"]
+    columns = margin["columns"]
+    rows = [dict(zip(columns, row)) for row in margin["rows"]]
+    window = [
+        row for row in rows
+        if values["percentile_window_first_month"] <= row["date"] <= values["percentile_window_last_month"]
+    ]
+    official = [row["mbr_usd_bbl"] for row in window if row["mbr_usd_bbl"] is not None]
+    study = [
+        row["mbr_usd_bbl"] - row["gas_wedge_usd_bbl"]
+        for row in window
+        if row["mbr_usd_bbl"] is not None and row["gas_wedge_usd_bbl"] is not None
+    ]
+    assert len(official) == values["percentile_observations"]
+    assert len(study) == values["percentile_observations_study_intensity"]
+    assert sum(1 for x in official if x <= values["mbr_usd_bbl"]) == values["percentile_rank"]
+    # The study's measure is a difference of two rows each stored to six places,
+    # so the comparison carries that rounding.
+    assert sum(
+        1 for x in study if x <= values["margin_study_intensity_usd_bbl"] + 1e-5
+    ) == values["percentile_rank_study_intensity"]
 
 
 # ---------------------------------------------------------------------------

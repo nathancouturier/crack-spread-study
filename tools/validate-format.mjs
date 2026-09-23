@@ -22,7 +22,7 @@
 // The figures below are test inputs inside a tool, not frontend code;
 // tools/check-literals.mjs scans src/ and index.html only.
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -212,6 +212,39 @@ try {
 }
 
 // ------------------------------------------------ cross check now.json ---
+// GATE 5 FINDING 4, on the JavaScript side. A count is data: it moves, and a
+// sentence a view composes around one reads "the 1 weeks" the week it becomes
+// one. format.countWords puts the words after a count in the count's number,
+// with the same {singular|plural} syntax crack.export._plural reads, and the
+// scan below fails when a view concatenates a count with a plural noun instead.
+check("countWords, one", format.countWords(1, " {week|weeks} from "), " week from ");
+check("countWords, many", format.countWords(19, " {week|weeks} from "), " weeks from ");
+check("countWords, none", format.countWords(0, " {month|months}"), " months");
+check("countWords, a verb too", format.countWords(1, " {month has|months have} runs data"), " month has runs data");
+check("countWords, nothing to choose", format.countWords(1, " no alternative here"), " no alternative here");
+{
+  // Words that end in "s" and are not plural nouns, so a count may precede
+  // them, plus "series", which is the same word in both numbers.
+  const NOT_A_PLURAL_NOUN = new Set(["is", "was", "has", "as", "less", "plus", "minus", "across", "this", "its", "thus", "always", "uses", "sits", "runs", "says", "holds", "does", "goes", "stops", "reads", "carries", "means", "gives", "leaves", "falls", "leads", "series"]);
+  const sources = readdirSync(path.join(ROOT, "src")).filter((f) => f.endsWith(".js"));
+  const problems = [];
+  for (const file of sources) {
+    const text = readFileSync(path.join(ROOT, "src", file), "utf8");
+    const lines = text.split("\n");
+    for (let i = 0; i < lines.length; i += 1) {
+      // A string literal glued to the right of a concatenation, opening with a
+      // lower case word: a noun continuing a sentence, which is where a count
+      // lands. A countWords template opens with "{", so it never matches, and a
+      // capitalised word opens a new sentence, so no count precedes it.
+      for (const match of lines[i].matchAll(/\+\s*"\s+([a-z]+)\b/g)) {
+        const word = match[1];
+        if (word.endsWith("s") && !NOT_A_PLURAL_NOUN.has(word)) problems.push(file + ":" + (i + 1) + " " + JSON.stringify(match[0]));
+      }
+    }
+  }
+  check("no view glues a count to a plural noun, " + sources.length + " modules read", problems, []);
+}
+
 const now = JSON.parse(readFileSync(path.join(ROOT, "data/now.json"), "utf8"));
 const decimals = now.conventions.decimals;
 const sentences = [now.verdict.segments, ...now.data_dates.map((row) => row.segments), ...now.sections.map((s) => s.summary_segments)];
@@ -233,13 +266,18 @@ for (const segments of sentences) {
 check("now.json carries numeric segments to check", numeric > 0, true);
 
 // The verdict is one sentence a trader would say out loud, SPEC.md section 7.2:
-// four clauses, the month said once, no fifth clause for the US gas intensity,
-// which lives in the margin section. docs/design.md Part 3 section 1 and Part 7,
-// C9 and C10. Read through format.js, as the page reads it.
+// the month said once, both gas figures, and no ratio, which lives in the margin
+// section. docs/design.md Part 3 section 1 and Part 7, C9, C10 and C16. Read
+// through format.js, as the page reads it.
 const spoken = now.verdict.segments.map((segment) => format.segmentText(segment, decimals).text).join("");
 const verdictFields = now.verdict.segments.filter((segment) => segment.field).map((segment) => segment.field);
 check("the verdict names the margin month once", verdictFields.filter((field) => field === "margin_month").length, 1);
-check("the verdict holds no US intensity figure", verdictFields.some((field) => field === "margin_study_intensity_usd_bbl" || field === "intensity_ratio"), false);
+check("the verdict carries both gas figures", verdictFields.includes("mbr_usd_bbl") && verdictFields.includes("margin_study_intensity_usd_bbl"), true);
+check("the verdict says whose gas use the second figure is at", spoken.includes("at this study's gas use"), true);
+check("the verdict holds no intensity ratio", verdictFields.includes("intensity_ratio"), false);
+// Gate 5 finding 9. Short enough to say out loud: Gate 4 cut a version of this
+// clause at about sixty five words and the sentence has to stay sayable.
+check("the verdict is still one breath", spoken.split(/\s+/).filter(Boolean).length <= 47, true);
 check("the verdict says whose gas", spoken.includes("after the ministry's gas allowance") && !spoken.includes("its own gas"), true);
 check("the verdict claims a gross margin, not earnings kept", spoken.includes("gross margin") && !/kept/.test(spoken), true);
 check("the verdict is one sentence", (spoken.match(/[.]\s/g) || []).length === 0 && spoken.endsWith("."), true);

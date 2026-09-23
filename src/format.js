@@ -151,6 +151,21 @@ export function formatCell(value, format, decimals, signed) {
   return formatNumber(value, format, decimals, { signed: signed === true, context: "table" });
 }
 
+/* The words after a count, in the number the count actually is. Alternatives
+ * are written {singular|plural}, the same syntax crack.export._plural reads, so
+ * a sentence composed here and a sentence composed there are written the same
+ * way and a reader never meets "the 1 weeks".
+ *
+ * GATE 5 FINDING 4, on this side of the wire. Most sentences arrive from an
+ * artifact already in the right number; the few a view composes around a count
+ * of its own go through here. */
+const PLURAL_CHOICE = /\{([^{}|]*)\|([^{}]*)\}/g;
+
+/** countWords(1, " {week|weeks} from ") is " week from ". */
+export function countWords(count, text) {
+  return String(text).replace(PLURAL_CHOICE, (all, one, many) => (Number(count) === 1 ? one : many));
+}
+
 /* ------------------------------------------------------------- time --- */
 
 /* The parts Intl is asked for. "2-digit" is Intl's own option vocabulary, a

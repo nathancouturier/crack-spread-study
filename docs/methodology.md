@@ -8,14 +8,17 @@ it. Where a number is an expectation rather than a measurement, it says so.
 written before Gate 1, `01-conventions`, `02-dgec`, `03-physical`, `04-market` and
 `05-crack-sources`, are the working record of what was fetched, from where, with
 what status and on what terms. THEY ARE NOT IN THE REPOSITORY: they live in
-`data/private/recon/`, which `.gitignore` excludes, because they quote source
-material and log an individual machine's requests. A citation to one is a
+`data/private/recon/`, which `.gitignore` excludes, because recon 03
+reproduces the Energy Institute capacity table that may not be redistributed,
+and because they log an individual machine's requests. A citation to one is a
 citation to that record, not to a public document, and nothing in this study
 rests on a recon note alone: every figure a recon note is cited for is either
 recomputed here from a committed cache, asserted in `tests/`, or carried in
 `data/manifest.json` with its own source. Where the note and the data disagree,
 the data wins and this document says so, as it does of recon 05 section 12 in
-section 1.6.
+section 1.6. **`docs/sources.md` section 6 lists all five reports, what each
+covers and the public primary source to fetch instead**, and a test fails if a
+report is cited and not listed there.
 
 ---
 

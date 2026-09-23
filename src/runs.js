@@ -34,7 +34,7 @@
  */
 
 import { el, clear, sentence, disclosure, scrollTable, figureCell } from "./dom.js";
-import { formatNumber, formatCell, segmentsText, UNITS } from "./format.js";
+import { formatNumber, formatCell, segmentsText, countWords, UNITS } from "./format.js";
 import * as charts from "./charts.js";
 import * as router from "./router.js";
 import * as runsSection from "./section-runs.js";
@@ -410,7 +410,7 @@ function equationBlock(eq, decimals) {
   tbody.appendChild(el("tr", { class: "is-note runs-long-sample" }, [
     el("th", { class: "model-name", attrs: { scope: "row" } }, [
       el("span", { class: "model-name__label", text: "A on its own longer sample, not in the race" }),
-      el("span", { class: "runs-variant", text: monthWords(long.first_month) + " to " + monthWords(long.last_month) + ", " + formatNumber(long.months, "count", decimals) + " months" }),
+      el("span", { class: "runs-variant", text: monthWords(long.first_month) + " to " + monthWords(long.last_month) + ", " + formatNumber(long.months, "count", decimals) + countWords(long.months, " {month|months}") }),
     ]),
     figureCell(formatCell(long.coefficient, "coef", decimals, true), "coefficient"),
     figureCell(formatCell(long.se, "coef", decimals), "se"),

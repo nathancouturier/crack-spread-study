@@ -35,7 +35,7 @@
  */
 
 import { el, clear, sentence, appendSegments } from "./dom.js";
-import { formatNumber, formatCell, formatQuantity, UNITS } from "./format.js";
+import { formatNumber, formatCell, formatQuantity, countWords, UNITS } from "./format.js";
 import * as charts from "./charts.js";
 import * as router from "./router.js";
 import { compute, present } from "./model-calc.js";
@@ -116,7 +116,7 @@ export function render(root, data, route) {
   for (const preset of model.presets) {
     const button = el("button", { class: "choice calc-preset", attrs: { type: "button", "data-preset": preset.id, "aria-pressed": "false" } }, [
       el("span", { class: "calc-preset__label", text: preset.label }),
-      preset.reconstructed ? el("span", { class: "calc-preset__status", text: "reconstructed, " + String(preset.weeks.fridays.length) + " weeks, " + (preset.weeks.printed ? String(preset.weeks.printed) : "none") + " printed" }) : null,
+      preset.reconstructed ? el("span", { class: "calc-preset__status", text: "reconstructed, " + String(preset.weeks.fridays.length) + countWords(preset.weeks.fridays.length, " {week|weeks}, ") + (preset.weeks.printed ? String(preset.weeks.printed) : "none") + " printed" }) : null,
     ]);
     button.addEventListener("click", () => {
       router.replaceState(VIEW, { preset: preset.id === model.presets[0].id ? "" : preset.id });
@@ -495,7 +495,7 @@ function modelRows(values, result) {
   gross.geometry = { kind: "total", start_usd_bbl: 0, end_usd_bbl: result.grossMarginUsdBbl };
   gross.previous = previous;
   setFigure(gross.figure, result.grossMarginUsdBbl, "gross_margin_usd_bbl", { total: true });
-  setDetail(gross, [String(result.included.length) + " of " + String(model.products.length) + " products priced; gross of gas, not the ministry's MBR."]);
+  setDetail(gross, [String(result.included.length) + " of " + String(model.products.length) + countWords(model.products.length, " {product|products}") + " priced; gross of gas, not the ministry's MBR."]);
 
   const gas = held.rows.get("gas");
   const other = held.rows.get("other");

@@ -67,6 +67,9 @@ const REQUIRED = {
     "verdict.values.percentile_window_months",
     "verdict.values.percentile_window_first_month",
     "verdict.values.percentile_window_last_month",
+    "verdict.values.percentile_rank_study_intensity",
+    "verdict.values.percentile_observations_study_intensity",
+    "verdict.values.percentile_ranks_agree",
     "verdict.values.margin_study_intensity_usd_bbl",
     "verdict.values.intensity_ratio",
     "verdict.values.gas_usd_mmbtu",
@@ -654,6 +657,38 @@ if (loaded["margin-stack"] && loaded.now) {
   });
 }
 
+if (loaded.now && loaded.history) {
+  // GATE 5 FINDING 9. The landing sentence carries both gas figures, so the
+  // rank clause that follows them has to be true of both. The two ranks are
+  // recomputed here from the rows the History view draws, and the sentence may
+  // only leave the measure unsaid while they agree.
+  check("the verdict's rank clause holds on both gas measures", () => {
+    const problems = [];
+    const values = loaded.now.verdict.values;
+    const margin = loaded.history.margin;
+    const at = (name) => margin.columns.indexOf(name);
+    const date = at("date");
+    const mbr = at("mbr_usd_bbl");
+    const wedge = at("gas_wedge_usd_bbl");
+    if (date < 0 || mbr < 0 || wedge < 0) return ["history.json margin is missing a column this check reads"];
+    const window = margin.rows.filter((row) => row[date] >= values.percentile_window_first_month && row[date] <= values.percentile_window_last_month);
+    const official = window.filter((row) => row[mbr] !== null).map((row) => row[mbr]);
+    const study = window.filter((row) => row[mbr] !== null && row[wedge] !== null).map((row) => row[mbr] - row[wedge]);
+    const rankOf = (list, value) => list.filter((x) => x <= value + SUM_TOLERANCE).length;
+    if (official.length !== values.percentile_observations) problems.push("the window holds " + official.length + " published months, the verdict says " + values.percentile_observations);
+    if (rankOf(official, values.mbr_usd_bbl) !== values.percentile_rank) problems.push("the rank on the ministry's measure is not " + values.percentile_rank);
+    if (rankOf(study, values.margin_study_intensity_usd_bbl) !== values.percentile_rank_study_intensity) problems.push("the rank on this study's measure is not " + values.percentile_rank_study_intensity);
+    const agree = values.percentile_rank === values.percentile_rank_study_intensity && values.percentile_observations === values.percentile_observations_study_intensity;
+    if (agree !== values.percentile_ranks_agree) problems.push("percentile_ranks_agree says " + values.percentile_ranks_agree + " and the two ranks say " + agree);
+    const spoken = loaded.now.verdict.segments.map((s) => (s.text !== undefined ? s.text : String(s.label === undefined ? s.value : s.label))).join("");
+    const names = spoken.includes("on the ministry's measure");
+    if (!agree && !names) problems.push("the two measures rank the month differently and the verdict does not say whose rank it gives");
+    if (agree && names) problems.push("the two measures agree and the verdict names one of them anyway");
+    if (!spoken.includes("at this study's gas use")) problems.push("the verdict does not carry this study's gas figure");
+    return problems;
+  });
+}
+
 if (loaded.history) {
   // Part 8.1: three panels never spliced, breaks only where a line carries
   // them, never one on the margin, the wedge never subtracted, every range
@@ -846,7 +881,7 @@ const SUPPORTING = {
   history: { study_intensity_mmbtu_per_bbl: WHY.copy, ministry_intensity_mmbtu_per_bbl: WHY.copy, no_break_source_url: WHY.provenance, partial_years: WHY.flag },
   "margin-stack": { slate_line: WHY.provenance, volume_yield: WHY.model, unattributed_mass_yield_percent: WHY.copy, approximations: WHY.provenance, residual_share: WHY.copy, gas_source: WHY.provenance, embedded_cost_usd_bbl: WHY.copy, study_cost_usd_bbl: WHY.copy, includes_zero: WHY.flag, official_usd_bbl: WHY.copy, quotations_vintage: WHY.provenance, not_decomposed: WHY.flag },
   model: { margin_basis: WHY.flag, official_margin_basis: WHY.flag, official_is_a_step: WHY.flag, slate_line: WHY.provenance, volume_yield: WHY.model, unattributed_slate_lines: WHY.provenance, study_mmbtu_per_bbl: WHY.copy, embedded_mmbtu_per_bbl: WHY.copy, run_cut_threshold_usd_bbl: WHY.flag, crack_source: WHY.provenance, jet: WHY.map, heating_oil: WHY.map, fuel_oil_1pct: WHY.map, evidence_classes: WHY.provenance },
-  now: { margin_basis: WHY.flag, net_of: WHY.provenance, embedded_gas_intensity_mmbtu_per_bbl: WHY.copy, embedded_gas_mass_yield_percent: WHY.copy, costs_subtracted: WHY.provenance, costs_not_subtracted: WHY.provenance, percentile_10y: WHY.copy, percentile_rank: WHY.copy, percentile_months_below: WHY.copy, percentile_window_months: WHY.copy, percentile_window_first_month: WHY.copy, percentile_window_last_month: WHY.copy, study_gas_intensity_mmbtu_per_bbl: WHY.copy, margin_study_intensity_usd_bbl: WHY.copy, intensity_ratio: WHY.copy, crack_month: WHY.copy, carrier_label: WHY.copy, carrier_reason: WHY.provenance, run_verdict: WHY.flag, headroom_segments: WHY.copy, fetch_status: WHY.flag, quotations_provisional: WHY.flag },
+  now: { margin_basis: WHY.flag, net_of: WHY.provenance, embedded_gas_intensity_mmbtu_per_bbl: WHY.copy, embedded_gas_mass_yield_percent: WHY.copy, costs_subtracted: WHY.provenance, costs_not_subtracted: WHY.provenance, percentile_10y: WHY.copy, percentile_rank: WHY.copy, percentile_months_below: WHY.copy, percentile_window_months: WHY.copy, percentile_window_first_month: WHY.copy, percentile_window_last_month: WHY.copy, percentile_rank_study_intensity: WHY.flag, percentile_observations_study_intensity: WHY.flag, percentile_ranks_agree: WHY.flag, study_gas_intensity_mmbtu_per_bbl: WHY.copy, intensity_ratio: WHY.copy, crack_month: WHY.copy, carrier_label: WHY.copy, carrier_reason: WHY.provenance, run_verdict: WHY.flag, headroom_segments: WHY.copy, fetch_status: WHY.flag, quotations_provisional: WHY.flag },
   "run-economics": { threshold_ci_width_usd_bbl: WHY.copy, max_ci_width_usd_bbl: WHY.flag, interval_touches_lower_edge: WHY.flag, interval_touches_upper_edge: WHY.flag, interval_too_wide: WHY.flag, slope_below_usd_bbl: WHY.copy, slope_below_without_episode: WHY.copy, slope_changes_sign_without_episode: WHY.flag, months_below_every_month: WHY.copy, nobs_every_month: WHY.copy, months_below_without_episode: WHY.copy, nobs_without_episode: WHY.copy, bootstrap_replications: WHY.provenance, bootstrap_seed: WHY.provenance, reasons: WHY.flag, closure_step_years_in_sample: WHY.provenance, lower_share: WHY.copy, share_of_runs_low_percent: WHY.copy, share_of_runs_high_percent: WHY.copy, sum_of_lags_unit: WHY.provenance, capacity_step_years_in_sample: WHY.provenance, diagnostic_sum_of_lags: WHY.copy, diagnostic_is_reported_as_a_result: WHY.flag, latest_provisional: WHY.flag, first_month_not_fitted: WHY.copy },
   runs: { margin_regressor: WHY.provenance, mean_imports_over_intake: WHY.copy, min_imports_over_intake: WHY.copy, max_imports_over_intake: WHY.copy, is_a_model: WHY.flag, headline: WHY.flag, level_percent: WHY.copy, regressor_low_usd_bbl: WHY.copy, regressor_high_usd_bbl: WHY.copy, reaches_search_edge: WHY.flag, trimmed: WHY.flag, any_distinguishable: WHY.flag, in_the_race: WHY.flag, distinguishable: WHY.flag, wedge_before_2022_usd_bbl: WHY.copy, wedge_2022_usd_bbl: WHY.copy },
 };

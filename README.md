@@ -240,6 +240,14 @@ validator passed. If anything fails it commits nothing and opens an issue.
 `.github/workflows/build.yml` then runs the gate again from a clean checkout and
 deploys to Pages.
 
+**It has never fired on its schedule.** The workflow was committed on
+2026-09-22 and its first scheduled Friday is 2026-09-25, so as of 2026-09-23
+every run in this repository's history is `build.yml` on a push. The work it
+does is exercised on every gate, by hand and offline; the trigger, the runner's
+network, the commit of a refreshed cache and the issue it opens on failure are
+not. Until a Friday has passed, treat the duty below as yours.
+[`docs/open-questions.md`](docs/open-questions.md) section 49.
+
 ### The weekly note duty, which is the one that cannot wait
 
 The ministry publishes one "Note de conjoncture petroliere" at a time and
@@ -372,6 +380,20 @@ number it affects appears, not only here.
 10. **Figtree stands in for Satoshi.** The portfolio's body face may not be
     copied into a public repository and its CDN is banned by SPEC.md section 0.1.
     Every other design token is the portfolio's, verbatim.
+11. **No audit has opened a primary source.** Every page number, every quoted
+    licence and every transcribed figure in this repository was read from a
+    document by the session that wrote the adapter, or taken from that session's
+    own record of it. The EIA gas figures were re-read from the source PDF; the
+    eleven annual utilisation anchors and the reuse terms were not. If one of
+    those transcriptions is wrong at the root, everything built on it is
+    consistently wrong and nothing here would catch it.
+    [`docs/open-questions.md`](docs/open-questions.md) section 50.
+12. **One browser engine, and no screen reader.** Every layout, focus and
+    contrast measurement, at five widths in both themes, was made in headless
+    Edge, which is Chromium. Firefox and Safari were not tested and no assistive
+    technology was run: the structure a screen reader reads from is checked, how
+    it sounds is not. [`docs/open-questions.md`](docs/open-questions.md)
+    section 48.
 
 More, including the ones that are open questions rather than settled
 limitations, in [`docs/open-questions.md`](docs/open-questions.md). The audits
